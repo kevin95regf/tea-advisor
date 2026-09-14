@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>今日茶饮建议 · Demo</title>
+<style>
+  :root {
+    --bg: #f7f5f0;
+    --card: #ffffff;
+    --ink: #2e2a24;
+    --muted: #8a8177;
+    --line: #e6e1d8;
+    --accent: #7a6a4f;
+    --warm: #c47a4a;
+    --cool: #4a7fa7;
+    --neutral: #8a8577;
+    --warn: #b4553f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0 0 60px;
+    background: var(--bg); color: var(--ink);
+    font: 15px/1.65 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  header {
+    padding: 22px 18px 14px; background: var(--card);
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 { margin: 0 0 4px; font-size: 19px; letter-spacing: .5px; }
+  header p { margin: 0; color: var(--muted); font-size: 12.5px; }
+  main { max-width: 680px; margin: 0 auto; padding: 16px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px; margin-bottom: 14px;
+  }
+  textarea {
+    width: 100%; min-height: 84px; padding: 12px; resize: vertical;
+    border: 1px solid var(--line); border-radius: 9px;
+    font: inherit; background: #fdfcfa; color: var(--ink);
+  }
+  textarea:focus { outline: 2px solid #d8cfae; border-color: #d8cfae; }
+  .row { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  select {
+    padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px;
+    font: inherit; background: #fdfcfa; color: var(--ink);
+  }
+  button {
+    padding: 10px 20px; border: 0; border-radius: 9px; cursor: pointer;
+    background: var(--accent); color: #fff; font: inherit; font-weight: 600;
+  }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  .hint { color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+  .examples { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .examples span {
+    font-size: 12.5px; padding: 5px 10px; border-radius: 20px;
+    background: #efeae0; color: #5f574a; cursor: pointer;
+  }
+  .examples span:hover { background: #e5dece; }
+  .tag {
+    display: inline-block; font-size: 12px; padding: 2px 8px;
+    border-radius: 20px; margin: 3px 5px 3px 0; background: #efeae0; color: #5f574a;
+  }
+  .tag.cold { background: #e2edf5; color: var(--cool); }
+  .tag.cool { background: #e7f0f6; color: var(--cool); }
+  .tag.warm { background: #f8ebe1; color: var(--warm); }
+  .tag.hot  { background: #f9e3dd; color: #b4553f; }
+  .tag.neutral { background: #eeece5; color: var(--neutral); }
+  h2 { font-size: 15px; margin: 0 0 10px; }
+  h3 { font-size: 15.5px; margin: 0 0 10px; }
+  .tea { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+  .tea:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+  .herb { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed var(--line); }
+  .herb:last-child { border-bottom: 0; }
+  .herb b { font-weight: 600; }
+  .herb .amt { color: var(--muted); font-size: 13px; }
+  .steps { margin: 8px 0 0; padding-left: 20px; color: #4d463c; }
+  .steps li { margin: 3px 0; }
+  .reason { background: #fbf8f1; border-left: 3px solid var(--accent); padding: 9px 12px; margin: 10px 0; border-radius: 0 8px 8px 0; font-size: 14px; }
+  .cautions { margin: 8px 0 0; padding-left: 20px; color: var(--warn); font-size: 13.5px; }
+  .disclaimer {
+    font-size: 12.5px; color: #6f675c; background: #f2efe8;
+    border: 1px dashed #d9d2c4; border-radius: 9px; padding: 12px; line-height: 1.7;
+  }
+  .error { color: var(--warn); font-size: 14px; }
+  .badge { font-size: 11.5px; padding: 2px 7px; border-radius: 5px; background: #f2efe8; color: #6f675c; margin-left: 6px; }
+  .loading { color: var(--muted); font-size: 14px; }
+  .meta { color: var(--muted); font-size: 12px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>今日茶饮建议</h1>
+  <p>说说你今天吃了什么，结合你的体质给一杯药食同源的冲泡建议 · Demo</p>
+</header>
+
+<main>
+  <div class="card">
+    <textarea id="text" placeholder="例：中午吃了碗麻辣烫，还喝了杯冰可乐，米饭没吃完"></textarea>
+    <div class="examples" id="examples">
+      <span>中午吃了碗麻辣烫，还喝了杯冰可乐</span>
+      <span>晚上火锅吃撑了，都是肉，还喝了啤酒</span>
+      <span>早上就一杯冰美式，中午吃了份沙拉</span>
+      <span>夜宵吃了炸鸡配奶茶</span>
+    </div>
+    <div class="row">
+      <label for="const">我的体质</label>
+      <select id="const"></select>
+      <button id="go">给我建议</button>
+    </div>
+    <div class="hint">体质仅用于饮食养生方向的粗略区分，不构成体质辨识或医学诊断。</div>
+  </div>
+
+  <div id="out"></div>
+</main>
+
+<script>
+const NATURE_CN = { cold: '寒', cool: '凉', neutral: '平', warm: '温', hot: '热', unknown: '未知' };
+const FLAVOR_CN = { sour: '酸', bitter: '苦', sweet: '甘', pungent: '辛', salty: '咸', bland: '淡', astringent: '涩' };
+const MEAL_CN = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '加餐', late_night: '夜宵', unknown: '未指明' };
+const out = document.getElementById('out');
+const btn = document.getElementById('go');
+const sel = document.getElementById('const');
+let disclaimerCache = null;
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+async function loadInit() {
+  try {
+    const [cs, dis] = await Promise.all([
+      fetch('/api/constitutions').then(r => r.json()),
+      fetch('/api/disclaimer').then(r => r.json()),
+    ]);
+    sel.innerHTML = cs.map(c => `<option value="${esc(c.id)}" title="${esc(c.one_line)}">${esc(c.label)}</option>`).join('');
+    disclaimerCache = dis;
+  } catch (e) {
+    sel.innerHTML = '<option value="balanced">平和质</option>';
+  }
+}
+
+function renderDisclaimer() {
+  const d = disclaimerCache || { text: '本内容仅供日常饮食参考，不构成医疗建议。' };
+  return `<div class="disclaimer"><b>免责声明</b><br>${esc(d.text)}</div>`;
+}
+
+function renderParsed(p) {
+  const chips = (p.foods || []).map(f => {
+    const nat = NATURE_CN[f.nature] || '未知';
+    const fla = (f.flavors || []).map(x => FLAVOR_CN[x] || x).join('');
+    return `<span class="tag ${esc(f.nature)}">${esc(f.name)} · ${esc(nat)}${fla ? ' · ' + esc(fla) : ''}</span>`;
+  }).join('');
+  const uncertain = (p.uncertain_items || []).length
+    ? `<div class="hint">没认出来的：${esc((p.uncertain_items || []).join('、'))}</div>` : '';
+  return `<div class="card">
+    <h2>我理解到的</h2>
+    <div>${chips || '<span class="hint">没有识别到具体食物</span>'}</div>
+    <div class="hint">时段：${esc(MEAL_CN[p.meal_time] || '未指明')} ｜ 整餐偏：${esc(NATURE_CN[p.overall_nature] || '未知')} ｜ 把握度：${esc(Math.round((p.confidence || 0) * 100))}%</div>
+    ${p.summary ? `<div class="reason">${esc(p.summary)}</div>` : ''}
+    ${uncertain}
+  </div>`;
+}
+
+function renderRecs(recs) {
+  if (!recs.length) return '';
+  const items = recs.map(r => {
+    const herbs = (r.herbs || []).map(h => `
+      <div class="herb">
+        <span><b>${esc(h.name)}</b>${h.role ? ` <span class="hint">${esc(h.role)}</span>` : ''}</span>
+        <span class="amt">${esc(h.amount_g)} g</span>
+      </div>`).join('');
+    const steps = (r.brew && r.brew.steps || []).map(s => `<li>${esc(s)}</li>`).join('');
+    const cautions = (r.cautions || []).length
+      ? `<ul class="cautions">${(r.cautions || []).map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : '';
+    return `<div class="tea">
+      <h3>${esc(r.title)}<span class="badge">匹配度 ${esc(Math.round((r.score || 0) * 100))}%</span></h3>
+      ${herbs}
+      ${r.fit_reason ? `<div class="reason">${esc(r.fit_reason)}</div>` : ''}
+      <div class="hint">冲泡：${esc((r.brew && r.brew.vessel) || '')} ｜ 约 ${esc((r.brew && r.brew.water_ml) || 400)} ml ｜ ${esc((r.brew && r.brew.water_temp_c) || 95)}℃ ｜ 焖 ${esc((r.brew && r.brew.steep_min) || 8)} 分钟 ｜ 可续水 ${esc((r.brew && r.brew.refill_times) || 1)} 次</div>
+      ${steps ? `<ol class="steps">${steps}</ol>` : ''}
+      ${cautions}
+    </div>`;
+  }).join('');
+  return `<div class="card"><h2>给你的建议</h2>${items}</div>`;
+}
+
+async function run() {
+  const text = document.getElementById('text').value.trim();
+  if (!text) { out.innerHTML = '<div class="card error">先说说你吃了什么吧。</div>'; return; }
+  btn.disabled = true;
+  out.innerHTML = '<div class="card loading">正在解析你的饮食…（双 Agent 串行，通常 10–30 秒）</div>';
+  const t0 = Date.now();
+  try {
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, constitution_override: sel.value }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const d = data.detail || {};
+      out.innerHTML = `<div class="card error"><b>出错了</b><br>${esc(d.message || JSON.stringify(data))}
+        <div class="hint">排查：http://127.0.0.1:8000/healthz 看凭据与饮片是否就绪</div></div>`;
+      return;
+    }
+    let html = '';
+    if (data.user_message) html += `<div class="card"><h2>说明</h2><div>${esc(data.user_message)}</div></div>`;
+    html += renderParsed(data.parsed);
+    html += renderRecs(data.recommendations || []);
+    html += `<div class="card">${renderDisclaimer()}
+      <div class="meta">耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s ｜ Agent1 ${esc(data.meta.agent1_ms)}ms ｜ Agent2 ${esc(data.meta.agent2_ms)}ms
+      ${data.meta.degraded ? '｜ 已降级为规则匹配' : ''}
+      ｜ 体质：${esc(data.basis.constitution_label)} ｜ request_id ${esc(data.request_id)}</div>
+    </div>`;
+    out.innerHTML = html;
+  } catch (e) {
+    out.innerHTML = `<div class="card error"><b>请求失败</b><br>${esc(e.message)}
+      <div class="hint">确认后端在运行，且 URL 是 http://127.0.0.1:8000/demo</div></div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('examples').addEventListener('click', e => {
+  if (e.target.tagName === 'SPAN') {
+    document.getElementById('text').value = e.target.textContent;
+    document.getElementById('text').focus();
+  }
+});
+btn.addEventListener('click', run);
+loadInit();
+</script>
+</body>
+</html>

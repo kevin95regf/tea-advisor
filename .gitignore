@@ -1,0 +1,35 @@
+# ---------- 凭据：绝不入库 ----------
+.env
+.env.*
+!.env.example
+
+# ---------- Python ----------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# ---------- 本地数据 ----------
+*.db
+*.sqlite3
+backend/data/*.local.json
+
+# ---------- DSH 运行时：含完整对话日志，绝不入库 ----------
+dsh-home/
+sessions/
+*.jsonl
+
+# ---------- 微信开发者工具 ----------
+project.private.config.json
+miniprogram_npm/
+
+# ---------- 杂项 ----------
+logs/
+var/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

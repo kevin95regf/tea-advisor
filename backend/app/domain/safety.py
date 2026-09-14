@@ -1,0 +1,231 @@
+"""确定性安全护栏。模型会飘，护栏不能飘。
+
+原则：任何面向用户的推荐，都必须先过这里，再由接口层返回。
+所有硬约束（白名单、剂量、禁用表述、高风险人群）都在本文件。
+"""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass, field
+from functools import lru_cache
+from pathlib import Path
+
+from app.config import get_settings
+
+# ============================================================
+# 常量
+# ============================================================
+# 高风险人群关键词：命中即不给出具体推荐，改为引导咨询医师
+HIGH_RISK_KEYWORDS: tuple[str, ...] = (
+    "怀孕", "孕妇", "备孕", "哺乳", "喂奶", "经期", "月经",
+    "小孩", "孩子", "儿童", "婴儿", "宝宝", "幼儿",
+    "化疗", "手术", "糖尿病", "高血压", "心脏病", "肾病", "肝病",
+    "吃药", "服药", "中药", "西药", "过敏",
+)
+
+# 绝对禁止出现在输出里的表述
+FORBIDDEN_PHRASES: tuple[str, ...] = (
+    "治疗", "治愈", "根治", "药到病除", "主治", "疗效",
+    "疗程", "处方", "代替吃药", "停药", "包好",
+    "确诊", "癌症", "肿瘤", "药方",
+)
+
+# 单味饮片日用量硬上限（克）。与 herbs.json 取较小值。
+HARD_DOSE_CEILING_G: float = 30.0
+
+# 单次搭配总用量上限（克/日）。超过就显得像方剂，不是茶饮。
+TOTAL_DOSE_CEILING_G: float = 45.0
+
+# 单次搭配最多味数（避免"君臣佐使"式处方结构）
+MAX_HERBS_PER_BLEND: int = 4
+
+
+# ============================================================
+# 数据结构
+# ============================================================
+@dataclass(frozen=True)
+class GuardrailResult:
+    """护栏检查结果。
+
+    blocked  : 致命问题，必须拦截或降级
+    warnings : 需要提示用户的注意项
+    adjusted : 被自动裁剪的项，用于前端标注
+    """
+
+    ok: bool = True
+    blocked: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    adjusted: list[str] = field(default_factory=list)
+
+
+# ============================================================
+# 数据加载
+# ============================================================
+@lru_cache(maxsize=1)
+def load_herb_catalog() -> dict[str, dict]:
+    """加载饮片白名单。key 为饮片 id。文件不存在时返回空字典，不抛异常。"""
+    path: Path = get_settings().data_dir / "herbs.json"
+    if not path.exists():
+        return {}
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    return {item["id"]: item for item in raw.get("herbs", [])}
+
+
+def reload_herb_catalog() -> dict[str, dict]:
+    """清缓存后重新加载（改了 herbs.json 之后调用）。"""
+    load_herb_catalog.cache_clear()
+    return load_herb_catalog()
+
+
+def herb_whitelist_names() -> set[str]:
+    """白名单里的饮片中文名集合。Agent 2 的候选集必须来自这里。"""
+    return {item["name"] for item in load_herb_catalog().values()}
+
+
+def herb_by_name() -> dict[str, dict]:
+    return {item["name"]: item for item in load_herb_catalog().values()}
+
+
+# ============================================================
+# 检查函数
+# ============================================================
+def detect_high_risk(text: str) -> list[str]:
+    """从用户原始文本里识别高风险人群关键词。"""
+    return [kw for kw in HIGH_RISK_KEYWORDS if kw in text]
+
+
+def contains_forbidden_phrase(text: str) -> list[str]:
+    """检测文本中是否出现禁用表述。"""
+    return [p for p in FORBIDDEN_PHRASES if p in text]
+
+
+def scan_free_text(text: str) -> GuardrailResult:
+    """扫描任意自由文本，拦截禁用表述。用于 Agent2 的 fit_reason / cautions。"""
+    hits = contains_forbidden_phrase(text)
+    if not hits:
+        return GuardrailResult()
+    return GuardrailResult(
+        ok=False,
+        blocked=[f"检测到禁用表述：{h}" for h in hits],
+    )
+
+
+def check_blend(
+    herbs: list[dict],
+    exclude_herbs: list[str] | None = None,
+) -> GuardrailResult:
+    """校验一组饮片搭配。
+
+    herbs 每项至少包含 name 与 amount_g 字段。
+    返回的 blocked 非空表示这组搭配不可直接使用。
+
+    调用方约定：不要静默丢弃 blocked 内容，要么剔除对应饮片后重算，
+    要么整条推荐作废并走规则兜底——绝不能把被拦的内容照原样返回给用户。
+    """
+    blocked: list[str] = []
+    warnings: list[str] = []
+    adjusted: list[str] = []
+
+    catalog = herb_by_name()
+    exclude = {name.strip() for name in (exclude_herbs or []) if name.strip()}
+
+    # 1) 味数上限：超过就整组拒绝，避免像方剂
+    if len(herbs) > MAX_HERBS_PER_BLEND:
+        blocked.append(
+            f"单次搭配 {len(herbs)} 味，超过 {MAX_HERBS_PER_BLEND} 味上限，"
+            "已按药食同源茶饮简化处理"
+        )
+
+    total = 0.0
+    for herb in herbs:
+        name = str(herb.get("name", "")).strip()
+        amount = float(herb.get("amount_g") or 0)
+
+        # 2) 必须在白名单内
+        if name not in catalog:
+            blocked.append(f"{name or '(未命名)'}：不在药食同源白名单内，已移除")
+            continue
+
+        # 3) 用户手动排除
+        if name in exclude:
+            blocked.append(f"{name}：用户已排除，已移除")
+            continue
+
+        entry = catalog[name]
+
+        # 4) 剂量上限：取 min(目录限量, 硬上限)
+        ceiling = min(
+            float(entry.get("max_daily_g") or HARD_DOSE_CEILING_G),
+            HARD_DOSE_CEILING_G,
+        )
+        if amount > ceiling:
+            warnings.append(f"{name}：{amount:g}g 超过建议上限，已调整为 {ceiling:g}g")
+            amount = ceiling
+            adjusted.append(name)
+
+        total += amount
+
+        # 5) 饮片自身禁忌逐条转成提示
+        for caution in entry.get("cautions", []):
+            warnings.append(f"{name}：{caution}")
+
+    # 6) 总量上限
+    if total > TOTAL_DOSE_CEILING_G:
+        warnings.append(
+            f"合计用量约 {total:g}g 偏多，建议控制在 {TOTAL_DOSE_CEILING_G:g}g 以内"
+        )
+        adjusted.append("总量")
+
+    return GuardrailResult(
+        ok=not blocked,
+        blocked=blocked,
+        warnings=warnings,
+        adjusted=adjusted,
+    )
+
+
+def check_constitution_fit(
+    herbs: list[dict],
+    constitution: str,
+) -> GuardrailResult:
+    """检查搭配是否与用户体质方向冲突。
+
+    规则简单但有效：饮片标记的不适宜人群命中体质时，给出警告并建议换料。
+    """
+    warnings: list[str] = []
+    catalog = herb_by_name()
+    for herb in herbs:
+        name = str(herb.get("name", "")).strip()
+        entry = catalog.get(name)
+        if not entry:
+            continue
+        if constitution in (entry.get("unsuitable_for") or []):
+            warnings.append(f"{name} 与你当前体质方向不完全契合，建议减量或更换")
+    return GuardrailResult(ok=True, warnings=warnings)
+
+
+def filter_by_constitution(
+    constitution: str,
+    limit: int = 12,
+) -> list[dict]:
+    """按体质筛出候选饮片，供 Agent 2 在受限集合内选择。
+
+    这是把"越界开方"风险锁死的结构性手段：
+    模型即使想自由发挥，候选集里也只有药食同源饮片。
+    """
+    catalog = load_herb_catalog()
+    suitable: list[dict] = []
+    neutral_fallback: list[dict] = []
+
+    for entry in catalog.values():
+        unsuitable = entry.get("unsuitable_for") or []
+        if constitution in unsuitable:
+            continue
+        if constitution in (entry.get("suitable_constitutions") or []):
+            suitable.append(entry)
+        else:
+            neutral_fallback.append(entry)
+
+    ordered = suitable + neutral_fallback
+    return ordered[:limit]

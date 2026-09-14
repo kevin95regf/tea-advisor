@@ -1,0 +1,364 @@
+{
+  "_meta": {
+    "title": "药食同源饮片库（demo 版）",
+    "version": "0.1.0",
+    "review_status": "pending",
+    "notice": "本文件仅收录『既是食品又是中药材的物质』方向的高频品种，属性依据中医饮食养生通行表述整理，剂量上限为保守的日常茶饮建议值。上线前必须由具备资质的中医师/中药师复核，并以国家卫健委发布的最新目录为准。",
+    "field_notes": {
+      "nature": "四气：cold 寒 / cool 凉 / neutral 平 / warm 温 / hot 热",
+      "flavors": "五味：sour 酸 / bitter 苦 / sweet 甘 / pungent 辛 / salty 咸 / bland 淡 / astringent 涩",
+      "meridians": "归经，中文展示用",
+      "effects": "功效方向描述，必须使用养生类措辞，禁止疗效承诺",
+      "max_daily_g": "单日茶饮建议用量上限（克）",
+      "suitable_constitutions": "契合的体质",
+      "unsuitable_for": "不适宜人群关键词，由 safety.py 强制检查",
+      "brewing": "该饮片的处理与冲泡要点"
+    }
+  },
+  "herbs": [
+    {
+      "id": "fuling",
+      "name": "茯苓",
+      "nature": "neutral",
+      "flavors": ["sweet", "bland"],
+      "meridians": ["心", "肺", "脾", "肾"],
+      "effects": ["利水渗湿", "健脾", "宁心"],
+      "max_daily_g": 15,
+      "cautions": ["阴虚津少、口干明显者不宜久服"],
+      "suitable_constitutions": ["phlegm_damp", "qi_deficiency", "balanced"],
+      "unsuitable_for": [],
+      "brewing": {
+        "form": "切块或薄片，质地坚实",
+        "note": "需先煎或久煮 10 分钟以上才易出味，直接冲泡效果差",
+        "prep": "可先用温水浸泡 10 分钟再煮"
+      }
+    },
+    {
+      "id": "chenpi",
+      "name": "陈皮",
+      "nature": "warm",
+      "flavors": ["pungent", "bitter"],
+      "meridians": ["脾", "肺"],
+      "effects": ["理气健脾", "燥湿化痰"],
+      "max_daily_g": 10,
+      "cautions": ["性偏温燥，口干咽燥、易上火者减量", "胃酸过多者不宜空腹饮用"],
+      "suitable_constitutions": ["phlegm_damp", "qi_deficiency", "balanced"],
+      "unsuitable_for": ["damp_heat"],
+      "brewing": {
+        "form": "干燥老陈皮，掰成小块",
+        "note": "越陈越香，建议选三年以上",
+        "prep": "温水快速冲洗一次去浮尘"
+      }
+    },
+    {
+      "id": "shanzha",
+      "name": "山楂",
+      "nature": "warm",
+      "flavors": ["sour", "sweet"],
+      "meridians": ["脾", "胃", "肝"],
+      "effects": ["消食化积", "行气散瘀"],
+      "max_daily_g": 12,
+      "cautions": ["胃酸过多、胃溃疡者慎用", "孕妇不宜", "不宜空腹大量饮用"],
+      "suitable_constitutions": ["phlegm_damp", "balanced"],
+      "unsuitable_for": ["qi_deficiency"],
+      "brewing": {
+        "form": "干山楂片，可略炒后用",
+        "note": "消肉食油腻效果明显，适合聚餐后",
+        "prep": "炒山楂偏温和，生山楂偏酸"
+      }
+    },
+    {
+      "id": "gouqizi",
+      "name": "枸杞子",
+      "nature": "neutral",
+      "flavors": ["sweet"],
+      "meridians": ["肝", "肾"],
+      "effects": ["滋补肝肾", "益精明目"],
+      "max_daily_g": 15,
+      "cautions": ["外感发热、腹泻期间不宜", "正在服用抗凝药物者请先咨询医师"],
+      "suitable_constitutions": ["qi_deficiency", "yang_deficiency", "balanced"],
+      "unsuitable_for": ["damp_heat"],
+      "brewing": {
+        "form": "干果，颗粒饱满者佳",
+        "note": "最后 3 分钟放入，避免久煮发酸；可连果一起吃掉",
+        "prep": "温水稍洗即可"
+      }
+    },
+    {
+      "id": "juhua",
+      "name": "菊花",
+      "nature": "cool",
+      "flavors": ["sweet", "bitter"],
+      "meridians": ["肺", "肝"],
+      "effects": ["疏散风热", "平肝明目", "清热解毒"],
+      "max_daily_g": 10,
+      "cautions": ["脾胃虚寒、易腹泻者不宜多饮", "不宜长期连续大量饮用"],
+      "suitable_constitutions": ["damp_heat", "balanced"],
+      "unsuitable_for": ["yang_deficiency", "qi_deficiency"],
+      "brewing": {
+        "form": "干花，杭白菊偏清甜，胎菊偏清苦",
+        "note": "水温 90℃ 左右即可，沸水久煮易苦",
+        "prep": "第一泡快速倒掉可去浮尘与涩味"
+      }
+    },
+    {
+      "id": "meiguihua",
+      "name": "玫瑰花",
+      "nature": "warm",
+      "flavors": ["sweet", "bitter"],
+      "meridians": ["肝", "脾"],
+      "effects": ["行气解郁", "和血散瘀"],
+      "max_daily_g": 6,
+      "cautions": ["孕妇不宜", "经量偏多者经期慎用", "便秘者不宜久服"],
+      "suitable_constitutions": ["qi_deficiency", "balanced"],
+      "unsuitable_for": [],
+      "brewing": {
+        "form": "干花蕾",
+        "note": "水温 85–90℃，焖 3–5 分钟，久煮香气尽失",
+        "prep": "可配少量陈皮同泡"
+      }
+    },
+    {
+      "id": "hongzao",
+      "name": "红枣",
+      "nature": "warm",
+      "flavors": ["sweet"],
+      "meridians": ["脾", "胃"],
+      "effects": ["补中益气", "养血安神"],
+      "max_daily_g": 15,
+      "cautions": ["湿盛腹胀、痰湿偏重者不宜多食", "含糖量高，血糖偏高者需控制", "建议掰开去核再泡"],
+      "suitable_constitutions": ["qi_deficiency", "yang_deficiency", "balanced"],
+      "unsuitable_for": ["phlegm_damp", "damp_heat"],
+      "brewing": {
+        "form": "干枣，切片或掰开",
+        "note": "整颗冲泡不出味，务必掰开或切片",
+        "prep": "去核可减弱燥性"
+      }
+    },
+    {
+      "id": "longyanrou",
+      "name": "龙眼肉",
+      "nature": "warm",
+      "flavors": ["sweet"],
+      "meridians": ["心", "脾"],
+      "effects": ["补益心脾", "养血安神"],
+      "max_daily_g": 10,
+      "cautions": ["易上火、口干舌燥者慎用", "痰湿偏重、腹胀者不宜", "含糖量高，血糖偏高者需控制"],
+      "suitable_constitutions": ["qi_deficiency", "yang_deficiency"],
+      "unsuitable_for": ["damp_heat", "phlegm_damp"],
+      "brewing": {
+        "form": "干桂圆肉",
+        "note": "3–5 粒即可，多则甜腻生痰",
+        "prep": "可配菊花平衡温性"
+      }
+    },
+    {
+      "id": "maidong",
+      "name": "麦冬",
+      "nature": "cool",
+      "flavors": ["sweet", "bitter"],
+      "meridians": ["心", "肺", "胃"],
+      "effects": ["养阴生津", "润肺清心"],
+      "max_daily_g": 12,
+      "cautions": ["脾胃虚寒、痰湿偏重者不宜", "腹泻期间停用"],
+      "suitable_constitutions": ["damp_heat", "balanced"],
+      "unsuitable_for": ["phlegm_damp", "yang_deficiency"],
+      "brewing": {
+        "form": "干块状，质地柔润",
+        "note": "与枸杞同泡是经典搭配，适合熬夜后口干",
+        "prep": "温水洗一次即可"
+      }
+    },
+    {
+      "id": "heye",
+      "name": "荷叶",
+      "nature": "neutral",
+      "flavors": ["bitter", "bland"],
+      "meridians": ["肝", "脾", "胃"],
+      "effects": ["清暑化湿", "升发清阳"],
+      "max_daily_g": 10,
+      "cautions": ["体瘦、气血偏虚者不宜久服", "孕妇不宜"],
+      "suitable_constitutions": ["phlegm_damp", "damp_heat"],
+      "unsuitable_for": ["qi_deficiency", "yang_deficiency"],
+      "brewing": {
+        "form": "干荷叶丝或碎块",
+        "note": "适合油腻餐后，清爽解腻",
+        "prep": "沸水焖 5 分钟"
+      }
+    },
+    {
+      "id": "juemingzi",
+      "name": "决明子",
+      "nature": "cool",
+      "flavors": ["sweet", "bitter", "salty"],
+      "meridians": ["肝", "大肠"],
+      "effects": ["清肝明目", "润肠通便"],
+      "max_daily_g": 12,
+      "cautions": ["脾胃虚寒、易腹泻者不宜", "孕妇不宜", "不宜长期连续大量饮用"],
+      "suitable_constitutions": ["damp_heat", "balanced"],
+      "unsuitable_for": ["yang_deficiency", "qi_deficiency"],
+      "brewing": {
+        "form": "炒决明子，需略捣碎",
+        "note": "整粒几乎不出味，务必捣碎或买打碎款",
+        "prep": "建议先干锅小火炒香再泡"
+      }
+    },
+    {
+      "id": "shengjiang",
+      "name": "生姜",
+      "nature": "warm",
+      "flavors": ["pungent"],
+      "meridians": ["肺", "脾", "胃"],
+      "effects": ["温中散寒", "化痰止咳", "和胃止呕"],
+      "max_daily_g": 10,
+      "cautions": ["阴虚内热、易上火者不宜", "不宜睡前饮用", "胃溃疡活动期慎用"],
+      "suitable_constitutions": ["yang_deficiency", "phlegm_damp", "balanced"],
+      "unsuitable_for": ["damp_heat"],
+      "brewing": {
+        "form": "鲜姜切薄片 2–3 片",
+        "note": "吃了生冷之后最合适，可配红枣",
+        "prep": "去皮减弱辛辣，留皮偏发散"
+      }
+    },
+    {
+      "id": "bohe",
+      "name": "薄荷",
+      "nature": "cool",
+      "flavors": ["pungent"],
+      "meridians": ["肺", "肝"],
+      "effects": ["疏散风热", "清利头目", "疏肝行气"],
+      "max_daily_g": 6,
+      "cautions": ["体虚多汗者不宜", "哺乳期不宜（影响乳汁分泌）", "孕妇不宜"],
+      "suitable_constitutions": ["damp_heat", "balanced"],
+      "unsuitable_for": ["qi_deficiency", "yang_deficiency"],
+      "brewing": {
+        "form": "干薄荷叶",
+        "note": "最后 2 分钟放入或直接焖泡，久煮挥发油尽失",
+        "prep": "加盖焖泡，减少香气逸散"
+      }
+    },
+    {
+      "id": "sangshen",
+      "name": "桑椹",
+      "nature": "cool",
+      "flavors": ["sweet", "sour"],
+      "meridians": ["心", "肝", "肾"],
+      "effects": ["滋阴补血", "生津润肠"],
+      "max_daily_g": 15,
+      "cautions": ["脾虚便溏者不宜", "含糖量较高，血糖偏高者需控制"],
+      "suitable_constitutions": ["damp_heat", "balanced"],
+      "unsuitable_for": ["phlegm_damp", "yang_deficiency"],
+      "brewing": {
+        "form": "干桑椹",
+        "note": "偏酸甜，适合熬夜后口干",
+        "prep": "温水洗去浮尘"
+      }
+    },
+    {
+      "id": "baihe",
+      "name": "百合",
+      "nature": "cool",
+      "flavors": ["sweet"],
+      "meridians": ["心", "肺"],
+      "effects": ["养阴润肺", "清心安神"],
+      "max_daily_g": 15,
+      "cautions": ["风寒咳嗽、脾胃虚寒者不宜", "腹泻期间停用"],
+      "suitable_constitutions": ["damp_heat", "balanced"],
+      "unsuitable_for": ["phlegm_damp", "yang_deficiency"],
+      "brewing": {
+        "form": "干百合片",
+        "note": "需煮 8–10 分钟，冲泡难以出味",
+        "prep": "温水泡发 20 分钟更易煮软"
+      }
+    },
+    {
+      "id": "lianzi",
+      "name": "莲子",
+      "nature": "neutral",
+      "flavors": ["sweet", "astringent"],
+      "meridians": ["脾", "肾", "心"],
+      "effects": ["补脾止泻", "益肾涩精", "养心安神"],
+      "max_daily_g": 15,
+      "cautions": ["大便干结者不宜多食", "腹胀满者慎用"],
+      "suitable_constitutions": ["qi_deficiency", "balanced"],
+      "unsuitable_for": [],
+      "brewing": {
+        "form": "干莲子，建议去芯",
+        "note": "莲子心偏苦寒，不喜苦味可去芯",
+        "prep": "需煮 10 分钟以上"
+      }
+    },
+    {
+      "id": "yiyiren",
+      "name": "薏苡仁",
+      "nature": "cool",
+      "flavors": ["sweet", "bland"],
+      "meridians": ["脾", "胃", "肺"],
+      "effects": ["利水渗湿", "健脾止泻", "除痹"],
+      "max_daily_g": 20,
+      "cautions": ["孕妇不宜", "津液不足、大便干结者不宜久服", "需煮透，冲泡效果差"],
+      "suitable_constitutions": ["phlegm_damp", "damp_heat"],
+      "unsuitable_for": ["qi_deficiency", "yang_deficiency"],
+      "brewing": {
+        "form": "炒薏苡仁更温和",
+        "note": "质地坚硬，建议先煮 15 分钟或直接用炒制打碎款",
+        "prep": "生薏苡仁偏凉，炒后偏健脾"
+      }
+    },
+    {
+      "id": "wumei",
+      "name": "乌梅",
+      "nature": "neutral",
+      "flavors": ["sour", "astringent"],
+      "meridians": ["肝", "脾", "肺", "大肠"],
+      "effects": ["敛肺生津", "涩肠止泻", "安蛔"],
+      "max_daily_g": 10,
+      "cautions": ["外感初期、实热积滞者不宜", "胃酸过多者慎用"],
+      "suitable_constitutions": ["balanced", "damp_heat"],
+      "unsuitable_for": [],
+      "brewing": {
+        "form": "干乌梅，可略捣",
+        "note": "酸甘化阴，夏季生津解渴；可配少量甘草与陈皮",
+        "prep": "温水洗后焖泡 10 分钟"
+      }
+    },
+    {
+      "id": "luohanguo",
+      "name": "罗汉果",
+      "nature": "cool",
+      "flavors": ["sweet"],
+      "meridians": ["肺", "大肠"],
+      "effects": ["清热润肺", "利咽开音", "滑肠通便"],
+      "max_daily_g": 10,
+      "cautions": ["脾胃虚寒、易腹泻者不宜", "甜度很高，一次 1/4 个足够"],
+      "suitable_constitutions": ["damp_heat", "balanced"],
+      "unsuitable_for": ["yang_deficiency", "phlegm_damp"],
+      "brewing": {
+        "form": "干果，掰碎 1/4 个",
+        "note": "天然甜味，可替代糖；嗓子不适时合适",
+        "prep": "连壳掰碎冲泡"
+      }
+    },
+    {
+      "id": "gancao",
+      "name": "甘草",
+      "nature": "neutral",
+      "flavors": ["sweet"],
+      "meridians": ["心", "肺", "脾", "胃"],
+      "effects": ["补脾益气", "调和诸味", "润肺止咳"],
+      "max_daily_g": 6,
+      "cautions": [
+        "不可长期大量饮用",
+        "高血压、水肿、低钾血症者慎用",
+        "正在服用利尿剂或降压药者请先咨询医师"
+      ],
+      "suitable_constitutions": ["balanced", "qi_deficiency"],
+      "unsuitable_for": [],
+      "brewing": {
+        "form": "甘草片 2–3 片",
+        "note": "主要作用是调和味道，用量宜少，不建议作为主料",
+        "prep": "可先煮 5 分钟"
+      }
+    }
+  ]
+}
