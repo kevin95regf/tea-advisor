@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from functools import lru_cache
 
 from pydantic import BaseModel, Field
@@ -104,7 +105,8 @@ def recommend(
     runtime = get_runtime()
     system_prompt = load_system_prompt()
     user_prompt = build_user_prompt(parsed, constitution, exclude_herbs)
-    sid = session_id or f"ta-a2-{abs(hash(user_prompt)) % 10**8}"
+    # 每次调用都用全新会话 id，避免重复内容累积上文（见 agent1 同样说明）
+    sid = session_id or f"ta-a2-{time.time_ns()}"
 
     first = runtime.run(
         user_prompt,
@@ -117,7 +119,7 @@ def recommend(
         again = runtime.run(
             fix_prompt,
             system_prompt=system_prompt,
-            session_id=f"{sid}-fix",
+            session_id=f"{sid}-fix-{time.time_ns()}",
             timeout_s=settings.agent2_timeout_s,
         )
         return again.text

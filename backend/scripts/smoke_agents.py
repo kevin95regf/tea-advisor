@@ -102,7 +102,9 @@ def main() -> int:
 
     hr("2. 原始往返测试（验证 SDK 基本可用）")
     try:
-        run = runtime.run("只回复两个字：收到", session_id="ta-smoke-ping")
+        # session id 必须唯一：复用同一个 id 会延续同一段持久对话，
+        # 重复跑本脚本时会直接报 "session already exists"。
+        run = runtime.run("只回复两个字：收到", session_id=f"ta-smoke-ping-{time.time_ns()}")
         print(f"  [通过] 模型回复：{run.text.strip()[:60]!r}（{run.elapsed_ms}ms）")
     except Exception as exc:
         print(f"  [失败] 往返失败：{exc}")

@@ -13,6 +13,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -78,6 +79,21 @@ def main() -> int:
         line(OK, "DSH_HOME 目录已存在")
     else:
         line(WARN, "DSH_HOME 目录不存在，首次启动时会自动创建")
+
+    # 防污染检查：如果指向的是主 DSH 环境，SDK 会往那里写 profile
+    main_home = Path.home() / ".dsh"
+    env_override = os.getenv("DSH_HOME")
+    if dsh_home.resolve() == main_home.resolve():
+        line(FAIL, f"DSH_HOME 指向你的主 DSH 环境（{main_home}），会污染主环境")
+        line(WARN, "请在 .env 中设置 DSH_HOME=D:\\work\\tea-advisor\\dsh-home")
+        line(WARN, "注意：DSH 自身会设置 DSH_HOME 环境变量，config.py 已用 override=True 让 .env 优先")
+        problems.append("DSH_HOME 指向主 DSH 环境")
+    else:
+        line(OK, "DSH_HOME 与主 DSH 环境隔离")
+        if env_override:
+            line(OK, f"（环境变量里有 DSH_HOME={env_override}，已被 .env 覆盖，这是预期行为）")
+        else:
+            line(WARN, "环境变量里没有 DSH_HOME，用的是 .env 或默认值")
 
     try:
         import deepseek_harness  # noqa: F401

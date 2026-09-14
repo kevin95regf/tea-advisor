@@ -14,26 +14,67 @@
 | 数据层（20 味药食同源饮片 + 5 型体质） | ✅ 完成 |
 | 安全护栏（白名单 / 剂量 / 禁用表述 / 高风险人群） | ✅ 完成，45 项测试通过 |
 | JSON 解析护栏（围栏剥离 / 校验 / 失败重试） | ✅ 完成 |
-| 双 Agent 提示词与实现 | ✅ 完成，**待真实模型验证** |
+| 双 Agent 提示词与实现 | ✅ 完成，**真实模型已跑通** |
 | 规则兜底（模型失败时降级） | ✅ 完成 |
-| FastAPI 接口 `/api/analyze` | ✅ 完成，HTTP 实测通过 |
+| FastAPI 接口 `/api/analyze` | ✅ 完成，HTTP 端到端实测通过 |
 | 网页 demo | ✅ 完成 |
-| 真实模型冒烟 | ⏳ 需要你的 API Key |
-| 微信小程序 | ⏸ demo 验证后再做 |
+| 微信小程序 | ⏸ 待做 |
+
+### 实测延迟（3 条真实语料，reasoning_effort=low）
+
+| 环节 | 耗时 |
+|---|---|
+| Agent1 饮食解析 | 1.1 – 4.6 s |
+| Agent2 茶饮推荐 | 11.5 – 15.0 s |
+| **全链路** | **12.9 – 16.3 s** |
+| 高风险人群分支 | ~0 s（不调用模型，直接引导就医） |
+
+`TA_REASONING_EFFORT` 对延迟影响极大，实测同一任务：
+
+| effort | Agent2 耗时 | 推荐条数 |
+|---|---|---|
+| max | 19.2 s | 3 |
+| high | 10.1 s | 3 |
+| **low（默认）** | **8.2 s** | **3** |
+| off | 2.7 s | 1 |
+
+本模型支持 `max` / `high` / `low` / `off`，`medium`、`none`、`minimal` 会导致启动失败。
+
+> ⚠️ 注意：12 秒以上的响应时间对小程序体验偏长，`wx.request` 默认超时需显式放宽。
+> 后续建议改为异步任务 + 轮询，并利用「两级返回」先把 Agent1 的解析回显给用户。
 
 ---
 
 ## 快速开始
 
-### 1. 配置环境变量
+### 1. 配置
+
+本项目有**两个**配置文件，分工不能混：
+
+| 文件 | 放什么 | 为什么 |
+|---|---|---|
+| `.env` | 应用配置：`TA_*` 模型参数、端口、超时 | 可以入库模板 |
+| `credentials.env` | `DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DSH_HOME` | **不能放 `.env`** |
+
+**为什么凭据必须单独一个文件**：`dsh` 启动时会扫描 workspace 根目录的 `.env`，
+一旦发现 `DSH_HOME` / `DSH_MAX_TOKENS` 这类 `DSH_*` 变量或凭据变量就**直接拒绝启动**：
+
+```
+Error: dsh: .env sets "DSH_HOME", which only the launching environment may set
+```
+
+因为它们决定进程如何启动、从哪里加载代码与指令、如何联网，属于「启动环境专属」变量。
+所以本项目约定：`.env` 里只出现 `TA_*` 与 `APP_*`，凭据与 `DSH_HOME` 放 `credentials.env`，
+由 `app/config.py` 读取、`app/agents/runtime.py` 注入子进程环境。
 
 ```powershell
 cd D:\work\tea-advisor
 Copy-Item .env.example .env
-notepad .env      # 填入 DEEPSEEK_API_KEY
+Copy-Item credentials.env.example credentials.env
+notepad credentials.env      # 填入 DEEPSEEK_API_KEY 与 DSH_HOME
 ```
 
-`.env` 已被 `.gitignore` 忽略，不会提交到仓库。
+两个真实配置文件都已被 `.gitignore` 忽略（模板文件会入库）。
 
 ### 2. 安装依赖
 
@@ -126,6 +167,8 @@ Agent2 只能从 `herbs.json` 的 20 味里挑，候选集由 `safety.py` 按体
 
 ```
 tea-advisor/
+├─ .env.example                  应用配置模板（TA_* / APP_*）
+├─ credentials.env.example       凭据模板（API Key / DSH_HOME，不能放 .env）
 ├─ backend/
 │  ├─ app/
 │  │  ├─ main.py                  FastAPI 入口、/healthz、/demo、目录与免责声明接口
@@ -184,23 +227,57 @@ tea-advisor/
 
 ---
 
-## 待验证事项（重要）
+## 已验证事项与踩过的坑
 
-以下三点我无法在当前环境验证，需要你在真实环境确认：
+以下三点已在真实环境验证通过，记录在此避免重复踩坑：
 
-1. **`DeepSeekHarness` 的构造参数与凭据传递方式**。代码按官方文档写了
-   `dsh_home` / `cwd` / `provider` / `model` / `max_tokens` / `api_key` / `base_url`，
-   首次跑 `smoke_agents.py` 时如报参数错误，对照
-   [Python SDK 文档](https://deepseek-harness.github.io/deepseek-harness/guide/python-sdk) 调整 `app/agents/runtime.py`。
-2. **系统提示词注入方式**。当前把系统提示词拼在 user 消息前（`runtime.run` 的 `system_prompt` 参数），
-   并在 `smoke_agents.py` 里通过 `DSH_SYSTEM_PROMPT` 影响子进程。若发现模型不守格式，
-   更稳的做法是给每个 agent 单独一个 profile + patch 文件。
-3. **`herbs.json` 的医学准确性**。文件里 `_meta.review_status` 标的是 `pending`：
+### 1. `dsh` 拒绝从工作区 `.env` 读取 `DSH_*` 变量 ✅ 已解决
 
-   > 属性、剂量上限、禁忌均为保守整理的通行表述，**上线前必须由具备资质的中医师/中药师复核**，
-   > 并以国家卫健委发布的最新「既是食品又是中药材的物质目录」为准。
+报错形态：
 
-另外：主力模型只用于生成结构化 JSON，**不建议开启联网/工具能力**。
+```
+Error: dsh: .env sets "DSH_HOME", which only the launching environment may set
+  (it decides how this process starts, where its code and instructions load from,
+   or how it reaches the network); export DSH_HOME instead of putting it in a .env file
+```
+
+**触发条件**：`dsh` 启动时扫描 workspace 根目录（即传给 SDK 的 `cwd`）的 `.env`。
+本项目 `cwd` = 项目根，所以任何 `DSH_HOME` / `DSH_MAX_TOKENS` / `DEEPSEEK_API_KEY`
+都不能出现在 `.env` 里，**注释里出现这些字符串也可能被扫描到**。
+
+**解决**：`DSH_*` 与凭据放 `credentials.env`（dsh 不扫描该文件名），
+由 `app/agents/runtime.py` 注入子进程 `os.environ`；`.env` 只留 `TA_*` / `APP_*`。
+
+### 2. `DeepSeekHarness` 构造参数 ✅ 已验证可用
+
+```python
+DeepSeekHarness(
+    dsh_home="...", cwd="...",
+    provider="deepseek-official", model="deepseek-v4-flash",
+    reasoning_effort="low", max_tokens=8192,
+    api_key="sk-...",          # 同时注入 os.environ 更稳
+)
+with harness: result = harness.run(prompt, session_id=...)
+result.final_response        # 取文本
+```
+
+- 启动约 1.7–4.5 s，进程复用，后续轮次 1–15 s。
+- **`session_id` 必须每次唯一**：复用同一个 id 会延续同一段持久对话，
+  重复执行同一请求会直接报 `session "xxx" already exists`，
+  且按内容 hash 生成 id 会让重复输入累积上文、污染结果。代码里已改用 `time.time_ns()`。
+
+### 3. 系统提示词注入方式 ✅ 已验证可用
+
+当前把系统提示词拼在 user 消息前（`runtime.run(..., system_prompt=...)`），
+实测模型能稳定遵守 JSON 格式与安全边界，**暂不需要给每个 agent 单独建 profile**。
+若后续发现格式遵守度下降，再考虑 profile + patch 方案。
+
+### 4. 仍需人工复核的事项 ⏳
+
+**`herbs.json` 的医学准确性**。文件里 `_meta.review_status` 标的是 `pending`：
+
+> 属性、剂量上限、禁忌均为保守整理的通行表述，**上线前必须由具备资质的中医师/中药师复核**，
+> 并以国家卫健委发布的最新「既是食品又是中药材的物质目录」为准。
 
 ---
 

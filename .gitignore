@@ -2,6 +2,9 @@
 .env
 .env.*
 !.env.example
+credentials.env
+credentials.*.env
+!credentials.env.example
 
 # ---------- Python ----------
 .venv/

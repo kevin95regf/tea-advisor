@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import threading
 import time
 from dataclasses import dataclass
@@ -68,6 +69,22 @@ class HarnessRuntime:
             workspace = self._settings.data_dir.parent.parent
             workspace.mkdir(parents=True, exist_ok=True)
 
+            # ------------------------------------------------------------
+            # 关键：这些变量必须进入「子进程环境」，不能只放在 .env 里。
+            # dsh 会拒绝从 .env 读取 DSH_HOME（它决定进程如何启动与联网），
+            # 所以这里显式注入 os.environ，子进程会继承。
+            # 同时把 .env 的路径常量清掉，避免 dsh 在 .env 里看到它们再次报错。
+            # ------------------------------------------------------------
+            _DSH_OWNED_VARS = ("DSH_HOME", "DEEPSEEK_API_KEY", "DEEPSEEK_BASE_URL")
+            for var in _DSH_OWNED_VARS:
+                os.environ.pop(var, None)
+
+            os.environ["DSH_HOME"] = str(dsh_home)
+            if self._settings.deepseek_api_key:
+                os.environ["DEEPSEEK_API_KEY"] = self._settings.deepseek_api_key
+            if self._settings.deepseek_base_url:
+                os.environ["DEEPSEEK_BASE_URL"] = self._settings.deepseek_base_url
+
             kwargs = {
                 "dsh_home": str(dsh_home),
                 "cwd": str(workspace),
@@ -77,7 +94,7 @@ class HarnessRuntime:
             }
             if self._settings.reasoning_effort:
                 kwargs["reasoning_effort"] = self._settings.reasoning_effort
-            # 只有显式配置了才覆盖子进程环境，避免把 None 传进去
+            # 凭据优先用 kwargs 显式传入（SDK 会用它覆盖子进程环境）
             if self._settings.deepseek_api_key:
                 kwargs["api_key"] = self._settings.deepseek_api_key
             if self._settings.deepseek_base_url:

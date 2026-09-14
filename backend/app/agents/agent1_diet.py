@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from functools import lru_cache
 
 from app.agents import json_guard
@@ -51,7 +52,10 @@ def parse_diet(
     runtime = get_runtime()
     system_prompt = load_system_prompt()
     user_prompt = build_user_prompt(text, meal_time)
-    sid = session_id or f"ta-a1-{abs(hash(text)) % 10**8}"
+    # 会话 id 必须每次唯一。
+    # 原因：SDK 的语义是「复用 harness + session id 就延续同一段持久对话」，
+    # 若按内容 hash 生成，用户重复说同一句话会累积上文，污染解析结果。
+    sid = session_id or f"ta-a1-{time.time_ns()}"
 
     first = runtime.run(
         user_prompt,
@@ -64,7 +68,7 @@ def parse_diet(
         again = runtime.run(
             fix_prompt,
             system_prompt=system_prompt,
-            session_id=f"{sid}-fix",
+            session_id=f"{sid}-fix-{time.time_ns()}",
             timeout_s=settings.agent1_timeout_s,
         )
         return again.text
