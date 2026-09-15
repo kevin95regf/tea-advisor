@@ -89,15 +89,56 @@
   .badge { font-size: 11.5px; padding: 2px 7px; border-radius: 5px; background: #f2efe8; color: #6f675c; margin-left: 6px; }
   .loading { color: var(--muted); font-size: 14px; }
   .meta { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  details.guide {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 16px; margin-bottom: 14px;
+  }
+  details.guide summary { cursor: pointer; font-weight: 600; font-size: 14.5px; color: var(--accent); }
+  details.guide[open] summary { margin-bottom: 8px; }
+  details.guide h3 { font-size: 13.5px; margin: 12px 0 4px; color: #4d463c; }
+  details.guide ol, details.guide ul { margin: 4px 0; padding-left: 22px; }
+  details.guide li { margin: 4px 0; font-size: 13.5px; line-height: 1.6; }
+  details.guide code { background: #efeae0; padding: 1px 5px; border-radius: 4px; font-size: 12.5px; }
+  details.guide .no { color: var(--warn); }
 </style>
 </head>
 <body>
 <header>
   <h1>今日茶饮建议</h1>
-  <p>说说你今天吃了什么，结合你的体质给一杯药食同源的冲泡建议 · Demo</p>
+  <p>说说你今天吃了什么，结合你的体质给一杯药食同源的冲泡建议 · 本地运行</p>
 </header>
 
 <main>
+  <details class="guide" open>
+    <summary>测试指引（先看这个，约 1 分钟）</summary>
+    <p class="hint" style="margin:0">
+      这个页面不是「AI 聊天」。它的核心是：<b>食物是寒是热，不靠模型猜，而是查表 + 纯规则判定</b>，
+      并且每一档结论都能追溯来源。模型只负责把你打的字解析成食物、把结论写成人话。
+    </p>
+
+    <h3>建议按顺序试这 4 次</h3>
+    <ol>
+      <li>点上面任意一条示例句，再点「给我建议」——约 <b>13–18 秒</b>，每次会真实调用模型（约 1 分钱）。</li>
+      <li><b>把鼠标停在结果里任意一个食物标签上</b>，会浮出它的判定来源与完整推导过程（如「查表 ｜ 置信度 90% ｜『麻辣烫』原形态下属性为热（查表直取）」）。这是本产品最重要的部分。</li>
+      <li>输入 <code>我怀孕了，今天吃了火锅，能喝什么茶</code> —— <b>秒回</b>，且不给推荐，只引导就医。这条<b>不调用模型</b>，免费。</li>
+      <li>输入一句表里没有的食物，如 <code>晚上吃了佛跳墙</code> —— 看它会不会"装懂"（应当标记为模型推测或未判定，而不是给你一个确定结论）。</li>
+    </ol>
+
+    <h3>看到这些<b>不是</b> bug</h3>
+    <ul>
+      <li><span class="no">满屏「待验证」</span>：食性表 146 条目前全部未经中医师审核，标注是<b>刻意</b>的——标记密度就是审核进度的可见反馈。</li>
+      <li><span class="no">属性显示成「未判定」</span>：置信度低于 30% 时界面统一不显示寒热属性，这是安全设计，不是漏渲染。</li>
+      <li><span class="no">「麻辣烫」把「辣椒」也带出来了</span>：关键词子串匹配的固有歧义（"麻辣烫"含"麻辣"），已在文档「已知局限」记录，需要别名库才能根治。</li>
+      <li><span class="no">复杂菜名落到「模型推测」</span>：表里没收录的整菜名会降级到第三层，属预期行为。</li>
+    </ul>
+
+    <h3>反馈时请带上</h3>
+    <ul>
+      <li>你输入的原文、以及页面底部那行 <code>request_id</code>（便于我按请求定位日志）。</li>
+      <li>你<b>预期</b>看到什么、实际看到什么。判断"属性对不对"请看标签悬停里的来源：<code>查表</code>与<code>按烹饪方式推算</code>是可以争论数据对不对的，<code>模型推测</code>本来就不保证准。</li>
+    </ul>
+  </details>
+
   <div class="card">
     <textarea id="text" placeholder="例：中午吃了碗麻辣烫，还喝了杯冰可乐，米饭没吃完"></textarea>
     <div class="examples" id="examples">
