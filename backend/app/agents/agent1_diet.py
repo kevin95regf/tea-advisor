@@ -18,6 +18,7 @@ from app.agents.runtime import get_runtime
 from app.config import get_settings
 from app.domain.enums import MealTime
 from app.domain.models import ParsedMeal
+from app.services.food_lookup import render_nature_change_rules, render_reference
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +30,41 @@ def load_system_prompt() -> str:
     return path.read_text(encoding="utf-8")
 
 
-def build_user_prompt(text: str, meal_time: MealTime | None = None) -> str:
-    """构造用户提示词。"""
+def build_user_prompt(
+    text: str,
+    meal_time: MealTime | None = None,
+    reference: str = "",
+) -> str:
+    """构造用户提示词。
+
+    reference 是从 food_properties.json 查出的属性参考表（可能为空）。
+    它放在 user 消息里而不是 system 提示词里，有两个原因：
+      1. 保持 system 前缀稳定，KV 缓存继续命中；
+      2. 参考表只包含用户提到的那几样食物，token 开销很小。
+    """
     parts = [f"用户口述：{text}"]
     if meal_time and meal_time is not MealTime.UNKNOWN:
         parts.append(f"（已知时段：{meal_time.value}）")
+
+    if reference:
+        parts.append(
+            "\n## 参考表\n"
+            "下列食物的属性已经查证，**必须原样采用表中的值**，"
+            "即使你的判断不同也以表为准：\n"
+            f"{reference}"
+        )
+    else:
+        parts.append(
+            "\n## 参考表\n"
+            "（本次没有命中预设参考表。请按烹饪方式与经验判断；"
+            "拿不准的填 unknown 并放进 uncertain_items，不要猜。）"
+        )
+
+    # 处理方式对属性的影响（表里没写 variant 的条目靠这条兜）
+    rules = render_nature_change_rules()
+    if rules:
+        parts.append(f"\n## 处理方式对属性的影响\n{rules}")
+
     parts.append("\n请按要求输出 JSON。")
     return "\n".join(parts)
 
@@ -51,7 +82,9 @@ def parse_diet(
     settings = get_settings()
     runtime = get_runtime()
     system_prompt = load_system_prompt()
-    user_prompt = build_user_prompt(text, meal_time)
+    # 先查表，把用户提到的食物属性作为参考注入
+    reference = render_reference(text)
+    user_prompt = build_user_prompt(text, meal_time, reference)
     # 会话 id 必须每次唯一。
     # 原因：SDK 的语义是「复用 harness + session id 就延续同一段持久对话」，
     # 若按内容 hash 生成，用户重复说同一句话会累积上文，污染解析结果。

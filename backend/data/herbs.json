@@ -359,6 +359,244 @@
         "note": "主要作用是调和味道，用量宜少，不建议作为主料",
         "prep": "可先煮 5 分钟"
       }
+    },
+    {
+      "id": "molihua",
+      "name": "茉莉花",
+      "nature": "warm",
+      "flavors": ["sweet", "pungent"],
+      "meridians": ["脾", "胃", "肝"],
+      "effects": ["理气开郁", "和中化湿"],
+      "max_daily_g": 6,
+      "cautions": ["性偏温，口干舌燥、易上火者减量", "不宜睡前饮用"],
+      "suitable_constitutions": ["qi_deficiency", "phlegm_damp", "balanced"],
+      "unsuitable_for": ["damp_heat"],
+      "brewing": {
+        "form": "干茉莉花蕾，或茉莉花茶",
+        "note": "香气易挥发，水温 85–90℃、加盖焖 3 分钟即可",
+        "prep": "市售茉莉花茶已含绿茶底，注意别与寒凉饮片叠加"
+      }
+    },
+    {
+      "id": "danzhuye",
+      "name": "淡竹叶",
+      "nature": "cool",
+      "flavors": ["sweet", "bland"],
+      "meridians": ["心", "胃", "小肠"],
+      "effects": ["清热除烦", "利尿通淋"],
+      "max_daily_g": 10,
+      "cautions": ["性偏凉，脾胃虚寒者不宜", "孕妇不宜", "不宜长期连续饮用"],
+      "suitable_constitutions": ["damp_heat", "balanced"],
+      "unsuitable_for": ["yang_deficiency", "qi_deficiency"],
+      "brewing": {
+        "form": "干叶切段",
+        "note": "夏季心烦口渴时合适",
+        "prep": "沸水焖 5 分钟"
+      }
+    },
+    {
+      "id": "zhizi",
+      "name": "栀子",
+      "nature": "cold",
+      "flavors": ["bitter"],
+      "meridians": ["心", "肺", "三焦"],
+      "effects": ["泻火除烦", "清热利湿"],
+      "max_daily_g": 6,
+      "cautions": ["性寒，脾胃虚寒、易腹泻者不宜", "孕妇不宜", "用量宜小"],
+      "suitable_constitutions": ["damp_heat"],
+      "unsuitable_for": ["yang_deficiency", "qi_deficiency", "phlegm_damp"],
+      "brewing": {
+        "form": "栀子果实，可略捣碎",
+        "note": "偏苦寒，一次 2–3 枚即可，多则伤胃",
+        "prep": "捣碎后沸水焖 5 分钟"
+      }
+    },
+    {
+      "id": "suanzaoren",
+      "name": "酸枣仁",
+      "nature": "neutral",
+      "flavors": ["sweet", "sour"],
+      "meridians": ["心", "肝", "胆"],
+      "effects": ["养心安神", "敛汗"],
+      "max_daily_g": 15,
+      "cautions": ["外感发热期间不宜", "需炒制后使用，且必须捣碎"],
+      "suitable_constitutions": ["qi_deficiency", "balanced"],
+      "unsuitable_for": ["damp_heat"],
+      "brewing": {
+        "form": "炒酸枣仁，捣碎",
+        "note": "整粒不出味；适合睡前 1 小时温饮",
+        "prep": "捣碎后沸水焖 10 分钟"
+      }
+    },
+    {
+      "id": "shanyao",
+      "name": "山药",
+      "nature": "neutral",
+      "flavors": ["sweet"],
+      "meridians": ["脾", "肺", "肾"],
+      "effects": ["补脾养胃", "生津益肺"],
+      "max_daily_g": 20,
+      "cautions": ["湿盛腹胀者不宜多食", "感冒发热期间不宜"],
+      "suitable_constitutions": ["qi_deficiency", "balanced"],
+      "unsuitable_for": ["phlegm_damp"],
+      "brewing": {
+        "form": "干山药片（淮山）",
+        "note": "需煮 10 分钟以上，冲泡难出味",
+        "prep": "温水泡 20 分钟后煮"
+      }
+    },
+    {
+      "id": "jineijin",
+      "name": "鸡内金",
+      "nature": "neutral",
+      "flavors": ["sweet"],
+      "meridians": ["脾", "胃", "小肠", "膀胱"],
+      "effects": ["健胃消食", "涩精止遗"],
+      "max_daily_g": 6,
+      "cautions": ["需研粉使用，整块几乎无效", "用量宜小，一次 1–2 克"],
+      "suitable_constitutions": ["phlegm_damp", "balanced"],
+      "unsuitable_for": [],
+      "brewing": {
+        "form": "炒鸡内金粉",
+        "note": "研粉冲服或冲入茶中，消食方向里最直接的一味",
+        "prep": "以粉直接冲入温茶"
+      }
+    },
+    {
+      "id": "baibiandou",
+      "name": "白扁豆",
+      "nature": "neutral",
+      "flavors": ["sweet"],
+      "meridians": ["脾", "胃"],
+      "effects": ["健脾化湿", "和中消暑"],
+      "max_daily_g": 20,
+      "cautions": ["必须炒熟或煮透，生用不宜", "腹胀者不宜多食"],
+      "suitable_constitutions": ["phlegm_damp", "qi_deficiency", "balanced"],
+      "unsuitable_for": [],
+      "brewing": {
+        "form": "炒白扁豆，捣碎",
+        "note": "质地坚硬，务必先煮 15 分钟",
+        "prep": "炒后捣碎更易出味"
+      }
+    },
+    {
+      "id": "juhong",
+      "name": "橘红",
+      "nature": "warm",
+      "flavors": ["pungent", "bitter"],
+      "meridians": ["肺", "脾"],
+      "effects": ["理气宽中", "燥湿化痰"],
+      "max_daily_g": 6,
+      "cautions": ["性偏温燥，阴虚口干者不宜", "气虚者慎用"],
+      "suitable_constitutions": ["phlegm_damp"],
+      "unsuitable_for": ["damp_heat", "qi_deficiency"],
+      "brewing": {
+        "form": "橘红片或丝",
+        "note": "比陈皮更偏于化痰，量宜少",
+        "prep": "沸水焖 5 分钟"
+      }
+    },
+    {
+      "id": "huaihua",
+      "name": "槐花",
+      "nature": "cool",
+      "flavors": ["bitter"],
+      "meridians": ["肝", "大肠"],
+      "effects": ["凉血止血", "清肝泻火"],
+      "max_daily_g": 10,
+      "cautions": ["性凉，脾胃虚寒者不宜", "孕妇不宜"],
+      "suitable_constitutions": ["damp_heat", "balanced"],
+      "unsuitable_for": ["yang_deficiency", "qi_deficiency"],
+      "brewing": {
+        "form": "干槐花",
+        "note": "夏季偏燥热时可用",
+        "prep": "沸水焖 4 分钟"
+      }
+    },
+    {
+      "id": "huoxiang",
+      "name": "藿香",
+      "nature": "warm",
+      "flavors": ["pungent"],
+      "meridians": ["脾", "胃", "肺"],
+      "effects": ["芳香化湿", "和中止呕"],
+      "max_daily_g": 6,
+      "cautions": ["性偏温散，阴虚火旺者不宜", "不宜久煮，香气易散"],
+      "suitable_constitutions": ["phlegm_damp"],
+      "unsuitable_for": ["damp_heat"],
+      "brewing": {
+        "form": "干藿香叶",
+        "note": "夏季湿重、食欲不振时合适；最后 2 分钟放入",
+        "prep": "加盖焖泡，减少香气逸散"
+      }
+    },
+    {
+      "id": "zisu",
+      "name": "紫苏",
+      "nature": "warm",
+      "flavors": ["pungent"],
+      "meridians": ["肺", "脾"],
+      "effects": ["解表散寒", "行气和胃"],
+      "max_daily_g": 6,
+      "cautions": ["性温，阴虚内热者不宜", "不宜久煮"],
+      "suitable_constitutions": ["yang_deficiency", "phlegm_damp"],
+      "unsuitable_for": ["damp_heat"],
+      "brewing": {
+        "form": "干紫苏叶",
+        "note": "吃了生冷海鲜之后合适",
+        "prep": "最后 2 分钟放入，或直接焖泡"
+      }
+    },
+    {
+      "id": "foshou",
+      "name": "佛手",
+      "nature": "warm",
+      "flavors": ["pungent", "bitter"],
+      "meridians": ["肝", "脾", "肺"],
+      "effects": ["疏肝理气", "和胃止痛"],
+      "max_daily_g": 6,
+      "cautions": ["性温，阴虚火旺者不宜", "气虚者慎用"],
+      "suitable_constitutions": ["qi_deficiency", "phlegm_damp"],
+      "unsuitable_for": ["damp_heat"],
+      "brewing": {
+        "form": "干佛手片",
+        "note": "情绪不畅、饭后胀气时合适，方向与玫瑰花相近",
+        "prep": "沸水焖 6 分钟"
+      }
+    },
+    {
+      "id": "xiangru",
+      "name": "香薷",
+      "nature": "warm",
+      "flavors": ["pungent"],
+      "meridians": ["肺", "胃"],
+      "effects": ["发汗解表", "化湿和中"],
+      "max_daily_g": 6,
+      "cautions": ["性温发汗，表虚多汗者不宜", "不宜久煮"],
+      "suitable_constitutions": ["phlegm_damp"],
+      "unsuitable_for": ["qi_deficiency", "damp_heat"],
+      "brewing": {
+        "form": "干香薷",
+        "note": "夏季空调房受凉后合适",
+        "prep": "沸水焖 5 分钟"
+      }
+    },
+    {
+      "id": "yuxingcao",
+      "name": "鱼腥草",
+      "nature": "cool",
+      "flavors": ["pungent"],
+      "meridians": ["肺"],
+      "effects": ["清热解毒", "消痈排脓"],
+      "max_daily_g": 15,
+      "cautions": ["性凉，脾胃虚寒者不宜", "气味特殊，接受度因人而异", "不宜长期大量饮用"],
+      "suitable_constitutions": ["damp_heat"],
+      "unsuitable_for": ["yang_deficiency", "qi_deficiency"],
+      "brewing": {
+        "form": "干鱼腥草",
+        "note": "偏于清热，适合湿热明显时短期使用",
+        "prep": "沸水焖 5 分钟"
+      }
     }
   ]
 }
