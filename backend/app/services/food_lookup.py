@@ -23,10 +23,11 @@ from app.domain.enums import FLAVOR_LABELS, NATURE_LABELS, Nature
 from app.domain.models import Verification
 from app.domain.nature_math import (
     COOKING_DELTA,
+    TemperatureSignal,
     apply_cooking_fallback,
-    detect_temperature_prefix,
     shift_nature,
 )
+from app.domain.nature_math import resolve_temperature as nature_math_resolve
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +168,50 @@ def names_match_basic(x: str, y: str) -> bool:
     return len(x) >= 2 and len(y) >= 2 and x[:2] == y[:2]
 
 
+def resolve_temperature_fields(name: str, note: str = "") -> TemperatureSignal | None:
+    """解析用的温度判定入口：带"须能锚定到表内条目"的准入校验。
+
+    扫描 name 与 note 两个字段（判定本身由 nature_math.resolve_temperature 实现，
+    新增前缀只改那一处的 CHILL_PREFIXES / HEAT_PREFIXES）。
+
+    准入校验分两种情形：
+      - 温度来自**食物名**：剥掉前缀后剩下的词必须是一个完整表内食物名
+        （「冰啤酒→啤酒」✅，「冰淇淋→淇淋」❌），否则丢弃——这样温度字
+        属于菜名的词不会被误判。
+      - 温度来自**备注**：名字本身就是完整的（如 name=奶茶），温度词是独立
+        描述，所以不要求 note 剥完还剩什么，只要名字能在表里锚定即可。
+    """
+    signal = nature_math_resolve(name=name, note=note)
+    if signal is None:
+        return None
+
+    if signal.from_field == "name":
+        # 名字通道：剥后必须锚定到表内条目
+        if not _is_full_entry_name(signal.stripped):
+            return None
+        return signal
+
+    # 备注通道：用"查表时的名字"做锚定校验。
+    # 名字本身没有温度前缀时，锚定对象就是 name 自身。
+    anchor = signal.stripped or name
+    if not _is_full_entry_name(anchor) and not _find_entry(anchor)[0]:
+        return None
+    return signal
+
+
+def temperature_signal(name: str = "", note: str = "") -> TemperatureSignal | None:
+    """提示词层用的温度判定入口：只识别，不做表达名校验。
+
+    与 resolve_temperature_fields 共用同一套前缀表与判定逻辑，
+    区别只是不做"剥后须为完整食物名"的严格准入——提示词里给出的是
+    泛化提醒（"这里的冰表示冰镇"），不需要精确锚定到某个表内条目。
+
+    两个入口都只是 nature_math.resolve_temperature 的薄包装，
+    新增前缀仍然只改一处。
+    """
+    return nature_math_resolve(name=name, note=note)
+
+
 def _is_full_entry_name(candidate: str) -> bool:
     """candidate 是否**恰好等于**某个条目的规范名或别名。
 
@@ -252,17 +297,12 @@ def _find_entry(
     return None, None, ""
 
 
-def strip_temperature_prefix(name: str) -> tuple[str, int, str]:
-    """去掉食物名开头的温度前缀。返回 (净名字, 温度增量, 前缀)。
-
-    温度前缀是纯字符串层面的确定信号，不需要模型判断，
-    所以在查表**之前**先剥掉，让「冰啤酒」能命中表内的「啤酒」条目。
-    """
-    detected = detect_temperature_prefix(name)
-    if not detected:
+def strip_temperature_prefix(name: str, note: str = "") -> tuple[str, int, str]:
+    """兼容包装：委托给唯一入口 resolve_temperature_fields。"""
+    signal = resolve_temperature_fields(name, note)
+    if signal is None:
         return name, 0, ""
-    delta, prefix, rest = detected
-    return rest, delta, prefix
+    return signal.stripped, signal.delta, signal.prefix
 
 
 def resolve_food(
@@ -270,6 +310,7 @@ def resolve_food(
     cooking: str | None = None,
     llm_nature: str | None = None,
     text_hint: str = "",
+    note: str = "",
 ) -> ResolvedFood:
     """确定性判定单个食物的四性。这就是三层架构的入口。
 
@@ -280,25 +321,32 @@ def resolve_food(
          若 LLM 也判不出（unknown）则降为 unresolved / 0.1。
       2. 命中表 + 条目有该烹饪方式的变体 → **食材变体层**，直接用变体值。
       3. 命中表 + 无变体 → **烹饪修正层**，按 ±1 通用规则做兜底。
-    烹饪修正永远在最后，且只在变体层未命中时生效。
+      4. 温度前缀层（纯规则）→ 在以上结果上再叠加 ±1。
     """
-    # ---- 温度前缀：纯字符串规则，先于查表剥掉 ----
+    # ---- 温度前缀：纯规则，先于查表剥掉 ----
     # 必须在查表**之前**做，否则「冰啤酒」会因包含匹配直接命中「啤酒」条目，
     # 温度信息就被丢掉了。
-    #
-    # 准入条件：剥掉前缀后剩下的词必须**本身就是一个完整的表内食物名**。
-    # 这样「冰啤酒→啤酒」「热牛奶→牛奶」「冰红茶→红茶」成立，
-    # 而「冰淇淋→淇淋」「热干面→干面」不成立——它们的温度字属于菜名。
-    stripped_name, temp_delta, temp_prefix = strip_temperature_prefix(name)
-    if temp_delta and not _is_full_entry_name(stripped_name):
-        stripped_name, temp_delta, temp_prefix = name, 0, ""
+    # 判定走唯一入口 resolve_temperature_fields（同时扫描 name 与 note），
+    # 它内含"剥后须为完整表内食物名"的准入校验。
+    signal = resolve_temperature_fields(name, note)
+    if signal is not None:
+        stripped_name = signal.stripped
+        temp_delta = signal.delta
+        temp_prefix = signal.prefix
+        temp_field = signal.from_field
+    else:
+        stripped_name, temp_delta, temp_prefix, temp_field = name, 0, "", ""
 
+    # 查表统一用"剥掉温度前缀后的名字"。
+    # 即使温度来自 note（name 本身不含前缀），也要用同一个名字查表，
+    # 否则会出现"查表用 name、叠加用 stripped"的不一致，
+    # 导致「name=奶茶, note=去冰」这种输入的温度增量白算。
     lookup_name = stripped_name if temp_delta else name
 
     entry, hit_word, match_kind = _find_entry(lookup_name, cooking)
 
     if entry is None and temp_delta:
-        # 剥掉前缀后仍查不到，还原成原名再试一次
+        # 剥掉前缀后仍查不到，用原名再试一次（温度仍保留，靠后面的锚定校验保证不误判）
         entry, hit_word, match_kind = _find_entry(name, cooking)
 
     if entry is None:
@@ -382,9 +430,10 @@ def resolve_food(
         if shifted is not None:
             nature = shifted.value
             source = "composed"
+            where = "食物名" if temp_field == "name" else "备注"
             layer_detail += (
                 f"；{temp_prefix}修正 {temp_delta:+d}：{_cn(before)} → {_cn(nature)}"
-                "（温度前缀为纯规则识别，不经模型判断）"
+                f"（温度前缀由{where}识别，纯规则判定，不经模型）"
             )
 
     # 置信度取决于审核状态（三态）：
@@ -456,13 +505,19 @@ def render_reference(text: str) -> str:
         if e.get("note"):
             lines.append(f"    说明：{e['note']}")
 
-    # 口述里出现冰镇/加冰时，明确提示属性要下调——
-    # 光靠 system 提示词里的规则，模型有时仍然照抄基础属性。
-    if any(kw in text for kw in ("冰", "加冰", "冰镇", "冰饮", "冷饮", "雪糕", "冰淇淋")):
+    # 口述里出现温度前缀时，提示属性要相应调整。
+    # 这里**不再自己写一套判定**，统一走 temperature_signal——
+    # 此前这里用子串匹配（"冰" in text），与解析层的前缀匹配不一致，
+    # 会把「冰淇淋」也当成冰镇，两层结论可能相互矛盾。
+    # 现在新增前缀只需改 nature_math 里的 CHILL_PREFIXES / HEAT_PREFIXES。
+    signal = temperature_signal(text)
+    if signal is not None:
+        direction = "寒凉" if signal.delta < 0 else "温热"
+        shift_desc = "平→凉、温→凉或平、凉→寒" if signal.delta < 0 else "平→温、凉→平、温→热"
         lines.append(
-            "\n注意：这次口述里含冰镇/加冰的饮品，"
-            "相关条目的属性应在此基础上向寒凉方向调整（平→凉、温→凉或平、凉→寒），"
-            "并在 `note` 里写明「冰镇」。"
+            f"\n注意：口述里的「{signal.prefix}」是温度前缀，"
+            f"「{signal.stripped}」的属性应在此基础上向{direction}方向调整"
+            f"（{shift_desc}），并在 `note` 里写明「{signal.prefix}」。"
         )
 
     return "\n".join(lines)

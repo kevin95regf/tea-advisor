@@ -13,7 +13,7 @@ from __future__ import annotations
 import pytest
 
 from app.domain.enums import Nature
-from app.domain.nature_math import detect_temperature_prefix
+from app.domain.nature_math import detect_temperature_prefix, resolve_temperature
 from app.services.food_lookup import resolve_food, strip_temperature_prefix
 from app.services.food_lookup import CONF_COMPOSED
 
@@ -68,7 +68,64 @@ def test_iced_beer_gets_chill_adjustment() -> None:
     assert resolved.nature == Nature.COLD.value
     assert resolved.verification.source == "composed"
     assert resolved.verification.confidence == CONF_COMPOSED
-    assert "纯规则识别" in (resolved.verification.detail or "")
+    assert "纯规则判定" in (resolved.verification.detail or "")
+    assert "食物名" in (resolved.verification.detail or "")
+
+
+# ============================================================
+# 备注通道（方案 B）：温度信息在 note 里也要识别
+# ============================================================
+def test_temperature_in_note_is_detected() -> None:
+    """模型可能输出 name=奶茶, note=去冰，温度信息在备注里。"""
+    resolved = resolve_food("奶茶", None, "warm", "", "去冰")
+    assert resolved.nature == Nature.COOL.value, "平 -1 应为凉"
+    assert resolved.verification.source == "composed"
+    assert "备注" in (resolved.verification.detail or "")
+
+
+@pytest.mark.parametrize(
+    "name,note,want",
+    [
+        ("啤酒", "冰镇", Nature.COLD),
+        ("牛奶", "热", Nature.WARM),
+        ("奶茶", "去冰", Nature.COOL),
+        ("酸奶", "冷藏", Nature.COOL),  # 平 -1 = 凉
+        ("奶茶", "常温", Nature.NEUTRAL),  # 常温不含温度词，不修正
+    ],
+)
+def test_note_channel_matrix(name: str, note: str, want: Nature) -> None:
+    resolved = resolve_food(name, None, "warm", "", note)
+    assert resolved.nature == want, f"{name}+{note} 期望 {want}，实际 {resolved.nature}"
+
+
+def test_name_channel_wins_over_note() -> None:
+    """名字与备注冲突时以名字为准——名字是用户最直接的表达。"""
+    resolved = resolve_food("冰啤酒", None, "warm", "", "热")
+    assert resolved.nature == Nature.COLD.value
+    assert "食物名" in (resolved.verification.detail or "")
+
+
+def test_note_temperature_word_position_flexible() -> None:
+    """备注里的温度词位置不固定，任意位置都要能识别。"""
+    for note in ["去冰", "加了冰", "冰箱里拿出来的", "要热的", "温热一下"]:
+        signal = resolve_temperature("奶茶", note)
+        assert signal is not None, f"备注 {note!r} 未识别出温度词"
+        assert signal.from_field == "note"
+
+
+def test_note_channel_still_requires_anchor_in_table() -> None:
+    """备注通道也要锚定表内条目：名字查不到表时不应凭 note 造出属性。"""
+    resolved = resolve_food("祖母秘制卷饼", None, "warm", "", "冰镇")
+    # 名字不在表内 → 落到 LLM 推测，不应因 note 里的"冰镇"改写
+    assert resolved.verification.source == "llm"
+
+
+def test_ice_cream_with_ice_note_not_double_counted() -> None:
+    """「冰淇淋」本来带冰，备注再写"冰镇"也不该连扣两档。"""
+    resolved = resolve_food("冰淇淋", None, "warm", "", "冰镇")
+    assert resolved.nature == Nature.COLD.value
+    detail = resolved.verification.detail or ""
+    assert "修正" not in detail, f"冰淇淋不应被温度规则改写：{detail}"
 
 
 def test_iced_cola_gets_chill_adjustment() -> None:

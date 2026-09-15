@@ -99,6 +99,9 @@ def calibrate_parsed(parsed: ParsedMeal, text: str = "") -> ParsedMeal:
                 cooking=food.cooking.value if hasattr(food.cooking, "value") else food.cooking,
                 llm_nature=food.nature.value if hasattr(food.nature, "value") else food.nature,
                 text_hint=hint,
+                # note 要一起传：模型可能把温度信息放在 note 里
+                # （实测「去冰奶茶」会输出 name=奶茶, note=去冰）
+                note=food.note or "",
             )
         except Exception:
             # 校准失败不能让整个解析失败，但必须留下可排查的痕迹

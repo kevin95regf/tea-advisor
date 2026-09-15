@@ -2780,6 +2780,73 @@
       "reviewed_at": null,
       "review_note": null,
       "review_status": "pending"
+    },
+    {
+      "id": "bing_naicha",
+      "name": "冰奶茶",
+      "aliases": [
+        "冰镇奶茶",
+        "加冰奶茶"
+      ],
+      "category": "饮料",
+      "nature": "cool",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "冰奶茶",
+        "冰镇奶茶",
+        "加冰奶茶"
+      ],
+      "note": "奶茶为平，冰镇后偏凉",
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
+    },
+    {
+      "id": "qubing_naicha",
+      "name": "去冰奶茶",
+      "aliases": [
+        "常温奶茶",
+        "少冰奶茶"
+      ],
+      "category": "饮料",
+      "nature": "cool",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "去冰奶茶",
+        "常温奶茶",
+        "少冰奶茶"
+      ],
+      "note": "去掉冰后仍比热饮偏凉，故记为凉",
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
+    },
+    {
+      "id": "re_naicha",
+      "name": "热奶茶",
+      "aliases": [
+        "温热奶茶"
+      ],
+      "category": "饮料",
+      "nature": "warm",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "热奶茶",
+        "温热奶茶"
+      ],
+      "note": "奶茶为平，加热后偏温",
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     }
   ],
   "tea_drinks": {

@@ -22,6 +22,8 @@
 
 from __future__ import annotations
 
+from typing import NamedTuple
+
 from app.domain.enums import Nature
 
 # 编码值边界
@@ -113,7 +115,7 @@ def clamp(value: int) -> int:
 # 降温前缀：命中即 -1
 CHILL_PREFIXES: tuple[str, ...] = (
     "冰镇的", "冰镇", "冰的", "冰", "加冰的", "加冰", "去冰的", "去冰",
-    "冰镇的", "冷冻的", "冷冻", "冷藏的", "冷藏", "冻的", "冻",
+    "冷冻的", "冷冻", "冷藏的", "冷藏", "冻的", "冻",
 )
 
 # 升温前缀：命中即 +1
@@ -121,6 +123,19 @@ HEAT_PREFIXES: tuple[str, ...] = (
     "热腾腾的", "热腾腾", "滚烫的", "滚烫", "烫的", "烫",
     "加热的", "加热", "温热的", "温热", "热的", "热",
 )
+
+
+class TemperatureSignal(NamedTuple):
+    """温度前缀的判定结果。
+
+    这是**唯一**的温度语义载体：字段是结构化数据（增量/前缀/来源），
+    不是中文文案，所以解析层与提示词层都能直接用，无需各写一套判断。
+    """
+
+    delta: int          # -1 降温 / +1 升温
+    prefix: str         # 命中的前缀，如"冰镇"
+    stripped: str       # 去掉前缀后的净名字，如"啤酒"
+    from_field: str     # 命中来自哪个字段："name" 或 "note"
 
 
 def _match_prefix(text: str, prefixes: tuple[str, ...]) -> str | None:
@@ -132,15 +147,10 @@ def _match_prefix(text: str, prefixes: tuple[str, ...]) -> str | None:
 
 
 def detect_temperature_prefix(name: str) -> tuple[int, str, str] | None:
-    """识别食物名里的温度前缀。**纯字符串规则，不经过模型。**
+    """识别单个字符串开头的温度前缀。
 
     返回 (增量, 前缀, 去掉前缀后的名字)，未识别到返回 None。
-
-    只做前缀匹配、不做全文匹配，是为了避免误判：
-      - 「冰淇淋」不带"冰"前缀语义（是整词），且去掉"冰"后"淇淋"不在表内
-      - 「凉皮」「凉茶」的"凉"不是前缀，且去掉后在表内也查不到
-      - 「热狗」「热干面」去掉后分别剩"狗""干面"，表里都没有
-    即便出现极端情况（如"热红酒"），调用方还有"去前缀后必须在表内"这一层把关。
+    只做前缀匹配，不做全文匹配。
     """
     if not name:
         return None
@@ -159,6 +169,67 @@ def detect_temperature_prefix(name: str) -> tuple[int, str, str] | None:
         rest = text[len(heat) :].strip()
         if rest:
             return 1, heat, rest
+
+    return None
+
+
+def find_temperature_in_text(text: str) -> tuple[int, str, str] | None:
+    """在任意文本里**查找**温度词（不限开头位置）。
+
+    与 detect_temperature_prefix 的区别：
+      - detect_temperature_prefix 只认**开头**的，用于食物名
+        （避免「冰淇淋」「凉皮」这类温度字属于菜名的词被误判）
+      - 本函数在任意位置查找，用于**备注**字段——备注通常就是"去冰""冰镇""热的"
+        这类简短描述，温度词可能出现在任何位置（实测模型输出「note=去冰」）
+
+    同样按最长匹配优先，避免"冰"抢走"冰镇"。
+    """
+    if not text:
+        return None
+    t = text.replace(" ", "").strip()
+    if not t:
+        return None
+
+    for delta, prefixes in ((-1, CHILL_PREFIXES), (1, HEAT_PREFIXES)):
+        for prefix in sorted(prefixes, key=len, reverse=True):
+            idx = t.find(prefix)
+            if idx < 0:
+                continue
+            rest = (t[:idx] + t[idx + len(prefix) :]).strip()
+            return delta, prefix, rest
+
+    return None
+
+
+def resolve_temperature(name: str = "", note: str = "") -> TemperatureSignal | None:
+    """**温度前缀判定的唯一入口。** 同时扫描食物名与备注，返回结构化信号。
+
+    为什么要有这个入口：温度判定原本散落在两处——
+    解析层用前缀匹配、提示词层用子串判断，两套逻辑会各自漂移
+    （例如「冰淇淋」在解析层被正确排除，在提示词层却会被当成冰镇）。
+    现在两层共用本函数，新增前缀只需改 CHILL_PREFIXES / HEAT_PREFIXES 一处。
+
+    扫描方式按字段区分，这是刻意的：
+      - **食物名**：只认开头的温度词，避免「冰淇淋」「凉皮」「热狗」被误判
+      - **备注**：在任意位置查找，因为备注通常就是"去冰""冰镇"这类简短描述，
+        温度词位置不定（实测模型会输出 note=去冰）
+
+    优先级：食物名 > 备注。名字里的温度字是用户最直接的表达，
+    备注只在名字没给出温度信息时才采信。
+    """
+    detected = detect_temperature_prefix(name or "")
+    if detected:
+        delta, prefix, stripped = detected
+        return TemperatureSignal(
+            delta=delta, prefix=prefix, stripped=stripped, from_field="name"
+        )
+
+    found = find_temperature_in_text(note or "")
+    if found:
+        delta, prefix, stripped = found
+        return TemperatureSignal(
+            delta=delta, prefix=prefix, stripped=stripped, from_field="note"
+        )
 
     return None
 

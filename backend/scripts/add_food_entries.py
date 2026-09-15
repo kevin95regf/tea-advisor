@@ -165,6 +165,38 @@ NEW_ENTRIES: list[dict] = [
         "keywords": ["酸奶碗", "yogurt bowl"],
         "note": "冷藏酸奶加水果，偏凉",
     },
+    # 奶茶的温度变体：模型的命名不稳定（有时 name=去冰奶茶、有时 name=奶茶+note=去冰、
+    # 有时 name=冰奶茶），靠温度前缀层只能覆盖前两种，所以把常见变体直接收录。
+    {
+        "id": "bing_naicha",
+        "name": "冰奶茶",
+        "aliases": ["冰镇奶茶", "加冰奶茶"],
+        "category": "饮料",
+        "nature": "cool",
+        "flavors": ["sweet"],
+        "keywords": ["冰奶茶", "冰镇奶茶", "加冰奶茶"],
+        "note": "奶茶为平，冰镇后偏凉",
+    },
+    {
+        "id": "qubing_naicha",
+        "name": "去冰奶茶",
+        "aliases": ["常温奶茶", "少冰奶茶"],
+        "category": "饮料",
+        "nature": "cool",
+        "flavors": ["sweet"],
+        "keywords": ["去冰奶茶", "常温奶茶", "少冰奶茶"],
+        "note": "去掉冰后仍比热饮偏凉，故记为凉",
+    },
+    {
+        "id": "re_naicha",
+        "name": "热奶茶",
+        "aliases": ["温热奶茶"],
+        "category": "饮料",
+        "nature": "warm",
+        "flavors": ["sweet"],
+        "keywords": ["热奶茶", "温热奶茶"],
+        "note": "奶茶为平，加热后偏温",
+    },
 ]
 
 REVIEW_DEFAULTS = {
