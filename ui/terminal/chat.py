@@ -2,9 +2,9 @@
 
 设计约束
 --------
-- **不改核心逻辑层**：本文件只 import `app.*`，不修改 backend/ 下任何文件。
+- **不改核心逻辑层**：本文件只 import `app.*`，不修改 core/ 下任何文件。
 - **零新依赖**：只用标准库。`rich` 属后续可选美化，不在这里引入。
-- **引导方式与项目现有脚本一致**：一句 sys.path.insert 指向 backend/，
+- **引导方式与项目现有脚本一致**：一句 sys.path.insert 指向 core/，
   与 scripts/check_setup.py:21、scripts/smoke_offline.py:14 完全相同。
 
 三种用法
@@ -28,10 +28,10 @@ import sys
 import time
 from pathlib import Path
 
-# ---- 唯一的"引导"代码：定位仓库根与 backend/，再挂进 sys.path ----
+# ---- 唯一的"引导"代码：定位仓库根与 core/，再挂进 sys.path ----
 REPO_DIR = Path(__file__).resolve().parents[2]
-BACKEND_DIR = REPO_DIR / "backend"
-sys.path.insert(0, str(BACKEND_DIR))
+CORE_DIR = REPO_DIR / "core"
+sys.path.insert(0, str(CORE_DIR))
 
 # Windows 控制台默认 GBK，中文会乱码（与核心脚本同样处理）。
 # stdin 也要一起改：核心脚本不读标准输入，本壳要读，

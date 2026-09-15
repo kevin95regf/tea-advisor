@@ -3,7 +3,7 @@
 这是本次改动的核心验证：把"模型凭语感猜属性"变成"查表后照抄"，
 到底提升了多少，用固定语料量出来。
 
-用法（在 backend 目录下）：
+用法（在 core 目录下）：
     python scripts/test_food_accuracy.py
 
 注意：每条语料都要调用一次模型，约 1–3 秒，默认 12 条语料。
@@ -15,8 +15,8 @@ import sys
 import time
 from pathlib import Path
 
-BACKEND_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BACKEND_DIR))
+CORE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(CORE_DIR))
 
 for _stream in (sys.stdout, sys.stderr):
     try:

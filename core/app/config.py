@@ -8,9 +8,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# 路径基准：backend/ 与其上一级
-BACKEND_DIR = Path(__file__).resolve().parent.parent
-PROJECT_ROOT = BACKEND_DIR.parent
+# 路径基准：core/ 与其上一级
+CORE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = CORE_DIR.parent
 
 # 加载配置。加载顺序（后者覆盖前者）：
 #   1. .env                —— 应用配置（模型、端口、超时）
@@ -25,9 +25,9 @@ PROJECT_ROOT = BACKEND_DIR.parent
 # override=True：本项目在 DSH 环境里开发时 DSH 自己会设 DSH_HOME，
 #   必须让项目配置覆盖它，否则 SDK 会往主 DSH home 写 profile。
 load_dotenv(PROJECT_ROOT / ".env", override=True)
-load_dotenv(BACKEND_DIR / ".env", override=True)
+load_dotenv(CORE_DIR / ".env", override=True)
 load_dotenv(PROJECT_ROOT / "credentials.env", override=True)
-load_dotenv(BACKEND_DIR / "credentials.env", override=True)
+load_dotenv(CORE_DIR / "credentials.env", override=True)
 
 
 class Settings:
@@ -63,8 +63,8 @@ class Settings:
         self.agent2_timeout_s: float = float(os.getenv("AGENT2_TIMEOUT_S", "60"))
 
         # --- 路径 ---
-        self.data_dir: Path = BACKEND_DIR / "data"
-        self.prompts_dir: Path = BACKEND_DIR / "app" / "agents" / "prompts"
+        self.data_dir: Path = CORE_DIR / "data"
+        self.prompts_dir: Path = CORE_DIR / "app" / "agents" / "prompts"
         # 前端交互层：所有"壳"都放在仓库根的 ui/ 下，与核心逻辑分层隔离。
         # 这里只登记 Web 壳的静态目录，终端壳不需要路径配置。
         self.web_dir: Path = PROJECT_ROOT / "ui" / "web"

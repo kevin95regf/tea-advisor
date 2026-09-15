@@ -3,7 +3,7 @@
 本服务是同源提供界面与接口的：前端页面由本服务自己返回，
 所以浏览器同源请求本来不需要 CORS。
 
-启动（在 backend 目录下）：
+启动（在 core 目录下）：
     python -m uvicorn app.main:app --reload --port 8000
 
 然后打开：

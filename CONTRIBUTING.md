@@ -5,7 +5,7 @@
 
 > ⚠️ **红线（先读这一段）**：本项目输出仅供日常饮食参考，**不构成医疗建议**。
 > 任何 PR 都不得引入疗效承诺、诊断结论或可替代就医的表述。
-> 提示词、文案、数据条目的改动都受此约束，`backend/app/domain/safety.py` 里有机器强制的词表。
+> 提示词、文案、数据条目的改动都受此约束，`core/app/domain/safety.py` 里有机器强制的词表。
 
 ---
 
@@ -17,7 +17,7 @@
 * 建议用虚拟环境：
 
 ```powershell
-cd backend
+cd core
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -e ".[dev,web]"
@@ -84,16 +84,16 @@ python ui\terminal\chat.py                            # 交互模式（默认走
 
 | 你的意图 | 该改的文件 | 说明 |
 |---|---|---|
-| 增减食材 / 改属性 | `backend/data/food_properties.json` | 见第 3 节，**别用脚本批量灌** |
-| 增减饮片 / 改剂量上限 | `backend/data/herbs.json` | 改完必须让 `check_setup.py` 与 `pytest` 通过 |
-| 改体质说明 | `backend/data/constitution.json` | 5 型，与 `app/domain/enums.py` 的枚举必须一致 |
+| 增减食材 / 改属性 | `core/data/food_properties.json` | 见第 3 节，**别用脚本批量灌** |
+| 增减饮片 / 改剂量上限 | `core/data/herbs.json` | 改完必须让 `check_setup.py` 与 `pytest` 通过 |
+| 改体质说明 | `core/data/constitution.json` | 5 型，与 `app/domain/enums.py` 的枚举必须一致 |
 | 改四性运算（±1 修正、合成算法） | `app/domain/nature_math.py` | **唯一真源**，改前先读 `docs/three-layer-architecture.md` |
 | 改温度前缀识别（冰/热…） | `app/domain/nature_math.py` 的 `CHILL_PREFIXES` / `HEAT_PREFIXES` | **只改这一处**，两个上层入口自动跟随 |
 | 改判定顺序 / 置信度 | `app/services/food_lookup.py` | `resolve_food()` 是三层架构的入口 |
 | 改安全护栏（词表、剂量、高风险人群） | `app/domain/safety.py` | 改词表要同步补测试 |
 | 改 Agent 行为 | `app/agents/prompts/*.md` | 提示词改动影响面大，PR 请附 ④ 的前后对比 |
 | 改接口字段 | `app/domain/models.py` | **改了就是改了对外契约**，必须同步前端与提示词 |
-| 改交互界面 | `ui/` 下的对应子目录 | 不要为此修改 `backend/app/` 下的核心逻辑 |
+| 改交互界面 | `ui/` 下的对应子目录 | 不要为此修改 `core/app/` 下的核心逻辑 |
 
 ---
 
@@ -233,6 +233,31 @@ python scripts\patch_food_table.py --dry-run
 7. **`.gitattributes` 强制 LF，写数据文件的脚本显式用 `newline="\n"`。**
    请不要让编辑器引入 CRLF，否则会产生大量假 diff。
 
+8. **`ui/` 单向依赖 `core/`——反向依赖绝对不允许。**
+
+   ```
+   ui/terminal/  ui/web/        ← 前端交互层（所有"壳"）
+        │  只允许向下 import
+        ▼
+   core/app/                    ← 核心逻辑层（domain / services / agents / api）
+   ```
+
+   * `ui/` 可以 `import app.*`，**可以**改自己的展示逻辑，**不可以**改 `core/app/domain/`、
+     `core/app/services/`、`core/app/agents/`。
+   * `core/` **不得** import `ui/` 下的任何东西，也不得假设自己正被某个特定界面调用。
+     界面差异（终端 / Web / 未来的 GUI）只体现在 `ui/` 里，核心层对它们一无所知。
+   * 新增一个界面 → 在 `ui/` 下加一个子目录并复用核心；**不要**为此在核心层加分支、
+     加参数、加 `if 是终端` 之类的判断。
+   * 唯一的接缝是 `core/app/domain/models.py` 定义的请求 / 响应结构（契约 1）。
+     界面需要新数据时，先改 `models.py` 并同步所有壳，而不是让核心层去适配某个壳。
+   * `core/app/main.py`（FastAPI 入口）与 `core/app/config.py` 属于**适配 / 基础设施层**，
+     不是核心判定逻辑：为 Web 壳加路由或路径配置是允许的，
+     但 `domain/`、`services/`、`agents/` 不应因界面变化而改动。
+
+   > 判断标准很简单：**如果删掉 `ui/` 整个目录，`core/` 应当仍然能跑通
+   > `pytest`、`smoke_offline.py` 和 `--resolve` 那条纯规则链路。**
+   > 这是每次评审都要确认的事。
+
 ---
 
 ## 5. 提交与 PR
@@ -251,11 +276,15 @@ feat: 温度判定收拢为单一入口，同时扫描 name 与 note
 
 ### PR 检查清单
 
+以下命令除注明外，都在 `core/` 目录下执行。
+
 - [ ] `python scripts\check_setup.py` 通过
 - [ ] `python scripts\smoke_offline.py` 通过
 - [ ] `python -m pytest -q` 全绿（当前基线 **183 passed**）
 - [ ] 改了提示词 / 判定逻辑的，附 `python scripts\smoke_agents.py` 的**前后对比**
 - [ ] 改了数据表的，先跑过对应脚本的 `--dry-run`，且 `git diff` 已人工复核
+- [ ] **动了 `ui/` 的：确认 `core/` 没被反向污染**——临时把 `ui/` 改名移走，
+      `core/` 下 `pytest` / `smoke_offline.py` 仍应全绿（契约 8）
 - [ ] 没有提交任何凭据（`.env` / `credentials.env` / `dsh-home/` 均不得入库）
 - [ ] 新增的判定分支都补了测试；新增的已知局限写进
       `docs/three-layer-architecture.md` 的「已知局限」一节

@@ -18,7 +18,7 @@ __pycache__/
 # ---------- 本地数据 ----------
 *.db
 *.sqlite3
-backend/data/*.local.json
+core/data/*.local.json
 
 # ---------- DSH 运行时：含完整对话日志，绝不入库 ----------
 dsh-home/

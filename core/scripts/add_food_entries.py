@@ -6,7 +6,7 @@
 手工在多行 JSON 里插条目极易漏字段或破坏语法。这里按数据结构插入，
 并自动为 review 字段补默认值，保证幂等（同 id 不重复添加）。
 
-用法（在 backend 目录下）：
+用法（在 core 目录下）：
     python scripts/add_food_entries.py --dry-run
     python scripts/add_food_entries.py
 """
@@ -18,8 +18,8 @@ import json
 import sys
 from pathlib import Path
 
-BACKEND_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BACKEND_DIR))
+CORE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(CORE_DIR))
 
 for _stream in (sys.stdout, sys.stderr):
     try:
@@ -27,7 +27,7 @@ for _stream in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-TABLE = BACKEND_DIR / "data" / "food_properties.json"
+TABLE = CORE_DIR / "data" / "food_properties.json"
 
 # 本次新增：主要针对"外国/新式食物"，实测发现这类词会被误配到相近的中式通用条目
 # （例如「希腊酸奶」被当成普通「酸奶」、「韩式炸鸡」被当成普通「炸鸡」）。

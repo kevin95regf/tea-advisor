@@ -32,7 +32,7 @@
 ### 30 秒体验：不需要 API Key，不花一分钱
 
 ```powershell
-cd backend
+cd core
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -e ".[dev]"        # 只想跑终端壳就够；要 Web 界面用 ".[dev,web]"
@@ -92,7 +92,7 @@ notepad credentials.env      # 填入 DEEPSEEK_API_KEY 与 DSH_HOME（纯英文�
 
 ```powershell
 # 环境与数据自检（秒级，不调模型）
-cd backend
+cd core
 python scripts\check_setup.py
 
 # 离线冒烟：数据层 → 解析 → 规则兜底 → 护栏 全链路
@@ -108,7 +108,7 @@ python ..\ui\terminal\chat.py
 ### 本地 Web 界面
 
 ```powershell
-cd backend
+cd core
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
@@ -150,7 +150,7 @@ print(r.verification.detail)       # 完整判定过程，可追溯
 
 ### 边界与注意事项
 
-* 数据层经由 `app.config` 依赖 `python-dotenv`，并且从 `backend/data/` 读 JSON。
+* 数据层经由 `app.config` 依赖 `python-dotenv`，并且从 `core/data/` 读 JSON。
   想把数据放到别处，目前需要自行设置工作目录或改 `config.py`（计划中会加 `TA_DATA_DIR`）。
 * `resolve_food()` **只判定单一食物**。整菜名（如「番茄炒蛋」）要么表里收录，要么整体落到 LLM 层。
   多层食材的合成算法 `nature_math.combine()` 已实现并测试，但**尚未接入主流程**。
@@ -238,9 +238,9 @@ Agent2 只能从 `herbs.json` 的 34 味里挑，候选集由 `safety.py` 按体
 
 | 文件 | 内容 | 规模 |
 |---|---|---|
-| `backend/data/food_properties.json` | 食材 + 茶饮食性表，逐条审核状态 | **146 条**（128 食材 + 18 茶饮） |
-| `backend/data/herbs.json` | 药食同源饮片白名单（含剂量上限与禁忌） | **34 味** |
-| `backend/data/constitution.json` | 体质速查 | **5 型** |
+| `core/data/food_properties.json` | 食材 + 茶饮食性表，逐条审核状态 | **146 条**（128 食材 + 18 茶饮） |
+| `core/data/herbs.json` | 药食同源饮片白名单（含剂量上限与禁忌） | **34 味** |
+| `core/data/constitution.json` | 体质速查 | **5 型** |
 
 **审核状态是三态**，不是布尔值——`reviewed: false` 无法区分「还没审」和「审了但不认可」：
 
@@ -271,7 +271,7 @@ tea-advisor/
 ├─ ui/                             ★ 前端交互层：所有"壳"都在这里
 │  ├─ terminal/chat.py             终端壳（仅标准库）：--resolve / --offline / 交互
 │  └─ web/index.html               本地 Web 界面（由 FastAPI 同源提供）
-├─ backend/                        ★ 核心逻辑层（与 ui/ 解耦，不 import ui）
+├─ core/                        ★ 核心逻辑层（与 ui/ 解耦，不 import ui）
 │  ├─ app/
 │  │  ├─ main.py                   FastAPI 入口（Web 适配层）、/ 、/docs、/healthz
 │  │  ├─ config.py                 环境变量集中读取
@@ -297,7 +297,7 @@ tea-advisor/
 └─ docs/three-layer-architecture.md
 ```
 
-**分层规则**：`ui/` 只单向依赖 `backend/app/`，核心逻辑层**不得**反向 import `ui/`。
+**分层规则**：`ui/` 只单向依赖 `core/app/`，核心逻辑层**不得**反向 import `ui/`。
 新增界面请放进 `ui/` 并复用核心，不要为此改动 `app/domain/`、`app/services/`、`app/agents/`。
 
 ---
@@ -305,7 +305,7 @@ tea-advisor/
 ## 测试
 
 ```powershell
-cd backend
+cd core
 python -m pytest -q          # 183 passed，约 0.4 秒，不调用模型、不需要 API Key
 ```
 
@@ -401,7 +401,7 @@ python -m pytest -q                 # 183 项
   温度判定只有 `resolve_temperature()` 一个入口、`resolve_food()` 的层序、置信度约定）
 * 数据表怎么加条目，以及 `scripts/` 下三个维护脚本**都是冻结的一次性批次脚本**、
   都支持 `--dry-run`、历史执行顺序是 `add_review_fields.py` → `patch_food_table.py`
-* `ui/` 与 `backend/` 的分层规则
+* `ui/` 与 `core/` 的分层规则
 
 ---
 

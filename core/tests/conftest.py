@@ -8,9 +8,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-BACKEND_DIR = Path(__file__).resolve().parent
-if str(BACKEND_DIR) not in sys.path:
-    sys.path.insert(0, str(BACKEND_DIR))
+CORE_DIR = Path(__file__).resolve().parent
+if str(CORE_DIR) not in sys.path:
+    sys.path.insert(0, str(CORE_DIR))
 
 # 控制台 UTF-8（Python 3.7+ 支持 reconfigure）
 for stream in (sys.stdout, sys.stderr):

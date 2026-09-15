@@ -218,7 +218,7 @@ async function run() {
     out.innerHTML = html;
   } catch (e) {
     out.innerHTML = `<div class="card error"><b>请求失败</b><br>${esc(e.message)}
-      <div class="hint">确认后端在运行，且 URL 是 http://127.0.0.1:8000/demo</div></div>`;
+      <div class="hint">确认服务在运行，且 URL 是 http://127.0.0.1:8000/demo</div></div>`;
   } finally {
     btn.disabled = false;
   }

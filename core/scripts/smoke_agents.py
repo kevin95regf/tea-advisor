@@ -1,6 +1,6 @@
 """真实模型冒烟：验证 dsh Python SDK 能跑通，并单测 Agent1 / Agent2 / 串联。
 
-用法（在 backend 目录下，需先配好 .env 里的 DEEPSEEK_API_KEY）：
+用法（在 core 目录下，需先配好 .env 里的 DEEPSEEK_API_KEY）：
 
     python scripts/smoke_agents.py            # 跑默认 3 条语料，全链路
     python scripts/smoke_agents.py --only a1  # 只测 Agent1
@@ -18,8 +18,8 @@ import sys
 import time
 from pathlib import Path
 
-BACKEND_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BACKEND_DIR))
+CORE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(CORE_DIR))
 
 for _stream in (sys.stdout, sys.stderr):
     try:
@@ -78,7 +78,7 @@ def main() -> int:
         (prompts_dir / "agent1_system.md").read_text(encoding="utf-8")[:4000],
     )
     # 运行时诊断日志
-    var_dir = BACKEND_DIR / "var"
+    var_dir = CORE_DIR / "var"
     var_dir.mkdir(exist_ok=True)
     log_file = open(var_dir / "dsh_runtime.log", "a", encoding="utf-8")  # noqa: SIM115
     print(f"  [通过] 运行时日志：{log_file.name}")

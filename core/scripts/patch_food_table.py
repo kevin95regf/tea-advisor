@@ -8,7 +8,7 @@
   2. 修正内容重叠的条目（这类重叠会让短名条目抢走具体菜名的匹配）。
   3. 记录修正原因到 review_note，便于日后追溯。
 
-用法（在 backend 目录下）：
+用法（在 core 目录下）：
     python scripts/patch_food_table.py --dry-run
     python scripts/patch_food_table.py
 """
@@ -20,8 +20,8 @@ import json
 import sys
 from pathlib import Path
 
-BACKEND_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BACKEND_DIR))
+CORE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(CORE_DIR))
 
 for _stream in (sys.stdout, sys.stderr):
     try:
@@ -29,7 +29,7 @@ for _stream in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-TABLE = BACKEND_DIR / "data" / "food_properties.json"
+TABLE = CORE_DIR / "data" / "food_properties.json"
 
 VALID_STATUS = ("approved", "pending", "rejected")
 

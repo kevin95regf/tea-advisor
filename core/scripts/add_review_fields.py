@@ -6,7 +6,7 @@
 三层架构里，硬规则库的属性会被当作高置信度（0.9）直接采信，
 所以"哪几条已审核"必须是数据的一部分，而不是靠记忆。
 
-用法（在 backend 目录下）：
+用法（在 core 目录下）：
     python scripts/add_review_fields.py            # 执行迁移
     python scripts/add_review_fields.py --dry-run  # 只看会改什么
 
@@ -21,8 +21,8 @@ import sys
 from datetime import date
 from pathlib import Path
 
-BACKEND_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BACKEND_DIR))
+CORE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(CORE_DIR))
 
 for _stream in (sys.stdout, sys.stderr):
     try:
@@ -30,7 +30,7 @@ for _stream in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-TABLE = BACKEND_DIR / "data" / "food_properties.json"
+TABLE = CORE_DIR / "data" / "food_properties.json"
 
 # 分层修正的说明：写进 _meta，作为数据文件的自我描述
 LAYER_NOTES = {

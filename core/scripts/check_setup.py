@@ -1,6 +1,6 @@
 """环境与数据自检脚本（不调用模型，秒级完成）。
 
-用法（在 backend 目录下）：
+用法（在 core 目录下）：
     python scripts/check_setup.py
 
 它会检查：
@@ -40,16 +40,16 @@ def line(symbol: str, text: str) -> None:
 
 def main() -> int:
     print("=" * 62)
-    print("茶饮推荐后端 · 环境自检")
+    print("中医食性助手 · 环境自检")
     print("=" * 62)
 
     # ---------- 1. 配置 ----------
     print("\n[1/5] 配置与环境变量")
-    from app.config import BACKEND_DIR, PROJECT_ROOT, get_settings
+    from app.config import CORE_DIR, PROJECT_ROOT, get_settings
 
     settings = get_settings()
     line(OK, f"项目根目录: {PROJECT_ROOT}")
-    line(OK, f"后端目录:   {BACKEND_DIR}")
+    line(OK, f"核心目录:   {CORE_DIR}")
 
     env_file = PROJECT_ROOT / ".env"
     if env_file.exists():
