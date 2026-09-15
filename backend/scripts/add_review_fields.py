@@ -111,7 +111,9 @@ def main() -> int:
         return 0
 
     TABLE.write_text(
-        json.dumps(raw, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        json.dumps(raw, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",  # 强制 LF：仓库用 .gitattributes 统一 LF，Windows 默认 CRLF 会造成假 diff
     )
     print(f"\n  已写入。请用 git diff 复核，然后让审核人逐条把 reviewed 改为 true。")
     print(f"  建议审核完成时间记录为 reviewed_at，审核人写 reviewed_by。")

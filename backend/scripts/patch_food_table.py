@@ -134,7 +134,11 @@ def main() -> int:
         print("\n  [dry-run] 未写入。")
         return 0
 
-    TABLE.write_text(json.dumps(raw, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    TABLE.write_text(
+        json.dumps(raw, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",  # 强制 LF，避免 Windows 默认 CRLF 在 git 里造成假 diff
+    )
     print("\n  已写入。")
     return 0
 
