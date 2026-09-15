@@ -1,0 +1,126 @@
+.head {
+  padding: 20rpx 6rpx 34rpx;
+}
+
+.head-title {
+  font-size: 42rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+}
+
+.head-sub {
+  font-size: 26rpx;
+  color: #8a8177;
+  margin-top: 10rpx;
+}
+
+.input {
+  width: 100%;
+  min-height: 180rpx;
+  font-size: 30rpx;
+  line-height: 1.7;
+  background: #fdfcfa;
+  border: 1rpx solid #e6e1d8;
+  border-radius: 16rpx;
+  padding: 22rpx;
+  box-sizing: border-box;
+}
+
+.ph {
+  color: #b3aca1;
+}
+
+.counter {
+  text-align: right;
+  font-size: 22rpx;
+  color: #b3aca1;
+  margin-top: 8rpx;
+}
+
+.examples {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 16rpx;
+}
+
+.example {
+  font-size: 24rpx;
+  color: #5f574a;
+  background: #efeae0;
+  border-radius: 30rpx;
+  padding: 10rpx 22rpx;
+  margin: 0 14rpx 14rpx 0;
+}
+
+.example:active {
+  background: #e5dece;
+}
+
+.picker-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18rpx 22rpx;
+  background: #fdfcfa;
+  border: 1rpx solid #e6e1d8;
+  border-radius: 16rpx;
+}
+
+.picker-value {
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+.picker-arrow {
+  font-size: 26rpx;
+  color: #7a6a4f;
+}
+
+.hint-box.mt {
+  margin-top: 16rpx;
+}
+
+.btn-primary {
+  margin-top: 10rpx;
+  background: #7a6a4f;
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: 16rpx;
+  padding: 8rpx 0;
+}
+
+.btn-primary[disabled] {
+  background: #c9c0ad;
+  color: #f4f1ea;
+}
+
+.btn-ghost {
+  margin-top: 22rpx;
+  background: #ffffff;
+  color: #7a6a4f;
+  border: 1rpx solid #d8cfae;
+  font-size: 27rpx;
+  border-radius: 14rpx;
+}
+
+.warn-card {
+  background: #fdf6f4;
+  border-color: #f0d5cd;
+}
+
+.mono {
+  font-family: Consolas, Menlo, monospace;
+  font-size: 23rpx;
+  background: #f2efe8;
+  padding: 2rpx 8rpx;
+  border-radius: 6rpx;
+}
+
+.foot-note {
+  margin-top: 26rpx;
+  font-size: 23rpx;
+  color: #8a8177;
+  line-height: 1.7;
+  text-align: center;
+}

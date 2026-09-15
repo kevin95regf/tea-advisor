@@ -1,0 +1,123 @@
+<view class="wrap">
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="card loading-card">
+    <view class="spinner"></view>
+    <view class="loading-title">正在为你生成建议…</view>
+    <view class="hint-box">
+      第 1 步 解析你的饮食描述{{'\n'}}
+      第 2 步 结合体质挑选饮片与用量{{'\n'}}
+      这两步是串行的，请稍等 12–18 秒
+    </view>
+    <view class="orig-text">「{{text}}」</view>
+  </view>
+
+  <!-- 出错 -->
+  <view wx:elif="{{error}}" class="card warn-card">
+    <view class="card-title warn-text">没能生成建议</view>
+    <view class="err-msg">{{error}}</view>
+    <button class="btn-primary" bindtap="retry">重试</button>
+    <button class="btn-ghost" bindtap="back">换个说法</button>
+  </view>
+
+  <!-- 结果 -->
+  <block wx:else>
+
+    <!-- 需要补充说明时 -->
+    <view wx:if="{{userMessage}}" class="card note-card">
+      <view class="card-title">说明</view>
+      <view>{{userMessage}}</view>
+    </view>
+
+    <!-- 我理解到的 -->
+    <view class="card">
+      <view class="card-title">我理解到的</view>
+      <view class="tags">
+        <text
+          wx:for="{{parsed.foods}}"
+          wx:key="name"
+          class="tag tag-{{item.natureKey}}"
+        >{{item.tagText}}</text>
+      </view>
+      <view wx:if="{{!parsed.foods.length}}" class="hint-box">没有识别到具体食物</view>
+      <view class="divider"></view>
+      <view class="meta-line">
+        时段 {{parsed.mealTimeText}} · 整餐偏{{parsed.overallText}} · 把握度 {{parsed.confidencePct}}%
+      </view>
+      <view wx:if="{{parsed.summary}}" class="reason">{{parsed.summary}}</view>
+      <view wx:if="{{parsed.uncertain.length}}" class="hint-box">
+        没认出来的：{{parsed.uncertainText}}
+      </view>
+    </view>
+
+    <!-- 推荐 -->
+    <view wx:if="{{recs.length}}" class="card">
+      <view class="card-title">给你的建议</view>
+
+      <view wx:for="{{recs}}" wx:for-item="rec" wx:key="title" class="tea {{index > 0 ? 'tea-gap' : ''}}">
+        <view class="tea-head">
+          <text class="tea-title">{{rec.title}}</text>
+          <text class="tea-score">{{rec.scorePct}}%</text>
+        </view>
+
+        <view class="herb-row" wx:for="{{rec.herbs}}" wx:for-item="herb" wx:key="name">
+          <view class="herb-left">
+            <text class="herb-name">{{herb.name}}</text>
+            <text class="herb-role">{{herb.role}}</text>
+          </view>
+          <text class="herb-amount">{{herb.amount}}g</text>
+        </view>
+
+        <view wx:if="{{rec.fitReason}}" class="reason">{{rec.fitReason}}</view>
+
+        <view class="brew-line">{{rec.brewLine}}</view>
+
+        <view wx:if="{{rec.steps.length}}" class="steps">
+          <view wx:for="{{rec.steps}}" wx:for-item="step" wx:key="*this" class="step">
+            {{index + 1}}. {{step}}
+          </view>
+        </view>
+
+        <view wx:if="{{rec.cautions.length}}" class="cautions">
+          <view class="cautions-title">注意</view>
+          <view wx:for="{{rec.cautions}}" wx:for-item="c" wx:key="*this" class="caution">· {{c}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="card">
+      <view class="card-title">暂时没有合适的搭配</view>
+      <view class="hint-box">可以补充一下吃了多少、烹饪方式，或者换个说法再试一次。</view>
+      <button class="btn-ghost" bindtap="back">重新描述</button>
+    </view>
+
+    <!-- 依据与耗时 -->
+    <view class="card">
+      <view class="card-title">判断依据</view>
+      <view class="meta-line">体质：{{basis.constitutionLabel}}</view>
+      <view wx:if="{{basis.ruleHits.length}}" class="meta-line">
+        命中规则：{{basis.ruleText}}
+      </view>
+      <view wx:if="{{basis.guardrail.length}}" class="hint-box">
+        安全校验调整了 {{basis.guardrail.length}} 处（用量上限、体质契合等）
+      </view>
+      <view class="divider"></view>
+      <view class="meta-line">
+        耗时 {{meta.totalSec}}s（解析 {{meta.agent1Sec}}s / 推荐 {{meta.agent2Sec}}s）
+        <text wx:if="{{meta.degraded}}"> · 已降级为规则匹配</text>
+        <text wx:if="{{fromCache}}"> · 来自本地缓存</text>
+      </view>
+      <view class="meta-line">模型：{{meta.model}}</view>
+    </view>
+
+    <!-- 免责声明：常显，放在可读位置 -->
+    <view class="disclaimer">
+      <view class="disclaimer-title">免责声明</view>
+      <view class="disclaimer-text">{{disclaimerText}}</view>
+    </view>
+
+    <button class="btn-ghost" bindtap="back">再说一餐</button>
+
+  </block>
+
+</view>

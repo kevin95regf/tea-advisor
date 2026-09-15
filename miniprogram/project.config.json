@@ -1,0 +1,25 @@
+{
+  "description": "中医饮食茶饮推荐 - 本地 demo 小程序",
+  "appid": "touristappid",
+  "projectname": "tea-advisor",
+  "compileType": "miniprogram",
+  "libVersion": "latest",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": false,
+    "bigPackageSizeSupport": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "condition": {},
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
+  }
+}

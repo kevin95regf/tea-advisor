@@ -1,0 +1,78 @@
+<view class="wrap">
+
+  <!-- 顶部说明 -->
+  <view class="head">
+    <view class="head-title">说说你今天吃了什么</view>
+    <view class="head-sub">结合你的体质，给一杯药食同源饮片的冲泡建议</view>
+  </view>
+
+  <!-- 后端连通状态：连不上时给出可操作的提示，而不是让人干瞪眼 -->
+  <view wx:if="{{healthChecked && !backendOk}}" class="card warn-card">
+    <view class="card-title warn-text">连不上后端服务</view>
+    <view class="hint-box">
+      请依次检查：{{'\n'}}
+      1. 后端是否在运行：{{'\n'}}
+      <text class="mono">uvicorn app.main:app --host 0.0.0.0 --port 8000</text>{{'\n'}}
+      2. <text class="mono">miniprogram/config/env.js</text> 里的 IP 是否是电脑当前的局域网 IP{{'\n'}}
+      3. 开发者工具「详情 → 本地设置」勾选「不校验合法域名」
+    </view>
+    <button class="btn-ghost" bindtap="recheck">重新检测</button>
+  </view>
+
+  <!-- 输入 -->
+  <view class="card">
+    <textarea
+      class="input"
+      value="{{text}}"
+      bindinput="onInput"
+      maxlength="500"
+      placeholder="例：中午吃了碗麻辣烫，还喝了杯冰可乐，米饭没吃完"
+      placeholder-class="ph"
+      auto-height
+      show-confirm-bar="{{false}}"
+    />
+
+    <view class="counter">{{text.length}}/500</view>
+
+    <!-- 示例，点一下直接填入 -->
+    <view class="examples">
+      <view
+        wx:for="{{examples}}"
+        wx:key="*this"
+        class="example"
+        data-text="{{item}}"
+        bindtap="useExample"
+      >{{item}}</view>
+    </view>
+  </view>
+
+  <!-- 体质 -->
+  <view class="card">
+    <view class="card-title">我的体质</view>
+    <picker
+      mode="selector"
+      range="{{constitutions}}"
+      range-key="label"
+      value="{{constIndex}}"
+      bindchange="onConstChange"
+    >
+      <view class="picker-row">
+        <text class="picker-value">{{constitutions[constIndex].label}}</text>
+        <text class="picker-arrow">切换 ›</text>
+      </view>
+    </picker>
+    <view class="hint-box">{{constitutions[constIndex].one_line}}</view>
+    <view class="hint-box mt">体质仅用于饮食养生方向的粗略区分，不构成体质辨识或医学诊断。</view>
+  </view>
+
+  <!-- 提交 -->
+  <button class="btn-primary" bindtap="submit" disabled="{{!text || loading}}">
+    {{loading ? '正在生成…' : '给我建议'}}
+  </button>
+
+  <view class="foot-note">
+    会依次做两件事：先把你的描述解析成结构化数据，再结合体质生成搭配。
+    大约需要 12–18 秒，请稍等。
+  </view>
+
+</view>
