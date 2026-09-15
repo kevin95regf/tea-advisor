@@ -66,6 +66,9 @@
   .tag.warm { background: #f8ebe1; color: var(--warm); }
   .tag.hot  { background: #f9e3dd; color: #b4553f; }
   .tag.neutral { background: #eeece5; color: var(--neutral); }
+  .tag.unknown { background: #eeece5; color: var(--neutral); }
+  .tag.unverified { border: 1px dashed #cfc6b6; }
+  .tag .verify { font-size: 10.5px; opacity: .8; margin-left: 5px; }
   h2 { font-size: 15px; margin: 0 0 10px; }
   h3 { font-size: 15.5px; margin: 0 0 10px; }
   .tea { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
@@ -118,6 +121,10 @@
 const NATURE_CN = { cold: '寒', cool: '凉', neutral: '平', warm: '温', hot: '热', unknown: '未知' };
 const FLAVOR_CN = { sour: '酸', bitter: '苦', sweet: '甘', pungent: '辛', salty: '咸', bland: '淡', astringent: '涩' };
 const MEAL_CN = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '加餐', late_night: '夜宵', unknown: '未指明' };
+/** 属性来源 → 中文。与 core/app/services/food_lookup.py 的 source 取值一致 */
+const SOURCE_CN = { rule: '查表', composed: '按烹饪方式推算', llm: '模型推测', unresolved: '无法判定' };
+/** 低于此置信度不显示寒热属性。与 food_lookup.CONF_SHOW_THRESHOLD 保持一致 */
+const CONF_SHOW_THRESHOLD = 0.3;
 const out = document.getElementById('out');
 const btn = document.getElementById('go');
 const sel = document.getElementById('const');
@@ -148,17 +155,36 @@ function renderDisclaimer() {
 }
 
 function renderParsed(p) {
+  let unverified = 0;
   const chips = (p.foods || []).map(f => {
-    const nat = NATURE_CN[f.nature] || '未知';
+    const v = f.verification || {};
+    const conf = typeof v.confidence === 'number' ? v.confidence : 0.3;
+    const source = v.source || 'llm';
+    const isUnverified = v.unverified !== false;
+    // 与终端版同规则：置信度低于阈值时不显示寒热属性（数据仍在，只是不呈现给用户）
+    const showNature = conf >= CONF_SHOW_THRESHOLD;
+    if (isUnverified) unverified++;
+    const nat = showNature ? (NATURE_CN[f.nature] || '未知') : '未判定';
+    const cls = (showNature ? esc(f.nature) : 'unknown') + (isUnverified ? ' unverified' : '');
     const fla = (f.flavors || []).map(x => FLAVOR_CN[x] || x).join('');
-    return `<span class="tag ${esc(f.nature)}">${esc(f.name)} · ${esc(nat)}${fla ? ' · ' + esc(fla) : ''}</span>`;
+    const tip = `${SOURCE_CN[source] || source} ｜ 置信度 ${Math.round(conf * 100)}%${v.detail ? ' ｜ ' + v.detail : ''}`;
+    const mark = isUnverified
+      ? `<span class="verify">待验证 ${Math.round(conf * 100)}%</span>`
+      : '';
+    return `<span class="tag ${cls}" title="${esc(tip)}">${esc(f.name)} · ${esc(nat)}${fla ? ' · ' + esc(fla) : ''}${mark}</span>`;
   }).join('');
   const uncertain = (p.uncertain_items || []).length
     ? `<div class="hint">没认出来的：${esc((p.uncertain_items || []).join('、'))}</div>` : '';
+  const verifyNote = unverified
+    ? `<div class="hint">⚠ 其中 <b>${unverified}</b> 项的食性标记为「待验证」：`
+      + `食性表共 146 条尚未经中医师审核；置信度低于 30% 的属性一律不显示。`
+      + `鼠标移到标签上可看判定来源与过程。</div>`
+    : '';
   return `<div class="card">
     <h2>我理解到的</h2>
     <div>${chips || '<span class="hint">没有识别到具体食物</span>'}</div>
     <div class="hint">时段：${esc(MEAL_CN[p.meal_time] || '未指明')} ｜ 整餐偏：${esc(NATURE_CN[p.overall_nature] || '未知')} ｜ 把握度：${esc(Math.round((p.confidence || 0) * 100))}%</div>
+    ${verifyNote}
     ${p.summary ? `<div class="reason">${esc(p.summary)}</div>` : ''}
     ${uncertain}
   </div>`;
