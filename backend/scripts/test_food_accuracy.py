@@ -51,6 +51,12 @@ CASES: list[dict] = [
     {"text": "晚上吃了寿司配味增汤", "expect": {"寿司": "cool"}},
     {"text": "中午吃了个牛肉汉堡和薯条", "expect": {"牛肉汉堡": "warm"}},
     {"text": "吃了咖喱鸡饭", "expect": {"咖喱": "hot"}},
+    # 温度前缀层（纯规则）：冰镇 -1、加热 +1
+    # 注意：本层依赖温度字出现在**食物名**里。
+    # 若模型把"去冰"放进 note 而不是 name（实测会发生），本层看不到，
+    # 那时会退回表值——这是已知局限，见 docs/three-layer-architecture.md
+    {"text": "喝了瓶冰镇啤酒", "expect": {"啤酒": "cold"}},
+    {"text": "睡前喝了杯热牛奶", "expect": {"牛奶": "warm"}},
 ]
 
 

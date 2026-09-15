@@ -99,6 +99,70 @@ def clamp(value: int) -> int:
     return max(NATURE_MIN, min(NATURE_MAX, value))
 
 
+# ============================================================
+# 温度前缀（纯规则识别，不经过模型）
+# ============================================================
+# 为什么用纯规则而不是让模型判断烹饪方式：
+#   模型给的 cooking 无法区分"可靠证据"与"猜测"——它会给出「希腊酸奶=cold」、
+#   「火腿三明治=grilled」这类没有依据的值，照单全收会污染表值。
+#   而「冰啤酒」「热牛奶」里的"冰/热"是字符串层面的确定信号，无需模型参与。
+#
+# 只在"去掉温度前缀后剩下的名字能在表里查到"时才叠加（由调用方保证），
+# 这天然排除了「热狗」「热干面」「凉皮」这类温度字属于菜名的误伤。
+
+# 降温前缀：命中即 -1
+CHILL_PREFIXES: tuple[str, ...] = (
+    "冰镇的", "冰镇", "冰的", "冰", "加冰的", "加冰", "去冰的", "去冰",
+    "冰镇的", "冷冻的", "冷冻", "冷藏的", "冷藏", "冻的", "冻",
+)
+
+# 升温前缀：命中即 +1
+HEAT_PREFIXES: tuple[str, ...] = (
+    "热腾腾的", "热腾腾", "滚烫的", "滚烫", "烫的", "烫",
+    "加热的", "加热", "温热的", "温热", "热的", "热",
+)
+
+
+def _match_prefix(text: str, prefixes: tuple[str, ...]) -> str | None:
+    """按长度降序匹配前缀，返回命中的前缀（长前缀优先，避免"冰"抢走"冰镇"）。"""
+    for prefix in sorted(prefixes, key=len, reverse=True):
+        if text.startswith(prefix):
+            return prefix
+    return None
+
+
+def detect_temperature_prefix(name: str) -> tuple[int, str, str] | None:
+    """识别食物名里的温度前缀。**纯字符串规则，不经过模型。**
+
+    返回 (增量, 前缀, 去掉前缀后的名字)，未识别到返回 None。
+
+    只做前缀匹配、不做全文匹配，是为了避免误判：
+      - 「冰淇淋」不带"冰"前缀语义（是整词），且去掉"冰"后"淇淋"不在表内
+      - 「凉皮」「凉茶」的"凉"不是前缀，且去掉后在表内也查不到
+      - 「热狗」「热干面」去掉后分别剩"狗""干面"，表里都没有
+    即便出现极端情况（如"热红酒"），调用方还有"去前缀后必须在表内"这一层把关。
+    """
+    if not name:
+        return None
+    text = name.replace(" ", "").strip()
+    if not text:
+        return None
+
+    chill = _match_prefix(text, CHILL_PREFIXES)
+    if chill:
+        rest = text[len(chill) :].strip()
+        if rest:
+            return -1, chill, rest
+
+    heat = _match_prefix(text, HEAT_PREFIXES)
+    if heat:
+        rest = text[len(heat) :].strip()
+        if rest:
+            return 1, heat, rest
+
+    return None
+
+
 def shift_nature(nature: Nature | str | None, delta: int) -> Nature | None:
     """在四性上叠加增量并夹取。unknown 参与修正仍返回 None。"""
     base = nature_to_num(nature)

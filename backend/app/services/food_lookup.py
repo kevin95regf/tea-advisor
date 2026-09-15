@@ -21,7 +21,12 @@ from typing import Any
 from app.config import get_settings
 from app.domain.enums import FLAVOR_LABELS, NATURE_LABELS, Nature
 from app.domain.models import Verification
-from app.domain.nature_math import COOKING_DELTA, apply_cooking_fallback
+from app.domain.nature_math import (
+    COOKING_DELTA,
+    apply_cooking_fallback,
+    detect_temperature_prefix,
+    shift_nature,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -162,8 +167,38 @@ def names_match_basic(x: str, y: str) -> bool:
     return len(x) >= 2 and len(y) >= 2 and x[:2] == y[:2]
 
 
-def _find_entry(name: str, cooking: str | None = None) -> tuple[dict | None, str | None]:
-    """按名称查条目。返回 (条目, 命中的词)。
+def _is_full_entry_name(candidate: str) -> bool:
+    """candidate 是否**恰好等于**某个条目的规范名或别名。
+
+    用于温度前缀的准入判断：只有剥掉前缀后剩下的词本身就是一个完整的
+    表内食物名（「啤酒」「牛奶」「红茶」），温度前缀才可信。
+    「淇淋」（来自冰淇淋）、「干面」（来自热干面）都不是完整食物名，
+    所以它们的温度字属于菜名，不该被当作温度指令。
+    """
+    target = (candidate or "").replace(" ", "").strip()
+    if not target:
+        return False
+    for entry in _entries():
+        if (entry.get("name") or "").replace(" ", "").strip() == target:
+            return True
+        for alias in entry.get("aliases") or []:
+            if (alias or "").replace(" ", "").strip() == target:
+                return True
+    return False
+
+
+def _find_entry(
+    name: str, cooking: str | None = None
+) -> tuple[dict | None, str | None, str]:
+    """按名称查条目。返回 (条目, 命中的词, 命中方式)。
+
+    命中方式 `match_kind` 有两种：
+      - `"name"`：命中条目**规范名**（含精确同名与包含关系）
+      - `"keyword"`：仅命中关键词/别名
+
+    区分这两种很重要：温度前缀只在 `"name"` 命中时才允许叠加。
+    「热干面」是靠关键词"面"匹配到「面条」的，它的"热"属于菜名而不是
+    让我们升温的指令；而「冰啤酒」是命中规范名「啤酒」加上前缀，应当叠加。
 
     匹配优先级（**顺序不可颠倒**）：
       0. 条目规范名与 name **完全相同** —— 最高优先，直接返回。
@@ -177,8 +212,11 @@ def _find_entry(name: str, cooking: str | None = None) -> tuple[dict | None, str
     「薯条」被匹配到「炸鱼薯条」（其关键词含"薯条"，且名字更长而胜出）。
     """
     if not name:
-        return None, None
+        return None, None, ""
+
     target = name.replace(" ", "").strip()
+    if not target:
+        return None, None, ""
 
     name_match: tuple[int, int, dict, str] | None = None   # (gap, 长度, 条目, 命中词)
     keyword_match: tuple[int, dict, str] | None = None     # (命中词长度, 条目, 命中词)
@@ -190,7 +228,7 @@ def _find_entry(name: str, cooking: str | None = None) -> tuple[dict | None, str
 
         # 第 0 级：完全同名
         if entry_name == target:
-            return entry, entry_name
+            return entry, entry_name, "name"
 
         # 第 1 级：包含关系，按 gap 最小者优先
         if entry_name in target or target in entry_name:
@@ -208,10 +246,23 @@ def _find_entry(name: str, cooking: str | None = None) -> tuple[dict | None, str
                 keyword_match = (len(k), entry, k)
 
     if name_match is not None:
-        return name_match[2], name_match[3]
+        return name_match[2], name_match[3], "name"
     if keyword_match is not None:
-        return keyword_match[1], keyword_match[2]
-    return None, None
+        return keyword_match[1], keyword_match[2], "keyword"
+    return None, None, ""
+
+
+def strip_temperature_prefix(name: str) -> tuple[str, int, str]:
+    """去掉食物名开头的温度前缀。返回 (净名字, 温度增量, 前缀)。
+
+    温度前缀是纯字符串层面的确定信号，不需要模型判断，
+    所以在查表**之前**先剥掉，让「冰啤酒」能命中表内的「啤酒」条目。
+    """
+    detected = detect_temperature_prefix(name)
+    if not detected:
+        return name, 0, ""
+    delta, prefix, rest = detected
+    return rest, delta, prefix
 
 
 def resolve_food(
@@ -231,7 +282,24 @@ def resolve_food(
       3. 命中表 + 无变体 → **烹饪修正层**，按 ±1 通用规则做兜底。
     烹饪修正永远在最后，且只在变体层未命中时生效。
     """
-    entry, hit_word = _find_entry(name, cooking)
+    # ---- 温度前缀：纯字符串规则，先于查表剥掉 ----
+    # 必须在查表**之前**做，否则「冰啤酒」会因包含匹配直接命中「啤酒」条目，
+    # 温度信息就被丢掉了。
+    #
+    # 准入条件：剥掉前缀后剩下的词必须**本身就是一个完整的表内食物名**。
+    # 这样「冰啤酒→啤酒」「热牛奶→牛奶」「冰红茶→红茶」成立，
+    # 而「冰淇淋→淇淋」「热干面→干面」不成立——它们的温度字属于菜名。
+    stripped_name, temp_delta, temp_prefix = strip_temperature_prefix(name)
+    if temp_delta and not _is_full_entry_name(stripped_name):
+        stripped_name, temp_delta, temp_prefix = name, 0, ""
+
+    lookup_name = stripped_name if temp_delta else name
+
+    entry, hit_word, match_kind = _find_entry(lookup_name, cooking)
+
+    if entry is None and temp_delta:
+        # 剥掉前缀后仍查不到，还原成原名再试一次
+        entry, hit_word, match_kind = _find_entry(name, cooking)
 
     if entry is None:
         # 表未覆盖：保留模型判断，但明确标记为推测
@@ -301,6 +369,23 @@ def resolve_food(
         else:
             form = f"{cooking_cn}后" if cooking_cn else "原形态下"
             layer_detail = f"「{entry['name']}」{form}属性为{_cn(nature)}"
+
+    # ---- 温度前缀叠加（纯规则）----
+    # 放在最后：变体层与烹饪层都算完之后，温度再修正一档。
+    # 用 shift_nature 自动夹取，不会溢出到 ±2 之外。
+    #
+    # 温度增量已在前面通过准入条件校验（剥后须为完整表内食物名），
+    # 这里直接叠加即可，不需要再判断温度字是否属于菜名。
+    if temp_delta:
+        before = nature
+        shifted = shift_nature(nature, temp_delta)
+        if shifted is not None:
+            nature = shifted.value
+            source = "composed"
+            layer_detail += (
+                f"；{temp_prefix}修正 {temp_delta:+d}：{_cn(before)} → {_cn(nature)}"
+                "（温度前缀为纯规则识别，不经模型判断）"
+            )
 
     # 置信度取决于审核状态（三态）：
     #   approved → 硬规则库，高置信度且不打"待验证"
