@@ -33,6 +33,24 @@
   color: #b3aca1;
 }
 
+.field-right {
+  display: flex;
+  align-items: center;
+}
+
+.clear-btn {
+  font-size: 24rpx;
+  color: #7a6a4f;
+  margin-left: 22rpx;
+  padding: 4rpx 16rpx;
+  border: 1rpx solid #d8cfae;
+  border-radius: 24rpx;
+}
+
+.clear-btn:active {
+  background: #f2efe8;
+}
+
 /* 输入区：明显的边框和底色，避免空着时看不见 */
 .input-box {
   background: #fdfcfa;
@@ -79,6 +97,13 @@
   background: #e5dece;
 }
 
+/* 已用过的示例：弱化显示，让"还能点哪句"一目了然 */
+.example-used {
+  opacity: 0.45;
+  background: #f2efe8;
+  color: #a89f92;
+}
+
 .picker-row {
   display: flex;
   justify-content: space-between;
@@ -92,6 +117,12 @@
 .picker-value {
   font-size: 30rpx;
   font-weight: 500;
+}
+
+/* 未选择状态：弱化显示，避免看起来像一个已经确认的体质 */
+.picker-unset {
+  color: #a89f92;
+  font-weight: 400;
 }
 
 .picker-arrow {
