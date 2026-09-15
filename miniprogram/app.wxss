@@ -69,6 +69,13 @@ page {
   color: #8a8577;
 }
 
+/* unknown 由后端在属性无法判定时返回，缺这条样式会退化成无背景的裸文字 */
+.tag-unknown {
+  background: #f0eeea;
+  color: #a89f92;
+  border: 1rpx dashed #d9d2c4;
+}
+
 /* 理由高亮块 */
 .reason {
   background: #fbf8f1;
