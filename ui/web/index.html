@@ -118,13 +118,12 @@
 </main>
 
 <script>
-const NATURE_CN = { cold: '寒', cool: '凉', neutral: '平', warm: '温', hot: '热', unknown: '未知' };
-const FLAVOR_CN = { sour: '酸', bitter: '苦', sweet: '甘', pungent: '辛', salty: '咸', bland: '淡', astringent: '涩' };
-const MEAL_CN = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '加餐', late_night: '夜宵', unknown: '未指明' };
-/** 属性来源 → 中文。与 core/app/services/food_lookup.py 的 source 取值一致 */
-const SOURCE_CN = { rule: '查表', composed: '按烹饪方式推算', llm: '模型推测', unresolved: '无法判定' };
-/** 低于此置信度不显示寒热属性。与 food_lookup.CONF_SHOW_THRESHOLD 保持一致 */
-const CONF_SHOW_THRESHOLD = 0.3;
+// 中文标签与显示阈值全部来自后端 /api/meta，本页面不再硬编码任何映射表。
+// 唯一真源：core/app/domain/enums.py（自然/五味/时段/来源）与
+// core/app/services/food_lookup.py（烹饪方式、CONF_SHOW_THRESHOLD）。
+// 终端壳 ui/terminal/chat.py 直接 import 同一份常量，两个壳因此不会漂移。
+let META = null;
+
 const out = document.getElementById('out');
 const btn = document.getElementById('go');
 const sel = document.getElementById('const');
@@ -136,16 +135,27 @@ function esc(s) {
   ));
 }
 
+/** 取标签，缺 meta 或缺键时回退为原始英文值，绝不抛异常 */
+function label(group, key) {
+  if (!META || !META[group]) return key || '';
+  return META[group][key] || key || '';
+}
+
 async function loadInit() {
   try {
-    const [cs, dis] = await Promise.all([
+    const [m, cs, dis] = await Promise.all([
+      fetch('/api/meta').then(r => r.json()),
       fetch('/api/constitutions').then(r => r.json()),
       fetch('/api/disclaimer').then(r => r.json()),
     ]);
+    META = m;
     sel.innerHTML = cs.map(c => `<option value="${esc(c.id)}" title="${esc(c.one_line)}">${esc(c.label)}</option>`).join('');
     disclaimerCache = dis;
   } catch (e) {
-    sel.innerHTML = '<option value="balanced">平和质</option>';
+    // 拿不到 meta 就不放行：否则标签与阈值都会失准
+    btn.disabled = true;
+    out.innerHTML = `<div class="card error"><b>初始化失败</b><br>${esc(e.message || e)}
+      <div class="hint">无法读取 /api/meta。请确认服务在运行，然后刷新页面。</div></div>`;
   }
 }
 
@@ -162,12 +172,12 @@ function renderParsed(p) {
     const source = v.source || 'llm';
     const isUnverified = v.unverified !== false;
     // 与终端版同规则：置信度低于阈值时不显示寒热属性（数据仍在，只是不呈现给用户）
-    const showNature = conf >= CONF_SHOW_THRESHOLD;
+    const showNature = conf >= META.conf_show_threshold;
     if (isUnverified) unverified++;
-    const nat = showNature ? (NATURE_CN[f.nature] || '未知') : '未判定';
+    const nat = showNature ? label('nature', f.nature) : '未判定';
     const cls = (showNature ? esc(f.nature) : 'unknown') + (isUnverified ? ' unverified' : '');
-    const fla = (f.flavors || []).map(x => FLAVOR_CN[x] || x).join('');
-    const tip = `${SOURCE_CN[source] || source} ｜ 置信度 ${Math.round(conf * 100)}%${v.detail ? ' ｜ ' + v.detail : ''}`;
+    const fla = (f.flavors || []).map(x => label('flavor', x)).join('');
+    const tip = `${label('source', source)} ｜ 置信度 ${Math.round(conf * 100)}%${v.detail ? ' ｜ ' + v.detail : ''}`;
     const mark = isUnverified
       ? `<span class="verify">待验证 ${Math.round(conf * 100)}%</span>`
       : '';
@@ -177,13 +187,14 @@ function renderParsed(p) {
     ? `<div class="hint">没认出来的：${esc((p.uncertain_items || []).join('、'))}</div>` : '';
   const verifyNote = unverified
     ? `<div class="hint">⚠ 其中 <b>${unverified}</b> 项的食性标记为「待验证」：`
-      + `食性表共 146 条尚未经中医师审核；置信度低于 30% 的属性一律不显示。`
+      + `食性表共 ${esc(META.food_table_size)} 条尚未经中医师审核；`
+      + `置信度低于 ${Math.round(META.conf_show_threshold * 100)}% 的属性一律不显示。`
       + `鼠标移到标签上可看判定来源与过程。</div>`
     : '';
   return `<div class="card">
     <h2>我理解到的</h2>
     <div>${chips || '<span class="hint">没有识别到具体食物</span>'}</div>
-    <div class="hint">时段：${esc(MEAL_CN[p.meal_time] || '未指明')} ｜ 整餐偏：${esc(NATURE_CN[p.overall_nature] || '未知')} ｜ 把握度：${esc(Math.round((p.confidence || 0) * 100))}%</div>
+    <div class="hint">时段：${esc(label('meal_time', p.meal_time))} ｜ 整餐偏：${esc(label('nature', p.overall_nature))} ｜ 把握度：${esc(Math.round((p.confidence || 0) * 100))}%</div>
     ${verifyNote}
     ${p.summary ? `<div class="reason">${esc(p.summary)}</div>` : ''}
     ${uncertain}
@@ -214,6 +225,10 @@ function renderRecs(recs) {
 }
 
 async function run() {
+  if (!META) {
+    out.innerHTML = '<div class="card error">页面未初始化完成（/api/meta 未取到），请刷新重试。</div>';
+    return;
+  }
   const text = document.getElementById('text').value.trim();
   if (!text) { out.innerHTML = '<div class="card error">先说说你吃了什么吧。</div>'; return; }
   btn.disabled = true;

@@ -47,6 +47,7 @@ from app.domain.enums import (  # noqa: E402
     CONSTITUTION_LABELS,
     FLAVOR_LABELS,
     NATURE_LABELS,
+    SOURCE_LABELS,
     Constitution,
     MealTime,
     Nature,
@@ -59,12 +60,8 @@ from app.services.food_lookup import (  # noqa: E402
     resolve_food,
 )
 
-SOURCE_LABELS = {
-    "rule": "查表",
-    "composed": "按烹饪方式推算",
-    "llm": "模型推测",
-    "unresolved": "无法判定",
-}
+# SOURCE_LABELS 已收敛到 app.domain.enums（与 /api/meta 给网页版的是同一份），
+# 本文件不再自己维护一套中文标签。
 
 EXAMPLES = [
     "中午吃了碗麻辣烫，还喝了杯冰可乐",

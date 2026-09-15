@@ -105,3 +105,13 @@ MEAL_TIME_LABELS: dict[str, str] = {
     MealTime.LATE_NIGHT.value: "夜宵",
     MealTime.UNKNOWN.value: "未指明",
 }
+
+# 属性来源（Verification.source）→ 中文。与 models.Verification 的取值一一对应。
+# 这是「这个属性是怎么判出来的」的对外说法，界面必须原样展示，
+# 让用户能区分「查表」与「模型推测」——三层架构的可信度就靠它传达。
+SOURCE_LABELS: dict[str, str] = {
+    "rule": "查表",
+    "composed": "按烹饪方式推算",
+    "llm": "模型推测",
+    "unresolved": "无法判定",
+}

@@ -28,8 +28,15 @@ from fastapi.responses import FileResponse
 
 from app.api import analyze as analyze_api
 from app.config import get_settings
+from app.domain.enums import (
+    FLAVOR_LABELS,
+    MEAL_TIME_LABELS,
+    NATURE_LABELS,
+    SOURCE_LABELS,
+)
 from app.domain.models import CatalogHerb, Disclaimer, HealthResponse
 from app.domain.safety import load_herb_catalog
+from app.services.food_lookup import CONF_SHOW_THRESHOLD, COOKING_LABELS, table_stats
 
 logging.basicConfig(
     level=logging.INFO,
@@ -126,6 +133,31 @@ async def constitutions() -> list[dict]:
         {"id": item["id"], "label": item["label"], "one_line": item["one_line"]}
         for item in data.get("constitutions", [])
     ]
+
+
+@app.get("/api/meta", summary="展示用标签与显示约定")
+async def meta() -> dict:
+    """前端展示所需的全部中文标签与阈值约定，**各壳不要再各自硬编码**。
+
+    为什么要单独一个接口：中文标签原本散在后端枚举、终端壳、网页壳三处，
+    一改就容易漂移。界面显示规则（要不要显示寒热属性、要不要标「待验证」）
+    依赖 `conf_show_threshold` 与 `source` 标签，两边必须完全一致，
+    所以统一由这里下发。
+
+    注意：这是**展示元数据**，不参与任何判定逻辑。
+    """
+    stats = table_stats()
+    return {
+        "nature": NATURE_LABELS,
+        "flavor": FLAVOR_LABELS,
+        "meal_time": MEAL_TIME_LABELS,
+        "cooking": COOKING_LABELS,
+        "source": SOURCE_LABELS,
+        # 低于该置信度时界面不显示寒热属性（数据仍会返回）
+        "conf_show_threshold": CONF_SHOW_THRESHOLD,
+        "food_table_size": stats["total"],
+        "disclaimer_version": Disclaimer().version,
+    }
 
 
 @app.get("/", include_in_schema=False)
