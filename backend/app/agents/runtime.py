@@ -3,8 +3,8 @@
 设计要点
 --------
 1. 进程复用：DeepSeekHarness 启动一次 dsh 子进程，多次 run() 复用，避免每次请求都拉起进程。
-2. 凭据隔离：DSH_HOME 指向独立目录（默认 D:\\work\\dsh-home），与你的主 DSH 环境分开，
-   避免污染主环境的 profile / settings / sessions。
+2. 凭据隔离：DSH_HOME 指向独立目录（默认 <仓库根>/dsh-home，可用 credentials.env 覆盖），
+   与你的主 DSH 环境分开，避免污染主环境的 profile / settings / sessions。
 3. 会话隔离：每个 agent 用独立 session_id 前缀，避免对话历史互相污染。
 4. 不设工具：本项目的两个 Agent 都是纯 文本→JSON 任务，不需要读写文件或执行命令。
 """

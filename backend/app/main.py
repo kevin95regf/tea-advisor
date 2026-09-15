@@ -1,12 +1,18 @@
-"""FastAPI 入口。
+"""FastAPI 入口（Web 适配层）。
+
+本服务是同源提供界面与接口的：前端页面由本服务自己返回，
+所以浏览器同源请求本来不需要 CORS。
 
 启动（在 backend 目录下）：
-    python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    python -m uvicorn app.main:app --reload --port 8000
 
 然后打开：
-    http://127.0.0.1:8000/demo     网页 demo
+    http://127.0.0.1:8000          本地 Web 界面（ui/web/index.html）
     http://127.0.0.1:8000/docs     接口文档
     http://127.0.0.1:8000/healthz  自检
+
+若只想用终端界面，不需要启动本服务：
+    python ui/terminal/chat.py
 """
 
 from __future__ import annotations
@@ -62,12 +68,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# 开发期允许小程序开发者工具跨域；上线需收紧
+# 界面与接口由本服务同源提供，浏览器同源请求本不需要 CORS。
+# 这里只放行本机来源，便于你另起一个前端开发服务器时调试。
+# ⚠️ 不要改回 ["*"]：那会让局域网内任意网页都能调用你本机的接口。
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        f"http://127.0.0.1:{settings.port}",
+        f"http://localhost:{settings.port}",
+    ],
     allow_credentials=False,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -117,7 +128,11 @@ async def constitutions() -> list[dict]:
     ]
 
 
+@app.get("/", include_in_schema=False)
 @app.get("/demo", include_in_schema=False)
-async def demo_page() -> FileResponse:
-    """网页 demo。手机访问时用 http://<你的电脑IP>:8000/demo"""
-    return FileResponse(settings.static_dir / "demo.html")
+async def web_ui() -> FileResponse:
+    """本地 Web 界面（仓库根 ui/web/index.html）。
+
+    `/` 与 `/demo` 指向同一个页面；`/demo` 作为历史路径保留，避免旧书签失效。
+    """
+    return FileResponse(settings.web_dir / "index.html")

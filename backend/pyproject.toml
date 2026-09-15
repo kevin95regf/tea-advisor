@@ -1,12 +1,13 @@
 [project]
 name = "tea-advisor"
 version = "0.1.0"
-description = "中医饮食茶饮推荐小程序 - 后端（demo）"
+description = "中医食性的确定性判定层 + 本地饮食茶饮建议助手（终端与本地 Web 双壳）"
 requires-python = ">=3.10"
 
+# 核心依赖 = 数据层 / 判定层 / Agent 层所需。
+# 只想把食性数据层当库用的人，装完这个就能 `from app.services.food_lookup import resolve_food`，
+# 不需要 Web 框架。（注意：数据层经由 app.config 依赖 python-dotenv，见 CONTRIBUTING）
 dependencies = [
-    "fastapi>=0.115",
-    "uvicorn[standard]>=0.30",
     "pydantic>=2.9",
     "python-dotenv>=1.0",
     "httpx>=0.27",
@@ -14,6 +15,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# 本地 Web 界面（ui/web/）所需。只用终端界面（ui/terminal/）时不必安装。
+web = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+]
 dev = [
     "pytest>=8.0",
     "ruff>=0.6",

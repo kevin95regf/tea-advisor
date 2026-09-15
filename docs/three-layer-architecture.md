@@ -40,8 +40,8 @@
 | `app/services/food_lookup.py` | 匹配、`resolve_food()` 确定性判定 |
 | `app/agents/agent1_diet.py::calibrate_parsed` | 用判定结果覆盖/标注模型输出 |
 | `app/agents/agent2_recommend.py::_build_unverified_section` | 把未验证项隔离给推荐器 |
-| `data/food_properties.json` | 143 条食性数据 + 逐条审核状态 |
-| `miniprogram/utils/format.js` | 按置信度决定显示与标注 |
+| `data/food_properties.json` | 146 条食性数据（128 食材 + 18 茶饮）+ 逐条审核状态 |
+| `ui/terminal/chat.py`、`ui/web/index.html` | 按置信度决定显示与标注（两个壳各自实现，规则一致） |
 
 ## 四性数值编码
 
@@ -169,7 +169,7 @@ class TemperatureSignal(NamedTuple):
 | `pending` | 待审核（默认） | 高置信度但必须标注 |
 | `rejected` | 审核不通过 | 降为组合推理档，不再作硬规则 |
 
-当前表内 143 条全部为 `pending`，所以**界面会普遍显示「待验证」标记**——
+当前表内 146 条全部为 `pending`，所以**界面会普遍显示「待验证」标记**——
 这是刻意的：标记密度就是审核进度的可见反馈。
 
 ## 审核工作流
@@ -185,8 +185,8 @@ python scripts\patch_food_table.py       # 结构升级与条目修正（幂等�
 并填写 `reviewed_by` / `reviewed_at`。改完跑一次回归：
 
 ```powershell
-python -m pytest -q                      # 133 项
-python scripts\test_food_accuracy.py     # 真实模型 20 条语料 / 26 项断言
+python -m pytest -q                      # 183 项
+python scripts\test_food_accuracy.py     # 真实模型 23 条语料 / 29 项断言
 ```
 
 ## 已知局限（重要，不要误当 bug 修）
@@ -218,6 +218,13 @@ python scripts\test_food_accuracy.py     # 真实模型 20 条语料 / 26 项断
 | 文件 | 覆盖内容 |
 |---|---|
 | `tests/test_nature_math.py` | 编码、夹取、边界取整、两层修正、合成算法（48 项） |
-| `tests/test_food_lookup.py` | 表完整性、匹配准确性、渲染、名称对齐 |
-| `tests/test_calibration.py` | 校准接线、来源标记、Agent2 隔离、已知局限固化 |
-| `scripts/test_food_accuracy.py` | 真实模型端到端，20 条语料 / 26 项属性断言 |
+| `tests/test_temperature_layer.py` | 温度前缀识别、双通道扫描、准入校验、与表内变体的优先级（48 项） |
+| `tests/test_safety.py` | 白名单、剂量裁剪、禁用表述、高风险人群、体质筛选（31 项） |
+| `tests/test_food_lookup.py` | 表完整性、匹配准确性、渲染、名称对齐（22 项） |
+| `tests/test_calibration.py` | 校准接线、来源标记、Agent2 隔离、已知局限固化（20 项） |
+| `tests/test_json_guard.py` | 围栏剥离、对象提取、schema 校验、失败重试（14 项） |
+| `scripts/test_food_accuracy.py` | 真实模型端到端，23 条语料 / 29 项属性断言 |
+| `scripts/smoke_agents.py` | 真实模型端到端：运行时启动 → 原始往返 → Agent1 → 全链路 |
+
+离线部分合计 **183 项**（`python -m pytest -q`，约 0.4 秒，不调用模型、不需要 API Key）。
+`test_food_accuracy.py` 与 `smoke_agents.py` 需要 API Key 且会产生调用费用。

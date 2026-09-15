@@ -85,8 +85,9 @@ def main() -> int:
     env_override = os.getenv("DSH_HOME")
     if dsh_home.resolve() == main_home.resolve():
         line(FAIL, f"DSH_HOME 指向你的主 DSH 环境（{main_home}），会污染主环境")
-        line(WARN, "请在 .env 中设置 DSH_HOME=D:\\work\\tea-advisor\\dsh-home")
-        line(WARN, "注意：DSH 自身会设置 DSH_HOME 环境变量，config.py 已用 override=True 让 .env 优先")
+        line(WARN, f"请在 credentials.env 中设置 DSH_HOME={PROJECT_ROOT / 'dsh-home'}")
+        line(WARN, "注意：DSH_HOME 不能写进 .env（dsh 会拒绝启动），必须放 credentials.env")
+        line(WARN, "config.py 依次加载 .env 与 credentials.env 且 override=True，后者优先")
         problems.append("DSH_HOME 指向主 DSH 环境")
     else:
         line(OK, "DSH_HOME 与主 DSH 环境隔离")
@@ -196,7 +197,7 @@ def main() -> int:
         print("\n提示：模型相关的问题不影响数据层，可先跑通启动流程。")
         return 1
     print("自检完成：全部通过，可以进入下一步（跑 agent 冒烟）。")
-    print("下一步：python scripts/smoke_agent1.py")
+    print("下一步：python scripts/smoke_agents.py")
     return 0
 
 

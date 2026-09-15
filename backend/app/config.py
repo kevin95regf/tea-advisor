@@ -64,8 +64,10 @@ class Settings:
 
         # --- 路径 ---
         self.data_dir: Path = BACKEND_DIR / "data"
-        self.static_dir: Path = BACKEND_DIR / "static"
         self.prompts_dir: Path = BACKEND_DIR / "app" / "agents" / "prompts"
+        # 前端交互层：所有"壳"都放在仓库根的 ui/ 下，与核心逻辑分层隔离。
+        # 这里只登记 Web 壳的静态目录，终端壳不需要路径配置。
+        self.web_dir: Path = PROJECT_ROOT / "ui" / "web"
 
     @property
     def has_credentials(self) -> bool:

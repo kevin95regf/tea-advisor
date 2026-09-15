@@ -1,87 +1,73 @@
-# 中医饮食茶饮推荐（Demo）
+# 中医食性判定层 + 本地饮食茶饮助手
 
-用户口述今天吃了什么 → 结合中医体质 → 推荐**药食同源饮片**的冲泡搭配。
+把「食物是寒是热」这件事从**模型凭语感猜**，变成**查表 + 纯规则判定**，
+再在此基础上给出日常饮食茶饮建议。全部在本地运行，不需要域名、备案、服务器或任何平台审核。
 
 > ⚠️ **本项目的所有输出仅供日常饮食参考，不构成医疗建议，也不能替代医师的诊断与治疗。**
 > 孕期、哺乳期、经期、儿童、慢性病患者及正在服药者，请先咨询执业医师或药师。
+>
+> 数据文件 `_meta.review_status` 目前为 `pending`：属性依据中医饮食养生通行表述整理，
+> **对外提供任何形式的服务前，必须由具备资质的中医师 / 中药师复核**，
+> 并以国家卫健委发布的最新「既是食品又是中药材的物质目录」为准。
 
 ---
 
-## 当前进度
+## 这是什么：两种用法
 
-| 阶段 | 状态 |
-|---|---|
-| 数据层（34 味药食同源饮片 + 130 条食材属性表 + 5 型体质） | ✅ 完成 |
-| 属性判定查表机制（food_lookup） | ✅ 完成，准确率 20/20、unknown 0/22 |
-| 安全护栏（白名单 / 剂量 / 禁用表述 / 高风险人群） | ✅ 完成，67 项测试通过 |
-| JSON 解析护栏（围栏剥离 / 校验 / 失败重试） | ✅ 完成 |
-| 双 Agent 提示词与实现 | ✅ 完成，**真实模型已跑通** |
-| 规则兜底（模型失败时降级） | ✅ 完成 |
-| FastAPI 接口 `/api/analyze` | ✅ 完成，HTTP 端到端实测通过 |
-| 网页 demo | ✅ 完成 |
-| 微信小程序（输入页 / 结果页） | ✅ 本地 demo 已跑通，未发布 |
+这个仓库同时服务两类人，请挑你需要的那一半读：
 
-### 属性判定的资料来源（重要）
-
-食物寒热属性**不再靠模型自由判断**，改为「查表优先」：
-
-```
-用户口述
-   ↓
-food_lookup.match_foods()   按关键词命中 food_properties.json 的条目
-   ↓
-注入 Agent1 的 user 消息     只注入命中的那几条，附中文属性与说明
-   ↓
-模型照抄表里的属性           表里没有的才按烹饪方式+经验判断，且必须标 unknown
-```
-
-**为什么必须这么做**：实测发现模型有系统性偏差——把性温的茉莉花茶判成「凉」，
-把中性食材（小笼包、兰州拉面）普遍判成「温」。加查表后准确率 81% → 100%。
-
-参考表放在 user 消息而不是 system 提示词里，是为了保持 system 前缀稳定、
-让 KV 缓存继续命中；同时只注入命中的条目，单条参考表 < 400 字符。
-
-回归测试：
-
-```powershell
-python scripts\test_food_accuracy.py            # 14 条语料 / 20 项属性断言
-python -m pytest tests\test_food_lookup.py -q   # 表本身与匹配逻辑的单测
-```
-
-### 实测延迟（3 条真实语料，reasoning_effort=low）
-
-| 环节 | 耗时 |
-|---|---|
-| Agent1 饮食解析 | 1.1 – 4.6 s |
-| Agent2 茶饮推荐 | 11.5 – 15.0 s |
-| **全链路** | **12.9 – 16.3 s** |
-| 高风险人群分支 | ~0 s（不调用模型，直接引导就医） |
-
-`TA_REASONING_EFFORT` 对延迟影响极大，实测同一任务：
-
-| effort | Agent2 耗时 | 推荐条数 |
+| 你是 | 你要的 | 去哪 |
 |---|---|---|
-| max | 19.2 s | 3 |
-| high | 10.1 s | 3 |
-| **low（默认）** | **8.2 s** | **3** |
-| off | 2.7 s | 1 |
+| **想要一个本地助手** | 输入「中午吃了碗麻辣烫配冰可乐」，得到一碗该喝什么的建议 | [快速开始](#快速开始) |
+| **想要一个可复用的判定库** | `resolve_food("冰啤酒") → 寒`，确定性、可复现、零成本、零 API 调用 | [当库用](#当库用三行拿到确定性判定) |
 
-本模型支持 `max` / `high` / `low` / `off`，`medium`、`none`、`minimal` 会导致启动失败。
-
-> ⚠️ 注意：12 秒以上的响应时间对小程序体验偏长，`wx.request` 默认超时需显式放宽。
-> 后续建议改为异步任务 + 轮询，并利用「两级返回」先把 Agent1 的解析回显给用户。
+**分界线**：`resolve_food()` 及它下面的整层（第 1、2 节所述的三层架构）**不调用任何模型**，
+是纯数据 + 纯规则，可以直接嵌进你自己的项目。模型只在「把自由文本解析成食物列表」
+和「写一段人话建议」这两步参与，且**随时可以整个绕过**。
 
 ---
 
 ## 快速开始
 
-### 1. 配置
+### 30 秒体验：不需要 API Key，不花一分钱
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e ".[dev]"        # 只想跑终端壳就够；要 Web 界面用 ".[dev,web]"
+
+# ① 纯规则查表：零 LLM、零成本、毫秒级
+python ..\ui\terminal\chat.py --resolve 冰啤酒 茉莉花茶 冰淇淋
+
+# ② 离线推荐：不调用模型，走规则兜底，仍然给出合规且不超剂量的搭配
+python ..\ui\terminal\chat.py --offline "中午吃了碗麻辣烫，还喝了杯冰可乐"
+
+# ③ 验证一切正常（183 项，约 0.4 秒）
+python -m pytest -q
+```
+
+`--resolve` 的实际输出（`detail` 会告诉你**每一档是怎么来的**）：
+
+```
+  冰啤酒
+    四性：寒   五味：苦甘
+    来源：按烹饪方式推算   置信度：0.6   待验证：是
+    过程：「啤酒」原形态下属性为凉；冰修正 -1：凉 → 寒
+          （温度前缀由食物名识别，纯规则判定，不经模型）（该条目尚未通过人工审核）
+
+  茉莉花茶
+    四性：温   五味：甘辛
+    来源：查表   置信度：0.9   待验证：是
+```
+
+### 用完整助手：需要 API Key
 
 本项目有**两个**配置文件，分工不能混：
 
 | 文件 | 放什么 | 为什么 |
 |---|---|---|
-| `.env` | 应用配置：`TA_*` 模型参数、端口、超时 | 可以入库模板 |
+| `.env` | 应用配置：`TA_*` 模型参数、`APP_*` 端口、超时 | 可以入库模板 |
 | `credentials.env` | `DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DSH_HOME` | **不能放 `.env`** |
 
 **为什么凭据必须单独一个文件**：`dsh` 启动时会扫描 workspace 根目录的 `.env`，
@@ -92,74 +78,135 @@ Error: dsh: .env sets "DSH_HOME", which only the launching environment may set
 ```
 
 因为它们决定进程如何启动、从哪里加载代码与指令、如何联网，属于「启动环境专属」变量。
-所以本项目约定：`.env` 里只出现 `TA_*` 与 `APP_*`，凭据与 `DSH_HOME` 放 `credentials.env`，
+所以约定：`.env` 里只出现 `TA_*` 与 `APP_*`，凭据与 `DSH_HOME` 放 `credentials.env`，
 由 `app/config.py` 读取、`app/agents/runtime.py` 注入子进程环境。
 
 ```powershell
-cd D:\work\tea-advisor
+cd <仓库根>
 Copy-Item .env.example .env
 Copy-Item credentials.env.example credentials.env
-notepad credentials.env      # 填入 DEEPSEEK_API_KEY 与 DSH_HOME
+notepad credentials.env      # 填入 DEEPSEEK_API_KEY 与 DSH_HOME（纯英文绝对路径）
 ```
 
 两个真实配置文件都已被 `.gitignore` 忽略（模板文件会入库）。
 
-### 2. 安装依赖
+```powershell
+# 环境与数据自检（秒级，不调模型）
+cd backend
+python scripts\check_setup.py
+
+# 离线冒烟：数据层 → 解析 → 规则兜底 → 护栏 全链路
+python scripts\smoke_offline.py
+
+# 真实模型冒烟（约 60–90 秒，会产生调用费用）
+python scripts\smoke_agents.py
+
+# 终端助手（交互模式，走真实模型）
+python ..\ui\terminal\chat.py
+```
+
+### 本地 Web 界面
 
 ```powershell
 cd backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
-```
-
-### 3. 自检（秒级，不调用模型）
-
-```powershell
-python scripts\check_setup.py
-```
-
-### 4. 离线冒烟（不调用模型，验证数据层与护栏）
-
-```powershell
-python scripts\smoke_offline.py
-```
-
-### 5. 真实模型冒烟（需要 API Key）
-
-```powershell
-python scripts\smoke_agents.py
-python scripts\smoke_agents.py --only a1     # 只测解析器
-python scripts\smoke_agents.py --case 1      # 只跑第 1 条语料
-```
-
-首次运行会启动 `dsh` 子进程并生成 profile，约十几秒。子进程 stderr 在 `backend/var/dsh_runtime.log`。
-
-### 6. 启动服务
-
-```powershell
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
-- 网页 demo：<http://127.0.0.1:8000/demo>
-- 接口文档：<http://127.0.0.1:8000/docs>
-- 自检：<http://127.0.0.1:8000/healthz>
+* 本地界面：<http://127.0.0.1:8000>
+* 接口文档：<http://127.0.0.1:8000/docs>
+* 自检：<http://127.0.0.1:8000/healthz>
 
-手机访问：把 `127.0.0.1` 换成电脑局域网 IP（`ipconfig` 查看），并确保防火墙放行 8000 端口。
+界面与接口由同一个服务同源提供，因此**不需要**、也不应该打开 CORS 通配。
+`app/main.py` 只放行本机来源；请勿改回 `["*"]`——那会让局域网内任意网页都能调用你本机的接口。
 
-```powershell
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-
-### 7. 跑测试
-
-```powershell
-python -m pytest -q
-```
+> 只用终端界面时**不必**启动这个服务，也不必安装 `web` extra。
 
 ---
 
-## 架构
+## 当库用：三行拿到确定性判定
+
+```python
+from app.services.food_lookup import resolve_food
+
+r = resolve_food(name="冰啤酒")
+print(r.nature)                    # cold（寒）
+print(r.flavors)                   # ['bitter', 'sweet']
+print(r.verification.source)       # composed —— 表值 + 纯规则温度修正
+print(r.verification.confidence)   # 0.6
+print(r.verification.detail)       # 完整判定过程，可追溯
+```
+
+`ResolvedFood.verification` 是这套库最核心的对外契约：
+
+| 字段 | 含义 |
+|---|---|
+| `source` | `rule` 命中表 / `composed` 组合推理 / `llm` 模型推测 / `unresolved` 无法判定 |
+| `confidence` | 0.9 / 0.6 / 0.3 / 0.1（约定见下） |
+| `unverified` | `true` 表示未经中医食性验证，**界面必须标注** |
+| `detail` | 判定过程说明，便于排查与审计 |
+
+**调用方应当按 `confidence` 决定是否展示**：约定是**低于 0.3 时不显示寒热属性**
+（数据仍然保留，但不要呈现给用户）。
+
+### 边界与注意事项
+
+* 数据层经由 `app.config` 依赖 `python-dotenv`，并且从 `backend/data/` 读 JSON。
+  想把数据放到别处，目前需要自行设置工作目录或改 `config.py`（计划中会加 `TA_DATA_DIR`）。
+* `resolve_food()` **只判定单一食物**。整菜名（如「番茄炒蛋」）要么表里收录，要么整体落到 LLM 层。
+  多层食材的合成算法 `nature_math.combine()` 已实现并测试，但**尚未接入主流程**。
+* `unknown` 没有数值（返回 `None`），**不是 0**——否则「未判定」会被当成平性参与运算。
+
+---
+
+## 核心：三层混合判断架构
+
+食物寒热属性的判定分三层，置信度递减，来源可追溯。完整设计见
+**[docs/three-layer-architecture.md](docs/three-layer-architecture.md)**。
+
+```
+用户口述
+   ↓
+┌─────────────────────────────────────────────┐
+│ 第一层 硬规则库          confidence 0.9      │
+│   food_properties.json 规范名精确命中         │
+│   直接查表，表值即权威，不叠加模型猜测         │
+├─────────────────────────────────────────────┤
+│ 第一层附 食材变体层       confidence 0.9      │
+│   条目自带 variant_nature（如 红薯→烤红薯 温）│
+├─────────────────────────────────────────────┤
+│ 第二层 组合推理（烹饪修正） confidence 0.6    │
+│   蒸煮 0 / 煎炸 +1 / 烧烤 +1 / 辛辣 +1 / 冰镇 -1│
+├─────────────────────────────────────────────┤
+│ 第二层附 温度前缀层       confidence 0.6      │
+│   「冰啤酒」「热牛奶」的冰/热用**纯字符串规则**识别 │
+│   剥掉前缀后须是完整表内食物名才生效            │
+├─────────────────────────────────────────────┤
+│ 第三层 LLM 推测          confidence 0.3      │
+│   表里没有 → 保留模型判断但标记未验证          │
+│   完全判不出 → unresolved / 0.1              │
+└─────────────────────────────────────────────┘
+   ↓
+逐项写入 verification{source, confidence, unverified, detail}
+   ↓
+界面按阈值决定是否显示、是否标注
+```
+
+### 为什么必须查表：模型的系统性偏差
+
+实测发现模型在食物寒热上有**成体系的错误**——把性温的茉莉花茶判成「凉」，
+把中性食材（小笼包、兰州拉面）普遍判成「温」。加查表后准确率 81% → 100%。
+
+参考表放在 user 消息而不是 system 提示词里，是为了保持 system 前缀稳定、
+让 KV 缓存继续命中；同时只注入命中的条目，单条参考表 < 400 字符。
+
+回归测试：
+
+```powershell
+python scripts\test_food_accuracy.py            # 真实模型 23 条语料 / 29 项断言
+python -m pytest tests\test_food_lookup.py -q   # 表本身与匹配逻辑的单测
+```
+
+### 双 Agent 协作：通过一个 JSON 通信，谁都不越界
 
 ```
 用户口述
@@ -174,20 +221,41 @@ python -m pytest -q
 [安全护栏 safety.py]  ──►  白名单 / 剂量裁剪 / 禁用表述 / 体质契合
    │
    ▼
- 接口响应（必带 disclaimer）
+接口响应（必带 disclaimer）
 ```
 
-**两个 Agent 通过一个 JSON 通信，谁都不越界。**
+* Agent1 管「你吃了什么」，不做推荐、不判断体质。
+* Agent2 管「配什么泡」，只能在白名单候选集内选，不开方剂、不超剂量。
 
-- Agent1 管「你吃了什么」，不做推荐、不判断体质。
-- Agent2 管「配什么泡」，只能在白名单候选集内选，不开方剂、不超剂量。
-
-### 为什么要有白名单和规则兜底
-
-提示词里写十遍「不要开方」，不如**让模型无方可开**：
-Agent2 只能从 `herbs.json` 的 20 味里挑，候选集由 `safety.py` 按体质预先收敛。
+**为什么要有白名单和规则兜底**：提示词里写十遍「不要开方」，不如**让模型无方可开**。
+Agent2 只能从 `herbs.json` 的 34 味里挑，候选集由 `safety.py` 按体质预先收敛。
 即使模型完全不可用，`matcher.py` 的规则兜底仍会给出合法、安全、不超剂量的搭配
 （响应里 `meta.degraded = true`）。
+
+---
+
+## 数据
+
+| 文件 | 内容 | 规模 |
+|---|---|---|
+| `backend/data/food_properties.json` | 食材 + 茶饮食性表，逐条审核状态 | **146 条**（128 食材 + 18 茶饮） |
+| `backend/data/herbs.json` | 药食同源饮片白名单（含剂量上限与禁忌） | **34 味** |
+| `backend/data/constitution.json` | 体质速查 | **5 型** |
+
+**审核状态是三态**，不是布尔值——`reviewed: false` 无法区分「还没审」和「审了但不认可」：
+
+| 状态 | 效果 |
+|---|---|
+| `approved` | 真·硬规则库，置信度 0.9，界面**不**标注 |
+| `pending` | 置信度 0.9，但界面必须标注「待验证」（**当前 146 条全部是这个**） |
+| `rejected` | 降为组合推理档（0.6），不再作硬规则 |
+
+> 全部为 `pending` 是**刻意**的：界面普遍显示「待验证」标记，
+> 标记密度就是审核进度的可见反馈。**请勿为了界面好看而批量置为 `approved`。**
+
+想加条目 / 参与审核，请读 **[CONTRIBUTING.md](CONTRIBUTING.md)**——
+特别是第 3 节，它说明了 `scripts/` 下那三个数据维护脚本**都是冻结的一次性批次脚本**，
+不是通用加条目工具。
 
 ---
 
@@ -195,85 +263,157 @@ Agent2 只能从 `herbs.json` 的 20 味里挑，候选集由 `safety.py` 按体
 
 ```
 tea-advisor/
-├─ .env.example                  应用配置模板（TA_* / APP_*）
-├─ credentials.env.example       凭据模板（API Key / DSH_HOME，不能放 .env）
-├─ backend/
+├─ README.md                       本文件
+├─ CONTRIBUTING.md                 贡献指南（数据表怎么改、哪些是契约）
+├─ LICENSE                         MIT
+├─ .env.example                    应用配置模板（TA_* / APP_*）
+├─ credentials.env.example         凭据模板（API Key / DSH_HOME，不能放 .env）
+├─ ui/                             ★ 前端交互层：所有"壳"都在这里
+│  ├─ terminal/chat.py             终端壳（仅标准库）：--resolve / --offline / 交互
+│  └─ web/index.html               本地 Web 界面（由 FastAPI 同源提供）
+├─ backend/                        ★ 核心逻辑层（与 ui/ 解耦，不 import ui）
 │  ├─ app/
-│  │  ├─ main.py                  FastAPI 入口、/healthz、/demo、目录与免责声明接口
-│  │  ├─ config.py                环境变量集中读取
-│  │  ├─ api/analyze.py           POST /api/analyze
+│  │  ├─ main.py                   FastAPI 入口（Web 适配层）、/ 、/docs、/healthz
+│  │  ├─ config.py                 环境变量集中读取
+│  │  ├─ api/analyze.py            POST /api/analyze
 │  │  ├─ agents/
-│  │  │  ├─ runtime.py            DeepSeekHarness 子进程生命周期
-│  │  │  ├─ agent1_diet.py        饮食解析器
-│  │  │  ├─ agent2_recommend.py   中医推荐器
-│  │  │  ├─ json_guard.py         JSON 提取 / 校验 / 重试
-│  │  │  └─ prompts/              两个 agent 的系统提示词
-│  │  ├─ domain/
-│  │  │  ├─ enums.py              四气 / 五味 / 时段 / 体质枚举
-│  │  │  ├─ models.py             请求 / 响应 / 中间结构（唯一真源）
-│  │  │  └─ safety.py             ★ 确定性安全护栏
+│  │  │  ├─ runtime.py             DeepSeekHarness 子进程生命周期
+│  │  │  ├─ agent1_diet.py         饮食解析器
+│  │  │  ├─ agent2_recommend.py    中医推荐器
+│  │  │  ├─ json_guard.py          JSON 提取 / 校验 / 重试
+│  │  │  └─ prompts/               两个 agent 的系统提示词
+│  │  ├─ domain/                   ★ 纯逻辑，不依赖 Web 框架
+│  │  │  ├─ enums.py               四气 / 五味 / 时段 / 体质枚举
+│  │  │  ├─ nature_math.py         四性数值运算 + 温度前缀唯一入口
+│  │  │  ├─ models.py              请求 / 响应 / 中间结构（唯一真源）
+│  │  │  └─ safety.py              ★ 确定性安全护栏
 │  │  └─ services/
-│  │     ├─ orchestrator.py       双 Agent 串行编排 + 降级
-│  │     └─ matcher.py            规则兜底与候选收敛
-│  ├─ data/
-│  │  ├─ herbs.json               ★ 20 味药食同源饮片库
-│  │  └─ constitution.json        5 型体质速查
-│  ├─ scripts/                    自检与冒烟脚本
-│  ├─ tests/                      45 项测试
-│  └─ static/demo.html            网页 demo
-└─ miniprogram/                   （待建）
+│  │     ├─ food_lookup.py         ★ resolve_food() 三层判定入口
+│  │     ├─ matcher.py             规则兜底与候选收敛
+│  │     └─ orchestrator.py        双 Agent 串行编排 + 降级
+│  ├─ data/                        数据层（上表三个 JSON）
+│  ├─ scripts/                     自检与冒烟脚本
+│  └─ tests/                       183 项离线测试
+└─ docs/three-layer-architecture.md
+```
+
+**分层规则**：`ui/` 只单向依赖 `backend/app/`，核心逻辑层**不得**反向 import `ui/`。
+新增界面请放进 `ui/` 并复用核心，不要为此改动 `app/domain/`、`app/services/`、`app/agents/`。
+
+---
+
+## 测试
+
+```powershell
+cd backend
+python -m pytest -q          # 183 passed，约 0.4 秒，不调用模型、不需要 API Key
+```
+
+| 文件 | 覆盖内容 | 项数 |
+|---|---|---|
+| `tests/test_nature_math.py` | 编码、夹取、边界取整、两层修正、合成算法 | 48 |
+| `tests/test_temperature_layer.py` | 温度前缀、双通道扫描、准入校验、与表内变体优先级 | 48 |
+| `tests/test_safety.py` | 白名单、剂量裁剪、禁用表述、高风险人群、体质筛选 | 31 |
+| `tests/test_food_lookup.py` | 表完整性、匹配准确性、渲染、名称对齐 | 22 |
+| `tests/test_calibration.py` | 校准接线、来源标记、Agent2 隔离、已知局限固化 | 20 |
+| `tests/test_json_guard.py` | 围栏剥离、对象提取、schema 校验、失败重试 | 14 |
+
+需要 API Key 的端到端（**不在 pytest 内**，会产生调用费用）：
+
+```powershell
+python scripts\test_food_accuracy.py    # 属性准确率：23 条语料 / 29 项断言
+python scripts\smoke_agents.py          # 运行时启动 → 原始往返 → Agent1 → 全链路
 ```
 
 ---
 
-## 核心接口
+## 实测延迟
 
-### `POST /api/analyze`
+`reasoning_effort=low`、3 条真实语料的实测（含 `scripts/smoke_agents.py` 全链路）：
 
-请求：
-
-```json
-{
-  "text": "中午吃了碗麻辣烫，还喝了杯冰可乐",
-  "constitution_override": "phlegm_damp",
-  "exclude_herbs": []
-}
-```
-
-响应要点：
-
-| 字段 | 说明 |
+| 环节 | 耗时 |
 |---|---|
-| `parsed` | Agent1 产物原样回显，前端展示「我理解到的」 |
-| `parsed.confidence` | 低于 0.5 时前端应提示用户补充描述 |
-| `recommendations[]` | 1–3 条，含 `herbs[]`（用量/属性/作用）、`brew`（冲泡步骤）、`fit_reason`、`cautions`、`score` |
-| `basis` | 体质、命中的规则、护栏介入记录 |
-| `meta.degraded` | `true` 表示走了规则兜底 |
-| `disclaimer` | **所有响应必带**，前端统一渲染，禁止各自硬编码 |
+| DSH 运行时首次启动 | ~2.2 s（进程复用，后续不再付这个成本） |
+| Agent1 饮食解析 | 1.3 – 4.7 s |
+| Agent2 茶饮推荐 | 11.7 – 16.5 s |
+| **全链路** | **13.4 – 18.7 s** |
+| 高风险人群分支 | ~0 s（**不调用模型**，直接引导就医） |
+| `--offline` 确定性链路 | ~0.00 s（**不调用模型**） |
 
-错误码：`AGENT1_FAILED`（422，解析失败）、`INTERNAL_ERROR`（500）。
+`TA_REASONING_EFFORT` 对延迟影响极大，实测同一任务：
+
+| effort | Agent2 耗时 | 推荐条数 |
+|---|---|---|
+| max | 19.2 s | 3 |
+| high | 10.1 s | 3 |
+| **low（默认）** | **8.2 s** | **3** |
+| off | 2.7 s | 1 |
+
+本模型支持 `max` / `high` / `low` / `off`；`medium`、`none`、`minimal` 会导致启动失败。
+
+> ⚠️ 13 秒以上的等待对交互体验偏长。若在意响应速度，优先用 `--resolve`（毫秒级）
+> 或 `--offline`（毫秒级）；要改成异步任务 + 轮询需自行扩展 `ui/`。
 
 ---
 
-## 已验证事项与踩过的坑
+## 已知局限（重要，不要误当 bug 修）
 
-以下三点已在真实环境验证通过，记录在此避免重复踩坑：
+1. **规范名精确命中时，不叠加模型给的烹饪修正。**
+   因为无法从模型输出可靠区分「可靠证据」与「猜测」——模型可能给「希腊酸奶」一个
+   `cold`、给「火腿三明治」一个 `grilled`，照单全收会把表值污染成错误档位。
+   这一局限已由**温度前缀层**部分解决；剩下的煎炸/烧烤类修正需要在表里为该食物
+   单列条目并写 `variant_nature`。
+
+2. **关键词子串会把无关名称拉进表。**
+   例如 `辣椒` 的关键词含「麻辣」，于是口述里的「麻辣烫」会把 `辣椒` 也命中。
+   已知案例（「薯条」被匹配到「炸鱼薯条」、「寿司」被匹配到「生鱼片」）已通过三级匹配优先级
+   （精确同名 > 包含关系按 gap 最小 > 关键词）修掉，但字符串匹配本质上无法完全消除歧义。
+   要彻底解决需要菜品别名库或分词。
+
+   > 这一局限在 `--offline` 模式下**更容易被看到**：`match_foods()` 是「表里哪些条目在句子里出现过」，
+   > 而不是「识别出你吃了什么」。所以离线模式的物品列表应理解为**表命中项**，与实际所吃并不等价。
+
+3. **第二层组合推理尚未接入主流程。**
+   `combine()` 已实现并测试，但 `resolve_food` 目前只做单食材判定。
+   「番茄炒蛋」这类整菜名要么表里收录，要么整体落到第三层。
+
+4. **第一层数据尚未人工审核。**
+   `food_properties.json` 与 `herbs.json` 全部为 `pending`。属性依据中医饮食养生通行表述整理
+   （食物偏性，非药物功效），**对外提供任何服务前应由具备资质的中医师/中药师复核**。
+
+5. **离线模式只能识别表内条目。**
+   `--offline` 依赖 `match_foods()` 的关键词匹配，表里没有的食物一律认不出。
+   它牺牲识别率换取零成本、零延迟与完全确定性，是刻意的取舍。
+
+---
+
+## 开发与贡献
+
+```powershell
+python scripts\check_setup.py       # 环境与数据自检
+python scripts\smoke_offline.py     # 离线全链路冒烟
+python -m pytest -q                 # 183 项
+```
+
+提交 PR 前请读 **[CONTRIBUTING.md](CONTRIBUTING.md)**，其中写明了：
+
+* 哪些是**不可随意改的契约**（`models.py` 唯一真源、`nature_math` 是四性运算唯一真源、
+  温度判定只有 `resolve_temperature()` 一个入口、`resolve_food()` 的层序、置信度约定）
+* 数据表怎么加条目，以及 `scripts/` 下三个维护脚本**都是冻结的一次性批次脚本**、
+  都支持 `--dry-run`、历史执行顺序是 `add_review_fields.py` → `patch_food_table.py`
+* `ui/` 与 `backend/` 的分层规则
+
+---
+
+## 踩过的坑（已验证，避免重复踩）
 
 ### 1. `dsh` 拒绝从工作区 `.env` 读取 `DSH_*` 变量 ✅ 已解决
-
-报错形态：
-
-```
-Error: dsh: .env sets "DSH_HOME", which only the launching environment may set
-  (it decides how this process starts, where its code and instructions load from,
-   or how it reaches the network); export DSH_HOME instead of putting it in a .env file
-```
 
 **触发条件**：`dsh` 启动时扫描 workspace 根目录（即传给 SDK 的 `cwd`）的 `.env`。
 本项目 `cwd` = 项目根，所以任何 `DSH_HOME` / `DSH_MAX_TOKENS` / `DEEPSEEK_API_KEY`
 都不能出现在 `.env` 里，**注释里出现这些字符串也可能被扫描到**。
 
-**解决**：`DSH_*` 与凭据放 `credentials.env`（dsh 不扫描该文件名），
+**解决**：`DSH_*` 与凭据放 `credentials.env`（`dsh` 不扫描该文件名），
 由 `app/agents/runtime.py` 注入子进程 `os.environ`；`.env` 只留 `TA_*` / `APP_*`。
 
 ### 2. `DeepSeekHarness` 构造参数 ✅ 已验证可用
@@ -289,8 +429,8 @@ with harness: result = harness.run(prompt, session_id=...)
 result.final_response        # 取文本
 ```
 
-- 启动约 1.7–4.5 s，进程复用，后续轮次 1–15 s。
-- **`session_id` 必须每次唯一**：复用同一个 id 会延续同一段持久对话，
+* 启动约 1.7–4.5 s，进程复用，后续轮次 1–15 s。
+* **`session_id` 必须每次唯一**：复用同一个 id 会延续同一段持久对话，
   重复执行同一请求会直接报 `session "xxx" already exists`，
   且按内容 hash 生成 id 会让重复输入累积上文、污染结果。代码里已改用 `time.time_ns()`。
 
@@ -300,25 +440,36 @@ result.final_response        # 取文本
 实测模型能稳定遵守 JSON 格式与安全边界，**暂不需要给每个 agent 单独建 profile**。
 若后续发现格式遵守度下降，再考虑 profile + patch 方案。
 
-### 4. 仍需人工复核的事项 ⏳
+### 4. Windows 控制台的编码 ✅ 已解决
 
-**`herbs.json` 的医学准确性**。文件里 `_meta.review_status` 标的是 `pending`：
+Python 脚本在 Windows 控制台默认用 GBK 输出，中文会乱码。
+`scripts/` 下的脚本与 `ui/terminal/chat.py` 都在入口处显式 `reconfigure(encoding="utf-8")`；
+终端壳还额外处理了 **stdin**——Windows 下标准输入被重定向时用系统 locale 编码（cp936），
+不显式指定 UTF-8 会把中文输入解成乱码。
 
-> 属性、剂量上限、禁忌均为保守整理的通行表述，**上线前必须由具备资质的中医师/中药师复核**，
-> 并以国家卫健委发布的最新「既是食品又是中药材的物质目录」为准。
+### 5. 仍需人工复核的事项 ⏳
+
+**`herbs.json` 与 `food_properties.json` 的医学准确性**。两个文件的 `_meta.review_status`
+都是 `pending`，**对外提供服务前必须由具备资质的中医师/中药师复核**。
 
 ---
 
 ## 隐私提醒
 
-`DSH_HOME` 默认指向项目内的 `dsh-home/`（已被 gitignore），与你主 DSH 环境隔离。
+`DSH_HOME` 默认指向仓库内的 `dsh-home/`（已被 gitignore），与你主 DSH 环境隔离。
 **不要把主 DSH 的 `~/.dsh` 或任何 `sessions/*.jsonl` 放进仓库或网盘**——里面有完整对话记录。
+同理，`dsh-home/` 目录虽然不入库，也建议放在仓库目录**之外**，避免误打包。
+
+提交前自查：
+
+```powershell
+git status --short          # 确认没有 .env / credentials.env / dsh-home/
+git diff --cached           # 逐行看一次暂存内容
+```
 
 ---
 
-## 下一步
+## 许可
 
-1. 配好 `.env` → 跑 `python scripts\smoke_agents.py`
-2. 打开 `http://127.0.0.1:8000/demo` 试几条真实口述
-3. 根据实际输出调 `backend/app/agents/prompts/` 里的提示词（改前先提交，方便回滚）
-4. demo 满意后再做小程序：`miniprogram/` 只做「输入页 + 结果页」两个页面
+[MIT](LICENSE)。另请一并阅读 LICENSE 文件末尾的**附加声明**：
+它说明了本项目的非医疗建议属性，以及对外提供服务的复核义务。
