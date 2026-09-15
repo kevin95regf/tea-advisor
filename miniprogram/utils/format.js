@@ -65,26 +65,78 @@ function cookingLabel(v) {
   return COOKING[v] || '';
 }
 
+/** 属性来源 → 中文说明。用于"待验证"标记的提示文案 */
+const SOURCE_LABELS = {
+  rule: '查表',
+  composed: '按烹饪方式推算',
+  llm: '模型推测',
+  unresolved: '无法判定',
+};
+
+/** 低于此置信度时界面不显示寒热属性 */
+const CONF_SHOW_THRESHOLD = 0.3;
+
+function sourceLabel(v) {
+  return SOURCE_LABELS[v] || '';
+}
+
+/**
+ * 整理单个食物的验证信息。
+ * 三层架构要求：非硬规则库的结果必须标注；
+ * 置信度低于阈值时**不显示**寒热属性（但数据仍在，Agent2 能看到）。
+ */
+function decorateVerification(f) {
+  const v = f.verification || {};
+  const confidence = typeof v.confidence === 'number' ? v.confidence : 0.3;
+  const source = v.source || 'llm';
+  const unverified = v.unverified !== false;
+  const showNature = confidence >= CONF_SHOW_THRESHOLD;
+  return {
+    source,
+    sourceText: sourceLabel(source),
+    confidence,
+    confidencePct: Math.round(confidence * 100),
+    unverified,
+    showNature,
+    detail: v.detail || '',
+  };
+}
+
 /** 把解析结果整理成页面直接可渲染的结构 */
 function decorateParsed(parsed) {
   if (!parsed) {
-    return { foods: [], chips: [], mealTimeText: '未指明', overallText: '未知', confidencePct: 0 };
+    return {
+      foods: [],
+      chips: [],
+      mealTimeText: '未指明',
+      overallText: '未知',
+      confidencePct: 0,
+      unverifiedCount: 0,
+      maxSourceText: '',
+    };
   }
   const foods = (parsed.foods || []).map((f) => {
     const flavors = (f.flavors || []).map(flavorLabel).join('');
     const cooking = cookingLabel(f.cooking);
+    const ver = decorateVerification(f);
+    // 置信度太低时不把属性写进标签文字，前端就不显示了
+    const naturePart = ver.showNature ? natureLabel(f.nature) : '';
+    const natureText = ver.showNature ? natureLabel(f.nature) : '未判定';
     return {
       name: f.name,
-      natureKey: f.nature || 'unknown',
-      natureText: natureLabel(f.nature),
+      natureKey: ver.showNature ? f.nature || 'unknown' : 'unknown',
+      natureText,
       flavorText: flavors,
       cookingText: cooking,
       amount: f.amount_desc || '',
       note: f.note || '',
-      // 标签文字：麻辣烫 · 热 · 辛咸
-      tagText: [f.name, natureLabel(f.nature), flavors].filter(Boolean).join(' · '),
+      // 标签文字：麻辣烫 · 热 · 辛咸（低于阈值时省略属性段）
+      tagText: [f.name, naturePart, flavors].filter(Boolean).join(' · '),
+      verification: ver,
     };
   });
+
+  const unverifiedCount = foods.filter((f) => f.verification.unverified).length;
 
   return {
     foods,
@@ -94,6 +146,9 @@ function decorateParsed(parsed) {
     confidencePct: Math.round((parsed.confidence || 0) * 100),
     summary: parsed.summary || '',
     uncertain: parsed.uncertain_items || [],
+    unverifiedCount,
+    // 只要存在未验证项，就在结果页给一行总说明
+    hasUnverified: unverifiedCount > 0,
   };
 }
 
@@ -136,10 +191,14 @@ module.exports = {
   FLAVOR,
   MEAL_TIME,
   CONSTITUTIONS,
+  SOURCE_LABELS,
+  CONF_SHOW_THRESHOLD,
   natureLabel,
   flavorLabel,
   mealTimeLabel,
   cookingLabel,
+  sourceLabel,
+  decorateVerification,
   decorateParsed,
   decorateRecommendations,
   constitutionLabel,

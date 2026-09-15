@@ -33,11 +33,18 @@
     <view class="card">
       <view class="card-title">我理解到的</view>
       <view class="tags">
-        <text
+        <view
           wx:for="{{parsed.foods}}"
           wx:key="name"
-          class="tag tag-{{item.natureKey}}"
-        >{{item.tagText}}</text>
+          class="tag-wrap"
+        >
+          <text class="tag tag-{{item.natureKey}}">{{item.tagText}}</text>
+          <!-- 非硬规则库的结果必须标注（三层架构要求） -->
+          <text
+            wx:if="{{item.verification.unverified}}"
+            class="pending-mark"
+          >待验证</text>
+        </view>
       </view>
       <view wx:if="{{!parsed.foods.length}}" class="hint-box">没有识别到具体食物</view>
       <view class="divider"></view>
@@ -47,6 +54,9 @@
       <view wx:if="{{parsed.summary}}" class="reason">{{parsed.summary}}</view>
       <view wx:if="{{parsed.uncertain.length}}" class="hint-box">
         没认出来的：{{parsed.uncertainText}}
+      </view>
+      <view wx:if="{{parsed.hasUnverified}}" class="pending-note">
+        标「待验证」的 {{parsed.unverifiedCount}} 项食性尚待人工审核或仅为推测，仅供参考，未用于推荐计算。
       </view>
     </view>
 

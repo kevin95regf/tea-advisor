@@ -16,9 +16,13 @@ from functools import lru_cache
 from app.agents import json_guard
 from app.agents.runtime import get_runtime
 from app.config import get_settings
-from app.domain.enums import MealTime
+from app.domain.enums import Flavor, MealTime, Nature
 from app.domain.models import ParsedMeal
-from app.services.food_lookup import render_nature_change_rules, render_reference
+from app.services.food_lookup import (
+    render_nature_change_rules,
+    render_reference,
+    resolve_food,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +71,56 @@ def build_user_prompt(
 
     parts.append("\n请按要求输出 JSON。")
     return "\n".join(parts)
+
+
+def calibrate_parsed(parsed: ParsedMeal, text: str = "") -> ParsedMeal:
+    """用确定性判定校准 LLM 的输出，并写入来源与置信度。
+
+    这是三层架构的落地点：
+      - 命中食性表 → source=rule/composed，属性以表为准（覆盖模型的值）
+      - 未命中 → 保留模型判断，但标 source=llm / unverified=True / 置信度 0.3
+      - 连模型也判不出 → source=unresolved / 置信度 0.1
+
+    为什么必须覆盖而不是"参考"：模型有系统性偏差（曾把性温的茉莉花茶判成凉），
+    表是人工整理的，出现分歧时以表为准。
+    """
+    if not parsed.foods:
+        return parsed
+
+    resolved_any = 0
+    for food in parsed.foods:
+        hint = " ".join(filter(None, [food.name, food.note or "", text]))
+        try:
+            resolved = resolve_food(
+                name=food.name,
+                cooking=food.cooking.value if hasattr(food.cooking, "value") else food.cooking,
+                llm_nature=food.nature.value if hasattr(food.nature, "value") else food.nature,
+                text_hint=hint,
+            )
+        except Exception:
+            logger.warning("校准「%s」时出错，保留模型判断", food.name, exc_info=True)
+            continue
+
+        food.verification = resolved.verification
+        if resolved.verification.source in ("rule", "composed"):
+            resolved_any += 1
+            # 表里有记录就以表为准，覆盖模型的值
+            food.nature = Nature(resolved.nature)
+            if resolved.flavors:
+                food.flavors = [Flavor(f) for f in resolved.flavors if f in {x.value for x in Flavor}]
+
+    # 整餐把握度：按逐项置信度重算，比模型自报的 confidence 更可解释
+    confidences = [f.verification.confidence for f in parsed.foods]
+    if confidences:
+        parsed.confidence = round(sum(confidences) / len(confidences), 2)
+
+    logger.info(
+        "校准完成：%d/%d 项命中食性表，整餐把握度 %.2f",
+        resolved_any,
+        len(parsed.foods),
+        parsed.confidence,
+    )
+    return parsed
 
 
 def parse_diet(
@@ -119,5 +173,8 @@ def parse_diet(
     # 用户显式给了时段就尊重用户
     if meal_time and meal_time is not MealTime.UNKNOWN:
         parsed.meal_time = meal_time
+
+    # 三层架构：用确定性判定校准模型的属性，并写入来源与置信度
+    parsed = calibrate_parsed(parsed, text)
 
     return parsed, first.elapsed_ms, sid

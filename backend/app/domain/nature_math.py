@@ -1,0 +1,207 @@
+"""四性（寒热）的数值编码与修正运算。
+
+为什么需要数值轴
+----------------
+「煎炸 +1、冰镇 -1」这类修正规则，以及第二层「多样食材合成」，
+都需要把定性枚举（寒/凉/平/温/热）映射到数值上才能运算。
+本模块是这个运算的唯一真源，任何涉及四性加减的地方都必须走这里。
+
+编码
+----
+寒 = -2   凉 = -1   平 = 0   温 = +1   热 = +2
+
+两层修正（顺序不可颠倒）
+------------------------
+1. **食材变体层**：同一种食材因形态不同而属性不同，如「红薯」平 → 「烤红薯」温。
+   由数据表条目的 `variant_nature` 提供，**查表优先**，直接取表里的值。
+2. **烹饪修正层**：表里没有变体记录时，按通用规则做 ±1 兜底。
+   蒸煮 0、煎炸 +1、加辛辣配料 +1、冰镇 -1。
+
+第 2 层只在第 1 层没有命中时生效——否则表里精确的变体值会被通用规则破坏。
+"""
+
+from __future__ import annotations
+
+from app.domain.enums import Nature
+
+# 编码值边界
+NATURE_MIN = -2
+NATURE_MAX = 2
+
+# 数值 → 四性。索引即偏移量，避免用 dict 查表时漏键
+_NUM_TO_NATURE: dict[int, Nature] = {
+    -2: Nature.COLD,
+    -1: Nature.COOL,
+    0: Nature.NEUTRAL,
+    1: Nature.WARM,
+    2: Nature.HOT,
+}
+
+_NATURE_TO_NUM: dict[str, int] = {
+    Nature.COLD.value: -2,
+    Nature.COOL.value: -1,
+    Nature.NEUTRAL.value: 0,
+    Nature.WARM.value: 1,
+    Nature.HOT.value: 2,
+}
+
+# 烹饪方式的通用修正（仅在第 1 层食材变体未命中时使用）
+COOKING_DELTA: dict[str, int] = {
+    "cold": -1,        # 冰镇/加冰
+    "deep_fried": 1,   # 煎炸
+    "grilled": 1,      # 烧烤
+    "stir_fried": 0,   # 炒
+    "steamed": 0,      # 蒸
+    "boiled": 0,       # 煮
+    "raw": 0,          # 生
+    "pickled": 0,      # 腌
+    "unknown": 0,
+}
+
+# 「加辛辣配料 +1」的识别关键词（看 note 与 name）
+SPICY_KEYWORDS: tuple[str, ...] = (
+    "辣", "麻辣", "重辣", "加辣", "辣椒", "花椒", "芥末", "咖喱", "胡椒", "孜然",
+)
+
+# 数值结果 → 四性的取整门限。
+# value 落在 [-0.5, 0.5) 记为平；±0.5 归到主导方向（由调用方给出 dominant），
+# 以避免"反向抵消后恰好为 0"把偏性抹平成平性。
+ROUND_THRESHOLD = 0.5
+
+
+def nature_to_num(nature: Nature | str | None) -> int | None:
+    """四性 → 数值。unknown 或无法识别返回 None（表示"没有值"，不是 0）。"""
+    if nature is None:
+        return None
+    key = nature.value if isinstance(nature, Nature) else str(nature)
+    return _NATURE_TO_NUM.get(key)
+
+
+def num_to_nature(value: float | int) -> Nature:
+    """数值 → 四性。四舍五入到最近的整数档，并夹在 [-2, 2]。"""
+    rounded = int(round(float(value)))
+    clamped = max(NATURE_MIN, min(NATURE_MAX, rounded))
+    return _NUM_TO_NATURE[clamped]
+
+
+def num_to_nature_with_dominant(value: float, dominant_sign: int) -> Nature:
+    """数值 → 四性，±0.5 的边界值归到主导方向。
+
+    dominant_sign: +1 表示主导项偏温/热，-1 表示偏寒/凉，0 表示无主导。
+    """
+    if abs(value) == ROUND_THRESHOLD and dominant_sign != 0:
+        return _NUM_TO_NATURE[dominant_sign]
+    return num_to_nature(value)
+
+
+def clamp(value: int) -> int:
+    """把数值夹到 [-2, 2]。例如"性热的羊肉再油炸"仍是热，不能变成"超热"。"""
+    return max(NATURE_MIN, min(NATURE_MAX, value))
+
+
+def shift_nature(nature: Nature | str | None, delta: int) -> Nature | None:
+    """在四性上叠加增量并夹取。unknown 参与修正仍返回 None。"""
+    base = nature_to_num(nature)
+    if base is None:
+        return None
+    return _NUM_TO_NATURE[clamp(base + delta)]
+
+
+def has_spicy_marker(text: str) -> bool:
+    """文本里是否出现"辛辣"信号（用于 +1 修正）。"""
+    if not text:
+        return False
+    return any(kw in text for kw in SPICY_KEYWORDS)
+
+
+def apply_cooking_fallback(
+    nature: Nature | str | None,
+    cooking: str | None,
+    text_hint: str = "",
+) -> tuple[Nature | None, list[str]]:
+    """烹饪修正层（第 2 层兜底）。返回 (修正后的四性, 修正说明列表)。
+
+    规则：蒸煮 0、煎炸 +1、烧烤 +1、冰镇 -1、加辛辣配料 +1。
+    辛辣与烹饪方式的增量会累加，再一并夹取。
+    """
+    base = nature_to_num(nature)
+    if base is None:
+        return None, []
+
+    notes: list[str] = []
+    delta = 0
+
+    # cooking 可能是 CookingMethod 枚举或纯字符串，统一取字符串值
+    cooking_key = ""
+    if cooking is not None:
+        cooking_key = cooking.value if hasattr(cooking, "value") else str(cooking)
+
+    cooking_delta = COOKING_DELTA.get(cooking_key, 0)
+    if cooking_delta:
+        delta += cooking_delta
+        label = {
+            "cold": "冰镇",
+            "deep_fried": "煎炸",
+            "grilled": "烧烤",
+        }.get(cooking_key, cooking_key)
+        notes.append(f"按{label}处理：{cooking_delta:+d}")
+
+    if has_spicy_marker(text_hint):
+        delta += 1
+        notes.append("含辛辣配料：+1")
+
+    if delta == 0:
+        return num_to_nature(base), notes
+
+    return _NUM_TO_NATURE[clamp(base + delta)], notes
+
+
+def combine(values: list[float], dominant_sign: int | None = None) -> tuple[float, int]:
+    """第二层合成：多样食材 → 一个数值。
+
+    规则（由使用者确认）：
+      1. **取绝对值最大者为主导项**；同向的其余项累加，封顶 ±2；
+      2. **反向项只做 50% 抵消，不翻转主导方向**；
+      3. 全部为 0（或空）时结果为 0（平）。
+
+    返回 (合成值, 主导方向符号)。主导方向符号用于 ±0.5 边界取整。
+
+    注意：本函数不处理烹饪修正——烹饪增量应在合成之后由调用方叠加。
+    """
+    if not values:
+        return 0.0, 0
+
+    if dominant_sign is None:
+        # 主导项 = 绝对值最大者。并列时（如 羊肉+2 与 苦瓜-2）
+        # 取**先出现的**那个，也就是在菜品描述里更靠前的食材，
+        # 通常对应主料。这一点很关键：否则并列时会因顺序不同给出不同结果。
+        best_idx = 0
+        for i, v in enumerate(values):
+            if abs(v) > abs(values[best_idx]):
+                best_idx = i
+        dominant_sign = 1 if values[best_idx] > 0 else (-1 if values[best_idx] < 0 else 0)
+
+    if dominant_sign == 0:
+        return 0.0, 0
+
+    same_dir = [v for v in values if v * dominant_sign > 0]
+    opposite = [v for v in values if v * dominant_sign < 0]
+
+    same_total = sum(same_dir)
+    # 同向累加封顶 ±2
+    same_total = max(-2.0, min(2.0, same_total))
+    if dominant_sign < 0:
+        same_total = max(-2.0, min(0.0, same_total))
+    else:
+        same_total = max(0.0, min(2.0, same_total))
+
+    # 反向 50% 抵消：反向值符号与主导相反，直接相加即自动起到抵消作用
+    result = same_total + 0.5 * sum(opposite)
+
+    # 不翻转主导方向：反向抵消最多把结果拉到 0，不能越过 0
+    if dominant_sign > 0:
+        result = max(0.0, result)
+    else:
+        result = min(0.0, result)
+
+    return result, dominant_sign

@@ -22,7 +22,7 @@ Page({
     constitution: 'balanced',
     loading: true,
     error: '',
-    parsed: { foods: [], uncertain: [], uncertainText: '' },
+    parsed: { foods: [], uncertain: [], uncertainText: '', unverifiedCount: 0, hasUnverified: false },
     recs: [],
     basis: { constitutionLabel: '', ruleHits: [], ruleText: '', guardrail: [] },
     meta: {},

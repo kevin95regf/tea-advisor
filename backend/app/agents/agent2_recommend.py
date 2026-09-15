@@ -22,6 +22,7 @@ from app.config import get_settings
 from app.domain.enums import CONSTITUTION_LABELS, NATURE_LABELS, Constitution
 from app.domain.models import BrewGuide, HerbInBlend, ParsedMeal, Recommendation
 from app.domain.safety import filter_by_constitution
+from app.services.food_lookup import CONF_SHOW_THRESHOLD
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,42 @@ def _candidate_lines(constitution: Constitution, limit: int = 12) -> str:
     return "\n".join(lines)
 
 
+def _build_unverified_section(parsed: ParsedMeal) -> str:
+    """把"未经验证"的食物单独列成一节，明确禁止作为搭配计算依据。
+
+    这是三层架构第三层的隔离手段：推测结果保留在解析结果里（信息不丢失），
+    但告知推荐器不得据此计算，避免未经审核的属性影响推荐方向。
+    """
+    unverified = [
+        f
+        for f in parsed.foods
+        if getattr(f, "verification", None) and f.verification.unverified
+    ]
+    if not unverified:
+        return ""
+
+    lines = ["## 以下食物的食性未经验证（不得作为搭配计算依据）"]
+    for food in unverified:
+        v = food.verification
+        reason = {
+            "llm": "模型推测",
+            "unresolved": "无法判定",
+        }.get(v.source, "表内条目尚未人工审核")
+        if v.confidence is not None and v.confidence < CONF_SHOW_THRESHOLD:
+            nature_text = "低于阈值，不予采信"
+        else:
+            nature_text = NATURE_LABELS.get(food.nature.value, "未知")
+        lines.append(f"- {food.name}：{nature_text}（{reason}，置信度 {v.confidence}）")
+
+    lines.append(
+        "\n约束：\n"
+        "1. 上述食物**不得作为选择饮片或计算用量的依据**，也不要因为它们而改变搭配方向。\n"
+        "2. 但如果你的推荐与该食物**直接相关**（例如正因为它偏于寒凉才要温中），"
+        "必须在 `fit_reason` 或 `cautions` 中注明「**此项食性未经验证**」。"
+    )
+    return "\n".join(lines)
+
+
 def build_user_prompt(
     parsed: ParsedMeal,
     constitution: Constitution,
@@ -77,18 +114,23 @@ def build_user_prompt(
     brief = _constitution_brief(constitution)
     exclude = "、".join(exclude_herbs) if exclude_herbs else "无"
 
-    return (
+    parts = [
         "## 用户背景\n"
         f"体质：{brief.get('label')}（{brief.get('one_line', '')}）\n"
         f"饮食原则：{'；'.join(brief.get('principles', []))}\n"
         f"应避免：{'、'.join(brief.get('avoid', []))}\n"
-        f"用户已排除的饮片：{exclude}\n\n"
+        f"用户已排除的饮片：{exclude}",
         "## 这一餐（由解析器输出）\n"
-        f"```json\n{parsed.model_dump_json(indent=2)}\n```\n\n"
-        "## 可选饮片清单（只能从这里挑，不得超出）\n"
-        f"{_candidate_lines(constitution)}\n\n"
-        "请按要求输出 JSON。"
-    )
+        f"```json\n{parsed.model_dump_json(indent=2)}\n```",
+        "## 可选饮片清单（只能从这里挑，不得超出）\n" f"{_candidate_lines(constitution)}",
+    ]
+
+    unverified_section = _build_unverified_section(parsed)
+    if unverified_section:
+        parts.append(unverified_section)
+
+    parts.append("请按要求输出 JSON。")
+    return "\n\n".join(parts)
 
 
 def recommend(

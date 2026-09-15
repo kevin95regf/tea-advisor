@@ -46,6 +46,24 @@ class ErrorBody(BaseModel):
 # ============================================================
 # Agent 1 产物：饮食解析
 # ============================================================
+class Verification(BaseModel):
+    """属性的来源与可信度。
+
+    三层架构的元数据：前端据此决定"要不要打待验证标记"，
+    Agent2 据此决定"能不能把这个属性当输入用"。
+    """
+
+    source: str = Field(
+        default="llm",
+        description="rule 硬规则库 / composed 组合推理 / llm 模型推测 / unresolved 无法判定",
+    )
+    confidence: float = Field(default=0.3, ge=0.0, le=1.0)
+    unverified: bool = Field(
+        default=True, description="true 表示未经中医食性验证，界面必须标注"
+    )
+    detail: str | None = Field(default=None, description="判定过程说明，便于排查")
+
+
 class ParsedFood(BaseModel):
     """单个食物条目。"""
 
@@ -55,6 +73,7 @@ class ParsedFood(BaseModel):
     flavors: list[Flavor] = Field(default_factory=list, description="五味")
     cooking: CookingMethod = Field(default=CookingMethod.UNKNOWN, description="烹饪方式")
     note: str | None = Field(default=None, description="补充说明，如 冰镇、重辣")
+    verification: Verification = Field(default_factory=Verification)
 
 
 class ParsedMeal(BaseModel):

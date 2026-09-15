@@ -35,6 +35,38 @@
   margin-bottom: 4rpx;
 }
 
+/* 标签 + 待验证标记作为一个整体换行，避免标记被挤到下一行 */
+.tag-wrap {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 12rpx 12rpx 0;
+}
+
+.tag-wrap .tag {
+  margin: 0;
+}
+
+/* 待验证标记：虚线小标签，与寒热属性标签明显区分 */
+.pending-mark {
+  font-size: 20rpx;
+  color: #a89f92;
+  border: 1rpx dashed #c9c0ad;
+  border-radius: 6rpx;
+  padding: 2rpx 8rpx;
+  margin-left: 8rpx;
+  white-space: nowrap;
+}
+
+.pending-note {
+  margin-top: 18rpx;
+  font-size: 23rpx;
+  color: #8a8177;
+  line-height: 1.7;
+  background: #f7f5f0;
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+}
+
 .meta-line {
   font-size: 25rpx;
   color: #6f675c;

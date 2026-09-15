@@ -14,13 +14,38 @@ from __future__ import annotations
 
 import json
 import logging
+from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any
 
 from app.config import get_settings
-from app.domain.enums import FLAVOR_LABELS, NATURE_LABELS
+from app.domain.enums import FLAVOR_LABELS, NATURE_LABELS, Nature
+from app.domain.models import Verification
+from app.domain.nature_math import COOKING_DELTA, apply_cooking_fallback
 
 logger = logging.getLogger(__name__)
+
+# ============================================================
+# 置信度约定（由使用者确认，低到高）
+#   低于 0.3 → 界面不显示寒热属性
+#   非 rule 来源 → 界面必须标注"待验证"
+# ============================================================
+CONF_RULE = 0.9             # 硬规则库：命中食性表（已审核则 unverified=False）
+CONF_COMPOSED = 0.6         # 组合推理 / 烹饪修正算出来的
+CONF_LLM = 0.3              # 模型推测
+CONF_UNRESOLVED = 0.1       # 无法判定
+CONF_SHOW_THRESHOLD = 0.3   # 低于此值不显示寒热属性
+
+
+@dataclass
+class ResolvedFood:
+    """单个食物的确定性判定结果。"""
+
+    name: str
+    nature: str
+    flavors: list[str] = field(default_factory=list)
+    entry: dict | None = None
+    verification: Verification = field(default_factory=Verification)
 
 # 处理方式 → 该方式下的属性变化（来自表里的 nature_change_rules 与条目 variant_nature）
 COOKING_LABELS = {
@@ -135,6 +160,188 @@ def names_match_basic(x: str, y: str) -> bool:
     if x in y or y in x:
         return True
     return len(x) >= 2 and len(y) >= 2 and x[:2] == y[:2]
+
+
+def _find_entry(name: str, cooking: str | None = None) -> tuple[dict | None, str | None]:
+    """按名称查条目。返回 (条目, 命中的词)。
+
+    匹配优先级（**顺序不可颠倒**）：
+      0. 条目规范名与 name **完全相同** —— 最高优先，直接返回。
+         这一级必须有，否则「希腊酸奶」会被「酸奶」抢走、「牛肉汉堡」会被「汉堡」抢走。
+      1. 条目规范名与 name 有包含关系。多个候选时取**包含关系更精确**的：
+         先比"规范名长度与该名字的差距"，差距小者胜；再比规范名长度。
+      2. 条目**关键词/别名**精确包含匹配（这一级永远低于名字匹配）。
+
+    为什么要严格分级：此前把名字与关键词混在一起按"命中词长度"打分，
+    导致「寿司」被匹配到「生鱼片」（其关键词含"寿司"）、
+    「薯条」被匹配到「炸鱼薯条」（其关键词含"薯条"，且名字更长而胜出）。
+    """
+    if not name:
+        return None, None
+    target = name.replace(" ", "").strip()
+
+    name_match: tuple[int, int, dict, str] | None = None   # (gap, 长度, 条目, 命中词)
+    keyword_match: tuple[int, dict, str] | None = None     # (命中词长度, 条目, 命中词)
+
+    for entry in _entries():
+        entry_name = (entry.get("name") or "").replace(" ", "").strip()
+        if not entry_name:
+            continue
+
+        # 第 0 级：完全同名
+        if entry_name == target:
+            return entry, entry_name
+
+        # 第 1 级：包含关系，按 gap 最小者优先
+        if entry_name in target or target in entry_name:
+            gap = abs(len(entry_name) - len(target))
+            key = (gap, len(entry_name))
+            if name_match is None or key < (name_match[0], name_match[1]):
+                name_match = (gap, len(entry_name), entry, entry_name)
+
+        # 第 2 级：关键词/别名匹配
+        for kw in list(entry.get("keywords") or []) + list(entry.get("aliases") or []):
+            k = (kw or "").replace(" ", "").strip()
+            if not k or k not in target:
+                continue
+            if keyword_match is None or len(k) > keyword_match[0]:
+                keyword_match = (len(k), entry, k)
+
+    if name_match is not None:
+        return name_match[2], name_match[3]
+    if keyword_match is not None:
+        return keyword_match[1], keyword_match[2]
+    return None, None
+
+
+def resolve_food(
+    name: str,
+    cooking: str | None = None,
+    llm_nature: str | None = None,
+    text_hint: str = "",
+) -> ResolvedFood:
+    """确定性判定单个食物的四性。这就是三层架构的入口。
+
+    返回的 ResolvedFood 直接对应接口里的 verification 块。
+
+    判定顺序：
+      1. 未命中表 → 保留 LLM 的判断但标 source=llm / 未验证 / 置信度 0.3；
+         若 LLM 也判不出（unknown）则降为 unresolved / 0.1。
+      2. 命中表 + 条目有该烹饪方式的变体 → **食材变体层**，直接用变体值。
+      3. 命中表 + 无变体 → **烹饪修正层**，按 ±1 通用规则做兜底。
+    烹饪修正永远在最后，且只在变体层未命中时生效。
+    """
+    entry, hit_word = _find_entry(name, cooking)
+
+    if entry is None:
+        # 表未覆盖：保留模型判断，但明确标记为推测
+        if llm_nature and llm_nature != Nature.UNKNOWN.value:
+            return ResolvedFood(
+                name=name,
+                nature=llm_nature,
+                flavors=[],
+                verification=Verification(
+                    source="llm",
+                    confidence=CONF_LLM,
+                    unverified=True,
+                    detail=f"「{name}」不在食性表内，属性为模型推测，未经中医食性验证",
+                ),
+            )
+        return ResolvedFood(
+            name=name,
+            nature=Nature.UNKNOWN.value,
+            flavors=[],
+            verification=Verification(
+                source="unresolved",
+                confidence=CONF_UNRESOLVED,
+                unverified=True,
+                detail=f"「{name}」不在食性表内，且无法推测属性",
+            ),
+        )
+
+    # 命中表：先看这一烹饪方式有没有专门的变体记录（食材变体层）
+    variants = entry.get("variant_nature") or {}
+    cooking_key = ""
+    if cooking is not None:
+        cooking_key = cooking.value if hasattr(cooking, "value") else str(cooking)
+
+    # 「模型给的名称」与「条目规范名」完全相同 → 表里就是这个食物本身，
+    # 它的 nature 是权威基线，**不叠加模型猜的烹饪修正**（否则模型随口给个
+    # grilled 就能把火腿三明治从平污染成温）。
+    #
+    # 注意这里比较的是**名称整体**，不是命中词：
+    # 「炸馒头」靠关键词"馒头"识别、「冰啤酒」靠包含关系识别，
+    # 两者名称与规范名都不同，属于"带烹饪信息的派生名称"，应当让烹饪层生效。
+    exact_name_hit = name.replace(" ", "").strip() == (entry.get("name") or "").replace(" ", "").strip()
+
+    base_nature = entry.get("nature") or Nature.UNKNOWN.value
+    nature = base_nature
+    layer_detail = ""
+    source = "rule"
+    cooking_cn = COOKING_LABELS.get(cooking_key, cooking_key) if cooking_key else ""
+
+    if cooking_key and cooking_key in variants:
+        nature = variants[cooking_key]
+        layer_detail = (
+            f"「{entry['name']}」{cooking_cn}后属性为{_cn(nature)}（食材变体层，查表直取）"
+        )
+    elif exact_name_hit:
+        form = f"{cooking_cn}后" if cooking_cn else "原形态下"
+        layer_detail = f"「{entry['name']}」{form}属性为{_cn(nature)}（查表直取）"
+        if cooking_key and COOKING_DELTA.get(cooking_key, 0):
+            layer_detail += "，未叠加模型推测的处理方式修正"
+    else:
+        # 由别名/关键词识别到，或名字与规范名不同 → 烹饪修正层兜底
+        adjusted, notes = apply_cooking_fallback(base_nature, cooking_key, text_hint)
+        if adjusted is not None:
+            nature = adjusted.value
+        if notes:
+            source = "composed"
+            layer_detail = f"「{entry['name']}」本为{_cn(base_nature)}，{'；'.join(notes)}"
+        else:
+            form = f"{cooking_cn}后" if cooking_cn else "原形态下"
+            layer_detail = f"「{entry['name']}」{form}属性为{_cn(nature)}"
+
+    # 置信度取决于审核状态（三态）：
+    #   approved → 硬规则库，高置信度且不打"待验证"
+    #   pending  → 高置信度但必须标"待验证"（方案 X）
+    #   rejected → 审核不通过，按组合推理档处理，不作为硬规则
+    status = entry.get("review_status")
+    if status is None:
+        # 兼容旧数据：只有 reviewed 布尔字段时按它推断
+        status = "approved" if entry.get("reviewed") else "pending"
+
+    if status == "approved":
+        confidence = CONF_RULE
+        unverified = False
+    elif status == "rejected":
+        confidence = CONF_COMPOSED
+        unverified = True
+        layer_detail += "（该条目审核未通过，仅供参考）"
+    else:  # pending
+        confidence = CONF_COMPOSED if source == "composed" else CONF_RULE
+        unverified = True
+        layer_detail += "（该条目尚未通过人工审核）"
+
+    if hit_word and hit_word != entry.get("name"):
+        layer_detail += f"（由「{hit_word}」识别为「{entry['name']}」）"
+
+    return ResolvedFood(
+        name=name,
+        nature=nature,
+        flavors=list(entry.get("flavors") or []),
+        entry=entry,
+        verification=Verification(
+            source=source,
+            confidence=confidence,
+            unverified=unverified,
+            detail=layer_detail or None,
+        ),
+    )
+
+
+def _cn(nature: str | None) -> str:
+    return NATURE_LABELS.get(nature or "unknown", "未知")
 
 
 def render_reference(text: str) -> str:
