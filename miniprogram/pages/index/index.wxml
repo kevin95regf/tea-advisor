@@ -21,18 +21,27 @@
 
   <!-- 输入 -->
   <view class="card">
-    <textarea
-      class="input"
-      value="{{text}}"
-      bindinput="onInput"
-      maxlength="500"
-      placeholder="例：中午吃了碗麻辣烫，还喝了杯冰可乐，米饭没吃完"
-      placeholder-class="ph"
-      auto-height
-      show-confirm-bar="{{false}}"
-    />
+    <!-- 标签行：让"这里要输入"一目了然 -->
+    <view class="field-head">
+      <text class="field-label">描述</text>
+      <text class="counter">{{text.length}}/500</text>
+    </view>
 
-    <view class="counter">{{text.length}}/500</view>
+    <view class="input-box">
+      <textarea
+        class="input"
+        value="{{text}}"
+        bindinput="onInput"
+        maxlength="500"
+        placeholder="在这里写你今天吃了什么…"
+        placeholder-class="ph"
+        auto-height
+        show-confirm-bar="{{false}}"
+        cursor-spacing="24"
+      />
+    </view>
+
+    <view class="examples-tip">或者点一句示例直接填入：</view>
 
     <!-- 示例，点一下直接填入 -->
     <view class="examples">

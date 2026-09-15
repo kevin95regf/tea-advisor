@@ -14,27 +14,50 @@
   margin-top: 10rpx;
 }
 
+/* 标签行 */
+.field-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14rpx;
+}
+
+.field-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2e2a24;
+}
+
+.counter {
+  font-size: 22rpx;
+  color: #b3aca1;
+}
+
+/* 输入区：明显的边框和底色，避免空着时看不见 */
+.input-box {
+  background: #fdfcfa;
+  border: 3rpx solid #d8cfae;
+  border-radius: 18rpx;
+  padding: 22rpx;
+}
+
 .input {
   width: 100%;
-  min-height: 180rpx;
-  font-size: 30rpx;
+  min-height: 160rpx;
+  font-size: 31rpx;
   line-height: 1.7;
-  background: #fdfcfa;
-  border: 1rpx solid #e6e1d8;
-  border-radius: 16rpx;
-  padding: 22rpx;
-  box-sizing: border-box;
+  color: #2e2a24;
+  background: transparent;
 }
 
 .ph {
   color: #b3aca1;
 }
 
-.counter {
-  text-align: right;
-  font-size: 22rpx;
-  color: #b3aca1;
-  margin-top: 8rpx;
+.examples-tip {
+  font-size: 24rpx;
+  color: #8a8177;
+  margin: 26rpx 0 14rpx;
 }
 
 .examples {
