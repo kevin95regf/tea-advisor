@@ -201,6 +201,12 @@ def find_temperature_in_text(text: str) -> tuple[int, str, str] | None:
     return None
 
 
+# 备注通道最大长度。超过这个长度就不再认为是"纯温度描述"——
+# 模型的 note 常常是复述菜名（如 note="麻辣烫 麻辣烫"），
+# 里面的"烫"会被误当成升温词。要求备注足够短，能挡住这类噪声。
+NOTE_MAX_LEN = 10
+
+
 def resolve_temperature(name: str = "", note: str = "") -> TemperatureSignal | None:
     """**温度前缀判定的唯一入口。** 同时扫描食物名与备注，返回结构化信号。
 
@@ -210,9 +216,12 @@ def resolve_temperature(name: str = "", note: str = "") -> TemperatureSignal | N
     现在两层共用本函数，新增前缀只需改 CHILL_PREFIXES / HEAT_PREFIXES 一处。
 
     扫描方式按字段区分，这是刻意的：
-      - **食物名**：只认开头的温度词，避免「冰淇淋」「凉皮」「热狗」被误判
-      - **备注**：在任意位置查找，因为备注通常就是"去冰""冰镇"这类简短描述，
-        温度词位置不定（实测模型会输出 note=去冰）
+
+    - **食物名**：只认**开头**的温度词，避免「冰淇淋」「凉皮」「热狗」被误判。
+    - **备注**：只在**任意位置**查找，且备注本身要短（NOTE_MAX_LEN 以内）。
+      备注里通常写的是"去冰""冰镇""热的"这类简短描述，位置不定（实测模型会
+      输出 note=去冰，也会输出 note=麻辣烫 麻辣烫 这种复述），
+      所以用长度上限挡掉复述型备注，避免把菜名里的"烫"当成升温词。
 
     优先级：食物名 > 备注。名字里的温度字是用户最直接的表达，
     备注只在名字没给出温度信息时才采信。
@@ -224,7 +233,11 @@ def resolve_temperature(name: str = "", note: str = "") -> TemperatureSignal | N
             delta=delta, prefix=prefix, stripped=stripped, from_field="name"
         )
 
-    found = find_temperature_in_text(note or "")
+    note_text = (note or "").replace(" ", "").strip()
+    if not note_text or len(note_text) > NOTE_MAX_LEN:
+        return None
+
+    found = find_temperature_in_text(note_text)
     if found:
         delta, prefix, stripped = found
         return TemperatureSignal(

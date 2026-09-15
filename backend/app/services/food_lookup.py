@@ -408,15 +408,26 @@ def resolve_food(
             layer_detail += "，未叠加模型推测的处理方式修正"
     else:
         # 由别名/关键词识别到，或名字与规范名不同 → 烹饪修正层兜底
-        adjusted, notes = apply_cooking_fallback(base_nature, cooking_key, text_hint)
-        if adjusted is not None:
-            nature = adjusted.value
-        if notes:
-            source = "composed"
-            layer_detail = f"「{entry['name']}」本为{_cn(base_nature)}，{'；'.join(notes)}"
-        else:
+        #
+        # 但**有温度信号时不走这一层**：温度语义已由温度层独占处理，
+        # 模型若同时给出 cooking=cold，会让同一个"冰"被算两遍。
+        # 实测「去冰奶茶」曾因此被判成寒（奶茶平 → 模型 cooking=cold 扣一档
+        # → 温度前缀再扣一档），而正确答案是凉。
+        if temp_delta:
             form = f"{cooking_cn}后" if cooking_cn else "原形态下"
             layer_detail = f"「{entry['name']}」{form}属性为{_cn(nature)}"
+            if cooking_key and COOKING_DELTA.get(cooking_key, 0):
+                layer_detail += "，温度语义由温度层处理，不叠加模型推测的处理方式"
+        else:
+            adjusted, notes = apply_cooking_fallback(base_nature, cooking_key, text_hint)
+            if adjusted is not None:
+                nature = adjusted.value
+            if notes:
+                source = "composed"
+                layer_detail = f"「{entry['name']}」本为{_cn(base_nature)}，{'；'.join(notes)}"
+            else:
+                form = f"{cooking_cn}后" if cooking_cn else "原形态下"
+                layer_detail = f"「{entry['name']}」{form}属性为{_cn(nature)}"
 
     # ---- 温度前缀叠加（纯规则）----
     # 放在最后：变体层与烹饪层都算完之后，温度再修正一档。
