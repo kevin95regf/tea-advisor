@@ -89,7 +89,10 @@ def calibrate_parsed(parsed: ParsedMeal, text: str = "") -> ParsedMeal:
 
     resolved_any = 0
     for food in parsed.foods:
-        hint = " ".join(filter(None, [food.name, food.note or "", text]))
+        # text_hint 只取**该食物自己**的名字与备注。
+        # 曾经这里传的是整句用户口述，导致跨食材串味：
+        # 「中午吃了碗兰州拉面，还喝了杯麻辣烫」里的"辣"会把兰州拉面判成温。
+        hint = " ".join(filter(None, [food.name, food.note or ""]))
         try:
             resolved = resolve_food(
                 name=food.name,
@@ -98,7 +101,8 @@ def calibrate_parsed(parsed: ParsedMeal, text: str = "") -> ParsedMeal:
                 text_hint=hint,
             )
         except Exception:
-            logger.warning("校准「%s」时出错，保留模型判断", food.name, exc_info=True)
+            # 校准失败不能让整个解析失败，但必须留下可排查的痕迹
+            logger.error("校准「%s」时出错，保留模型判断", food.name, exc_info=True)
             continue
 
         food.verification = resolved.verification

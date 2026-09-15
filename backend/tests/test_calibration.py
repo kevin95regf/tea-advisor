@@ -143,6 +143,32 @@ def test_low_confidence_keeps_unknown_nature() -> None:
     assert resolved.verification.confidence == CONF_UNRESOLVED
 
 
+def test_no_cross_food_contamination_from_sentence() -> None:
+    """整句口述里的信息不得串到其他食物上。
+
+    回归用例：`calibrate_parsed` 曾把整句用户口述当作 text_hint 传给每一项，
+    于是「中午吃了碗兰州拉面，还喝了杯麻辣烫」里的"辣"会把**兰州拉面**判成温。
+    修复后 text_hint 只取该食物自己的名字与备注。
+    """
+    meal = make_meal(
+        ParsedFood(name="兰州拉面", nature=Nature.WARM, cooking=CookingMethod.BOILED),
+        ParsedFood(name="麻辣烫", nature=Nature.HOT, cooking=CookingMethod.BOILED, note="麻辣汤底"),
+    )
+    out = calibrate_parsed(meal, "中午吃了碗兰州拉面，还喝了杯麻辣烫")
+    by_name = {f.name: f for f in out.foods}
+    assert by_name["兰州拉面"].nature == Nature.NEUTRAL, "不应被邻项的辣味串味成温"
+    assert by_name["麻辣烫"].nature == Nature.HOT
+
+
+def test_spicy_note_still_applies_to_own_food() -> None:
+    """该食物自己的备注里有辛辣信号时，修正仍然生效。"""
+    meal = make_meal(
+        ParsedFood(name="烤馒头", nature=Nature.NEUTRAL, cooking=CookingMethod.GRILLED, note="撒了辣椒面"),
+    )
+    out = calibrate_parsed(meal)
+    assert out.foods[0].nature in (Nature.WARM, Nature.HOT)
+
+
 # ============================================================
 # 置信度与把握度
 # ============================================================
