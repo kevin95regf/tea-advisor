@@ -107,12 +107,19 @@ Error: dsh: .env sets "DSH_HOME", which only the launching environment may set
 
 ```powershell
 cd <仓库根>
-Copy-Item .env.example .env                          # 必须（后端与模型参数）
+Copy-Item .env.example .env                          # 可选：不配也能跑，全部参数都有默认值
 Copy-Item credentials.env.example credentials.env    # 可选：想用服务端兜底 Key 才需要
 notepad credentials.env      # 填入 DEEPSEEK_API_KEY 与 DSH_HOME（纯英文绝对路径）
 ```
 
+两份 .env 都是**可选**的：
+
+* **不配 `.env`** → 用内置默认值（`TA_BACKEND=direct`、`deepseek-v4-flash`、`TA_REASONING_EFFORT=low`）。
+  这反而更安全：少一个文件就少一次"把 `DSH_*` 写进 `.env` 导致 dsh 拒绝启动"的机会。
+* **不配 `credentials.env`** → 用户在界面里填自己的 Key 即可；不填则返回 `NO_API_KEY`。
+
 两个真实配置文件都已被 `.gitignore` 忽略（模板文件会入库）。
+**实测：全新 clone 不配任何 .env 也能跑通 `pytest`（230 项）与 `--resolve` 纯规则链路。**
 
 ```powershell
 # 环境与数据自检（秒级，不调模型）
