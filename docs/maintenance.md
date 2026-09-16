@@ -1,0 +1,648 @@
+# 维护与交接文档
+
+> **这份文档给维护者。** 其它三份文档的分工：
+>
+> | 文档 | 给谁 | 回答什么问题 |
+> |---|---|---|
+> | `README.md` | 使用者 | 这是什么、怎么装、怎么用 |
+> | `CONTRIBUTING.md` | 贡献者 | 哪些是契约、数据怎么改、PR 要走什么流程 |
+> | `docs/three-layer-architecture.md` | 想改判定逻辑的人 | 三层架构的设计原理、数值编码、**已知局限** |
+> | **本文** | **维护者** | 全貌、数据流、运维、验证基线、排错手册、以及"当初为什么这么写" |
+>
+> 维护时的第一原则：**改任何东西之前，先看 `CONTRIBUTING.md` 第 4 节的十条契约。**
+> 那十条是踩过坑之后钉下来的，不是装饰。
+
+---
+
+## 1. 项目是什么、现在到哪一步
+
+### 1.1 定位
+
+**中医食性的确定性判定层 + 本地运行的饮食茶饮建议助手。**
+
+核心主张：**食物是寒是热，不靠模型的语感猜，而是查表 + 纯规则推导，并且每一档结论都能追溯来源。**
+模型只负责两件事——把自由文本解析成食物列表、把结论写成人话——而且这两件事都可以整个绕过。
+
+### 1.2 两种用法
+
+| 用法 | 入口 | 是否需要 API Key |
+|---|---|---|
+| 当**库**用（只要判定） | `resolve_food()` / `match_foods()` / `nature_math.*` | **不需要**，零成本、零网络 |
+| 当**助手**用（要建议） | `ui/terminal/chat.py`、`ui/web/`、`POST /api/analyze` | 需要（用户自带或服务端兜底） |
+
+### 1.3 当前状态
+
+| 能力 | 状态 |
+|---|---|
+| 三层判定（`resolve_food`） | ✅ 完整，含温度前缀层与准入校验 |
+| 双 Agent 协作 | ✅ 真实模型跑通 |
+| 安全护栏（白名单/剂量/禁用表述/高风险人群） | ✅ 机器强制 |
+| JSON 护栏（围栏剥离/校验/重试） | ✅ |
+| 规则兜底（模型不可用时降级） | ✅ |
+| 终端壳 | ✅ `--resolve` / `--offline` / 交互三种用法 |
+| 网页壳 | ✅ 含测试指引、置信度标注、API Key 输入 |
+| **用户自带 API Key（逐请求）** | ✅ 默认直连后端支持 |
+| 服务端兜底 Key | ✅ 可选，响应标注 `key_source` |
+| 数据表**人工审核** | ❌ **146 条全部 `pending`**（刻意的，见 §9.3） |
+| 第二层 `combine()` 接入主流程 | ❌ 已实现并测试，但未接线 |
+| 食性表规模 | 146 条（128 食材 + 18 茶饮） |
+| 饮片白名单 | 34 味 |
+| 体质 | 5 型 |
+
+### 1.4 规模（随代码变动，更新时请重测）
+
+| 层 | 文件 | 行数 | 说明 |
+|---|---|---|---|
+| `core/app/domain` | 5 | 828 | **核心判定，纯逻辑，不依赖 Web 框架** |
+| `core/app/services` | 4 | 940 | 编排与规则兜底 |
+| `core/app/agents` | 8 | 972 | LLM 层（含两个后端） |
+| `core/app/api` | 3 | 90 | HTTP 适配，极薄 |
+| `core/tests` | 9 | 1,696 | **230 项，全离线，约 0.7 秒** |
+| `core/scripts` | 7 | 1,221 | 运维/自检脚本 |
+| `ui/terminal` | 1 | 358 | 终端壳 |
+| `ui/web` | 1 | 434 | 网页壳 |
+| **合计** | | **6,539** | |
+
+数据：`food_properties.json` 66 KB、`herbs.json` 22 KB、`constitution.json` 2.6 KB。
+
+> 判断架构是否还健康的快速指标：**`domain` + `services` 的行数占比**。
+> 这两层是真正的资产（1,768 行），其余是壳与测试。若这两层开始膨胀，
+> 说明有人在把界面逻辑或模型逻辑塞进核心层。
+
+---
+
+## 2. 一次请求的完整数据流
+
+以网页端点「给我建议」为例，标注每一步的落点与**不变量**：
+
+```
+浏览器
+  │  POST /api/analyze
+  │  Authorization: Bearer <用户Key>   （可选）
+  │  {"text": "...", "constitution_override": "..."}
+  ▼
+core/app/api/analyze.py::analyze_endpoint
+  │  auth.extract_api_key(header)      → 裸 Key 或 None（格式不对也返回 None，不抛 500）
+  │  ⚠️ 不变量：此处及之后，Key 绝不进日志/响应/异常
+  ▼
+core/app/services/orchestrator.py::analyze(request, *, api_key)
+  │  ① 凭据前置校验（早于一切模型调用）
+  │     · 有用户 Key 但后端不支持 → AnalyzeError("USER_KEY_UNSUPPORTED")
+  │     · 无任何 Key           → AnalyzeError("NO_API_KEY")
+  │  ② 高风险人群检查 detect_high_risk(text)
+  │     └─ 命中 → 直接返回，recommendations=[]，meta.key_source="not_used"
+  │        ⚠️ 不变量：此分支**不调用模型**，秒回、零成本
+  ▼
+core/app/agents/agent1_diet.py::parse_diet(text, meal_time, api_key=...)
+  │  ③ render_reference(text)        → 先查表，把命中的条目属性作为参考注入提示词
+  │  ④ runtime.run(user_prompt, system_prompt=...)   ← 后端在此分叉
+  │     · TA_BACKEND=direct → DirectAPIRuntime（逐请求 Key）
+  │     · TA_BACKEND=dsh    → HarnessRuntime（Key 绑子进程，不接受逐请求 Key）
+  │  ⑤ json_guard.validate_with_retry(ParsedMeal, ...)  失败重试 1 次
+  │  ⑥ calibrate_parsed(parsed, text)  ★ 三层架构的落地点
+  │     └─ 逐项调 resolve_food，用确定性结果**覆盖**模型的属性判断
+  │        ⚠️ 不变量：命中表时以表为准，模型的值只作为第三层兜底
+  ▼
+core/app/services/food_lookup.py::resolve_food(name, cooking, llm_nature, text_hint, note)
+  │  ⑦ 判定顺序（**不可颠倒**）：
+  │     温度前缀层准入校验 → 查表精确同名 → 食材变体层 → 烹饪修正层 → 温度前缀叠加
+  │     产出 ResolvedFood(nature, flavors, entry, verification{source, confidence, unverified, detail})
+  │  ⑧ 置信度：rule 0.9 / composed 0.6 / llm 0.3 / unresolved 0.1
+  ▼
+core/app/agents/agent2_recommend.py::recommend(parsed, constitution, exclude, api_key=...)
+  │  ⑨ _candidate_lines(constitution) → 用 safety.filter_by_constitution 收敛候选集
+  │     ⚠️ 不变量：模型只能在白名单内选，**无方可开**
+  │  ⑩ _build_unverified_section(parsed) → 把未验证项单列并禁止用作搭配依据
+  ▼
+core/app/services/orchestrator.py::_sanitize_recommendations
+  │  ⑪ safety.check_blend        → 白名单 / 剂量裁剪 / 用户排除
+  │  ⑫ safety.scan_free_text     → 禁用表述（"治疗""根治"…）
+  │  ⑬ safety.check_constitution_fit → 体质契合提示
+  │     ⚠️ 不变量：被拦的内容绝不原样返回；全被拦则整条作废并走规则兜底
+  │  ⑭ 推荐为空 → matcher.fallback_recommend（meta.degraded=True）
+  ▼
+AnalyzeResponse  ← 必带 disclaimer；meta 带 key_source / backend / 耗时 / degraded
+```
+
+### 2.1 三个"绕过模型"的入口（维护时别把它们弄丢）
+
+| 入口 | 何时用 | 成本 |
+|---|---|---|
+| `food_lookup.resolve_food()` | 只要属性判定 | 0 |
+| `ui/terminal/chat.py --offline` | 无 Key 也要给建议（`match_foods` + `resolve_food` + `matcher`） | 0 |
+| 高风险人群分支 | 命中孕期/慢性病/服药等 | 0（不调用模型） |
+
+---
+
+## 3. 模块地图与改动风险
+
+| 文件 | 行数 | 职责 | 改动风险 |
+|---|---|---|---|
+| `domain/enums.py` | 93 | 四气/五味/时段/烹饪/体质枚举 + 中文标签（含 `SOURCE_LABELS`） | 低（加取值安全，改取值名=改契约） |
+| `domain/nature_math.py` | 295 | 四性数值轴、`shift_nature`、`combine`、**温度前缀唯一入口** | **高** |
+| `domain/models.py` | 227 | 请求/响应/中间结构**唯一真源** | **高**（改字段名=改对外契约） |
+| `domain/safety.py` | 212 | 白名单/剂量/禁用表述/高风险人群/体质收敛 | **高**（安全层） |
+| `services/food_lookup.py` | 475 | `resolve_food` 三层判定、`match_foods`、`render_reference` | **高** |
+| `services/matcher.py` | 214 | 规则兜底、体质默认搭配 | 中 |
+| `services/orchestrator.py` | 250 | 编排、凭据前置校验、护栏调用、降级 | **高** |
+| `agents/runtime.py` | 209 | 后端选择器、dsh 后端、`AgentRun`、`CredentialError` | 中 |
+| `agents/direct_api.py` | 188 | 直连官方 API 后端、思考参数映射、错误文案 | 中 |
+| `agents/agent1_diet.py` | 168 | 解析器 + `calibrate_parsed` | **高** |
+| `agents/agent2_recommend.py` | 186 | 推荐器 + 未验证项隔离 | 中 |
+| `agents/json_guard.py` | 159 | JSON 提取/校验/重试 | 中（最容易被低估） |
+| `agents/prompts/*.md` | 61 | 两个 system prompt | 中（改完必须跑真实回归） |
+| `api/auth.py` | 32 | Bearer 头 → 裸 Key | 低 |
+| `api/analyze.py` | 57 | 路由 + 凭据错误码映射 | 低 |
+| `config.py` | 96 | 环境变量集中读取（**Key 的唯一读取点**） | 低 |
+| `main.py` | 162 | FastAPI 入口、`/`、`/healthz`、`/api/meta` | 低 |
+| `ui/terminal/chat.py` | 358 | 终端壳（仅标准库） | 低 |
+| `ui/web/index.html` | 434 | 网页壳（单文件，内联 JS） | 低 |
+
+---
+
+## 4. 三层判定：常量与不变量
+
+完整设计见 `docs/three-layer-architecture.md`。这里只列**改代码时必须记住的常量**：
+
+| 常量 | 值 | 位置 | 含义 |
+|---|---|---|---|
+| `CONF_RULE` | 0.9 | `food_lookup` | 表命中（已审核不标注） |
+| `CONF_COMPOSED` | 0.6 | `food_lookup` | 组合推理 / 烹饪修正 |
+| `CONF_LLM` | 0.3 | `food_lookup` | 模型推测 |
+| `CONF_UNRESOLVED` | 0.1 | `food_lookup` | 无法判定 |
+| `CONF_SHOW_THRESHOLD` | **0.3** | `food_lookup` | **低于此值界面不显示寒热属性**（数据仍传 Agent2） |
+| `COOKING_DELTA` | 冰镇 −1 / 煎炸 +1 / 烧烤 +1 | `nature_math` | 仅在第 1 层未命中时生效 |
+| `SPICY_KEYWORDS` | 辣/麻辣/花椒/孜然… | `nature_math` | 命中即 +1（**注意它会受模型 note 措辞影响**，见 §10.11） |
+| `CHILL_PREFIXES` / `HEAT_PREFIXES` | 冰/去冰/加热… | `nature_math` | **新增前缀只改这一处** |
+| 四性编码 | 寒 −2 / 凉 −1 / 平 0 / 温 +1 / 热 +2 | `nature_math` | `unknown` **没有数值**（`None`），不是 0 |
+| `review_status` | approved / pending / rejected | 数据 | 三态，不是布尔 |
+
+### 4.1 四条不可颠倒 / 不可分散的不变量
+
+1. **温度判定只有一个入口** `nature_math.resolve_temperature(name, note)`。
+   历史上解析层用前缀匹配、提示词层用子串匹配，两套逻辑漂移过（「冰淇淋」在解析层被正确排除，
+   在提示词层却被当成冰镇）。
+2. **`resolve_food` 的层序**：温度前缀准入 → 精确同名 → 食材变体层 → 烹饪修正层 → 温度叠加。
+   表里精确的变体值会被通用规则破坏，所以变体层必须优先于通用修正。
+3. **规范名精确命中时不叠加模型给的烹饪修正**（无法区分"可靠证据"与"猜测"）。
+4. **中文标签与显示阈值只从 `/api/meta` 取**（终端壳则直接 `import app.domain.enums`）。
+   两个壳都不得各自硬编码映射表——这条已有回归测试（变异测试）钉住。
+
+---
+
+## 5. 凭据与后端：完整矩阵
+
+### 5.1 两个后端
+
+| | `direct`（默认） | `dsh` |
+|---|---|---|
+| 实现 | `agents/direct_api.py` | `agents/runtime.py::HarnessRuntime` |
+| 传输 | httpx 直连官方 OpenAI 兼容端点 | DeepSeekHarness 子进程（stdio） |
+| 启动成本 | 无 | 首次约 1.4–2.2 秒 |
+| **逐请求 Key** | ✅ 支持 | ❌ **不支持**（Key 写进子进程环境，`run()` 无凭据参数） |
+| 运行时目录 | 不需要 | 需要 `DSH_HOME`，会写 profile |
+| 输入 token | 只有本项目提示词 | 额外带 ~9,000 token 的 harness 上下文（走缓存价） |
+| 无状态 | ✅ 每次调用独立 | 复用 `session_id` 会延续同一段持久对话 |
+| 用途 | **生产默认** | 调试 / 对照 |
+
+### 5.2 行为矩阵（维护时最常查的表）
+
+| 后端 | 用户带 Key | 服务端有兜底 Key | 结果 |
+|---|---|---|---|
+| direct | ✅ | 任意 | 用用户 Key，`meta.key_source="user"` |
+| direct | ❌ | ✅ | 用兜底 Key，`meta.key_source="server"` |
+| direct | ❌ | ❌ | `400 NO_API_KEY`（提示指向 `credentials.env`） |
+| direct | ✅ 但被服务方拒绝 | 任意 | `400 API_KEY_REJECTED`（401/402/403 映射） |
+| dsh | ✅ | ✅ | `400 USER_KEY_UNSUPPORTED` — **绝不静默改用服务端 Key** |
+| dsh | ❌ | ✅ | 用兜底 Key，`key_source="server"` |
+| 任意 | 任意 | 任意，且命中高风险人群 | 不调用模型，`key_source="not_used"` |
+
+> **为什么 dsh + 用户 Key 要报错而不是回退**：静默回退会让用户以为自己填的 Key 生效了、
+> 以为费用记在自己账上。报错比"看起来能用"更安全。
+
+### 5.3 Key 的流向与安全规则
+
+```
+浏览器 localStorage/sessionStorage
+  → Authorization: Bearer <key>
+  → api/auth.py::extract_api_key()
+  → orchestrator.analyze(api_key=...)
+  → parse_diet / recommend(api_key=...)
+  → runtime.run(api_key=...)
+  → httpx headers={"Authorization": f"Bearer {key}"}
+```
+
+**硬规则（`CONTRIBUTING.md` 契约 9，配套测试 `tests/test_key_handling.py`）：**
+
+* 不得记录 `Authorization` 头或 Key（连掩码也不要加进请求路径）
+* 不得把 Key 放进响应体、`HTTPException(detail=...)` 或异常信息
+* 上游报错时**不回显响应体**（官方 401 响应体自带掩码 Key，但一律不回显更好守）
+* 允许记录的只有：模型名、接口主机名、耗时、token 用量、`session_id`
+
+---
+
+## 6. 运维手册
+
+### 6.1 四种起法
+
+```powershell
+# ① 最省事：双击（Windows）
+start-web.cmd          # 起服务 + 4 秒后自动开浏览器；TA_NO_BROWSER=1 可跳过
+start-terminal.cmd     # 终端版
+
+# ② 网页版（手打）
+cd core
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --port 8000
+
+# ③ 终端版
+core\.venv\Scripts\python.exe ui\terminal\chat.py              # 交互（走模型）
+core\.venv\Scripts\python.exe ui\terminal\chat.py --offline "..."  # 离线（0 成本）
+core\.venv\Scripts\python.exe ui\terminal\chat.py --resolve 冰啤酒   # 纯查表（0 成本）
+
+# ④ 只想用判定层（无需服务、无需 Key）
+core\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'core'); from app.services.food_lookup import resolve_food; print(resolve_food(name='冰啤酒').nature)"
+```
+
+> ⚠️ **不要用裸 `pip` / `uvicorn`**：`core/.venv` 的目录名被改过（`backend` → `core`），
+> Windows 的控制台脚本 shim 把绝对路径写死在 exe 里，已失效。一律用 `python -m`。
+> 想修就重建 venv（见 §10.5）。
+
+### 6.2 端口 / 绑定 / CORS 约束
+
+| 项 | 值 | 说明 |
+|---|---|---|
+| 默认端口 | 8000（`APP_PORT`） | |
+| 默认绑定 | `127.0.0.1` | **只本机可访问**。要让局域网访问必须显式 `--host 0.0.0.0` |
+| CORS | 只放行 `http://127.0.0.1:<port>` 与 `http://localhost:<port>` | 界面与接口同源，本来不需要 CORS；**绝不要改回 `["*"]`** |
+
+> ⚠️ 若用 `--host 0.0.0.0` 暴露到局域网：CORS 只能挡浏览器 JS，**挡不住直连**。
+> 那个场景请把 `credentials.env` 留空（强制用户自带 Key），否则任何人都能消耗你的额度。
+
+### 6.3 日志
+
+| 位置 | 内容 |
+|---|---|
+| 进程 stdout/stderr | uvicorn 访问日志 + `app.*` 的 INFO（直连后端会打印 model/host/耗时/token 用量） |
+| `core/var/dsh_runtime.log` | **仅 dsh 后端**的子进程 stderr（排查 dsh 启动问题看它） |
+| `dsh-home/` | **仅 dsh 后端**的 profile 与会话记录（含完整对话，已被 gitignore） |
+
+**日志里不会出现 Key** —— 这是有测试保证的（§7.3）。
+
+### 6.4 关闭与清理
+
+```powershell
+# 停服务：Ctrl+C；或按端口找进程
+Get-NetTCPConnection -LocalPort 8000 -State Listen | ForEach-Object { Get-Process -Id $_.OwningProcess }
+Get-Process | Where-Object { $_.ProcessName -match 'python' } | Stop-Process -Force
+```
+
+> ⚠️ **改完代码记得重启服务**：uvicorn 不加 `--reload` 不会热加载。
+> 曾因此出现"改了代码但请求打到旧进程、报出莫名错误"（见 §10.1）。
+
+---
+
+## 7. 验证与回归
+
+### 7.1 四道验证（成本从低到高）
+
+| # | 命令 | 耗时 | 需要 Key | 费用 |
+|---|---|---|---|---|
+| ① | `python scripts\check_setup.py` | 秒级 | 否 | 0 |
+| ② | `python scripts\smoke_offline.py` | 秒级 | 否 | 0 |
+| ③ | `python -m pytest -q` | 约 0.7 秒 | 否 | 0 |
+| ④ | `python scripts\smoke_agents.py` | 60–90 秒 | **是** | 约 3.5 分 |
+| ⑤ | `python scripts\test_food_accuracy.py` | 60–120 秒 | **是** | 约 3.7 分 |
+
+（均在 `core/` 目录下执行）
+
+### 7.2 基线（2026-09，direct 后端启用前后实测）
+
+| 指标 | dsh + low | direct + low | direct + off |
+|---|---|---|---|
+| 属性准确率（23 语料 / 29 断言） | 29/29 (100%) | 28/29 (97%) | **29/29 (100%)** |
+| unknown 占比 | 0/35 (0%) | 0/34 (0%) | 0/34 (0%) |
+| Agent1 耗时 | 1.9–4.3 s | 1.4–2.0 s | 1.0–1.1 s |
+| Agent2 耗时 | 8.2–21.8 s | 11.9–13.6 s | **4.1–4.6 s** |
+| 全链路 | 11.3–24.9 s | 12.6–15.6 s | **5.1–5.7 s** |
+| 推荐条数 | 2–3 | 2–3 | 2–3 |
+| 单元测试 | 183 | 230 | 230 |
+
+**`direct + low` 那 1 项失败已定位，不是回归**：Agent1 偶然把"配辣椒油"写进 `note`，
+合法触发了 `SPICY_KEYWORDS` 的 +1 规则（「面条」平 → 温）。见 §10.11。
+
+存档位置（本机，不入库）：`D:\work\tea-advisor-baselines\`。
+
+### 7.3 各脚本能测到什么、**测不到**什么（重要）
+
+| 脚本 | 测到的 | **测不到的** |
+|---|---|---|
+| `pytest` | 判定逻辑、护栏、JSON 护栏、凭据与日志安全（230 项，全离线） | 真实模型行为；HTTP 层在缺 `[web]` extra 时会自动跳过 |
+| `test_food_accuracy.py` | **只有 Agent1 的属性判定** | **推荐质量、Agent2 的任何东西、文案措辞、注意事项是否到位** |
+| `smoke_agents.py` | 运行时启动、原始往返、Agent1 解析、全链路格式与条数 | 属性准确率（无断言，只打印）；安全性 |
+| `smoke_offline.py` | 数据层→解析→规则兜底→护栏，**不调模型** | 模型相关的任何事 |
+
+> **改动 Agent2 或提示词时，别只看 `test_food_accuracy.py` 通过就收工** ——
+> 它根本不碰 Agent2。必须人工读一遍 `smoke_agents.py` 的输出。
+
+### 7.4 已知的"期望脆弱点"
+
+`test_food_accuracy.py` 的语料里有几条期望值对**模型措辞**敏感，不是判定逻辑不稳：
+
+| 语料 | 期望 | 为何会飘 |
+|---|---|---|
+| 中午吃了碗兰州拉面 | `neutral` | Agent1 若在 `note` 写"配辣椒油/加辣"，会合法触发辛辣 +1 → `warm` |
+| 早上…蔬菜沙拉 | `cool` | 实测出现过 `cold`（凉/寒的程度差异有主观性，脚本对冰饮类已放宽为元组） |
+
+改语料前请先确认是"判定错了"还是"模型这次这么说的"。
+
+---
+
+## 8. 成本模型
+
+### 8.1 定价（`deepseek-flash`，元/百万 token）
+
+| | 空闲时段 | 高峰时段 |
+|---|---|---|
+| 输入（缓存命中） | 0.02 | 0.04 |
+| 输入（缓存未命中） | 1 | 2 |
+| 输出 | 4 | 8 |
+
+高峰 = 北京时间**周一至周五 9:00–12:00、14:00–18:00**，其余为空闲。
+官方定价页：<https://api-docs.deepseek.com/zh-cn/quick_start/pricing/>
+
+### 8.2 实测单次用量与成本
+
+| | 缓存命中输入 | 未命中输入 | 输出（含思考） |
+|---|---|---|---|
+| Agent1 | 8,960 | 193 | 314（思考 161） |
+| Agent2 | 9,728 | 230 | 2,028（思考 1,213） |
+
+| 时段 | 一次完整查询 | 1 元可跑 | 1000 次 |
+|---|---|---|---|
+| 空闲 | **1.02 分** | 98 次 | 10.16 元 |
+| 高峰 | 2.03 分 | 49 次 | 20.33 元 |
+
+**成本结构：输出占 92.2%，输入仅 7.8%；其中 Agent2 占 84%。**
+
+三个推论：
+
+1. **省钱的杠杆只有一个：缩短输出。** 输入便宜到可忽略（9,728 token 的缓存输入只值 0.0002 元）。
+2. **Agent1 几乎免费**（0.163 分/次）—— 只跑属性判定的脚本可以随便跑。
+3. **思考强度是最大旋钮**：`off` 让 Agent2 输出从 2,028 降到数百 token 级，
+   全链路从 12.6–15.6 s 降到 5.1–5.7 s（见 §7.2 的 off 列）。
+
+### 8.3 怎么自己复核（不信任上面的数字时）
+
+官方返回的 `usage` 里有分项，直接用 httpx 调一次即可（`DirectAPIRuntime` 已把它记进日志）：
+
+```python
+# 关键字段
+usage["prompt_tokens"]                    # 未命中输入
+usage["prompt_cache_hit_tokens"]          # 命中输入
+usage["completion_tokens"]                # 输出
+usage["completion_tokens_details"]["reasoning_tokens"]   # 其中思考
+```
+
+> ⚠️ **不要用 `total_tokens` 算钱**：它是 `输入 + 输出 + 缓存命中输入` 的合计，
+> 三个部分的单价差 200 倍，混在一起算会严重高估。
+
+---
+
+## 9. 数据维护
+
+### 9.1 三个数据文件
+
+| 文件 | 内容 | 规模 |
+|---|---|---|
+| `food_properties.json` | `foods[]` + `tea_drinks.items[]` + `_meta` | 146 条 |
+| `herbs.json` | `_meta` + `herbs[]`（含剂量上限、禁忌、归经） | 34 味 |
+| `constitution.json` | 5 型体质 + `one_line` / `principles` / `avoid` | 5 型 |
+
+字段含义写在各自的 `_meta.field_notes` 里，**改结构时同步改它**。
+
+### 9.2 加条目的正确姿势
+
+**直接编辑 JSON**，按 `indent=2` 的现有风格插入，并补齐 `review_*` 字段。理由：diff 干净、可评审。
+
+### 9.3 审核三态（**不要为了界面好看而批量置 approved**）
+
+| 状态 | 效果 |
+|---|---|
+| `approved` | 真·硬规则库，0.9，界面**不**标注 |
+| `pending` | 0.9，但界面必须标「待验证」（**当前 146 条全部是这个**） |
+| `rejected` | 降为组合推理档 0.6，不再作硬规则 |
+
+`approved` 只应由具备资质的中医师/中药师填写，并同时填 `reviewed_by` / `reviewed_at`。
+标记密度就是审核进度的可见反馈。
+
+### 9.4 ⚠️ `scripts/` 下三个脚本都是**冻结的一次性批次脚本**
+
+| 脚本 | 真相 |
+|---|---|
+| `add_food_entries.py` | `NEW_ENTRIES` 是**源码里硬编码的 16 条历史批次**，**不是通用加条目工具**。会全量重写整个文件（大 diff）。幂等靠 id+name 双重去重；但去重集合在循环外算一次，往列表里追加时要自己保证 id 唯一 |
+| `add_review_fields.py` | 加布尔 `reviewed`。**现在跑是空操作**（146 条都已有该字段） |
+| `patch_food_table.py` | `reviewed` → `review_status` 三态迁移 + 4 条写死的条目修正 |
+
+**历史执行顺序不可颠倒**：
+
+```
+add_review_fields.py   →   patch_food_table.py
+  （先补 reviewed 布尔）      （再把 reviewed 迁移为 review_status）
+```
+
+三者都支持 `--dry-run`。**改任何数据文件前先跑 `--dry-run`。**
+
+---
+
+## 10. 排错手册
+
+### 10.1 改了代码但行为没变 / 报出莫名其妙的错
+
+**症状**：请求返回旧结构；或旧进程报 `KeyError: 'xxx'`。
+**原因**：**端口被旧服务占用**。新启动的 uvicorn 绑不上端口直接退出（Windows 上表现为 exit 1、无输出），
+而请求打到了那个跑旧代码的进程上。
+**处置**：
+
+```powershell
+Get-NetTCPConnection -LocalPort 8000 -State Listen | ForEach-Object { Get-Process -Id $_.OwningProcess | Select-Object Id, ProcessName, StartTime }
+Get-Process | Where-Object { $_.ProcessName -match 'python' } | Stop-Process -Force
+```
+**预防**：uvicorn 加 `--reload`；或每次测完就把服务关掉。
+
+### 10.2 命令报 `exit code: 1` 但输出完全正常
+
+**原因**：管道被下游提前关闭。`... | Select-Object -First 5` 取够就关管道，
+上游进程收到断管，Windows 上结算为 exit 1。
+**处置**：忽略；要确认就重跑一次不接管道，取 `$LASTEXITCODE`。
+
+### 10.3 存档的中文输出变成乱码，或被判为二进制文件
+
+**原因**：PowerShell 重定向原生命令输出时的编码不一致。
+实测同一批脚本，`Tee-Object` 写出了 **UTF-16**（带 FF FE BOM），而 `Out-File -Encoding utf8` 正常；
+且 PowerShell 会用 cp936 解码原生命令的 UTF-8 输出，写入时再次变形。
+**处置**：脚本自己已经 `reconfigure(encoding="utf-8")`；在 PowerShell 侧统一用
+`| Out-File -FilePath x.txt -Encoding utf8`。若已拿到 UTF-16 文件，转码即可。
+
+### 10.4 终端里中文乱码
+
+**原因**：Windows 控制台默认 GBK。
+**处置**：`scripts/` 与 `ui/terminal/chat.py` 都在入口 `reconfigure(encoding="utf-8")`，
+终端壳还额外处理了 **stdin**（重定向时 stdin 用 locale 编码，不指定会把中文输入解成乱码）。
+
+### 10.5 `pip.exe` / `uvicorn.exe` 报错或无声失败
+
+**原因**：`core/.venv` 是在目录还叫 `backend` 时创建的，Windows 的控制台脚本 shim 把绝对路径写死在 exe 里。
+**处置**：一律用 `python -m`。或重建：
+
+```powershell
+cd core
+Remove-Item .venv -Recurse -Force
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev,web]"
+```
+
+### 10.6 设了环境变量却不生效
+
+**原因**：`config.py` 用 `load_dotenv(..., override=True)` 加载 `.env` 与 `credentials.env`，
+**文件里的值会覆盖进程环境变量**。
+**处置**：改文件，别改环境变量。这条是刻意的——为了让项目配置压过 DSH 自己设的 `DSH_HOME`。
+
+### 10.7 `dsh: .env sets "DSH_HOME", which only the launching environment may set`
+
+**原因**：`.env`（**含注释里**）出现了任何 `DSH_*` 变量。
+**处置**：把 `DSH_*` 与凭据移到 `credentials.env`（dsh 不扫描该文件名）。
+
+### 10.8 模型返回空正文（`content` 为空串）
+
+**原因**：思考模式下 `max_tokens` 太小，被思考吃光。
+实测 `max_tokens=64` 时 64 个 token 全进 reasoning，正文为空。
+**处置**：调大 `TA_MAX_TOKENS`（默认 8192 足够），或设 `TA_REASONING_EFFORT=off`。
+`DirectAPIRuntime` 已对这个情况给出明确报错。
+
+### 10.9 在界面填了 Key 却显示「本次使用服务端 Key」
+
+**原因**：`Authorization` 头格式不对（缺 `Bearer` 前缀、含空格、超长）→ `extract_api_key` 返回 `None` 回退。
+**处置**：这是**刻意**的（宁可回退也不要 500），且 `meta.key_source` 会让它可见。
+检查前端拼头的方式。
+
+### 10.10 关键词子串把无关条目拉进表
+
+**症状**：说「麻辣烫」把「辣椒」也识别出来（因为辣椒的关键词含"麻辣"）。
+**原因**：字符串子串匹配的固有歧义，已记录在 `docs/three-layer-architecture.md` 的「已知局限」。
+**处置**：**不要当 bug 修**。彻底解决需要菜品别名库或分词。
+在 `--offline` 模式下更容易看到，因为 `match_foods` 是"表里哪些条目在句子里出现过"，
+而不是"识别出你吃了什么"。
+
+### 10.11 同一句话两次判定结果不同
+
+**原因**：模型层有运行间波动，会传导到判定。最常见的是 Agent1 在 `note` 里补了
+"配辣椒油/加辣"之类的措辞，**合法**触发 `SPICY_KEYWORDS` 的 +1。
+另有 `蔬菜沙拉` 在 `cool`/`cold` 之间摆动（程度差异有主观性）。
+**处置**：先看 `verification.detail` 里的判定过程，确认是"规则被合法触发"还是"真错了"。
+`detail` 就是为这种排查设计的。
+
+### 10.12 `pytest` 报 `ModuleNotFoundError: fastapi`
+
+**原因**：`fastapi` 在 `[web]` extra 里，只装了 `.[dev]`。
+**处置**：`pip install -e ".[dev,web]"`；或只跑核心测试（HTTP 层测试会自动 skip）。
+
+---
+
+## 11. 已知局限与开放决策
+
+### 11.1 已知局限（完整版见 `docs/three-layer-architecture.md`）
+
+1. 规范名精确命中时不叠加模型给的烹饪修正（需要时在表里单列 `variant_nature`）
+2. 关键词子串会拉进无关条目
+3. **第二层 `combine()` 未接入主流程**（已实现并测试，`resolve_food` 目前只做单食材）
+4. 数据未人工审核（146 条全 `pending`）
+5. `--offline` 只能识别表内条目
+6. 中文标签虽已收敛到 `/api/meta`，但 `cooking` 标签的展示仍只在前端用到（终端壳未展示）
+
+### 11.2 开放决策（留给后续）
+
+| # | 决策点 | 现状与建议 |
+|---|---|---|
+| 1 | **默认思考强度** `low` vs `off` | 数据见 §7.2：`off` 更快更省、准确率无损失、推荐条数不变；但样本量小、且推荐文案质量未做盲评。**当前保持 `low`**（初期 demo 优先稳妥） |
+| 2 | 数据人工审核 | 需要资质人员；审核完逐条改 `review_status` + `reviewed_by` |
+| 3 | `combine()` 接入 | 属改核心，需单独立项与回归 |
+| 4 | `ui/web` 展示判定过程 | 现在只有悬停 tooltip；可考虑铺开成终端那种逐项列表 |
+| 5 | Web 壳支持 `--offline` | 需要把离线装配逻辑暴露成接口或前端实现（注意别越过 `ui/`→`core/` 的分层线） |
+| 6 | 异步任务 + 进度反馈 | 全链路 5–25 秒是主要体验瓶颈 |
+
+---
+
+## 12. 本次转型变更史
+
+从"微信小程序 demo"转成"本地桌面助手 + 开源库"的完整过程，按提交顺序：
+
+| 提交 | 做了什么 | 为什么 |
+|---|---|---|
+| `fb4c51a` | 删除 `miniprogram/`（17 文件），新增 `ui/terminal/chat.py`、`ui/web/index.html`；CORS 收紧；`pyproject` 拆分 `[web]` extra；新增 LICENSE/CONTRIBUTING；重写 README | 个人主体无法通过相关类目审核，放弃小程序；核心逻辑一行未动 |
+| `46d67ed` | `backend/` → `core/`，统一 `BACKEND_DIR` → `CORE_DIR`；CONTRIBUTING 新增契约 8（`ui/` 单向依赖 `core/`） | 没有前后端之分了，`backend` 名不副实 |
+| `3b9f8f5` | 网页壳补齐置信度与「待验证」标注 | 文档声称两个壳显示规则一致，实际网页壳完全没读 `verification`，会把 `llm` 档推测当确定结论展示 |
+| `e74acb3` | 新增 `GET /api/meta`；两个壳不再各自硬编码中文标签与 0.3 阈值 | 标签散在三处，改一处忘一处就会让安全边界漂移 |
+| `26b57d3` | 网页壳新增「测试指引」面板 | 外部测试人员面对满屏「待验证」会当缺陷上报 |
+| `63ac5c3` | **支持用户自带 API Key**：新增 `direct_api.py` 直连后端（默认）、`api/auth.py`、`meta.key_source`、网页 Key 输入框；`tests/test_key_handling.py`（47 项，含日志安全）；`start-*.cmd` | dsh 的 Key 绑子进程，做不到逐请求 Key |
+| `3c63c7f` `9ffa5ea` | 文档与实测数字对齐（230 项）；澄清两份 `.env` 都是可选的 | 避免文档把人带偏 |
+
+### 12.1 转型中修掉的历史 bug（都是"文档写了但代码没做到"）
+
+| 问题 | 位置 |
+|---|---|
+| 提示文案教用户把 `DEEPSEEK_API_KEY` 写进 `.env`，而 dsh 会因此拒绝启动 | `config.py::missing_credentials_hint`（同名错误曾在 `check_setup.py` 里也有一处） |
+| 提示跑一个不存在的脚本 `scripts/smoke_agent1.py` | `check_setup.py` |
+| 硬编码 `D:\work\tea-advisor\dsh-home`（换台机器就没用） | `check_setup.py`、`runtime.py` 注释 |
+| 网页壳忽略 `verification`，把低置信度属性当确定结论 | `ui/web/index.html` |
+| 4 处文档数字漂移：130/143/20/45 项 → 实际 146/34/183 | README、docs |
+| dsh 后端下用无效 Key 被包装成"饮食解析失败" | `orchestrator`（已改为 `API_KEY_REJECTED`） |
+
+---
+
+## 13. 后续路线建议（按性价比排序）
+
+1. **人工审核 146 条食性数据** —— 唯一阻碍"对外提供服务"的事项，且只有人能解。
+2. **异步任务 + 两级返回** —— 先回显「我理解到的」，再出推荐。当前 5–25 秒是最大体验瓶颈。
+3. **`combine()` 接入主流程** —— 让「番茄炒蛋」这类整菜名能走第二层，而不是整体落到 LLM。
+4. **决定默认思考强度** —— 攒够样本（比如各跑 5 次准确率 + 盲评 20 条推荐文案）再定。
+5. **Web 壳支持离线模式** —— 让测试人员能零成本自由探索。
+6. **菜品别名库 / 分词** —— 根治关键词子串歧义。
+7. **打包分发**（PyInstaller / 便携 zip）—— 让非技术用户不必先装 Python。
+
+---
+
+## 附录 A：常用命令速查
+
+```powershell
+$R = 'D:\work\tea-advisor'; $PY = "$R\core\.venv\Scripts\python.exe"
+
+# 使用
+& $PY "$R\ui\terminal\chat.py" --resolve 冰啤酒          # 0 成本
+& $PY "$R\ui\terminal\chat.py" --offline "中午吃了麻辣烫"   # 0 成本
+& $PY "$R\ui\terminal\chat.py"                           # 走模型
+
+# 验证
+Set-Location "$R\core"
+& $PY -m pytest -q                                       # 230 项
+& $PY scripts\smoke_offline.py
+& $PY scripts\check_setup.py
+& $PY scripts\test_food_accuracy.py                      # 真实模型，约 3.7 分
+& $PY scripts\smoke_agents.py                            # 真实模型，约 3.5 分
+
+# 服务
+Set-Location "$R\core"; & $PY -m uvicorn app.main:app --port 8000
+
+# 排查
+Get-NetTCPConnection -LocalPort 8000 -State Listen
+git -C $R status --short
+git -C $R log --oneline -10
+```
+
+## 附录 B：新增一个界面时要做什么
+
+1. 在 `ui/` 下新建子目录（`ui/gui/`、`ui/tui/`…）
+2. 只 `import app.*`，**不得**改 `core/app/domain`、`services`、`agents`
+3. 需要标签/阈值 → 用 `/api/meta`（或直接 `import app.domain.enums`）
+4. 需要新字段 → 先改 `core/app/domain/models.py` 并同步**所有已有壳**
+5. 不要在新壳里再抄一份中文映射表 —— 用 `/api/meta`（见 §4.1 第 4 条）
+6. 完成后跑一次契约 8 的验证：**临时把 `ui/` 改名移走，`core/` 下 `pytest` 与 `smoke_offline.py` 仍应全绿**
