@@ -138,10 +138,15 @@ def recommend(
     constitution: Constitution,
     exclude_herbs: list[str] | None = None,
     session_id: str | None = None,
+    *,
+    api_key: str | None = None,
 ) -> tuple[list[Recommendation], str, int]:
     """生成推荐。
 
     返回 (推荐列表, user_message, 耗时毫秒)。
+
+    `api_key`：用户自带的 Key（HTTP 层从 Authorization 头取）。
+    为空则由运行时回退到服务端兜底 Key。
     """
     settings = get_settings()
     runtime = get_runtime()
@@ -155,6 +160,7 @@ def recommend(
         system_prompt=system_prompt,
         session_id=sid,
         timeout_s=settings.agent2_timeout_s,
+        api_key=api_key,
     )
 
     def retry_runner(fix_prompt: str) -> str:
@@ -163,6 +169,7 @@ def recommend(
             system_prompt=system_prompt,
             session_id=f"{sid}-fix-{time.time_ns()}",
             timeout_s=settings.agent2_timeout_s,
+            api_key=api_key,
         )
         return again.text
 

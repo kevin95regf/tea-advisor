@@ -45,6 +45,19 @@
     padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px;
     font: inherit; background: #fdfcfa; color: var(--ink);
   }
+  input[type="password"], input[type="text"] {
+    padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px;
+    font: inherit; background: #fdfcfa; color: var(--ink);
+    flex: 1; min-width: 230px;
+  }
+  .chk {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--muted); cursor: pointer; white-space: nowrap;
+  }
+  .chk input { margin: 0; }
+  .badge.ok { background: #e3efe4; color: #3f7a48; }
+  .badge.warn { background: #f8ebe1; color: var(--warm); }
+  .badge.bad { background: #f9e3dd; color: var(--warn); }
   button {
     padding: 10px 20px; border: 0; border-radius: 9px; cursor: pointer;
     background: var(--accent); color: #fff; font: inherit; font-weight: 600;
@@ -153,6 +166,20 @@
       <button id="go">给我建议</button>
     </div>
     <div class="hint">体质仅用于饮食养生方向的粗略区分，不构成体质辨识或医学诊断。</div>
+
+    <hr style="border:0;border-top:1px solid var(--line);margin:14px 0 12px" />
+    <div class="row" style="margin-top:0">
+      <label for="key">API Key</label>
+      <input id="key" type="password" autocomplete="off" spellcheck="false"
+             placeholder="sk-…（留空则用服务端配置的 Key）" />
+      <label class="chk" title="勾选后写入浏览器 localStorage；不勾选只存在本次标签页，关掉即失效">
+        <input id="remember" type="checkbox" /> 记住 Key
+      </label>
+    </div>
+    <div class="hint" id="keyHint">
+      你的 Key 只随本次请求通过 Authorization 头发给本机后端，再由后端转给模型服务；
+      <b>不写入服务器日志、不落盘</b>。默认不勾选「记住 Key」，只保存在本标签页内。
+    </div>
   </div>
 
   <div id="out"></div>
@@ -168,7 +195,68 @@ let META = null;
 const out = document.getElementById('out');
 const btn = document.getElementById('go');
 const sel = document.getElementById('const');
+const keyEl = document.getElementById('key');
+const rememberEl = document.getElementById('remember');
+const keyHintEl = document.getElementById('keyHint');
 let disclaimerCache = null;
+
+// 两个存储位：勾了「记住 Key」写 localStorage（跨会话），否则写 sessionStorage（仅本标签页）。
+// 保存前先把两处都清掉，否则取消勾选后旧值会残留。
+const KEY_LS = 'ta_api_key';
+const KEY_SS = 'ta_api_key_session';
+const KEY_HINT_DEFAULT = keyHintEl ? keyHintEl.innerHTML : '';
+
+function loadStoredKey() {
+  try {
+    const saved = localStorage.getItem(KEY_LS);
+    if (saved) { keyEl.value = saved; rememberEl.checked = true; return; }
+  } catch (e) { /* 隐私模式可能禁用 localStorage */ }
+  try {
+    const sess = sessionStorage.getItem(KEY_SS);
+    if (sess) keyEl.value = sess;
+  } catch (e) { /* ignore */ }
+}
+
+function saveKey() {
+  const v = keyEl.value.trim();
+  try {
+    localStorage.removeItem(KEY_LS);
+    sessionStorage.removeItem(KEY_SS);
+  } catch (e) { /* ignore */ }
+  if (!v) return;
+  try {
+    if (rememberEl.checked) localStorage.setItem(KEY_LS, v);
+    else sessionStorage.setItem(KEY_SS, v);
+  } catch (e) { /* 存不下不影响本次请求 */ }
+}
+
+function currentKey() {
+  return (keyEl.value || '').trim();
+}
+
+/** 用 /healthz 的信息给出「你到底需不需要填 Key」的明确提示 */
+async function refreshKeyHint() {
+  if (!keyHintEl) return;
+  try {
+    const h = await fetch('/healthz').then(r => r.json());
+    const notes = [];
+    if (h.user_key_supported === false) {
+      notes.push('<span class="badge bad">当前后端不支持自带 Key</span>'
+        + '（<code>TA_BACKEND=' + esc(h.backend) + '</code>）—— 填了也不会生效，'
+        + '请改用服务端配置的 Key，或把后端切到 direct。');
+    } else if (h.credentials_ok) {
+      notes.push('服务端已配置兜底 Key：<b>这里留空也能用</b>，此时结果里会标注「本次使用服务端 Key」。');
+    } else {
+      notes.push('<span class="badge warn">服务端未配置 Key</span>'
+        + '你必须填自己的 Key 才能得到建议。');
+    }
+    notes.push('你的 Key 只通过 <code>Authorization</code> 头发给本机后端，'
+      + '<b>不写入服务器日志、不落盘</b>。默认不勾选「记住 Key」，只存在本标签页内。');
+    keyHintEl.innerHTML = notes.join('<br>');
+  } catch (e) {
+    keyHintEl.innerHTML = KEY_HINT_DEFAULT;
+  }
+}
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
@@ -183,6 +271,8 @@ function label(group, key) {
 }
 
 async function loadInit() {
+  loadStoredKey();
+  refreshKeyHint();
   try {
     const [m, cs, dis] = await Promise.all([
       fetch('/api/meta').then(r => r.json()),
@@ -272,20 +362,38 @@ async function run() {
   }
   const text = document.getElementById('text').value.trim();
   if (!text) { out.innerHTML = '<div class="card error">先说说你吃了什么吧。</div>'; return; }
+
+  // 记住/清除 Key 的选择在提交时落定，避免每敲一个键就写一次存储
+  saveKey();
+  const userKey = currentKey();
+
   btn.disabled = true;
   out.innerHTML = '<div class="card loading">正在解析你的饮食…（双 Agent 串行，通常 10–30 秒）</div>';
   const t0 = Date.now();
   try {
+    const headers = { 'Content-Type': 'application/json' };
+    // 用户自带 Key：逐请求通过 Authorization 头发给本机后端。
+    // 只有填了才带这个头；不填则后端用服务端兜底 Key。
+    if (userKey) headers['Authorization'] = 'Bearer ' + userKey;
+
     const res = await fetch('/api/analyze', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ text, constitution_override: sel.value }),
     });
     const data = await res.json();
     if (!res.ok) {
       const d = data.detail || {};
-      out.innerHTML = `<div class="card error"><b>出错了</b><br>${esc(d.message || JSON.stringify(data))}
-        <div class="hint">排查：http://127.0.0.1:8000/healthz 看凭据与饮片是否就绪</div></div>`;
+      // 凭据类错误要指向 Key 输入框，而不是让人去猜
+      const isKeyIssue = d.code === 'NO_API_KEY' || d.code === 'USER_KEY_UNSUPPORTED'
+        || d.code === 'API_KEY_REJECTED';
+      const extra = isKeyIssue
+        ? '<div class="hint">见上方 API Key 一栏。</div>'
+        : '<div class="hint">排查：打开 <code>http://127.0.0.1:8000/healthz</code> '
+          + '看后端与饮片是否就绪。</div>';
+      out.innerHTML = `<div class="card error"><b>${isKeyIssue ? '凭据问题' : '出错了'}</b><br>`
+        + `${esc(d.message || JSON.stringify(data))}${extra}</div>`;
+      if (isKeyIssue && keyEl) keyEl.focus();
       return;
     }
     let html = '';
@@ -296,14 +404,35 @@ async function run() {
       <div class="meta">耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s ｜ Agent1 ${esc(data.meta.agent1_ms)}ms ｜ Agent2 ${esc(data.meta.agent2_ms)}ms
       ${data.meta.degraded ? '｜ 已降级为规则匹配' : ''}
       ｜ 体质：${esc(data.basis.constitution_label)} ｜ request_id ${esc(data.request_id)}</div>
+      ${renderKeySource(data.meta)}
     </div>`;
     out.innerHTML = html;
   } catch (e) {
     out.innerHTML = `<div class="card error"><b>请求失败</b><br>${esc(e.message)}
-      <div class="hint">确认服务在运行，且 URL 是 http://127.0.0.1:8000/demo</div></div>`;
+      <div class="hint">确认服务在运行，且 URL 是 http://127.0.0.1:8000</div></div>`;
   } finally {
     btn.disabled = false;
   }
+}
+
+/**
+ * 标明本次用的是谁的 Key。
+ * 这一行是必须的：用户填了自己的 Key 却因为格式问题回退到服务端 Key 时，
+ * 只有靠它才看得出来 —— 否则用户会以为自己花的钱。
+ */
+function renderKeySource(meta) {
+  const ks = (meta && meta.key_source) || '';
+  const backend = meta && meta.backend ? `，后端 ${esc(meta.backend)}` : '';
+  if (ks === 'user') {
+    return `<div class="hint"><span class="badge ok">本次使用你自带的 Key</span>`
+      + `费用记在你的账号上${backend}。</div>`;
+  }
+  if (ks === 'server') {
+    return `<div class="hint"><span class="badge warn">本次使用服务端 Key</span>`
+      + `没有收到你填的 Key，本次费用记在服务端账号${backend}。</div>`;
+  }
+  return `<div class="hint"><span class="badge">本次未调用模型</span>`
+    + `（规则分支，无费用）${backend}。</div>`;
 }
 
 document.getElementById('examples').addEventListener('click', e => {
@@ -312,6 +441,9 @@ document.getElementById('examples').addEventListener('click', e => {
     document.getElementById('text').focus();
   }
 });
+// 勾选/取消「记住 Key」立刻生效（取消时要把已存的清掉，不能等下次提交）
+rememberEl.addEventListener('change', saveKey);
+keyEl.addEventListener('change', saveKey);
 btn.addEventListener('click', run);
 loadInit();
 </script>

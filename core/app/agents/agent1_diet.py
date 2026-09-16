@@ -134,11 +134,16 @@ def parse_diet(
     text: str,
     meal_time: MealTime | None = None,
     session_id: str | None = None,
+    *,
+    api_key: str | None = None,
 ) -> tuple[ParsedMeal, int, str]:
     """解析饮食口述。
 
     返回 (ParsedMeal, 耗时毫秒, session_id)。
     解析或校验失败会抛 JsonGuardError / RuntimeError，由上层决定是否降级。
+
+    `api_key`：用户自带的 Key（HTTP 层从 Authorization 头取）。
+    为空则由运行时回退到服务端兜底 Key。
     """
     settings = get_settings()
     runtime = get_runtime()
@@ -147,8 +152,9 @@ def parse_diet(
     reference = render_reference(text)
     user_prompt = build_user_prompt(text, meal_time, reference)
     # 会话 id 必须每次唯一。
-    # 原因：SDK 的语义是「复用 harness + session id 就延续同一段持久对话」，
+    # 原因：dsh 的语义是「复用 harness + session id 就延续同一段持久对话」，
     # 若按内容 hash 生成，用户重复说同一句话会累积上文，污染解析结果。
+    # （direct 后端无状态，此 id 只用于日志串联。）
     sid = session_id or f"ta-a1-{time.time_ns()}"
 
     first = runtime.run(
@@ -156,6 +162,7 @@ def parse_diet(
         system_prompt=system_prompt,
         session_id=sid,
         timeout_s=settings.agent1_timeout_s,
+        api_key=api_key,
     )
 
     def retry_runner(fix_prompt: str) -> str:
@@ -164,6 +171,7 @@ def parse_diet(
             system_prompt=system_prompt,
             session_id=f"{sid}-fix-{time.time_ns()}",
             timeout_s=settings.agent1_timeout_s,
+            api_key=api_key,
         )
         return again.text
 

@@ -144,6 +144,20 @@ class Meta(BaseModel):
     degraded: bool = Field(default=False, description="是否走了规则兜底")
     degraded_reason: str | None = None
 
+    # --- 凭据与后端来源 ---
+    # 前端必须把 key_source="server" 显式展示出来，否则用户会以为
+    # 自己填在界面里的 Key 生效了，而实际上用的是服务端兜底 Key。
+    key_source: Literal["user", "server", "not_used"] = Field(
+        default="server",
+        description=(
+            "user = 本次用用户自带的 Key；server = 本次用服务端兜底 Key；"
+            "not_used = 本次未调用模型（如高风险人群分支）"
+        ),
+    )
+    backend: str | None = Field(
+        default=None, description="Agent 运行时后端：direct 直连官方 API / dsh 子进程"
+    )
+
 
 # ============================================================
 # 接口请求 / 响应
@@ -197,6 +211,12 @@ class HealthResponse(BaseModel):
     dsh_home_exists: bool
     model: str
     disclaimer_version: str
+
+    # 凭据模式的可见性：前端据此决定是否提示"需要填自己的 Key"
+    backend: str = Field(default="direct", description="Agent 后端：direct / dsh")
+    user_key_supported: bool = Field(
+        default=True, description="是否支持用户在界面里自带 API Key"
+    )
 
 
 class CatalogHerb(BaseModel):

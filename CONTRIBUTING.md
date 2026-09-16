@@ -258,6 +258,43 @@ python scripts\patch_food_table.py --dry-run
    > `pytest`、`smoke_offline.py` 和 `--resolve` 那条纯规则链路。**
    > 这是每次评审都要确认的事。
 
+9. **API Key 绝不进日志、响应体或异常信息。这是硬规则，退化成"把 Key 打进日志"就是事故。**
+
+   本项目支持**用户自带 Key**：Key 通过 `Authorization: Bearer <key>` 头逐请求传入
+   （见 `core/app/api/auth.py`），因此它会在进程内存里流动。必须守住：
+
+   * **不得**记录 `Authorization` 头，不得记录 Key 本身，也不得记录它的任何片段。
+     连"前 6 位 + 后 4 位"这种掩码也**不要**加进请求路径 —— 已有的
+     `check_setup.py` / `smoke_agents.py` 掩码打印的是**服务端配置文件里的** Key，
+     那属于本地自检，可以保留。
+   * **不得**把 Key 放进响应体、错误详情或 `HTTPException(detail=...)`。
+   * 上游报错时**不要回显响应体**：官方 401 的响应体自带掩码后的 Key，
+     但"绝不回显任何与凭据相关的内容"这条更容易守。参见
+     `DirectAPIRuntime._describe_error()`。
+   * 允许记录的只有：模型名、接口主机名、耗时、token 用量、`session_id`。
+   * **不得**添加会打印请求头的中间件或日志配置。
+
+   配套测试在 `core/tests/test_key_handling.py`，用哨兵 Key 断言它
+   不出现在日志、响应体与异常信息里。改任何与凭据相关的代码后必须跑它：
+
+   ```powershell
+   python -m pytest tests\test_key_handling.py -q
+   ```
+
+10. **凭据缺失 / 后端不支持时，报错要"可操作"，且不得静默降级。**
+
+   * 没有可用 Key → `NO_API_KEY`，信息里指明 `credentials.env`，
+     并警告 **不能**写进 `.env`（`dsh` 会因为 `.env` 出现该变量而拒绝启动）。
+     这条文案曾经写错并坑过用户，已有回归测试钉住。
+   * `TA_BACKEND=dsh` 时用户带了 Key → 必须报 `USER_KEY_UNSUPPORTED` 并说明怎么解决。
+     **绝不能静默改用服务端 Key**：那会让用户以为费用记在自己账上。
+   * 凭据类错误的 HTTP 状态码用 **400**（配置问题，换个说法重试没用），
+     而不是 422（解析失败）。
+
+   > 相关背景：`dsh` 的 Key 生效粒度是「一个 harness 实例 = 一个 dsh 子进程」，
+   > `DeepSeekHarness.__init__` 把 `api_key` 写进子进程环境，`run()` 没有凭据参数。
+   > 所以 `dsh` 后端天然做不到逐请求换 Key —— 这也是默认后端是 `direct` 的原因。
+
 ---
 
 ## 5. 提交与 PR
@@ -280,7 +317,8 @@ feat: 温度判定收拢为单一入口，同时扫描 name 与 note
 
 - [ ] `python scripts\check_setup.py` 通过
 - [ ] `python scripts\smoke_offline.py` 通过
-- [ ] `python -m pytest -q` 全绿（当前基线 **183 passed**）
+- [ ] `python -m pytest -q` 全绿（当前基线 **228 passed**）
+- [ ] **碰了凭据 / 日志的：`python -m pytest tests\test_key_handling.py -q` 全绿**（契约 9、10）
 - [ ] 改了提示词 / 判定逻辑的，附 `python scripts\smoke_agents.py` 的**前后对比**
 - [ ] 改了数据表的，先跑过对应脚本的 `--dry-run`，且 `git diff` 已人工复核
 - [ ] **动了 `ui/` 的：确认 `core/` 没被反向污染**——临时把 `ui/` 改名移走，
@@ -288,6 +326,17 @@ feat: 温度判定收拢为单一入口，同时扫描 name 与 note
 - [ ] 没有提交任何凭据（`.env` / `credentials.env` / `dsh-home/` 均不得入库）
 - [ ] 新增的判定分支都补了测试；新增的已知局限写进
       `docs/three-layer-architecture.md` 的「已知局限」一节
+
+> 改了 Agent 运行时（`core/app/agents/runtime.py` 或 `direct_api.py`）的，
+> 除了 pytest 之外**必须**跑一次真实模型回归，因为线上行为只在那里体现：
+>
+> ```powershell
+> python scripts\test_food_accuracy.py   # 属性准确率（基线 29/29，unknown 0）
+> python scripts\smoke_agents.py         # 全链路格式与推荐条数
+> ```
+>
+> 注意 `test_food_accuracy.py` **只测 Agent1 的属性判定**，测不出推荐质量；
+> 涉及 Agent2 的改动请人工读一遍 `smoke_agents.py` 的输出。
 
 ### 关于「已知局限」
 

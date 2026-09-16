@@ -17,6 +17,7 @@ import uuid
 
 from app.agents.agent1_diet import parse_diet
 from app.agents.agent2_recommend import recommend as agent2_recommend
+from app.agents.runtime import CredentialError
 from app.config import get_settings
 from app.domain.enums import CONSTITUTION_LABELS, Constitution, MealTime
 from app.domain.models import (
@@ -100,11 +101,31 @@ def _sanitize_recommendations(
     return cleaned, applied
 
 
-def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
-    """执行完整分析流程。"""
+def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeResponse:
+    """执行完整分析流程。
+
+    `api_key`：调用方（HTTP 层从 `Authorization` 头里取）传入的**用户自带** Key。
+    为空则回退到服务端 credentials.env 的兜底 Key，并在 `meta.key_source` 里标注 ——
+    前端必须把"本次使用服务端 Key"显示出来，否则用户会以为自己填的 Key 生效了。
+    """
     settings = get_settings()
     request_id = uuid.uuid4().hex[:16]
     started = time.perf_counter()
+
+    user_key = (api_key or "").strip()
+    key_source = "user" if user_key else "server"
+
+    # ---------- 凭据前置校验 ----------
+    # 放在最前面（早于高风险分支）：配置类问题要一眼看出是配置问题，
+    # 而不是被包装成"饮食解析失败"。
+    if user_key and not settings.user_key_supported:
+        raise AnalyzeError(
+            "USER_KEY_UNSUPPORTED",
+            f"当前后端（{settings.backend}）不支持逐请求 API Key。"
+            "请把 TA_BACKEND 设为 direct；或清空界面里的 Key，改用服务端配置的 Key。",
+        )
+    if not user_key and not settings.has_credentials:
+        raise AnalyzeError("NO_API_KEY", settings.missing_credentials_hint())
 
     constitution = _constitution_of(request)
     label = CONSTITUTION_LABELS.get(constitution.value, constitution.value)
@@ -132,6 +153,10 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
                 model=settings.model,
                 degraded=True,
                 degraded_reason="high_risk_group",
+                # 本分支不调用模型，key_source 如实标 not_used，
+                # 免得前端显示"本次使用服务端 Key"却根本没有调用
+                key_source="not_used",
+                backend=settings.backend,
             ),
             user_message=(
                 "你提到的孕期/哺乳/经期/儿童或慢性病、正在服药等情况，"
@@ -141,7 +166,14 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
 
     # ---------- 1. Agent1 ----------
     try:
-        parsed, agent1_ms, _ = parse_diet(request.text, request.meal_time)
+        parsed, agent1_ms, _ = parse_diet(
+            request.text, request.meal_time, api_key=user_key or None
+        )
+    except CredentialError as exc:
+        # 凭据被拒（Key 无效 / 余额不足 / 无权限）——这不是"没看懂你吃了什么"，
+        # 必须回一个让人去改 Key 的错误码，前端据此把焦点移到 Key 输入框。
+        logger.warning("凭据被模型服务方拒绝")
+        raise AnalyzeError("API_KEY_REJECTED", str(exc)) from exc
     except Exception as exc:
         logger.exception("Agent1 失败")
         raise AnalyzeError(
@@ -160,6 +192,8 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
                 agent1_ms=agent1_ms,
                 total_ms=int((time.perf_counter() - started) * 1000),
                 model=settings.model,
+                key_source=key_source,
+                backend=settings.backend,
             ),
             user_message="没太看明白你吃了什么，可以再说具体一点，比如「中午吃了碗牛肉面加一杯冰可乐」。",
         )
@@ -173,7 +207,7 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
 
     try:
         recs, user_message, agent2_ms = agent2_recommend(
-            parsed, constitution, request.exclude_herbs
+            parsed, constitution, request.exclude_herbs, api_key=user_key or None
         )
         if not recs:
             raise RuntimeError("Agent2 返回空推荐")
@@ -226,6 +260,8 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
             model=settings.model,
             degraded=degraded,
             degraded_reason=degraded_reason,
+            key_source=key_source,
+            backend=settings.backend,
         ),
         user_message=user_message,
     )

@@ -53,6 +53,13 @@ class Settings:
         self.reasoning_effort: str | None = os.getenv("TA_REASONING_EFFORT") or "low"
         self.max_tokens: int = int(os.getenv("TA_MAX_TOKENS", "8192"))
 
+        # --- Agent 运行时后端 ---
+        #   direct（默认）：直连 DeepSeek 官方 API。API Key 逐请求传入，
+        #                   因此支持"用户自带 Key"，不落盘、不写运行时目录。
+        #   dsh：走 DeepSeekHarness 子进程。其 Key 与 harness 实例绑定
+        #        （一个进程一个 Key），**不支持逐请求换 Key**，保留用于调试。
+        self.backend: str = (os.getenv("TA_BACKEND") or "direct").strip().lower()
+
         # --- 服务 ---
         self.host: str = os.getenv("APP_HOST", "127.0.0.1")
         self.port: int = int(os.getenv("APP_PORT", "8000"))
@@ -71,15 +78,41 @@ class Settings:
 
     @property
     def has_credentials(self) -> bool:
-        """是否具备调用模型的最低条件。"""
+        """是否配置了**服务端兜底** Key。
+
+        注意：这不等于"能调用模型"。direct 后端下用户可以自带 Key，
+        即使这里为 False 也能正常服务。
+        """
         return bool(self.deepseek_api_key)
 
+    @property
+    def user_key_supported(self) -> bool:
+        """是否支持逐请求（用户自带）API Key。
+
+        只有 direct 后端支持：dsh 的 Key 绑在子进程上，无法按请求切换。
+        """
+        return self.backend != "dsh"
+
+    @property
+    def resolved_base_url(self) -> str:
+        """官方 API 基地址（direct 后端用）。"""
+        return (self.deepseek_base_url or "https://api.deepseek.com").rstrip("/")
+
     def missing_credentials_hint(self) -> str:
+        """完全没有可用 Key 时的可操作提示。
+
+        ⚠️ 这段文案曾经写错成「在 .env 中填入 DEEPSEEK_API_KEY」，会直接把用户带进坑：
+        dsh 启动时扫描 workspace 的 .env，发现该变量会**拒绝启动**。
+        正确位置是 credentials.env。回归测试见 tests/test_key_handling.py。
+        """
         return (
-            "缺少 DEEPSEEK_API_KEY。请执行：\n"
-            "  1) 复制 .env.example 为 .env\n"
-            "  2) 在 .env 中填入 DEEPSEEK_API_KEY=sk-...\n"
-            "  3) 重新运行本命令"
+            "没有可用的 DEEPSEEK_API_KEY。二选一：\n"
+            "  A) 在界面里填入你自己的 Key —— 直接调官方 API，逐请求生效，不落盘\n"
+            "  B) 配置服务端兜底 Key：复制 credentials.env.example 为 credentials.env，\n"
+            f"     在 {PROJECT_ROOT / 'credentials.env'} 中填入 DEEPSEEK_API_KEY=sk-...\n"
+            "  ⚠️ DEEPSEEK_API_KEY 必须放 credentials.env，不能放 .env：\n"
+            "     dsh 会因为 .env 里出现该变量而拒绝启动。\n"
+            "  改完重新运行本命令。"
         )
 
 

@@ -1,7 +1,16 @@
-"""Agent 运行时：管理 DeepSeekHarness 子进程的生命周期。
+"""Agent 运行时。两个后端，用 TA_BACKEND 选。
 
-设计要点
---------
+  direct（默认）  DirectAPIRuntime —— 直连 DeepSeek 官方 API，见 direct_api.py。
+                  API Key 逐请求传入，支持"用户自带 Key"。
+  dsh             HarnessRuntime  —— 走 DeepSeekHarness 子进程（本文件）。
+                  Key 绑在 harness 实例上，**不支持逐请求换 Key**，保留用于调试。
+
+为什么默认是 direct：dsh 的 Key 生效粒度是「一个 harness 实例 = 一个子进程」
+（`DeepSeekHarness.__init__` 把 api_key 写进子进程环境，`run()` 没有凭据参数），
+与"每个请求带自己的 Key"直接冲突。详见 direct_api.py 的模块说明。
+
+dsh 后端的设计要点
+------------------
 1. 进程复用：DeepSeekHarness 启动一次 dsh 子进程，多次 run() 复用，避免每次请求都拉起进程。
 2. 凭据隔离：DSH_HOME 指向独立目录（默认 <仓库根>/dsh-home，可用 credentials.env 覆盖），
    与你的主 DSH 环境分开，避免污染主环境的 profile / settings / sessions。
@@ -17,6 +26,7 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from app.config import get_settings
 
@@ -36,6 +46,18 @@ class AgentRun:
     text: str
     elapsed_ms: int
     session_id: str
+    # 模型返回的 token 用量（direct 后端会填；dsh 后端拿不到，为 None）。
+    # 只用于日志与成本核算，不含任何凭据信息。
+    usage: dict[str, Any] | None = None
+
+
+class CredentialError(RuntimeError):
+    """凭据被模型服务方拒绝（Key 无效 / 余额不足 / 无权限）。
+
+    单独一个类型是为了让上层能把它与"解析失败"区分开：
+    用户自带 Key 模式下，填错 Key 是最常见的错误，
+    必须回一个"去改 Key"的提示，而不是"没看懂你吃了什么"。
+    """
 
 
 class HarnessRuntime:
@@ -125,13 +147,28 @@ class HarnessRuntime:
         system_prompt: str | None = None,
         session_id: str | None = None,
         timeout_s: float | None = None,
+        api_key: str | None = None,
     ) -> AgentRun:
         """跑一轮 agent，返回最终助手文本。
 
         注意：DSH 的 persona 取环境变量 DSH_SYSTEM_PROMPT。若要按 agent 切换
         系统提示词，需要用 patch 文件为每个 profile 单独配置（见 README 的"待验证事项"）。
         因此当前实现把 system_prompt 作为 user 消息的前缀注入，稳妥且无副作用。
+
+        `api_key`：dsh 后端**不支持**逐请求 Key。传了一个与服务端不同的 Key 时
+        宁可明确报错，也不能静默改用服务端 Key —— 那会让用户以为自己填的 Key 生效了。
         """
+        # 先校验凭据来源，再启动子进程：避免为一个用不了的请求付出 2.2s 启动成本
+        if api_key and api_key.strip():
+            server_key = (self._settings.deepseek_api_key or "").strip()
+            if api_key.strip() != server_key:
+                raise RuntimeError(
+                    "当前后端是 dsh，不支持逐请求 API Key"
+                    "（dsh 的 Key 与 harness 子进程绑定，一个进程只能有一个 Key）。"
+                    "请把 TA_BACKEND 设为 direct 后重试，"
+                    "或清空界面里的 Key 以使用服务端配置的 Key。"
+                )
+
         self.ensure_started()
         assert self._harness is not None
 
@@ -153,15 +190,52 @@ class HarnessRuntime:
         return AgentRun(text=text, elapsed_ms=elapsed_ms, session_id=sid)
 
 
-_runtime: HarnessRuntime | None = None
+# ============================================================
+# 后端选择
+# ============================================================
+_harness_runtime: HarnessRuntime | None = None
+_direct_runtime: Any | None = None
 _runtime_lock = threading.Lock()
 
 
-def get_runtime() -> HarnessRuntime:
-    """获取全局运行时单例。"""
-    global _runtime
-    if _runtime is None:
+def get_harness_runtime() -> HarnessRuntime:
+    """dsh 后端单例（TA_BACKEND=dsh 时使用）。"""
+    global _harness_runtime
+    if _harness_runtime is None:
         with _runtime_lock:
-            if _runtime is None:
-                _runtime = HarnessRuntime()
-    return _runtime
+            if _harness_runtime is None:
+                _harness_runtime = HarnessRuntime()
+    return _harness_runtime
+
+
+def get_runtime() -> Any:
+    """按 TA_BACKEND 返回当前后端。
+
+    * `direct`（默认）：DirectAPIRuntime，支持逐请求 API Key
+    * `dsh`：HarnessRuntime，Key 绑在子进程上，不支持逐请求换 Key
+
+    direct_api 采用**延迟导入**：它需要从本模块拿 AgentRun，
+    放在模块顶部会形成循环导入。
+    """
+    if get_settings().backend == "dsh":
+        return get_harness_runtime()
+
+    global _direct_runtime
+    if _direct_runtime is None:
+        with _runtime_lock:
+            if _direct_runtime is None:
+                from app.agents.direct_api import DirectAPIRuntime
+
+                _direct_runtime = DirectAPIRuntime()
+    return _direct_runtime
+
+
+def close_runtime() -> None:
+    """关闭所有已创建的后端（供 FastAPI lifespan 调用）。"""
+    global _harness_runtime, _direct_runtime
+    with _runtime_lock:
+        for rt in (_harness_runtime, _direct_runtime):
+            if rt is not None:
+                rt.close()
+        _harness_runtime = None
+        _direct_runtime = None

@@ -49,21 +49,29 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """启动时校验数据与凭据，关闭时释放 DSH 子进程。"""
+    """启动时校验数据与凭据，关闭时释放运行时。"""
     herbs = load_herb_catalog()
     logger.info("已加载 %d 味饮片", len(herbs))
+    logger.info(
+        "Agent 后端：%s（逐请求 API Key %s）",
+        settings.backend,
+        "支持" if settings.user_key_supported else "不支持",
+    )
     if not settings.has_credentials:
-        logger.warning("未检测到 DEEPSEEK_API_KEY，接口会在调用模型时报错")
+        # 不是错误：direct 后端下用户可以自带 Key，服务仍然可用
+        logger.warning(
+            "未配置服务端兜底 DEEPSEEK_API_KEY。"
+            "用户需在界面里填入自己的 Key；未填且无兜底时会返回 NO_API_KEY。"
+        )
     logger.warning(
         "本服务输出仅供饮食养生参考，不构成医疗建议。上线前请由专业人员复核 herbs.json"
     )
     yield
-    # 关闭 DSH 子进程
+    # 关闭运行时（direct 后端关 HTTP 连接池；dsh 后端关子进程）
     try:
-        from app.agents.runtime import _runtime
+        from app.agents.runtime import close_runtime
 
-        if _runtime is not None:
-            _runtime.close()
+        close_runtime()
     except Exception:  # pragma: no cover
         pass
 
@@ -111,6 +119,8 @@ async def healthz() -> HealthResponse:
         dsh_home_exists=dsh_home.exists(),
         model=settings.model,
         disclaimer_version=Disclaimer().version,
+        backend=settings.backend,
+        user_key_supported=settings.user_key_supported,
     )
 
 
