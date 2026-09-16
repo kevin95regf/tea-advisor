@@ -43,7 +43,7 @@ python ..\ui\terminal\chat.py --resolve 冰啤酒 茉莉花茶 冰淇淋
 # ② 离线推荐：不调用模型，走规则兜底，仍然给出合规且不超剂量的搭配
 python ..\ui\terminal\chat.py --offline "中午吃了碗麻辣烫，还喝了杯冰可乐"
 
-# ③ 验证一切正常（228 项，约 0.7 秒）
+# ③ 验证一切正常（230 项，约 0.7 秒）
 python -m pytest -q
 ```
 
@@ -128,6 +128,18 @@ python scripts\smoke_agents.py
 # 终端助手（交互模式，走真实模型）
 python ..\ui\terminal\chat.py
 ```
+
+### 图省事：双击启动（Windows）
+
+不想敲命令就双击仓库根目录下的两个脚本：
+
+| 脚本 | 作用 |
+|---|---|
+| **`start-web.cmd`** | 起本地服务，约 4 秒后自动打开浏览器到 <http://127.0.0.1:8000>。设 `TA_NO_BROWSER=1` 可跳过自动开浏览器 |
+| **`start-terminal.cmd`** | 打开终端版助手 |
+
+两个脚本都会先检查 `core\.venv` 是否存在，缺了就打印安装命令而不是报一堆错。
+它们只是便利入口，等价于下面手打的命令。
 
 ### 本地 Web 界面
 
@@ -300,14 +312,18 @@ tea-advisor/
 │  │  ├─ main.py                   FastAPI 入口（Web 适配层）、/ 、/docs、/healthz
 │  │  ├─ config.py                 环境变量集中读取
 │  │  ├─ api/analyze.py            POST /api/analyze
+│  │  ├─ api/
+│  │  │  ├─ analyze.py             POST /api/analyze（读 Authorization 头）
+│  │  │  └─ auth.py                从 Bearer 头提取用户自带的 API Key
 │  │  ├─ agents/
-│  │  │  ├─ runtime.py             DeepSeekHarness 子进程生命周期
+│  │  │  ├─ runtime.py             后端选择 + dsh 子进程后端 + CredentialError
+│  │  │  ├─ direct_api.py          直连官方 API 的后端（默认，支持逐请求 Key）
 │  │  │  ├─ agent1_diet.py         饮食解析器
 │  │  │  ├─ agent2_recommend.py    中医推荐器
 │  │  │  ├─ json_guard.py          JSON 提取 / 校验 / 重试
 │  │  │  └─ prompts/               两个 agent 的系统提示词
 │  │  ├─ domain/                   ★ 纯逻辑，不依赖 Web 框架
-│  │  │  ├─ enums.py               四气 / 五味 / 时段 / 体质枚举
+│  │  │  ├─ enums.py               四气 / 五味 / 时段 / 体质枚举 + 中文标签
 │  │  │  ├─ nature_math.py         四性数值运算 + 温度前缀唯一入口
 │  │  │  ├─ models.py              请求 / 响应 / 中间结构（唯一真源）
 │  │  │  └─ safety.py              ★ 确定性安全护栏
@@ -317,7 +333,9 @@ tea-advisor/
 │  │     └─ orchestrator.py        双 Agent 串行编排 + 降级
 │  ├─ data/                        数据层（上表三个 JSON）
 │  ├─ scripts/                     自检与冒烟脚本
-│  └─ tests/                       228 项离线测试
+│  └─ tests/                       230 项离线测试
+├─ start-web.cmd                   ★ Windows 双击启动网页版（自动开浏览器）
+├─ start-terminal.cmd              ★ Windows 双击启动终端版
 └─ docs/three-layer-architecture.md
 ```
 
@@ -330,7 +348,7 @@ tea-advisor/
 
 ```powershell
 cd core
-python -m pytest -q          # 228 passed，约 0.7 秒，不调用模型、不需要 API Key
+python -m pytest -q          # 230 passed，约 0.7 秒，不调用模型、不需要 API Key
 ```
 
 | 文件 | 覆盖内容 | 项数 |
@@ -341,6 +359,7 @@ python -m pytest -q          # 228 passed，约 0.7 秒，不调用模型、不�
 | `tests/test_food_lookup.py` | 表完整性、匹配准确性、渲染、名称对齐 | 22 |
 | `tests/test_calibration.py` | 校准接线、来源标记、Agent2 隔离、已知局限固化 | 20 |
 | `tests/test_json_guard.py` | 围栏剥离、对象提取、schema 校验、失败重试 | 14 |
+| `tests/test_key_handling.py` | Authorization 解析、思考模式映射、**Key 不进日志/响应/异常**、凭据错误码 | 47 |
 
 需要 API Key 的端到端（**不在 pytest 内**，会产生调用费用）：
 
@@ -416,7 +435,7 @@ python scripts\smoke_agents.py          # 运行时启动 → 原始往返 → A
 ```powershell
 python scripts\check_setup.py       # 环境与数据自检
 python scripts\smoke_offline.py     # 离线全链路冒烟
-python -m pytest -q                 # 228 项
+python -m pytest -q                 # 230 项
 ```
 
 提交 PR 前请读 **[CONTRIBUTING.md](CONTRIBUTING.md)**，其中写明了：
