@@ -162,10 +162,24 @@ def test_every_pending_item_has_owner_and_status(pending):
 
 
 def test_pending_marks_hard_blockers(pending):
-    """硬阻碍必须有显式标记，不能和普通事项混在一起。"""
-    assert "⛔" in pending
+    """硬阻碍必须在**概览表行内**显式标 ⛔，不能和普通事项混在一起。
+
+    2026-09-17 更新：B3（九型配伍数据）已解除 ⛔ —— 九型上线了，余下 244 格影响的
+    是推荐完备度而非功能阻塞。现在真正标 ⛔ 的只剩 **A1**（对外服务的硬阻碍）。
+
+    这里刻意**只数表格行**：原先的写法是在整块正文里 `count("⛔") >= 2`，
+    于是正文里随便一句带 ⛔ 的说明行都能让它变绿（B3 解除标记后正是这样侥幸通过的）
+    —— 断言数量而不是断言位置，等于没测。
+    """
     overview = _overview_block(pending)
-    assert overview.count("⛔") >= 2, "至少 A1 与 B3 应标为硬阻碍"
+    rows = [
+        line
+        for line in overview.splitlines()
+        if line.startswith("|") and "---" not in line and "ID" not in line
+    ]
+    marked = [row for row in rows if "⛔" in row]
+    assert marked, "概览表里没有任何硬阻碍标记"
+    assert any("**A1**" in row for row in marked), "A1 是当前唯一的硬阻碍，必须标 ⛔"
 
 
 def test_pending_uses_relative_commands_not_machine_paths(pending):
