@@ -257,7 +257,7 @@
     {
       "label": "阴虚质",
       "id": "yin_deficiency",
-      "in_project": false,
+      "in_project": true,
       "features": [
         {
           "text": "阴液亏少，口燥咽干，手足心热。",
@@ -282,7 +282,22 @@
           "source": "gd_tcm"
         }
       ],
-      "project_principles": null
+      "project_principles": {
+        "one_line": "口燥咽干、手足心热，喜冷饮，易失眠",
+        "principles": [
+          "滋阴润燥",
+          "少食温燥伤津之物",
+          "避免熬夜"
+        ],
+        "direction": [
+          "甘凉滋润为主（鸭肉、猪肉、梨、桑葚、银耳）"
+        ],
+        "avoid": [
+          "温热燥烈（羊肉、韭菜、辣椒、胡椒）",
+          "炒制品与烟酒",
+          "长期熬夜"
+        ]
+      }
     },
     {
       "label": "痰湿质",
@@ -377,7 +392,7 @@
     {
       "label": "血瘀质",
       "id": "blood_stasis",
-      "in_project": false,
+      "in_project": true,
       "features": [
         {
           "text": "血行不畅，肤色晦暗，易现瘀斑。",
@@ -398,12 +413,27 @@
           "source": "gd_tcm"
         }
       ],
-      "project_principles": null
+      "project_principles": {
+        "one_line": "肤色晦黯易现瘀斑，口唇色暗，易烦健忘",
+        "principles": [
+          "行气活血",
+          "少食涩滞之品",
+          "控制盐的摄入"
+        ],
+        "direction": [
+          "行气活血为主（山楂、红枣、黑木耳、藕）"
+        ],
+        "avoid": [
+          "涩滞收敛之品（蚕豆、甘薯、栗子、柿子、乌梅）",
+          "过咸饮食",
+          "久坐少动"
+        ]
+      }
     },
     {
       "label": "气郁质",
       "id": "qi_stagnation",
-      "in_project": false,
+      "in_project": true,
       "features": [
         {
           "text": "气机郁滞，情绪低沉，敏感多虑。",
@@ -428,12 +458,27 @@
           "source": "gd_tcm"
         }
       ],
-      "project_principles": null
+      "project_principles": {
+        "one_line": "情绪低落敏感多虑，胸胁胀满，常叹气",
+        "principles": [
+          "理气解郁",
+          "少食酸涩收敛之物",
+          "作息规律以疏达情志"
+        ],
+        "direction": [
+          "理气解郁为主（橙子、白萝卜、薄荷）"
+        ],
+        "avoid": [
+          "酸涩收敛（石榴、乌梅、柿子）",
+          "浓茶与咖啡",
+          "长期情绪压抑"
+        ]
+      }
     },
     {
       "label": "特禀质",
       "id": "special_diathesis",
-      "in_project": false,
+      "in_project": true,
       "features": [
         {
           "text": "先天失常，过敏反应。",
@@ -454,7 +499,21 @@
           "source": "gd_tcm"
         }
       ],
-      "project_principles": null
+      "project_principles": {
+        "one_line": "过敏体质，易起风团、喷嚏鼻塞",
+        "principles": [
+          "平补固表",
+          "饮食清淡少发物",
+          "留意个体已知过敏原"
+        ],
+        "direction": [
+          "平补固表为主（山药、红枣、黑芝麻）"
+        ],
+        "avoid": [
+          "个体已明确的过敏原（优先于本表其他条目）",
+          "常见发物（荸荠、海带、虾蟹）"
+        ]
+      }
     }
   ],
   "open_items": [
@@ -472,9 +531,9 @@
     },
     {
       "id": "four_types_missing_in_project",
-      "title": "阴虚/血瘀/气郁/特禀四型本项目尚未收录",
-      "detail": "core/data/constitution.json 只有 5 型。四型的 C 栏为空。扩到 9 型需要：枚举 +5 个 id、constitution.json +4 条、agent2 提示词补充，以及 herbs.json 里 34 味 × suitable_constitutions + 27 味 × unsuitable_for 针对 4 个新体质共约 244 个配伍判定——后者无标准可依，必须由懂中医的人判定。",
-      "status": "待确认"
+      "title": "四型已纳入项目，配伍数据仍待补（Step 1 完成，Step 2 待做）",
+      "detail": "**2026-09-17 更新**：四型已完成 Step 1 —— `Constitution` 枚举 +4 成员（顺序同国标）、`constitution.json` +4 条（含 C 栏）、`matcher.CONSTITUTION_DEFAULT` +4 组默认搭配、本文件四型 `in_project` 翻真并补齐 C 栏快照。**但四型目前尚不可对外服务**：herbs.json 里还没有任何饮片把它们的 id 标进 `suitable_constitutions`，`filter_by_constitution` 会抛 `MissingConstitutionDataError`。因此暴露与否由数据派生决定（`safety.ready_constitutions()`），`/api/constitutions` 与运行时闸门都会挡住它们，直接传 `constitution_override` 得到 422 而非 500。\n\n**Step 2（待做）**：为 34 味饮片补 four 型的 suitable/unsuitable 标注。已有一批公开来源依据的候选（阴虚＝桑椹；血瘀＝山楂/红枣/生姜；气郁＝红枣/薄荷；特禀＝红枣/山药），但按 A1 口径这些属**未人工审核数据**，写入 ≠ 审核通过；另有 2 条待确认项（山楂×阴虚、山楂×气郁、槐花×血瘀）需专业判断。数据一备齐，四型自动出现，无需翻任何开关。",
+      "status": "进行中"
     },
     {
       "id": "ids_confirmed",
