@@ -65,7 +65,7 @@ python scripts\check_setup.py
 # ② 离线冒烟：数据层 → 解析 → 规则兜底 → 护栏 全链路（不调模型）
 python scripts\smoke_offline.py
 
-# ③ 单元测试（离线，约 0.8 秒，309 项）
+# ③ 单元测试（离线，约 0.9 秒，335 项）
 python -m pytest -q
 
 # ④ 真实模型冒烟（需要 API Key，约 60–90 秒，会产生调用费用）

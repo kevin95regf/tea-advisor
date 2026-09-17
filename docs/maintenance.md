@@ -60,11 +60,11 @@
 | `core/app/services` | 4 | 1,102 | 编排与规则兜底 |
 | `core/app/agents` | 8 | 1,164 | LLM 层（含两个后端）+ 2 个提示词文件 |
 | `core/app/api` | 3 | 115 | HTTP 适配，极薄 |
-| `core/tests` | 12 | 2,647 | **309 项，全离线，约 0.8 秒** |
+| `core/tests` | 13 | 2,919 | **335 项，全离线，约 0.9 秒** |
 | `core/scripts` | 10 | 2,907 | 运维/自检脚本 |
 | `ui/terminal` | 1 | 398 | 终端壳 |
 | `ui/web` | 1 | 449 | 网页壳 |
-| **合计** | 44 | **9,755** | |
+| **合计** | 45 | **10,027** | |
 
 数据：`food_properties.json` 66 KB、`herbs.json` 22 KB、`constitution.json` 2.6 KB、
 `food_medicine_catalog.json` 19 KB（合规自检用）、`herb_nature_reference.json` 61 KB（药典核对用）。
@@ -147,25 +147,28 @@ AnalyzeResponse  ← 必带 disclaimer；meta 带 key_source / backend / 耗时 
 
 | 文件 | 行数 | 职责 | 改动风险 |
 |---|---|---|---|
-| `domain/enums.py` | 93 | 四气/五味/时段/烹饪/体质枚举 + 中文标签（含 `SOURCE_LABELS`） | 低（加取值安全，改取值名=改契约） |
-| `domain/nature_math.py` | 295 | 四性数值轴、`shift_nature`、`combine`、**温度前缀唯一入口** | **高** |
-| `domain/models.py` | 227 | 请求/响应/中间结构**唯一真源** | **高**（改字段名=改对外契约） |
-| `domain/safety.py` | 212 | 白名单/剂量/禁用表述/高风险人群/体质收敛 | **高**（安全层） |
-| `services/food_lookup.py` | 475 | `resolve_food` 三层判定、`match_foods`、`render_reference` | **高** |
-| `services/matcher.py` | 214 | 规则兜底、体质默认搭配 | 中 |
-| `services/orchestrator.py` | 250 | 编排、凭据前置校验、护栏调用、降级 | **高** |
-| `agents/runtime.py` | 209 | 后端选择器、dsh 后端、`AgentRun`、`CredentialError` | 中 |
-| `agents/direct_api.py` | 188 | 直连官方 API 后端、思考参数映射、错误文案 | 中 |
-| `agents/agent1_diet.py` | 168 | 解析器 + `calibrate_parsed` | **高** |
-| `agents/agent2_recommend.py` | 186 | 推荐器 + 未验证项隔离 | 中 |
-| `agents/json_guard.py` | 159 | JSON 提取/校验/重试 | 中（最容易被低估） |
-| `agents/prompts/*.md` | 61 | 两个 system prompt | 中（改完必须跑真实回归） |
-| `api/auth.py` | 32 | Bearer 头 → 裸 Key | 低 |
-| `api/analyze.py` | 57 | 路由 + 凭据错误码映射 | 低 |
-| `config.py` | 96 | 环境变量集中读取（**Key 的唯一读取点**） | 低 |
-| `main.py` | 162 | FastAPI 入口、`/`、`/healthz`、`/api/meta` | 低 |
-| `ui/terminal/chat.py` | 358 | 终端壳（仅标准库） | 低 |
-| `ui/web/index.html` | 434 | 网页壳（单文件，内联 JS） | 低 |
+| `domain/enums.py` | 117 | 四气/五味/时段/烹饪/体质枚举 + 中文标签（含 `SOURCE_LABELS`） | 低（加取值安全，改取值名=改契约） |
+| `domain/nature_math.py` | 355 | 四性数值轴、`shift_nature`、`combine`、**温度前缀唯一入口** | **高** |
+| `domain/models.py` | 236 | 请求/响应/中间结构**唯一真源** | **高**（改字段名=改对外契约） |
+| `domain/safety.py` | 264 | 白名单/剂量/禁用表述/高风险人群/体质收敛 | **高**（安全层） |
+| `services/food_lookup.py` | 561 | `resolve_food` 三层判定、`match_foods`、`render_reference` | **高** |
+| `services/matcher.py` | 268 | 规则兜底、体质默认搭配 | 中 |
+| `services/orchestrator.py` | 272 | 编排、凭据前置校验、护栏调用、降级 | **高** |
+| `agents/runtime.py` | 251 | 后端选择器、dsh 后端、`AgentRun`、`CredentialError` | 中 |
+| `agents/direct_api.py` | 224 | 直连官方 API 后端、思考参数映射、错误文案 | 中 |
+| `agents/agent1_diet.py` | 195 | 解析器 + `calibrate_parsed` | **高** |
+| `agents/agent2_recommend.py` | 197 | 推荐器 + 未验证项隔离 | 中 |
+| `agents/json_guard.py` | 166 | JSON 提取/校验/重试 | 中（最容易被低估） |
+| `agents/prompts/*.md` | 130 | 两个 system prompt | 中（改完必须跑真实回归） |
+| `api/auth.py` | 47 | Bearer 头 → 裸 Key | 低 |
+| `api/analyze.py` | 67 | 路由 + 凭据错误码映射 | 低 |
+| `config.py` | 129 | 环境变量集中读取（**Key 的唯一读取点**） | 低 |
+| `main.py` | 177 | FastAPI 入口、`/`、`/healthz`、`/api/meta` | 低 |
+| `ui/terminal/chat.py` | 398 | 终端壳（仅标准库） | 低 |
+| `ui/web/index.html` | 449 | 网页壳（单文件，内联 JS） | 低 |
+
+> 行数口径同 §1.4（Python `bytes.count(b"\n")`，不含 `__pycache__`）。
+> 别用 PowerShell `(Get-Content x).Count` —— 它还会把 UTF-8 当 GBK 解，中文注释会乱码。
 
 ---
 
@@ -343,7 +346,7 @@ Get-Process | Where-Object { $_.ProcessName -match 'python' } | Stop-Process -Fo
 | Agent2 耗时 | 8.2–21.8 s | 11.9–13.6 s | **4.1–4.6 s** |
 | 全链路 | 11.3–24.9 s | 12.6–15.6 s | **5.1–5.7 s** |
 | 推荐条数 | 2–3 | 2–3 | 2–3 |
-| 单元测试 | 183 | 230 | 230 |
+| 单元测试（当时的口径，现在是 §7.3 的 309） | 183 | 230 | 230 |
 
 **`direct + low` 那 1 项失败已定位，不是回归**：Agent1 偶然把"配辣椒油"写进 `note`，
 合法触发了 `SPICY_KEYWORDS` 的 +1 规则（「面条」平 → 温）。见 §10.11。
@@ -354,7 +357,7 @@ Get-Process | Where-Object { $_.ProcessName -match 'python' } | Stop-Process -Fo
 
 | 脚本 | 测到的 | **测不到的** |
 |---|---|---|
-| `pytest` | 判定逻辑、护栏、JSON 护栏、凭据与日志安全、食药物质目录合规、体质参考与药典核对文档一致性（309 项，全离线） | 真实模型行为；HTTP 层在缺 `[web]` extra 时会自动跳过 |
+| `pytest` | 判定逻辑、护栏、JSON 护栏、凭据与日志安全、食药物质目录合规、体质参考与药典核对文档一致性、交接文档结构（335 项，全离线） | 真实模型行为；HTTP 层在缺 `[web]` extra 时会自动跳过 |
 | `test_food_accuracy.py` | **只有 Agent1 的属性判定** | **推荐质量、Agent2 的任何东西、文案措辞、注意事项是否到位** |
 | `smoke_agents.py` | 运行时启动、原始往返、Agent1 解析、全链路格式与条数 | 属性准确率（无断言，只打印）；安全性 |
 | `smoke_offline.py` | 数据层→解析→规则兜底→护栏，**不调模型** | 模型相关的任何事 |
@@ -563,6 +566,20 @@ GET  https://ydz.chp.org.cn/front-api/entry/{id}   # 返回 htmlContent，含【
 5. **项目 `effects` 不照抄药典【功能与主治】是刻意的**：`herbs.json` 的
    `_meta.field_notes` 要求"必须使用养生类措辞，禁止疗效承诺"。所以别把
    「把 effects 换成药典原文」当成修 bug。
+
+### 9.7 交接文档与挂起清单
+
+| 文档 | 用途 |
+|---|---|
+| `docs/handover.md` | **项目全貌交接文档**：项目是什么、七条核心设计原则、目录与分层、当前状态、31 条已定决策、工作区状态、接手前 30 分钟 |
+| `docs/pending-items.md` | **挂起事项的唯一真源**：A 类对外服务硬阻碍 / B 类等 nanple / C 类等外部资料 / D 类等决定 / E 类技术债 |
+
+**约定**：`maintenance.md` 与 `handover.md` 只放摘要 + 指向 `pending-items.md` 的链接，
+**不要把挂起明细复制过来**，否则两处会不一致。挂起项解决后只更新 `pending-items.md`。
+
+这两个文档有 26 项结构测试（`tests/test_handover_docs.py`）守着：章节齐备、
+挂起项 ID 唯一且都有责任人与状态、**引用的仓库路径真实存在**、文档里没有 Key 材料。
+所以重构后如果文档引用了已改名的文件，`pytest` 会直接报错。
 
 ---
 
