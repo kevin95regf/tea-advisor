@@ -86,8 +86,19 @@ class DirectAPIRuntime:
     # ------------------------------------------------------------
     # 生命周期（直连无需启动任何东西，方法保留是为了接口一致）
     # ------------------------------------------------------------
-    def ensure_started(self) -> None:
-        """直连后端没有"启动"这一步；保留方法以对齐 HarnessRuntime 的调用形状。"""
+    def ensure_started(self, api_key: str | None = None) -> None:
+        """直连后端没有"启动"这一步；保留方法以对齐 `HarnessRuntime` 的调用形状。
+
+        `api_key` **收下但刻意忽略**：直连后端的 Key 是逐请求传的（`run(api_key=...)`），
+        启动时不需要、也不应该记住它 —— 记住就等于让进程持有一份凭据，
+        与"本项目不保存 Key"的设计相悖。参数存在只是为了让调用方
+        能用同一个形状调用两个运行时。
+
+        历史 bug：本方法曾不收任何参数，而 `scripts/smoke_agents.py` 按 dsh 的形状
+        调 `ensure_started(api_key)`，导致该脚本自 826b44a 起一启动就 TypeError、
+        从未跑通过（默认后端正是 direct）。所以**形状必须两边兼容**。
+        """
+        del api_key  # 显式丢弃：既不落盘，也不留在实例上
         return None
 
     def close(self) -> None:

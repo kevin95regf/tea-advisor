@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import inspect
 import json
 import logging
 
@@ -144,6 +145,52 @@ def test_dsh_backend_does_not_support_user_key(monkeypatch: pytest.MonkeyPatch) 
     """dsh 的 Key 绑在子进程上，不能按请求切换。"""
     monkeypatch.setattr(get_settings(), "backend", "dsh")
     assert get_settings().user_key_supported is False
+
+
+def test_runtime_ensure_started_shapes_are_compatible() -> None:
+    """两个运行时的 `ensure_started` 必须形状一致：除 self 外不能有必传参数。
+
+    历史 bug：`DirectAPIRuntime.ensure_started` 曾不收任何参数，而
+    `scripts/smoke_agents.py` 按 dsh 的形状调 `ensure_started(api_key)`，
+    于是该脚本一启动就 `TypeError`。默认后端正是 direct，
+    所以这条验证路径自 826b44a 起**从未跑通过**，且没人发现。
+
+    两个运行时的生命周期语义本来就不同（dsh 真的要启动子进程，direct 什么都不用做），
+    调用方却共用同一段代码 —— 那就只能靠"形状兼容"来兜住。
+    """
+    from app.agents.direct_api import DirectAPIRuntime
+    from app.agents.runtime import HarnessRuntime
+
+    for cls in (HarnessRuntime, DirectAPIRuntime):
+        params = [
+            p
+            for name, p in inspect.signature(cls.ensure_started).parameters.items()
+            if name != "self"
+        ]
+        for p in params:
+            assert (
+                p.default is not inspect.Parameter.empty
+            ), f"{cls.__name__}.ensure_started 的 {p.name} 是必传的，不带 Key 的调用点会崩"
+
+
+def test_direct_runtime_ensure_started_tolerates_api_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """direct 运行时带不带 Key 都能"启动"，且不留下任何凭据痕迹。
+
+    对应 `smoke_agents.py:100` 的实际调用形状，这条测试不需要 Key、不联网。
+    """
+    monkeypatch.setattr(get_settings(), "backend", "direct")
+    from app.agents.runtime import get_runtime
+
+    rt = get_runtime()
+    assert rt.ensure_started() is None                        # 不带参
+    assert rt.ensure_started(SENTINEL_KEY) is None            # smoke_agents.py 的形状
+    assert rt.ensure_started(api_key=SENTINEL_KEY) is None    # 关键字形式
+
+    # 直连后端的 Key 是逐请求传的（run(api_key=...)）：
+    # ensure_started 收下即丢弃，不得把它留在实例上。
+    assert SENTINEL_KEY not in repr(vars(rt))
 
 
 # ============================================================
