@@ -1,7 +1,7 @@
 {
   "_meta": {
     "title": "药食同源饮片库（demo 版）",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "review_status": "pending",
     "notice": "本文件仅收录『既是食品又是中药材的物质』方向的高频品种，属性依据中医饮食养生通行表述整理，剂量上限为保守的日常茶饮建议值。上线前必须由具备资质的中医师/中药师复核，并以国家卫健委发布的最新目录为准。",
     "field_notes": {
@@ -11,8 +11,16 @@
       "effects": "功效方向描述，必须使用养生类措辞，禁止疗效承诺",
       "max_daily_g": "单日茶饮建议用量上限（克）",
       "suitable_constitutions": "契合的体质",
-      "unsuitable_for": "不适宜人群关键词，由 safety.py 强制检查",
+      "unsuitable_for": "不适宜体质的 id 列表（如 damp_heat / yin_deficiency）：命中的饮片会被 filter_by_constitution 移出候选集，由 safety.py 强制检查。不是自然语言人群关键词——人群类禁忌写在 cautions",
       "brewing": "该饮片的处理与冲泡要点"
+    },
+    "constitution_extension": {
+      "date": "2026-09-17",
+      "constitutions": ["yin_deficiency", "blood_stasis", "qi_stagnation", "special_diathesis"],
+      "writing_rule": "只写入『公开来源直接点名该饮片适用于/不适用于该体质』的组合（共 10 格）；药典功效外推与项目 cautions 推导一律不写入，留待人工审核",
+      "source": "广东省中医药局《如何辨识自己的体质？九种体质调理方，一文说清楚》2023-03-22（政府网站科普，基于 2009 版学会标准）",
+      "review_status": "pending",
+      "note": "这 10 格未经人工审核，与其余 5 型数据同等对待。空缺 ≠ 安全或不宜，空缺只表示『未判定』。逐条依据与推导过程见 docs/herbs-9types-draft.md"
     }
   },
   "herbs": [
@@ -59,7 +67,7 @@
       "effects": ["消食化积", "行气散瘀"],
       "max_daily_g": 12,
       "cautions": ["胃酸过多、胃溃疡者慎用", "孕妇不宜", "不宜空腹大量饮用"],
-      "suitable_constitutions": ["phlegm_damp", "balanced"],
+      "suitable_constitutions": ["phlegm_damp", "balanced", "blood_stasis"],
       "unsuitable_for": ["qi_deficiency"],
       "brewing": {
         "form": "干山楂片，可略炒后用",
@@ -127,7 +135,7 @@
       "effects": ["补中益气", "养血安神"],
       "max_daily_g": 15,
       "cautions": ["湿盛腹胀、痰湿偏重者不宜多食", "含糖量高，血糖偏高者需控制", "建议掰开去核再泡"],
-      "suitable_constitutions": ["qi_deficiency", "yang_deficiency", "balanced"],
+      "suitable_constitutions": ["qi_deficiency", "yang_deficiency", "balanced", "blood_stasis", "qi_stagnation", "special_diathesis"],
       "unsuitable_for": ["phlegm_damp", "damp_heat"],
       "brewing": {
         "form": "干枣，切片或掰开",
@@ -212,7 +220,7 @@
       "effects": ["温中散寒", "化痰止咳", "和胃止呕"],
       "max_daily_g": 10,
       "cautions": ["阴虚内热、易上火者不宜", "不宜睡前饮用", "胃溃疡活动期慎用"],
-      "suitable_constitutions": ["yang_deficiency", "phlegm_damp", "balanced"],
+      "suitable_constitutions": ["yang_deficiency", "phlegm_damp", "balanced", "blood_stasis"],
       "unsuitable_for": ["damp_heat"],
       "brewing": {
         "form": "鲜姜切薄片 2–3 片",
@@ -229,7 +237,7 @@
       "effects": ["疏散风热", "清利头目", "疏肝行气"],
       "max_daily_g": 6,
       "cautions": ["体虚多汗者不宜", "哺乳期不宜（影响乳汁分泌）", "孕妇不宜"],
-      "suitable_constitutions": ["damp_heat", "balanced"],
+      "suitable_constitutions": ["damp_heat", "balanced", "qi_stagnation"],
       "unsuitable_for": ["qi_deficiency", "yang_deficiency"],
       "brewing": {
         "form": "干薄荷叶",
@@ -246,7 +254,7 @@
       "effects": ["滋阴补血", "生津润肠"],
       "max_daily_g": 15,
       "cautions": ["脾虚便溏者不宜", "含糖量较高，血糖偏高者需控制"],
-      "suitable_constitutions": ["damp_heat", "balanced"],
+      "suitable_constitutions": ["damp_heat", "balanced", "yin_deficiency"],
       "unsuitable_for": ["phlegm_damp", "yang_deficiency"],
       "brewing": {
         "form": "干桑椹",
@@ -315,7 +323,7 @@
       "max_daily_g": 10,
       "cautions": ["外感初期、实热积滞者不宜", "胃酸过多者慎用"],
       "suitable_constitutions": ["balanced", "damp_heat"],
-      "unsuitable_for": [],
+      "unsuitable_for": ["blood_stasis", "qi_stagnation"],
       "brewing": {
         "form": "干乌梅，可略捣",
         "note": "酸甘化阴，夏季生津解渴；可配少量甘草与陈皮",
@@ -437,7 +445,7 @@
       "effects": ["补脾养胃", "生津益肺"],
       "max_daily_g": 20,
       "cautions": ["湿盛腹胀者不宜多食", "感冒发热期间不宜"],
-      "suitable_constitutions": ["qi_deficiency", "balanced"],
+      "suitable_constitutions": ["qi_deficiency", "balanced", "special_diathesis"],
       "unsuitable_for": ["phlegm_damp"],
       "brewing": {
         "form": "干山药片（淮山）",
