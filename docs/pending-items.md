@@ -38,10 +38,10 @@
 | **范围** | ⚠️ **本项只覆盖 `food_properties.json`。** `herbs.json` 不是「逐条 pending」——它**根本没有逐条审核字段**，审核状态只在文件级 `_meta.review_status`。已单列为 **E2** |
 | **影响** | 所有条目虽按 0.9 置信度参与判定，但界面**必须**标「待验证」。这是刻意的保守设计，不是 bug |
 | **为何只有人能解** | `approved` 意味着「真·硬规则库、界面不再标注」，必须由具备资质的中医师/中药师逐条确认，并同时填写 `reviewed_by` / `reviewed_at` |
-| **需要什么** | 审核人 + 一份逐条审核流程（`docs/maintenance.md` §9.2/§9.3 有正确姿势） |
+| **需要什么** | 审核人 + 一份逐条审核流程（`docs/maintenance.md` §9.2/§9.3 有正确姿势）。**核验单已就绪**：`docs/food-properties-review-sheet.md`（脚本生成、只读可重跑）。④层内部矛盾（不依赖外部来源）已跑完；①②③ 层按「官方优先 + 多源兜底 + 无源标空」推进，第一批从 ★ 主食/乳饮/水产 开始 |
 | **验收标准** | `food_properties.json` 的 `review_status` 分布中 `approved` 条数 > 0，且每条 approved 都有 `reviewed_by` + `reviewed_at` |
 | **注意** | ⚠️ **不要为了界面好看而批量置 approved**。标记密度就是审核进度的可见反馈，批量置等于把这个反馈抹掉 |
-| **相关文件** | `core/data/food_properties.json` |
+| **相关文件** | `core/data/food_properties.json`、`docs/food-properties-review-sheet.md`（核验单，脚本生成）、`core/scripts/build_food_review_sheet.py`（生成工具，**只读**，`--check` 可进 CI） |
 
 ---
 
