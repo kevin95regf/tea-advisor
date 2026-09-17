@@ -20,6 +20,7 @@ from app.domain.safety import (
     filter_by_constitution,
     herb_whitelist_names,
     load_herb_catalog,
+    ready_constitutions,
     scan_free_text,
 )
 
@@ -174,14 +175,35 @@ def test_normal_text_not_flagged_high_risk() -> None:
 # 体质筛选
 # ============================================================
 def test_filter_by_constitution_returns_candidates() -> None:
-    """每种体质都必须能筛出候选饮片。
+    """每种**已就绪**的体质都必须能筛出候选饮片。
 
     列表**从枚举派生**，不写死：这样以后加体质时这条测试会自动跟上。
     写死列表会留下隐形缺口 —— 看起来全绿，其实新体质一条都没测。
+
+    ⚠️ 2026-09-17（5→9）：枚举加成员 ≠ 数据已备齐。四型刚进枚举时 herbs.json
+    里一条标注都没有，`filter_by_constitution` 会如实抛 `MissingConstitutionDataError`。
+    所以这里的守卫改成**就绪 ⟺ 有候选**这条双向不变式：
+    就绪的必须有候选（本条），未就绪的必须抛错（下一条 `..._without_data`）。
+    这样「扩了枚举忘了补数据」仍然会被抓到——只是抓它的是下一条。
     """
     for constitution in Constitution:
+        if constitution.value not in ready_constitutions():
+            continue
         candidates = filter_by_constitution(constitution.value)
-        assert candidates, f"{constitution.value} 没有候选饮片"
+        assert candidates, f"{constitution.value} 已就绪却没有候选饮片"
+
+
+def test_legacy_five_constitutions_are_ready() -> None:
+    """现有 5 型的数据是齐的，闸门写反也不能把它们关掉。
+
+    单独一条是因为上面那条改成「跳过未就绪」之后就有了盲区：
+    万一 `ready_constitutions()` 哪天返回空集，上面那条会一条都不测却依然全绿。
+    """
+    legacy = {
+        "balanced", "qi_deficiency", "yang_deficiency", "phlegm_damp", "damp_heat",
+    }
+    missing = legacy - ready_constitutions()
+    assert not missing, f"这几种原有体质不应变成未就绪：{sorted(missing)}"
 
 
 def test_filter_by_constitution_rejects_constitution_without_data() -> None:
