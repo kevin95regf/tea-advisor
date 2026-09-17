@@ -84,12 +84,12 @@ def validate(ref: dict, project: dict[str, dict]) -> list[str]:
                     problems.append(f"{c['label']}：{layer} 有空条目")
 
         # 项目内体质：C 栏必须能在 constitution.json 里找到，且快照要与实时数据一致
-        pid = c.get("project_id")
+        pid = c.get("id")
         if c.get("in_project"):
             if not pid:
-                problems.append(f"{c['label']}：in_project 为真但没有 project_id")
+                problems.append(f"{c['label']}：in_project 为真但没有 id")
             elif pid not in project:
-                problems.append(f"{c['label']}：project_id {pid!r} 在 constitution.json 里不存在")
+                problems.append(f"{c['label']}：id {pid!r} 在 constitution.json 里不存在")
             else:
                 snap = c.get("project_principles")
                 live = project[pid]
@@ -102,8 +102,13 @@ def validate(ref: dict, project: dict[str, dict]) -> list[str]:
                                 f"{c['label']}：project_principles.{field} 快照与 "
                                 f"constitution.json 不一致（快照已过期，请更新 JSON）"
                             )
-        elif c.get("project_principles") is not None:
-            problems.append(f"{c['label']}：未收录的体质不应有 project_principles")
+        else:
+            if not pid:
+                problems.append(f"{c['label']}：缺少 id")
+            elif pid in project:
+                problems.append(f"{c['label']}：标为未收录，但 id {pid!r} 已在 constitution.json 里")
+            if c.get("project_principles") is not None:
+                problems.append(f"{c['label']}：未收录的体质不应有 project_principles")
 
     return problems
 
@@ -213,21 +218,22 @@ def render(ref: dict, project: dict[str, dict]) -> str:
         if len(diet) > 60:
             diet = diet[:58] + "……"
         if c["in_project"]:
-            proj = f"已收录（`{c['project_id']}`）"
+            proj = f"已收录（`{c['id']}`）"
         else:
-            proj = f"**未收录**（拟用 id `{c.get('proposed_id')}`）"
+            proj = f"**未收录**（id 已定：`{c['id']}`）"
         L.append(f"| **{c['label']}** | {feats} | {diet} | {proj} |")
+    L.append("")
+    L.append("> 九型的 id 已于 2026-09-17 全部确认，扩到 9 型时直接使用，见 §4 的"
+             "「四个新体质的英文 id 已确认」。")
     L.append("")
 
     # ---------- 逐型详情 ----------
     L.append("## 3. 逐型详情")
     L.append("")
     for c in ref["constitutions"]:
-        title = c["label"]
-        if c["in_project"]:
-            title += f"　`{c['project_id']}`"
-        else:
-            title += f"　（本项目未收录，拟用 id `{c.get('proposed_id')}`）"
+        title = c["label"] + f"　`{c['id']}`"
+        if not c["in_project"]:
+            title += "　（本项目未收录）"
         L.append(f"### {title}")
         L.append("")
         L.append("**A 栏 · 国标特征的官方转引**　⚠️ 非标准正文")

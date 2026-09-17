@@ -74,19 +74,47 @@ def test_nine_constitutions_in_standard_order(ref):
 def test_project_coverage_matches_project_data(ref, project):
     for c in ref["constitutions"]:
         label = c["label"]
+        assert c["id"], label
         if label in PROJECT_IDS:
             assert c["in_project"] is True, label
-            assert c["project_id"] == PROJECT_IDS[label], label
-            assert c["project_id"] in project, label
+            assert c["id"] == PROJECT_IDS[label], label
+            assert c["id"] in project, label
         else:
             assert c["in_project"] is False, label
-            assert c["project_id"] is None, label
-            assert c.get("proposed_id"), label
+            assert c["id"] not in project, label
 
 
 def test_new_types_are_exactly_the_four_missing(ref):
     missing = [c["label"] for c in ref["constitutions"] if not c["in_project"]]
     assert missing == NOT_IN_PROJECT
+
+
+def test_confirmed_ids_for_new_types(ref):
+    """四个新体质的 id 已于 2026-09-17 确认，改动即意味着推翻决定。"""
+    confirmed = {
+        "阴虚质": "yin_deficiency",
+        "血瘀质": "blood_stasis",
+        "气郁质": "qi_stagnation",
+        "特禀质": "special_diathesis",
+    }
+    by = {c["label"]: c for c in ref["constitutions"]}
+    for label, cid in confirmed.items():
+        assert by[label]["id"] == cid, label
+        assert by[label]["in_project"] is False
+
+
+def test_no_leftover_proposed_or_project_id_keys(ref):
+    """迁移后不允许 project_id / proposed_id 残留。"""
+    for c in ref["constitutions"]:
+        assert "project_id" not in c, c["label"]
+        assert "proposed_id" not in c, c["label"]
+
+
+def test_id_matches_project_data_for_covered_types(ref, project):
+    for c in ref["constitutions"]:
+        if c["in_project"]:
+            assert c["id"] in project
+            assert project[c["id"]]["label"] == c["label"]
 
 
 # --------------------------- 层次与来源的诚实性 ----------------------------
@@ -135,7 +163,7 @@ def test_fulltext_status_admits_it_is_missing(ref):
 def test_open_items_recorded(ref):
     ids = {i["id"] for i in ref["open_items"]}
     for expected in ("A_layer_not_verbatim", "diet_not_in_standard",
-                     "four_types_missing_in_project", "proposed_ids_unconfirmed"):
+                     "four_types_missing_in_project", "ids_confirmed"):
         assert expected in ids
 
 
@@ -156,7 +184,7 @@ def test_c_column_matches_live_project_data(ref, project):
             assert c["project_principles"] is None, c["label"]
             continue
         snap = c["project_principles"]
-        live = project[c["project_id"]]
+        live = project[c["id"]]
         for field in ("one_line", "principles", "direction", "avoid"):
             assert snap[field] == live[field], f"{c['label']}.{field} 快照已过期"
 
@@ -173,6 +201,25 @@ def test_validate_catches_stale_snapshot(mod, ref, project):
     broken["constitutions"][0]["project_principles"]["one_line"] = "被改过了"
     problems = mod.validate(broken, project)
     assert any("快照" in p for p in problems), problems
+
+
+def test_validate_catches_unknown_id(mod, ref, project):
+    import copy
+
+    broken = copy.deepcopy(ref)
+    broken["constitutions"][0]["id"] = "no_such_id"
+    problems = mod.validate(broken, project)
+    assert any("不存在" in p for p in problems), problems
+
+
+def test_validate_catches_inconsistent_in_project_flag(mod, ref, project):
+    """标为未收录、但 id 已在 constitution.json 里 —— 迁移漏改的典型症状。"""
+    import copy
+
+    broken = copy.deepcopy(ref)
+    broken["constitutions"][0]["in_project"] = False
+    problems = mod.validate(broken, project)
+    assert any("已在 constitution.json" in p for p in problems), problems
 
 
 def test_validate_catches_unknown_source(mod, ref, project):

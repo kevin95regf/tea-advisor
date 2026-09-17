@@ -16,7 +16,6 @@
       "C": "本项目现有调养原则（引自 core/data/constitution.json）"
     }
   },
-
   "standard": {
     "code": "GB/T 46939-2025",
     "name_zh": "中医体质分类与判定",
@@ -49,187 +48,415 @@
       "how_to_fill_layer_a": "若需把 A 栏升级为逐字原文：用 Chrome/Firefox/Edge 打开国家标准全文公开系统的在线预览（或购买中国标准出版社正版 PDF），把 PDF 提供给我，即可逐条替换为原文并标注条款号。"
     },
     "sources": [
-      {"key": "openstd", "label": "国家标准全文公开系统 · GB/T 46939-2025 标准信息页", "url": "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=827D6D266BA52A2983F93638DA871028", "kind": "官方发布"},
-      {"key": "bucm", "label": "北京中医药大学《由我校牵头……〈中医体质分类与判定〉国家标准首次制定发布！》", "url": "https://www.bucm.edu.cn/bzyyw/44d4e7d1da5a44a4b1ea1d44505ddf63.htm", "date": "2026-02-03", "kind": "起草单位官方发布"},
-      {"key": "zytcm_bao", "label": "《中国中医药报》2026-01-26 报道（经上海中医药大学年鉴网、广东省中医药局转载，两处文字一致）", "url": "https://zynj.shutcm.edu.cn/2026/0126/c4359a171782/page.htm", "date": "2026-01-26", "kind": "官方媒体"},
-      {"key": "zytcm_bao_gd", "label": "广东省中医药局《中医体质分类与判定国家标准制定发布》（同上《中国中医药报》文章）", "url": "http://szyyj.gd.gov.cn/gkmlpt/content/4/4845/mpost_4845516.html", "date": "2026-01-20", "kind": "政府网站"}
+      {
+        "key": "openstd",
+        "label": "国家标准全文公开系统 · GB/T 46939-2025 标准信息页",
+        "url": "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=827D6D266BA52A2983F93638DA871028",
+        "kind": "官方发布"
+      },
+      {
+        "key": "bucm",
+        "label": "北京中医药大学《由我校牵头……〈中医体质分类与判定〉国家标准首次制定发布！》",
+        "url": "https://www.bucm.edu.cn/bzyyw/44d4e7d1da5a44a4b1ea1d44505ddf63.htm",
+        "date": "2026-02-03",
+        "kind": "起草单位官方发布"
+      },
+      {
+        "key": "zytcm_bao",
+        "label": "《中国中医药报》2026-01-26 报道（经上海中医药大学年鉴网、广东省中医药局转载，两处文字一致）",
+        "url": "https://zynj.shutcm.edu.cn/2026/0126/c4359a171782/page.htm",
+        "date": "2026-01-26",
+        "kind": "官方媒体"
+      },
+      {
+        "key": "zytcm_bao_gd",
+        "label": "广东省中医药局《中医体质分类与判定国家标准制定发布》（同上《中国中医药报》文章）",
+        "url": "http://szyyj.gd.gov.cn/gkmlpt/content/4/4845/mpost_4845516.html",
+        "date": "2026-01-20",
+        "kind": "政府网站"
+      }
     ]
   },
-
   "sources": [
-    {"key": "kjrb_wangqi", "label": "科技日报《中医体质分类国家标准4月1日起实施 四分钟读懂你的「体质密码」》——专访王琦院士（经中国新闻网转载）", "url": "https://www.chinanews.com.cn/sh/2026/02-10/10569268.shtml", "date": "2026-02-10", "kind": "起草人访谈"},
-    {"key": "wangqi_press", "label": "国家中医药管理局 2026-04-29 新闻发布会，王琦院士解读（中国青年报报道，经中国青年网、网易转载；中国网同日报道文字一致）", "url": "http://news.youth.cn/jsxw/202604/t20260429_16634476.htm", "date": "2026-04-29", "kind": "起草人公开发布会"},
-    {"key": "cnr_natcm", "label": "央广网／央视新闻《国家中医药管理局：〈中医体质分类与判定〉从「治已病」转向「治未病」》", "url": "https://news.cnr.cn/native/gd/kx/20260429/t20260429_527605055.shtml", "date": "2026-04-29", "kind": "官方媒体"},
-    {"key": "cnr_health", "label": "央广网《中医体质有「国标」了，调体养生更精准》——受访者熊暑霖（湖南中医药大学第二附属医院治未病中心主任、主任医师）", "url": "https://health.cnr.cn/jkgdxw/20260216/t20260216_527528517.shtml", "date": "2026-02-16", "kind": "官媒报道（受访专家解读）"},
-    {"key": "gd_tcm", "label": "广东省中医药局《如何辨识自己的体质？九种体质调理方，一文说清楚》（页面标注来源：中国中医药报、广州市中西医结合医院、《中医健康养生》杂志）", "url": "http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html", "date": "2023-03-22", "kind": "政府网站科普（基于 2009 版分类法）"}
+    {
+      "key": "kjrb_wangqi",
+      "label": "科技日报《中医体质分类国家标准4月1日起实施 四分钟读懂你的「体质密码」》——专访王琦院士（经中国新闻网转载）",
+      "url": "https://www.chinanews.com.cn/sh/2026/02-10/10569268.shtml",
+      "date": "2026-02-10",
+      "kind": "起草人访谈"
+    },
+    {
+      "key": "wangqi_press",
+      "label": "国家中医药管理局 2026-04-29 新闻发布会，王琦院士解读（中国青年报报道，经中国青年网、网易转载；中国网同日报道文字一致）",
+      "url": "http://news.youth.cn/jsxw/202604/t20260429_16634476.htm",
+      "date": "2026-04-29",
+      "kind": "起草人公开发布会"
+    },
+    {
+      "key": "cnr_natcm",
+      "label": "央广网／央视新闻《国家中医药管理局：〈中医体质分类与判定〉从「治已病」转向「治未病」》",
+      "url": "https://news.cnr.cn/native/gd/kx/20260429/t20260429_527605055.shtml",
+      "date": "2026-04-29",
+      "kind": "官方媒体"
+    },
+    {
+      "key": "cnr_health",
+      "label": "央广网《中医体质有「国标」了，调体养生更精准》——受访者熊暑霖（湖南中医药大学第二附属医院治未病中心主任、主任医师）",
+      "url": "https://health.cnr.cn/jkgdxw/20260216/t20260216_527528517.shtml",
+      "date": "2026-02-16",
+      "kind": "官媒报道（受访专家解读）"
+    },
+    {
+      "key": "gd_tcm",
+      "label": "广东省中医药局《如何辨识自己的体质？九种体质调理方，一文说清楚》（页面标注来源：中国中医药报、广州市中西医结合医院、《中医健康养生》杂志）",
+      "url": "http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+      "date": "2023-03-22",
+      "kind": "政府网站科普（基于 2009 版分类法）"
+    }
   ],
-
   "constitutions": [
     {
       "label": "平和质",
-      "project_id": "balanced",
+      "id": "balanced",
       "in_project": true,
       "features": [
-        {"text": "阴阳气血调和，体态适中，面色红润，精力充沛。", "source": "kjrb_wangqi"},
-        {"text": "这是正常、健康的体质，往往表现为体态适中、面色红润、精力充沛。", "source": "cnr_health"},
-        {"text": "阴阳气血调和，属于几种体质人群中最为健康的一种。以面色红润、精力充沛、心态平和、体态均匀适中等为主要特征。", "source": "gd_tcm"}
+        {
+          "text": "阴阳气血调和，体态适中，面色红润，精力充沛。",
+          "source": "kjrb_wangqi"
+        },
+        {
+          "text": "这是正常、健康的体质，往往表现为体态适中、面色红润、精力充沛。",
+          "source": "cnr_health"
+        },
+        {
+          "text": "阴阳气血调和，属于几种体质人群中最为健康的一种。以面色红润、精力充沛、心态平和、体态均匀适中等为主要特征。",
+          "source": "gd_tcm"
+        }
       ],
       "diet_direction": [
-        {"text": "饮食基本无特殊禁忌。只是对有偏性的食物，如偏凉或偏热，不长期食用便可。对冬季「流行」的膏方，平和体质的人可不吃或少吃，以免补过，出现长痘、便秘等「上火」症状。", "source": "gd_tcm"}
+        {
+          "text": "饮食基本无特殊禁忌。只是对有偏性的食物，如偏凉或偏热，不长期食用便可。对冬季「流行」的膏方，平和体质的人可不吃或少吃，以免补过，出现长痘、便秘等「上火」症状。",
+          "source": "gd_tcm"
+        }
       ],
       "project_principles": {
         "one_line": "吃得好、睡得着、精力稳定，寒热都不太敏感",
-        "principles": ["饮食有节，不必刻意进补", "顺时而食即可", "避免长期偏嗜寒凉或辛辣"],
-        "direction": ["平性为主，随餐调整"],
-        "avoid": ["长期大量进补类食材", "长期冰饮"]
+        "principles": [
+          "饮食有节，不必刻意进补",
+          "顺时而食即可",
+          "避免长期偏嗜寒凉或辛辣"
+        ],
+        "direction": [
+          "平性为主，随餐调整"
+        ],
+        "avoid": [
+          "长期大量进补类食材",
+          "长期冰饮"
+        ]
       }
     },
     {
       "label": "气虚质",
-      "project_id": "qi_deficiency",
+      "id": "qi_deficiency",
       "in_project": true,
       "features": [
-        {"text": "元气不足，易疲劳、气短。", "source": "kjrb_wangqi"},
-        {"text": "元气不足，爱出虚汗，容易疲乏。舌淡红，舌边有齿痕，脉弱。", "source": "cnr_health"},
-        {"text": "元气不足，以疲乏、气短、自汗等气虚表现为主要特征。这种体质的人多肌肉松软不实，抵抗力较差，不耐受风、寒、暑、湿邪，极易感冒，内脏易下垂，病后康复较慢，性格内向。", "source": "gd_tcm"}
+        {
+          "text": "元气不足，易疲劳、气短。",
+          "source": "kjrb_wangqi"
+        },
+        {
+          "text": "元气不足，爱出虚汗，容易疲乏。舌淡红，舌边有齿痕，脉弱。",
+          "source": "cnr_health"
+        },
+        {
+          "text": "元气不足，以疲乏、气短、自汗等气虚表现为主要特征。这种体质的人多肌肉松软不实，抵抗力较差，不耐受风、寒、暑、湿邪，极易感冒，内脏易下垂，病后康复较慢，性格内向。",
+          "source": "gd_tcm"
+        }
       ],
       "diet_direction": [
-        {"text": "气虚质的人适合用黄芪、山药等补气健脾的食物。", "source": "wangqi_press"},
-        {"text": "气虚质适合食用黄芪、山药、大枣等补气健脾。", "source": "kjrb_wangqi"},
-        {"text": "可适当多吃的食物：糯米、小米、红枣、龙眼肉、莲子、鸡肉、牛肉、鲫鱼、黄鳝、虾等。应少吃的食物：薄荷、胡椒、大蒜、紫苏、生萝卜、橙子、茶叶及烟酒等。", "source": "gd_tcm"}
+        {
+          "text": "气虚质的人适合用黄芪、山药等补气健脾的食物。",
+          "source": "wangqi_press"
+        },
+        {
+          "text": "气虚质适合食用黄芪、山药、大枣等补气健脾。",
+          "source": "kjrb_wangqi"
+        },
+        {
+          "text": "可适当多吃的食物：糯米、小米、红枣、龙眼肉、莲子、鸡肉、牛肉、鲫鱼、黄鳝、虾等。应少吃的食物：薄荷、胡椒、大蒜、紫苏、生萝卜、橙子、茶叶及烟酒等。",
+          "source": "gd_tcm"
+        }
       ],
       "project_principles": {
         "one_line": "容易累、说话没劲、稍动就出汗、易感冒",
-        "principles": ["健脾益气", "少食生冷耗气之物", "少量多次进食，避免过饥"],
-        "direction": ["温平偏补", "健脾为主"],
-        "avoid": ["大量寒凉生冷", "过度节食", "浓茶空腹"]
+        "principles": [
+          "健脾益气",
+          "少食生冷耗气之物",
+          "少量多次进食，避免过饥"
+        ],
+        "direction": [
+          "温平偏补",
+          "健脾为主"
+        ],
+        "avoid": [
+          "大量寒凉生冷",
+          "过度节食",
+          "浓茶空腹"
+        ]
       }
     },
     {
       "label": "阳虚质",
-      "project_id": "yang_deficiency",
+      "id": "yang_deficiency",
       "in_project": true,
       "features": [
-        {"text": "阳气不足，畏寒怕冷。", "source": "kjrb_wangqi"},
-        {"text": "阳气不足，畏寒怕冷，四肢不温，喜热饮食，精神不振。", "source": "cnr_health"},
-        {"text": "阳气不足，以畏寒怕冷、手足不温等虚寒表现为主要特征。这种体质的人形体多白胖，面色淡白而无华，喜暖怕凉，性格多沉静、内向，耐春夏不耐秋冬，易感风、寒、湿邪。", "source": "gd_tcm"}
+        {
+          "text": "阳气不足，畏寒怕冷。",
+          "source": "kjrb_wangqi"
+        },
+        {
+          "text": "阳气不足，畏寒怕冷，四肢不温，喜热饮食，精神不振。",
+          "source": "cnr_health"
+        },
+        {
+          "text": "阳气不足，以畏寒怕冷、手足不温等虚寒表现为主要特征。这种体质的人形体多白胖，面色淡白而无华，喜暖怕凉，性格多沉静、内向，耐春夏不耐秋冬，易感风、寒、湿邪。",
+          "source": "gd_tcm"
+        }
       ],
       "diet_direction": [
-        {"text": "阳虚质的人适合用红枣、生姜等温阳散寒的食物。", "source": "wangqi_press"},
-        {"text": "医生会建议其可多吃牛羊肉、鳝鱼、辣椒、花椒，少食黄瓜、藕、梨、西瓜等生冷寒凉食物。", "source": "cnr_health"},
-        {"text": "可适当多吃的食物：羊肉、胡椒、荔枝、茴香、海虾、桂圆等。应少吃生冷、苦寒、黏腻的食物：如梨、西瓜、香蕉、柿子、黄瓜、苦瓜、绿豆、甲鱼、蟹肉、绿茶、冰镇饮料等。", "source": "gd_tcm"}
+        {
+          "text": "阳虚质的人适合用红枣、生姜等温阳散寒的食物。",
+          "source": "wangqi_press"
+        },
+        {
+          "text": "医生会建议其可多吃牛羊肉、鳝鱼、辣椒、花椒，少食黄瓜、藕、梨、西瓜等生冷寒凉食物。",
+          "source": "cnr_health"
+        },
+        {
+          "text": "可适当多吃的食物：羊肉、胡椒、荔枝、茴香、海虾、桂圆等。应少吃生冷、苦寒、黏腻的食物：如梨、西瓜、香蕉、柿子、黄瓜、苦瓜、绿豆、甲鱼、蟹肉、绿茶、冰镇饮料等。",
+          "source": "gd_tcm"
+        }
       ],
       "project_principles": {
         "one_line": "怕冷、手脚凉、喜热饮、吃凉的容易不舒服",
-        "principles": ["温阳散寒", "忌生冷冰饮", "晨起可少量温性饮片"],
-        "direction": ["温性为主"],
-        "avoid": ["冰镇饮品", "大量寒凉食材（菊花、决明子、荷叶等）", "夜间饮茶"]
+        "principles": [
+          "温阳散寒",
+          "忌生冷冰饮",
+          "晨起可少量温性饮片"
+        ],
+        "direction": [
+          "温性为主"
+        ],
+        "avoid": [
+          "冰镇饮品",
+          "大量寒凉食材（菊花、决明子、荷叶等）",
+          "夜间饮茶"
+        ]
       }
     },
     {
       "label": "阴虚质",
-      "project_id": null,
-      "proposed_id": "yin_deficiency",
+      "id": "yin_deficiency",
       "in_project": false,
       "features": [
-        {"text": "阴液亏少，口燥咽干，手足心热。", "source": "kjrb_wangqi"},
-        {"text": "阴液亏少，口燥咽干，手足心热，易失眠，大便干燥。", "source": "cnr_health"},
-        {"text": "阴液亏少，以口燥咽干、手足心热等虚热表现为主要特征。这种体质的人形体多偏瘦，会形成阴虚阳亢证，常表现为手足心热、口燥咽干、鼻微干、喜冷饮、大便干燥、舌红少津、脉细数等，耐冬不耐夏。性情急躁、活泼好动。", "source": "gd_tcm"}
+        {
+          "text": "阴液亏少，口燥咽干，手足心热。",
+          "source": "kjrb_wangqi"
+        },
+        {
+          "text": "阴液亏少，口燥咽干，手足心热，易失眠，大便干燥。",
+          "source": "cnr_health"
+        },
+        {
+          "text": "阴液亏少，以口燥咽干、手足心热等虚热表现为主要特征。这种体质的人形体多偏瘦，会形成阴虚阳亢证，常表现为手足心热、口燥咽干、鼻微干、喜冷饮、大便干燥、舌红少津、脉细数等，耐冬不耐夏。性情急躁、活泼好动。",
+          "source": "gd_tcm"
+        }
       ],
       "diet_direction": [
-        {"text": "医生会建议其多吃瘦猪肉、鸭肉、绿豆、冬瓜等甘凉滋润食物，少食羊肉、狗肉、韭菜、辣椒等性温燥烈的食物，并避免熬夜和剧烈运动。", "source": "cnr_health"},
-        {"text": "可适当多吃的食物：鸭肉、猪肉、猪皮、牛奶、甲鱼、梨、桑葚、银耳、蛤蜊等。应少吃温热燥性之品：如狗肉、大蒜、韭菜、胡椒、辣椒，以及各种炒制品，如炒豆子、爆米花等。最好戒烟酒。", "source": "gd_tcm"}
+        {
+          "text": "医生会建议其多吃瘦猪肉、鸭肉、绿豆、冬瓜等甘凉滋润食物，少食羊肉、狗肉、韭菜、辣椒等性温燥烈的食物，并避免熬夜和剧烈运动。",
+          "source": "cnr_health"
+        },
+        {
+          "text": "可适当多吃的食物：鸭肉、猪肉、猪皮、牛奶、甲鱼、梨、桑葚、银耳、蛤蜊等。应少吃温热燥性之品：如狗肉、大蒜、韭菜、胡椒、辣椒，以及各种炒制品，如炒豆子、爆米花等。最好戒烟酒。",
+          "source": "gd_tcm"
+        }
       ],
       "project_principles": null
     },
     {
       "label": "痰湿质",
-      "project_id": "phlegm_damp",
+      "id": "phlegm_damp",
       "in_project": true,
       "features": [
-        {"text": "痰湿凝聚，形体肥胖，腹部肥满。", "source": "kjrb_wangqi"},
-        {"text": "痰湿凝聚，形体偏胖，腹部肥满，口黏苔腻，容易困倦，易打鼾。", "source": "cnr_health"},
-        {"text": "痰湿凝聚，以形体肥胖、腹部肥满、口黏苔腻等痰湿表现为主要特征。这种体质的人皮肤油脂较多，汗多且黏、胸闷、痰多，性格偏温和，善于忍耐，易患糖尿病、中风等，对梅雨季节及潮湿环境适应能力较差。", "source": "gd_tcm"}
+        {
+          "text": "痰湿凝聚，形体肥胖，腹部肥满。",
+          "source": "kjrb_wangqi"
+        },
+        {
+          "text": "痰湿凝聚，形体偏胖，腹部肥满，口黏苔腻，容易困倦，易打鼾。",
+          "source": "cnr_health"
+        },
+        {
+          "text": "痰湿凝聚，以形体肥胖、腹部肥满、口黏苔腻等痰湿表现为主要特征。这种体质的人皮肤油脂较多，汗多且黏、胸闷、痰多，性格偏温和，善于忍耐，易患糖尿病、中风等，对梅雨季节及潮湿环境适应能力较差。",
+          "source": "gd_tcm"
+        }
       ],
       "diet_direction": [
-        {"text": "可适当多吃健脾益气、利水祛湿的食物：如玉米、薏苡仁、海带、冬瓜、紫菜、黑木耳、芦笋、扁豆、赤小豆、鲫鱼等。应少吃甜腻酸涩之品：如石榴、柚子、砂糖、甲鱼等。", "source": "gd_tcm"}
+        {
+          "text": "可适当多吃健脾益气、利水祛湿的食物：如玉米、薏苡仁、海带、冬瓜、紫菜、黑木耳、芦笋、扁豆、赤小豆、鲫鱼等。应少吃甜腻酸涩之品：如石榴、柚子、砂糖、甲鱼等。",
+          "source": "gd_tcm"
+        }
       ],
       "project_principles": {
         "one_line": "身体偏重、易困倦、口黏、舌苔厚腻、易浮肿",
-        "principles": ["健脾利湿化痰", "少甜少油少酒", "晚餐宜清淡"],
-        "direction": ["健脾祛湿为主"],
-        "avoid": ["甜腻厚味", "油炸与奶油类", "大量甜味补品（桂圆、红枣过量）"]
+        "principles": [
+          "健脾利湿化痰",
+          "少甜少油少酒",
+          "晚餐宜清淡"
+        ],
+        "direction": [
+          "健脾祛湿为主"
+        ],
+        "avoid": [
+          "甜腻厚味",
+          "油炸与奶油类",
+          "大量甜味补品（桂圆、红枣过量）"
+        ]
       }
     },
     {
       "label": "湿热质",
-      "project_id": "damp_heat",
+      "id": "damp_heat",
       "in_project": true,
       "features": [
-        {"text": "湿热内蕴，面垢油光，易生痤疮。", "source": "kjrb_wangqi"},
-        {"text": "湿热内蕴，面垢油光，易生痤疮，口苦口干，大便黏滞。舌质偏红，苔黄腻，脉滑数。", "source": "cnr_health"},
-        {"text": "湿热内蕴，以面垢油光、口苦、苔黄腻等湿热表现为主要特征。这种体质的人容易生痤疮，口苦口干、大便粘腻不畅或燥结、小便短黄，性格多烦躁易怒，不善忍耐，不耐受炎热或湿热气候。", "source": "gd_tcm"},
-        {"text": "国标在湿热体质中增加了「高尿酸血症」的表述。", "source": "wangqi_press"}
+        {
+          "text": "湿热内蕴，面垢油光，易生痤疮。",
+          "source": "kjrb_wangqi"
+        },
+        {
+          "text": "湿热内蕴，面垢油光，易生痤疮，口苦口干，大便黏滞。舌质偏红，苔黄腻，脉滑数。",
+          "source": "cnr_health"
+        },
+        {
+          "text": "湿热内蕴，以面垢油光、口苦、苔黄腻等湿热表现为主要特征。这种体质的人容易生痤疮，口苦口干、大便粘腻不畅或燥结、小便短黄，性格多烦躁易怒，不善忍耐，不耐受炎热或湿热气候。",
+          "source": "gd_tcm"
+        },
+        {
+          "text": "国标在湿热体质中增加了「高尿酸血症」的表述。",
+          "source": "wangqi_press"
+        }
       ],
       "diet_direction": [
-        {"text": "湿热质的人适合用薏米、绿豆等清热利湿的食物。", "source": "wangqi_press"},
-        {"text": "可适当多吃清利湿热的食物：如薏苡仁、莲子、苦瓜、赤小豆、绿豆、鲫鱼、冬瓜、丝瓜、卷心菜、莲藕、空心菜等。应少吃的食物：辣椒、大蒜、大葱、韭菜、蜂蜜、酒、牛肉、狗肉、鹿肉等。", "source": "gd_tcm"}
+        {
+          "text": "湿热质的人适合用薏米、绿豆等清热利湿的食物。",
+          "source": "wangqi_press"
+        },
+        {
+          "text": "可适当多吃清利湿热的食物：如薏苡仁、莲子、苦瓜、赤小豆、绿豆、鲫鱼、冬瓜、丝瓜、卷心菜、莲藕、空心菜等。应少吃的食物：辣椒、大蒜、大葱、韭菜、蜂蜜、酒、牛肉、狗肉、鹿肉等。",
+          "source": "gd_tcm"
+        }
       ],
       "project_principles": {
         "one_line": "容易长痘、口苦口臭、面油、小便偏黄、大便黏",
-        "principles": ["清热利湿", "少辛辣少酒少熬夜", "饮食清淡"],
-        "direction": ["清凉利湿为主"],
-        "avoid": ["辛辣烧烤", "酒类", "大量温燥补品（桂圆、生姜、红枣过量）"]
+        "principles": [
+          "清热利湿",
+          "少辛辣少酒少熬夜",
+          "饮食清淡"
+        ],
+        "direction": [
+          "清凉利湿为主"
+        ],
+        "avoid": [
+          "辛辣烧烤",
+          "酒类",
+          "大量温燥补品（桂圆、生姜、红枣过量）"
+        ]
       }
     },
     {
       "label": "血瘀质",
-      "project_id": null,
-      "proposed_id": "blood_stasis",
+      "id": "blood_stasis",
       "in_project": false,
       "features": [
-        {"text": "血行不畅，肤色晦暗，易现瘀斑。", "source": "kjrb_wangqi"},
-        {"text": "容易烦躁，健忘，性情急躁。血行不畅，易出现瘀斑，肤色、口唇黯淡。刷牙时牙龈易出血，眼睛常有红丝，皮肤容易干燥、粗糙。", "source": "cnr_health"},
-        {"text": "血行不畅，以肤色晦黯、舌苔紫黯等血瘀表现为主要特征。这种体质的人群胖瘦均见，常肤色沉着，易烦、健忘，不耐受寒冷气候。", "source": "gd_tcm"}
+        {
+          "text": "血行不畅，肤色晦暗，易现瘀斑。",
+          "source": "kjrb_wangqi"
+        },
+        {
+          "text": "容易烦躁，健忘，性情急躁。血行不畅，易出现瘀斑，肤色、口唇黯淡。刷牙时牙龈易出血，眼睛常有红丝，皮肤容易干燥、粗糙。",
+          "source": "cnr_health"
+        },
+        {
+          "text": "血行不畅，以肤色晦黯、舌苔紫黯等血瘀表现为主要特征。这种体质的人群胖瘦均见，常肤色沉着，易烦、健忘，不耐受寒冷气候。",
+          "source": "gd_tcm"
+        }
       ],
       "diet_direction": [
-        {"text": "可适当多吃的食物：山楂、红枣、橘子、香菜、胡萝卜、黑木耳、藕、玉米、生姜、鸡肉、牛肉等。应少吃的食物：蚕豆、甘薯、栗子、柿子、花生米、乌梅、苦瓜等。此外，需控制盐的摄入。", "source": "gd_tcm"}
+        {
+          "text": "可适当多吃的食物：山楂、红枣、橘子、香菜、胡萝卜、黑木耳、藕、玉米、生姜、鸡肉、牛肉等。应少吃的食物：蚕豆、甘薯、栗子、柿子、花生米、乌梅、苦瓜等。此外，需控制盐的摄入。",
+          "source": "gd_tcm"
+        }
       ],
       "project_principles": null
     },
     {
       "label": "气郁质",
-      "project_id": null,
-      "proposed_id": "qi_stagnation",
+      "id": "qi_stagnation",
       "in_project": false,
       "features": [
-        {"text": "气机郁滞，情绪低沉，敏感多虑。", "source": "kjrb_wangqi"},
-        {"text": "气机郁滞，情绪低落，紧张焦虑，敏感多虑，胸胁胀满。", "source": "cnr_health"},
-        {"text": "气机郁滞，以神情抑郁、忧虑脆弱等气郁表现为主要特征。这种体质的人多形体消瘦，性格内向、敏感多虑、多愁善感，对精神刺激适应能力较差。", "source": "gd_tcm"},
-        {"text": "国标在气郁体质中增加了「抑郁」「认知衰弱」的表述。", "source": "wangqi_press"}
+        {
+          "text": "气机郁滞，情绪低沉，敏感多虑。",
+          "source": "kjrb_wangqi"
+        },
+        {
+          "text": "气机郁滞，情绪低落，紧张焦虑，敏感多虑，胸胁胀满。",
+          "source": "cnr_health"
+        },
+        {
+          "text": "气机郁滞，以神情抑郁、忧虑脆弱等气郁表现为主要特征。这种体质的人多形体消瘦，性格内向、敏感多虑、多愁善感，对精神刺激适应能力较差。",
+          "source": "gd_tcm"
+        },
+        {
+          "text": "国标在气郁体质中增加了「抑郁」「认知衰弱」的表述。",
+          "source": "wangqi_press"
+        }
       ],
       "diet_direction": [
-        {"text": "可适当多吃的食物：橙子、韭菜、茴香、白萝卜、薄荷、牛奶、大枣等。应少吃的食物：石榴、乌梅、柿子、奶酪、咖啡、浓茶等。", "source": "gd_tcm"}
+        {
+          "text": "可适当多吃的食物：橙子、韭菜、茴香、白萝卜、薄荷、牛奶、大枣等。应少吃的食物：石榴、乌梅、柿子、奶酪、咖啡、浓茶等。",
+          "source": "gd_tcm"
+        }
       ],
       "project_principles": null
     },
     {
       "label": "特禀质",
-      "project_id": null,
-      "proposed_id": "special_diathesis",
+      "id": "special_diathesis",
       "in_project": false,
       "features": [
-        {"text": "先天失常，过敏反应。", "source": "kjrb_wangqi"},
-        {"text": "主要指过敏性体质，皮肤易起抓痕、紫斑，易患哮喘、荨麻疹、花粉症及药物过敏等。", "source": "cnr_health"},
-        {"text": "先天失常，以生理缺陷、过敏反应等为主要特征。过敏体质常见哮喘、风团、咽痒、喷嚏、鼻塞等；患遗传性疾病者有垂直遗传、先天性、家族性特征；患胎传性疾病者具有母体影响胎儿个体生长发育及相关疾病特征。", "source": "gd_tcm"}
+        {
+          "text": "先天失常，过敏反应。",
+          "source": "kjrb_wangqi"
+        },
+        {
+          "text": "主要指过敏性体质，皮肤易起抓痕、紫斑，易患哮喘、荨麻疹、花粉症及药物过敏等。",
+          "source": "cnr_health"
+        },
+        {
+          "text": "先天失常，以生理缺陷、过敏反应等为主要特征。过敏体质常见哮喘、风团、咽痒、喷嚏、鼻塞等；患遗传性疾病者有垂直遗传、先天性、家族性特征；患胎传性疾病者具有母体影响胎儿个体生长发育及相关疾病特征。",
+          "source": "gd_tcm"
+        }
       ],
       "diet_direction": [
-        {"text": "可适当多吃的食物：山药、红薯、栗子、红枣、花生、黑芝麻、黑米等。应少吃的食物：苦瓜、荸荠、海带、紫菜、香椿、虾、蟹、鲤鱼、辣椒、咖啡、生菜等。", "source": "gd_tcm"}
+        {
+          "text": "可适当多吃的食物：山药、红薯、栗子、红枣、花生、黑芝麻、黑米等。应少吃的食物：苦瓜、荸荠、海带、紫菜、香椿、虾、蟹、鲤鱼、辣椒、咖啡、生菜等。",
+          "source": "gd_tcm"
+        }
       ],
       "project_principles": null
     }
   ],
-
   "open_items": [
     {
       "id": "A_layer_not_verbatim",
@@ -250,10 +477,10 @@
       "status": "待确认"
     },
     {
-      "id": "proposed_ids_unconfirmed",
-      "title": "四个新体质的英文 id 是我提的，未定",
-      "detail": "proposed_id 为 yin_deficiency / blood_stasis / qi_stagnation / special_diathesis，与项目现有 balanced / qi_deficiency / yang_deficiency / phlegm_damp / damp_heat 命名风格一致，但未经你确认。另注：nanple 的体质问卷项目用 phlegm_dampness，与本项目的 phlegm_damp 拼写不一致，接入时需适配。",
-      "status": "待确认"
+      "id": "ids_confirmed",
+      "title": "四个新体质的英文 id 已确认",
+      "detail": "**2026-09-17 已认可**，以后 5→9 直接用这套：阴虚质 `yin_deficiency`、血瘀质 `blood_stasis`、气郁质 `qi_stagnation`、特禀质 `special_diathesis`，与项目现有 `balanced` / `qi_deficiency` / `yang_deficiency` / `phlegm_damp` / `damp_heat` 命名风格一致。另注：nanple 的体质问卷项目用 `phlegm_dampness`，与本项目的 `phlegm_damp` 拼写不一致，接入时需适配（这一条与本决定无关，仍然待处理）。",
+      "status": "已确认"
     },
     {
       "id": "threshold_40",

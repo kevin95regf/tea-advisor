@@ -60,14 +60,14 @@
 | `core/app/services` | 4 | 1,102 | 编排与规则兜底 |
 | `core/app/agents` | 8 | 1,164 | LLM 层（含两个后端）+ 2 个提示词文件 |
 | `core/app/api` | 3 | 115 | HTTP 适配，极薄 |
-| `core/tests` | 12 | 2,598 | **304 项，全离线，约 0.8 秒** |
-| `core/scripts` | 10 | 2,681 | 运维/自检脚本 |
+| `core/tests` | 12 | 2,647 | **309 项，全离线，约 0.8 秒** |
+| `core/scripts` | 10 | 2,907 | 运维/自检脚本 |
 | `ui/terminal` | 1 | 398 | 终端壳 |
 | `ui/web` | 1 | 449 | 网页壳 |
-| **合计** | 44 | **9,480** | |
+| **合计** | 44 | **9,755** | |
 
 数据：`food_properties.json` 66 KB、`herbs.json` 22 KB、`constitution.json` 2.6 KB、
-`food_medicine_catalog.json` 19 KB（合规自检用）、`herb_nature_reference.json` 54 KB（药典核对用）。
+`food_medicine_catalog.json` 19 KB（合规自检用）、`herb_nature_reference.json` 61 KB（药典核对用）。
 后两个**不参与运行时判定**。
 
 > ⚠️ **别用 PowerShell 的 `(Get-Content x).Count` 数行数。** 实测它会把
@@ -354,7 +354,7 @@ Get-Process | Where-Object { $_.ProcessName -match 'python' } | Stop-Process -Fo
 
 | 脚本 | 测到的 | **测不到的** |
 |---|---|---|
-| `pytest` | 判定逻辑、护栏、JSON 护栏、凭据与日志安全、食药物质目录合规、体质参考与药典核对文档一致性（304 项，全离线） | 真实模型行为；HTTP 层在缺 `[web]` extra 时会自动跳过 |
+| `pytest` | 判定逻辑、护栏、JSON 护栏、凭据与日志安全、食药物质目录合规、体质参考与药典核对文档一致性（309 项，全离线） | 真实模型行为；HTTP 层在缺 `[web]` extra 时会自动跳过 |
 | `test_food_accuracy.py` | **只有 Agent1 的属性判定** | **推荐质量、Agent2 的任何东西、文案措辞、注意事项是否到位** |
 | `smoke_agents.py` | 运行时启动、原始往返、Agent1 解析、全链路格式与条数 | 属性准确率（无断言，只打印）；安全性 |
 | `smoke_offline.py` | 数据层→解析→规则兜底→护栏，**不调模型** | 模型相关的任何事 |
@@ -535,13 +535,25 @@ GET  https://ydz.chp.org.cn/front-api/entry/{id}   # 返回 htmlContent，含【
 当前结果：**34 味中一致 26、不一致 7、药典未收载 1**。不一致项见
 `docs/herb-nature-crosscheck.md` 第 3 节，**脚本只报告，不改数据**，以哪个为准由人定。
 
+**2026-09-17 已决定：7 处不一致先保留项目值，等 nanple 复核后再定。** 决定与每处的
+「差异影响」都写进了 `docs/herb-nature-crosscheck.md` 与参考数据的 `open_items`。
+
+> ⚠️ 关于影响面，有一处**必须记住的反直觉结论**：饮片的 nature / flavors / meridians
+> **不参与任何确定性判定**。`safety.py` 只读 `name`/`max_daily_g`/`cautions`/
+> `unsuitable_for`/`suitable_constitutions`；`matcher` 的 `match_natures` 匹配的是
+> **整餐四气**（`parsed.overall_nature`，来自 Agent1），不是饮片四气；两个壳渲染推荐饮片时
+> 只打印 `name`/`amount_g`/`role`。唯一实质消费者是 `agent2_recommend.py:62-66` 把候选
+> 描述交给 Agent2 的提示词，属**软性影响**。所以这 7 处差异改了也不会改变任何判定结果，
+> 「先保留」不引入功能风险。（文档 §3.1 有完整取证；先前有一处文档写反了，已更正。）
+
 维护时要知道的五件事：
 
 1. **不要用 PowerShell 数行数**（见 §1.4 的警告），也别用第三方药典镜像当主源 ——
    官方接口能直接拿到 `htmlContent` 原文，还带页码和在线链接。
-2. **四气降档是我方约定**：药典有「微寒/微温」，项目只有 5 档，脚本按
-   `微寒→凉、微温→温` 降档。原文一律保留在 `pharmacopoeia.xingwei_verbatim` 里，
-   所以这个约定随时可以推翻重算。
+2. **四气降档是项目约定，不是药典原文**：药典有「微寒/微温」，项目只有 5 档，脚本按
+   `微寒→凉、微温→温` 降档（2026-09-17 已认可）。**药典原文一律保留**在
+   `pharmacopoeia.nature_word` 与 `xingwei_verbatim`，文档表格也单列「药典四气（原文）」
+   并用 `†` 标出用了降档的行。改约定后跑 `--recompute` 即可**离线**重算派生字段，无需重抓。
 3. **`project` 字段是快照**，有测试卡住它与 `herbs.json` 实时一致。改了 `herbs.json`
    的 nature/flavors/meridians 就必须 `--refresh` 重建，否则 `pytest` 会失败。
 4. **《中华本草》那一列本次没有数据**，原因是公开渠道取不到（药智网需登录、
@@ -710,6 +722,9 @@ python -m venv .venv
 >    是广东省中医药局 2023 年的文章，分类框架源自 **2009 年学会标准**，早于新国标。
 > 3. **C 栏实时取自 `core/data/constitution.json`**，并有测试卡住快照与实时数据的一致性 ——
 >    改了项目数据而没更新 JSON 快照，`pytest` 会直接失败，不会静默渲染一份错文档。
+> 4. **九型的 id 已于 2026-09-17 全部确认**（阴虚质 `yin_deficiency`、血瘀质 `blood_stasis`、
+>    气郁质 `qi_stagnation`、特禀质 `special_diathesis`），扩到 9 型时直接用。
+>    注意 nanple 的问卷项目用 `phlegm_dampness`，和本项目的 `phlegm_damp` 拼写不同，接入要适配。
 
 > **关于第 7 项的防错（2026-09-17 加）**
 >

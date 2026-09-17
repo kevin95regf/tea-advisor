@@ -105,7 +105,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "陈皮",
@@ -161,7 +162,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "山楂",
@@ -221,7 +223,8 @@
       "differences": [
         "四气：降档后一致，但药典原文用的是更细的档「微温」"
       ],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "枸杞子",
@@ -273,7 +276,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "菊花",
@@ -332,7 +336,8 @@
       "differences": [
         "四气：降档后一致，但药典原文用的是更细的档「微寒」"
       ],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "玫瑰花",
@@ -388,7 +393,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "红枣",
@@ -443,7 +449,11 @@
       "differences": [
         "**归经**：项目缺「心」"
       ],
-      "status": "不一致"
+      "status": "不一致",
+      "impact": [
+        "**归经不参与任何运算**：`herbs.json` 的 `_meta.field_notes` 就写明归经是「中文展示用」。项目缺「心」，**确定性逻辑零影响**；唯一后果是 Agent2 看到的脏腑信息少了一味，可能轻微影响它写 `role` 时的用词。",
+        "**结论**：本处差异**不会改变任何确定性判定结果**，因此「先保留项目值」不会引入功能风险；改动与否取决于中药专业判断。"
+      ]
     },
     {
       "herb": "龙眼肉",
@@ -495,7 +505,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "麦冬",
@@ -555,7 +566,8 @@
       "differences": [
         "四气：降档后一致，但药典原文用的是更细的档「微寒」"
       ],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "荷叶",
@@ -613,7 +625,11 @@
       "differences": [
         "**五味**：项目多「淡」"
       ],
-      "status": "不一致"
+      "status": "不一致",
+      "impact": [
+        "**五味不参与任何运算**：五味没有数值编码，既不进护栏也不进规则兜底的选取条件，只出现在 Agent2 的候选描述文字里。项目多「淡」，因此**确定性逻辑零影响**，仅候选描述的文字不同。",
+        "**结论**：本处差异**不会改变任何确定性判定结果**，因此「先保留项目值」不会引入功能风险；改动与否取决于中药专业判断。"
+      ]
     },
     {
       "herb": "决明子",
@@ -675,7 +691,8 @@
       "differences": [
         "四气：降档后一致，但药典原文用的是更细的档「微寒」"
       ],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "生姜",
@@ -732,7 +749,8 @@
       "differences": [
         "四气：降档后一致，但药典原文用的是更细的档「微温」"
       ],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "薄荷",
@@ -785,7 +803,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "桑椹",
@@ -845,7 +864,14 @@
       "differences": [
         "**四气**：项目「凉」，药典「寒」（按降档约定应为「寒」）"
       ],
-      "status": "不一致"
+      "status": "不一致",
+      "impact": [
+        "**四性数值轴**：项目 `cool`(-1) → 药典降档后 `cold`(-2)，相差 **1 档**（编码见 `core/app/domain/nature_math.py`）。注意：这条轴**不作用于饮片**，只作用于食材。",
+        "**对确定性逻辑无影响**：没有任何护栏或规则读饮片四气，所以改与不改都不会改变 `filter_by_constitution`、`check_blend`、`_pick_rule` 的结果。",
+        "**对 Agent2 有软性影响**：候选描述里 桑椹 的四性会从「凉」变成「寒」（更偏寒凉），模型据此做寒热搭配推理时可能略微改变选料倾向。这不是硬约束，无法用测试断言。",
+        "**展示影响**：两个壳目前都不打印饮片四性，所以用户看不到这个差别。",
+        "**结论**：本处差异**不会改变任何确定性判定结果**，因此「先保留项目值」不会引入功能风险；改动与否取决于中药专业判断。"
+      ]
     },
     {
       "herb": "百合",
@@ -899,7 +925,14 @@
       "differences": [
         "**四气**：项目「凉」，药典「寒」（按降档约定应为「寒」）"
       ],
-      "status": "不一致"
+      "status": "不一致",
+      "impact": [
+        "**四性数值轴**：项目 `cool`(-1) → 药典降档后 `cold`(-2)，相差 **1 档**（编码见 `core/app/domain/nature_math.py`）。注意：这条轴**不作用于饮片**，只作用于食材。",
+        "**对确定性逻辑无影响**：没有任何护栏或规则读饮片四气，所以改与不改都不会改变 `filter_by_constitution`、`check_blend`、`_pick_rule` 的结果。",
+        "**对 Agent2 有软性影响**：候选描述里 百合 的四性会从「凉」变成「寒」（更偏寒凉），模型据此做寒热搭配推理时可能略微改变选料倾向。这不是硬约束，无法用测试断言。",
+        "**展示影响**：两个壳目前都不打印饮片四性，所以用户看不到这个差别。",
+        "**结论**：本处差异**不会改变任何确定性判定结果**，因此「先保留项目值」不会引入功能风险；改动与否取决于中药专业判断。"
+      ]
     },
     {
       "herb": "莲子",
@@ -958,7 +991,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "薏苡仁",
@@ -1017,7 +1051,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "乌梅",
@@ -1078,7 +1113,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "罗汉果",
@@ -1131,7 +1167,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "甘草",
@@ -1188,7 +1225,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "茉莉花",
@@ -1218,6 +1256,7 @@
       "pharmacopoeia": null,
       "status": "未收载",
       "differences": [],
+      "impact": [],
       "nature_match": null,
       "flavors_match": null,
       "meridians_match": null
@@ -1280,7 +1319,14 @@
       "differences": [
         "**四气**：项目「凉」，药典「寒」（按降档约定应为「寒」）"
       ],
-      "status": "不一致"
+      "status": "不一致",
+      "impact": [
+        "**四性数值轴**：项目 `cool`(-1) → 药典降档后 `cold`(-2)，相差 **1 档**（编码见 `core/app/domain/nature_math.py`）。注意：这条轴**不作用于饮片**，只作用于食材。",
+        "**对确定性逻辑无影响**：没有任何护栏或规则读饮片四气，所以改与不改都不会改变 `filter_by_constitution`、`check_blend`、`_pick_rule` 的结果。",
+        "**对 Agent2 有软性影响**：候选描述里 淡竹叶 的四性会从「凉」变成「寒」（更偏寒凉），模型据此做寒热搭配推理时可能略微改变选料倾向。这不是硬约束，无法用测试断言。",
+        "**展示影响**：两个壳目前都不打印饮片四性，所以用户看不到这个差别。",
+        "**结论**：本处差异**不会改变任何确定性判定结果**，因此「先保留项目值」不会引入功能风险；改动与否取决于中药专业判断。"
+      ]
     },
     {
       "herb": "栀子",
@@ -1334,7 +1380,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "酸枣仁",
@@ -1392,7 +1439,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "山药",
@@ -1446,7 +1494,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "鸡内金",
@@ -1502,7 +1551,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "白扁豆",
@@ -1556,7 +1606,14 @@
       "differences": [
         "**四气**：项目「平」，药典「微温」（按降档约定应为「温」）"
       ],
-      "status": "不一致"
+      "status": "不一致",
+      "impact": [
+        "**四性数值轴**：项目 `neutral`(+0) → 药典降档后 `warm`(+1)，相差 **1 档**（编码见 `core/app/domain/nature_math.py`）。注意：这条轴**不作用于饮片**，只作用于食材。",
+        "**对确定性逻辑无影响**：没有任何护栏或规则读饮片四气，所以改与不改都不会改变 `filter_by_constitution`、`check_blend`、`_pick_rule` 的结果。",
+        "**对 Agent2 有软性影响**：候选描述里 白扁豆 的四性会从「平」变成「温」（更偏温热），模型据此做寒热搭配推理时可能略微改变选料倾向。这不是硬约束，无法用测试断言。",
+        "**展示影响**：两个壳目前都不打印饮片四性，所以用户看不到这个差别。",
+        "**结论**：本处差异**不会改变任何确定性判定结果**，因此「先保留项目值」不会引入功能风险；改动与否取决于中药专业判断。"
+      ]
     },
     {
       "herb": "橘红",
@@ -1612,7 +1669,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "槐花",
@@ -1666,7 +1724,8 @@
       "differences": [
         "四气：降档后一致，但药典原文用的是更细的档「微寒」"
       ],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "藿香",
@@ -1722,7 +1781,8 @@
       "differences": [
         "四气：降档后一致，但药典原文用的是更细的档「微温」"
       ],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "紫苏",
@@ -1774,7 +1834,8 @@
       "flavors_match": true,
       "meridians_match": true,
       "differences": [],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "佛手",
@@ -1838,7 +1899,12 @@
         "**五味**：项目缺「酸」",
         "**归经**：项目缺「胃」"
       ],
-      "status": "不一致"
+      "status": "不一致",
+      "impact": [
+        "**五味不参与任何运算**：五味没有数值编码，既不进护栏也不进规则兜底的选取条件，只出现在 Agent2 的候选描述文字里。项目缺「酸」，因此**确定性逻辑零影响**，仅候选描述的文字不同。",
+        "**归经不参与任何运算**：`herbs.json` 的 `_meta.field_notes` 就写明归经是「中文展示用」。项目缺「胃」，**确定性逻辑零影响**；唯一后果是 Agent2 看到的脏腑信息少了一味，可能轻微影响它写 `role` 时的用词。",
+        "**结论**：本处差异**不会改变任何确定性判定结果**，因此「先保留项目值」不会引入功能风险；改动与否取决于中药专业判断。"
+      ]
     },
     {
       "herb": "香薷",
@@ -1892,7 +1958,8 @@
       "differences": [
         "四气：降档后一致，但药典原文用的是更细的档「微温」"
       ],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "鱼腥草",
@@ -1944,15 +2011,16 @@
       "differences": [
         "四气：降档后一致，但药典原文用的是更细的档「微寒」"
       ],
-      "status": "一致"
+      "status": "一致",
+      "impact": []
     }
   ],
   "open_items": [
     {
-      "id": "discrepancies_need_human_decision",
-      "title": "不一致项需要人判断以哪个为准",
-      "status": "待确认",
-      "detail": "脚本只标出差异，不替你选。三类差异的性质不同：**四气档位差异**（如项目「凉」vs 药典「寒」）会影响三层判定里的寒热加减，改动前应确认；**五味/归经缺项**（如佛手缺「酸」、缺「胃」经）通常是收录时漏填，补齐风险较低；**项目多出的属性**（如荷叶多「淡」）需要确认是否有药典之外的依据。"
+      "id": "discrepancies_keep_project_values",
+      "title": "7 处不一致：先保留项目值，等 nanple 复核",
+      "status": "待 nanple 复核",
+      "detail": "**2026-09-17 决定：先保留项目值，不修改 herbs.json，等 nanple 复核数据后再决定是否改。** 每处差异的「差异影响」见 docs/herb-nature-crosscheck.md §3.2。**此处更正一处早先的错误说法**：本文件曾写「四气档位差异会影响三层判定里的寒热加减」，这是错的 —— 代码里没有任何护栏或规则读饮片四气（取证见文档 §3.1：safety.py 只读 name/max_daily_g/cautions/unsuitable_for/suitable_constitutions；matcher 的 match_natures 匹配的是整餐四气 parsed.overall_nature；两个壳渲染饮片时只打印 name/amount_g/role）。所以这些差异**不改变任何确定性判定结果**，唯一实质消费者是 Agent2 的候选描述提示词，属软性影响。"
     },
     {
       "id": "zhonghua_bencao_column_empty",
@@ -1968,9 +2036,9 @@
     },
     {
       "id": "nature_mapping_decision",
-      "title": "四气降档约定需要你确认",
-      "status": "待确认",
-      "detail": "把药典的「微寒」降到项目的「凉」、「微温」降到「温」，是我方约定。若你认为「微寒」应当降到别的档位（或项目应增加档位），请说明，我会改映射规则并重新生成。"
+      "title": "四气降档约定（微寒→凉、微温→温）",
+      "status": "已认可（仍属项目约定）",
+      "detail": "**2026-09-17 已认可**：把药典的「微寒」降到项目的「凉」、「微温」降到「温」。注意这始终是**项目约定，不是药典原文** —— 药典原文用词一律保留在 pharmacopoeia.nature_word 与 xingwei_verbatim 里，文档表格的「药典四气（原文）」列也原样展示、并用 † 标出用了降档的行。日后若要改约定，运行 python scripts/build_herb_crosscheck.py --recompute 即可离线重算，无需重新抓取药典。"
     }
   ]
 }

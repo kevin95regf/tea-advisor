@@ -85,28 +85,28 @@ NEEDS_HUMAN_JUDGMENT: dict[str, str] = {
 DECISIONS: dict[str, dict[str, str]] = {
     "玫瑰花": {
         "decided_at": "2026-09-17",
-        "decision": "保留",
+        "decision": "保留，名称需明确品种。**代码先不动，等 nanple 审数据时一起处理。**",
         "action": (
-            "把 herbs.json 中的名称改为「玫瑰花（重瓣红玫瑰）」，明确品种；"
+            "计划：把 herbs.json 中的名称改为「玫瑰花（重瓣红玫瑰）」，明确品种；"
             "并同步加别名「玫瑰花」，否则 check_blend 会因名称不匹配把模型输出的"
             "「玫瑰花」判成白名单外饮片而拦掉。"
             "⚠️ 该品种约束是**采购/供应链要求**，代码只能表达它、无法核实原料；"
             "若无法保证原料确为重瓣红玫瑰，本条应降级为「仅作参考」。"
         ),
-        "status": "待实施",
+        "status": "待实施（等 nanple 审数据）",
         "basis": (
             "卫生部公告 2010 年第 3 号允许「玫瑰花（重瓣红玫瑰）」作为普通食品生产经营"
         ),
     },
     "茉莉花": {
         "decided_at": "2026-09-17",
-        "decision": "标注「仅作参考」，推荐时排除",
+        "decision": "标注「仅作参考」，推荐时排除。**代码先不动，等 nanple 审数据时一起处理。**",
         "action": (
-            "在 herbs.json 上标记为仅作参考，并让推荐链路（filter_by_constitution 的候选集、"
+            "计划：在 herbs.json 上标记为仅作参考，并让推荐链路（filter_by_constitution 的候选集、"
             "matcher.fallback_recommend）永不选中它。需要新增目录级排除能力——"
             "现有 exclude_herbs 是每个请求的用户自选排除，不是目录级开关。"
         ),
-        "status": "待实施",
+        "status": "待实施（等 nanple 审数据）",
         "basis": (
             "食用依据仅为广西地方标准（效力限广西），不承担全国范围的合规风险"
         ),

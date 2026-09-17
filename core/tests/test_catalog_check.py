@@ -189,8 +189,10 @@ def test_json_output_is_parseable(capsys, tmp_path):
 
 # 这三个决定是人作出的，登记在脚本里以防丢失。改动这里意味着决定被推翻，必须显式确认。
 EXPECTED_DECISIONS = {
-    "玫瑰花": ("保留", "待实施"),
-    "茉莉花": ("标注「仅作参考」，推荐时排除", "待实施"),
+    "玫瑰花": ("保留，名称需明确品种。**代码先不动，等 nanple 审数据时一起处理。**",
+               "待实施（等 nanple 审数据）"),
+    "茉莉花": ("标注「仅作参考」，推荐时排除。**代码先不动，等 nanple 审数据时一起处理。**",
+               "待实施（等 nanple 审数据）"),
     "橘红": ("归属 2002 年附件 1 的「桔红」，视为在目录内", "已实施"),
 }
 
@@ -209,7 +211,7 @@ def test_every_decision_is_traceable(mod):
         assert d["decided_at"], herb
         assert d["basis"].strip(), herb
         assert d["action"].strip(), herb
-        assert d["status"] in {"已实施", "待实施"}, herb
+        assert d["status"].startswith(("已实施", "待实施")), herb
 
 
 def test_pending_decisions_are_not_reported_as_done(mod):
