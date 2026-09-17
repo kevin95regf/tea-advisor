@@ -101,6 +101,26 @@ CONSTITUTION_DEFAULT: dict[str, tuple[list[tuple[str, float]], str, str]] = {
         "菊花荷叶清利饮",
         "湿热方向偏于清热利湿，避开温燥补品。",
     ),
+    Constitution.YIN_DEFICIENCY.value: (
+        [("枸杞子", 8), ("麦冬", 5)],
+        "枸杞麦冬养阴饮",
+        "阴虚方向偏于甘凉滋润，避开温燥辛温之品。",
+    ),
+    Constitution.BLOOD_STASIS.value: (
+        [("山楂", 6), ("红枣", 8)],
+        "山楂红枣活血饮",
+        "血瘀方向偏于行气活血，少用涩滞收敛之物。",
+    ),
+    Constitution.QI_STAGNATION.value: (
+        [("陈皮", 5), ("玫瑰花", 4)],
+        "陈皮玫瑰理气饮",
+        "气郁方向偏于理气解郁，避开酸涩收敛之物。",
+    ),
+    Constitution.SPECIAL_DIATHESIS.value: (
+        [("山药", 10), ("红枣", 8)],
+        "山药红枣平补饮",
+        "特禀方向偏于平补固表，用量宜少而稳；个体过敏原优先。",
+    ),
 }
 
 DEFAULT_BREW = BrewGuide(

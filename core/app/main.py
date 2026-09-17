@@ -35,7 +35,7 @@ from app.domain.enums import (
     SOURCE_LABELS,
 )
 from app.domain.models import CatalogHerb, Disclaimer, HealthResponse
-from app.domain.safety import load_herb_catalog
+from app.domain.safety import load_herb_catalog, ready_constitutions
 from app.services.food_lookup import CONF_SHOW_THRESHOLD, COOKING_LABELS, table_stats
 
 logging.basicConfig(
@@ -134,11 +134,23 @@ async def disclaimer() -> Disclaimer:
 
 @app.get("/api/constitutions", summary="体质选项")
 async def constitutions() -> list[dict]:
+    """返回**可对外服务**的体质。
+
+    收录进 constitution.json ≠ 可以对用户开放：枚举加了新体质但 herbs.json 的
+    配伍标注还没备齐时，选中它会让 `filter_by_constitution` 抛
+    `MissingConstitutionDataError`（500）。所以这里按 `ready_constitutions()`
+    过滤——判据是「herbs.json 里至少有 1 味把它标进 suitable_constitutions」，
+    与运行时闸门（orchestrator._constitution_of）用的是同一个条件。
+
+    返回字段不变；前端与终端都读这个接口，因此数据一备齐就会自动出现。
+    """
     path = settings.data_dir / "constitution.json"
     data = json.loads(path.read_text(encoding="utf-8"))
+    ready = ready_constitutions()
     return [
         {"id": item["id"], "label": item["label"], "one_line": item["one_line"]}
         for item in data.get("constitutions", [])
+        if item["id"] in ready
     ]
 
 

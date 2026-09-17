@@ -234,6 +234,9 @@ def filter_by_constitution(
     如果该体质在数据里一条记录都没有，就**无法完成方向收敛**，
     此时抛 `MissingConstitutionDataError` 而不是退化成未筛选清单 ——
     详见该异常的说明。
+
+    某体质何时算「数据备齐、可以对外」，判据由 `ready_constitutions()` 给出，
+    两者用的是同一个条件。
     """
     catalog = load_herb_catalog()
     if not catalog:
@@ -262,3 +265,27 @@ def filter_by_constitution(
 
     ordered = suitable + neutral_fallback
     return ordered[:limit]
+
+
+def ready_constitutions() -> set[str]:
+    """可对外服务的体质集合：至少有 1 味饮片把它标进 `suitable_constitutions`。
+
+    为什么用「派生」而不是 `constitution.json` 里的一个手工开关：
+    这个条件恰好是 `filter_by_constitution` 不抛 `MissingConstitutionDataError`
+    的**充要条件**。手工 flag 会漂移——翻了开关却漏写数据，用户一点就是 500。
+    派生的话「数据备齐」与「体质上线」是同一件事，没有开关可以忘记翻。
+
+    新增体质的安全上线顺序因此是：先补 herbs.json，它自动出现在选项里；
+    反之，枚举里有但数据没备齐的体质**不会被暴露**。
+    """
+    catalog = load_herb_catalog()
+    if not catalog:
+        # 整个白名单缺失（herbs.json 没部署）。这是既有设计允许的降级路径，
+        # 但此时没有任何体质能给出有意义的收敛，一律视为未就绪。
+        return set()
+
+    ready: set[str] = set()
+    for entry in catalog.values():
+        for cid in entry.get("suitable_constitutions") or []:
+            ready.add(str(cid))
+    return ready

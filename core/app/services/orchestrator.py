@@ -33,6 +33,7 @@ from app.domain.safety import (
     check_blend,
     check_constitution_fit,
     detect_high_risk,
+    ready_constitutions,
     scan_free_text,
 )
 from app.services import matcher
@@ -52,6 +53,33 @@ class AnalyzeError(Exception):
 def _constitution_of(request: AnalyzeRequest) -> Constitution:
     # demo 阶段：请求里带就用，否则默认平和质（正式版从用户画像读）
     return request.constitution_override or Constitution.BALANCED
+
+
+def _ensure_constitution_ready(constitution: Constitution) -> None:
+    """挡住「数据未备齐」的体质，不让它走到需要配伍数据的那几步。
+
+    这里是 HTTP / 终端 / 脚本的**唯一入口**（三者都经 `analyze`），
+    闸门放在这一层，手搓 API 传 `constitution_override` 也绕不过去。
+
+    **为什么不采用「回落平和质」**：终端对**未知 id** 确实是那么做的
+    （`chat.py:pick_constitution`），但那是输入错误，退到默认值合理。
+    这里不是输入错误，而是「这个体质的饮片数据还没备齐」——回落等于用平和质的
+    答案冒充阴虚质的答案。项目讲的「降级而非失败」针对的是基础设施故障
+    （没 Key、模型挂、JSON 解析失败），那些情况下降级还能给出有用的东西；
+    而阴虚与平和需要的是不同的饮片，降级没有有意义的答案，只能显式拒绝。
+
+    调用时机很讲究：**必须排在高风险分支之后**。安全提示（孕期/服药/儿童等）
+    是"无条件可用"的，不该被数据就绪这种配置问题挡在前面——
+    而它排在凭据校验之前，是因为体质问题连"填个 Key"都解决不了。
+    """
+    if constitution.value in ready_constitutions():
+        return
+    label = CONSTITUTION_LABELS.get(constitution.value, constitution.value)
+    raise AnalyzeError(
+        "CONSTITUTION_NOT_READY",
+        f"「{label}」暂未启用：尚无可用的饮片配伍数据。"
+        "请先补齐该体质的标注，在此之前该体质不会出现在选项中。",
+    )
 
 
 def _sanitize_recommendations(
@@ -156,6 +184,11 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
                 "不适合按日常茶饮自行调理，请先咨询执业医师或药师。"
             ),
         )
+
+    # ---------- 体质就绪闸门（刻意放在安全分支之后、凭据校验之前）----------
+    # 放在安全分支之后：安全提示不该被"数据没备齐"这种配置问题挡掉。
+    # 放在凭据校验之前：体质不可用不是填个 Key 能解决的，先报更根本的那一条。
+    _ensure_constitution_ready(constitution)
 
     # ---------- 凭据校验（刻意放在安全分支之后）----------
     # 本项目不使用服务端内置 Key，所以没带 Key 就无法调用模型。

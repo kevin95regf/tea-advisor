@@ -61,21 +61,38 @@ class CookingMethod(StrEnum):
 
 
 class Constitution(StrEnum):
-    """体质类型。demo 阶段只做 5 型，后续可扩到九型。"""
+    """体质类型，顺序与 GB/T 46939-2025 的九型名录一致。
+
+    ⚠️ 顺序不是随意排的：国标名录为 平和/气虚/阳虚/阴虚/痰湿/湿热/血瘀/气郁/特禀。
+    阴虚插在阳虚与痰湿之间，血瘀/气郁/特禀接在湿热之后。
+    `tests/test_constitution_readiness.py` 会断言本枚举与 constitution.json、
+    docs/constitution-9-types.json 的 id 与顺序三者一致，改动需同步三处。
+
+    ⚠️ 收录进枚举 ≠ 可以对用户开放。能否对外服务由 herbs.json 是否备齐数据决定，
+    见 `safety.ready_constitutions()`。
+    """
 
     BALANCED = "balanced"                # 平和质
     QI_DEFICIENCY = "qi_deficiency"      # 气虚质
     YANG_DEFICIENCY = "yang_deficiency"  # 阳虚质
+    YIN_DEFICIENCY = "yin_deficiency"    # 阴虚质
     PHLEGM_DAMP = "phlegm_damp"          # 痰湿质
     DAMP_HEAT = "damp_heat"              # 湿热质
+    BLOOD_STASIS = "blood_stasis"        # 血瘀质
+    QI_STAGNATION = "qi_stagnation"      # 气郁质
+    SPECIAL_DIATHESIS = "special_diathesis"  # 特禀质
 
 
 CONSTITUTION_LABELS: dict[str, str] = {
     Constitution.BALANCED.value: "平和质",
     Constitution.QI_DEFICIENCY.value: "气虚质",
     Constitution.YANG_DEFICIENCY.value: "阳虚质",
+    Constitution.YIN_DEFICIENCY.value: "阴虚质",
     Constitution.PHLEGM_DAMP.value: "痰湿质",
     Constitution.DAMP_HEAT.value: "湿热质",
+    Constitution.BLOOD_STASIS.value: "血瘀质",
+    Constitution.QI_STAGNATION.value: "气郁质",
+    Constitution.SPECIAL_DIATHESIS.value: "特禀质",
 }
 
 NATURE_LABELS: dict[str, str] = {
