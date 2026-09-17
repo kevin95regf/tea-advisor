@@ -206,13 +206,26 @@ def test_legacy_five_constitutions_are_ready() -> None:
     assert not missing, f"这几种原有体质不应变成未就绪：{sorted(missing)}"
 
 
-def test_filter_by_constitution_rejects_constitution_without_data() -> None:
+def test_filter_by_constitution_rejects_constitution_without_data(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """herbs.json 里没有该体质数据时，必须显式报错，不能静默返回未筛选清单。
 
     这是「枚举加了新体质、数据没跟上」的防线：静默降级会让模型拿到一份
     未经筛选的候选集去配，可能开出方向完全相反的搭配（阴虚质拿到温补辛温之品），
     而这种错误从输出表面**看不出来**。宁可失败，也不要"看起来能用"。
+
+    ⚠️ 2026-09-17：`yin_deficiency` 补上数据后已就绪，所以未就绪样本改为**现场造**
+    —— 把某体质的 suitable 标注全部抹掉。原先直接拿 `yin_deficiency` 当样本的写法
+    会随数据补齐**静默失效**（测试仍绿，但已经测不到这条防线了）。
     """
+    catalog = {k: {**v} for k, v in safety.load_herb_catalog().items()}
+    for entry in catalog.values():
+        entry["suitable_constitutions"] = [
+            c for c in (entry.get("suitable_constitutions") or []) if c != "yin_deficiency"
+        ]
+    monkeypatch.setattr(safety, "load_herb_catalog", lambda: catalog)
+
     with pytest.raises(MissingConstitutionDataError) as ei:
         filter_by_constitution("yin_deficiency")
 
