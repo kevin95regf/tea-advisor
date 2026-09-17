@@ -154,9 +154,11 @@ def test_every_pending_item_has_owner_and_status(pending):
     for row in rows:
         cells = [c.strip() for c in row.strip("|").split("|")]
         assert len(cells) >= 4, row
-        owner, status = cells[-3], cells[-1]
+        owner, status_raw = cells[-3], cells[-1]
         assert owner and owner != "—", f"缺责任人：{row}"
-        assert status.startswith("待") or status.startswith("已"), f"状态可疑：{row}"
+        # 状态列允许带 ✅/⛔ 等装饰，先剥掉再判断
+        status = status_raw.strip("✅⛔* `")
+        assert status.startswith(("待", "已")), f"状态可疑：{status_raw!r}"
 
 
 def test_pending_marks_hard_blockers(pending):
@@ -216,12 +218,16 @@ def test_referenced_paths_exist(doc_name):
 def test_docs_contain_no_key_material(doc_name):
     """交接文档绝不能出现真实的 Key。
 
-    注意：`sk-` 本身可以出现（文档要描述这个模式、要写占位符），
-    所以这里只拦「`sk-` 后面跟着一长串像 Key 的字符」。
+    注意三件事：
+    - `sk-` 本身可以出现（文档要描述这个模式、要写 `sk-...` 占位符）
+    - 测试哨兵常量 `sk-SENTINEL-...` 是**已知的、刻意造的**常量，它本来就在
+      `tests/test_key_handling.py` 里，文档引用它来说明扫描结果也是合理的
+    - 除此之外，任何 `sk-` 后跟一串像 Key 的字符都不允许
     """
     text = (DOCS / doc_name).read_text(encoding="utf-8")
-    hits = re.findall(r"sk-[A-Za-z0-9]{8,}", text)
-    assert not hits, f"{doc_name} 里出现疑似 Key：{hits}"
+    hits = [h for h in re.findall(r"sk-[A-Za-z0-9_-]{8,}", text)
+            if not h.upper().startswith("SK-SENTINEL")]
+    assert not hits, f"{doc_name} 里出现疑似真 Key：{hits}"
 
 
 @pytest.mark.parametrize("doc_name", ["handover.md", "pending-items.md"])

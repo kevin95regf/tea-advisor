@@ -339,13 +339,13 @@ python scripts/build_herb_crosscheck.py
 
 | 项 | 值 |
 |---|---|
-| 分支 | `main`，**领先 `origin/main`（锚点 `010db2f`）若干提交、未推送** |
-| 准确数字 | 跑 `git log --oneline origin/main..HEAD`（数字每次本地提交都会变，故不在此硬编码） |
-| 提交总数 | 30（截至本快照；加上本文档所在的提交是 31） |
+| 分支 | `main`，**与 `origin/main` 已同步**（2026-09-17 推送达 `010db2f..7ed495a`，6 个提交） |
+| 准确状态 | 跑 `git log --oneline origin/main..HEAD`（输出为空即已同步） |
+| 提交总数 | 31（截至 2026-09-17 推送时；取当前值跑 `git rev-list --count HEAD`） |
 | 远程 | `https://github.com/kevin95regf/tea-advisor.git`（公开） |
 | 标签 | `demo-1-backend`、`v1-llm-only` |
 | 工作区 | **干净**（无未提交改动、无未跟踪文件） |
-| 跟踪文件数 | 81（加上本文档、`pending-items.md`、`test_handover_docs.py` 是 84） |
+| 跟踪文件数 | 84（截至本次推送；取当前值跑 `git ls-files \| Measure-Object`） |
 
 **2026-09-17 这批工作的产出**（按时间顺序，本文档自身的提交在其后）：
 
