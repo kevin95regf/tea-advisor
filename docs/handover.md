@@ -285,7 +285,7 @@ python scripts/test_food_accuracy.py   # 属性准确率，只测 Agent1
 | 21 | **橘红：归属 2002 年附件 1 的「桔红」，视为在目录内** | ✅ 已实施（无需改代码） |
 | 22 | **药典与项目不一致的 7 处：先保留项目值**，文档标注药典值与差异影响，等 nanple 复核 | ⏳ 待 nanple 复核 |
 | 23 | **四气降档约定：微寒→凉、微温→温**。**这是项目约定，不是药典原文**；药典原文用词一律保留 | ✅ 已认可 |
-| 24 | **九型体质 id 全部确认**：`balanced` / `qi_deficiency` / `yang_deficiency` / `yin_deficiency` / `phlegm_damp` / `damp_heat` / `blood_stasis` / `qi_stagnation` / `special_diathesis` | ✅ **已实施（Step 1 + Step 2，2026-09-17）**：枚举 / `constitution.json` / 就绪闸门已扩到 9 型，`herbs.json` 补入 10 格来源点名的配伍标注，九型全部就绪且对外可见。244 格的完整判定仍待 nanple，见 B3 |
+| 24 | **九型体质 id 全部确认**：`balanced` / `qi_deficiency` / `yang_deficiency` / `yin_deficiency` / `phlegm_damp` / `damp_heat` / `blood_stasis` / `qi_stagnation` / `special_diathesis` | ✅ **已实施（Step 1 + Step 2，2026-09-17）**：枚举 / `constitution.json` / 就绪闸门已扩到 9 型，`herbs.json` 补入 10 格来源点名的配伍标注，九型全部就绪且对外可见；同日第二批又由外部专业意见写入 5 格（见 `docs/herbs-9types-batch2.md`）。244 格里余 239 格的完整判定仍待 nanple，见 B3 |
 | 25 | **国标 A 栏（九型特征）用官方解读/起草人访谈的转引，逐条标注「非标准正文」** | ✅ 已实施 |
 | 26 | **《中华本草》列统一标「待确认」，不猜** | ✅ 已实施（取不到数据，见挂起事项） |
 
@@ -308,7 +308,7 @@ python scripts/test_food_accuracy.py   # 属性准确率，只测 Agent1
 | 类别 | 事项 | 谁来解 |
 |---|---|---|
 | **对外服务前的硬阻碍** | 147 条食性数据全部未人工审核（全 `pending`） | 具备资质的中医师/中药师 |
-| **只等 nanple** | 7 处药典不一致复核；244 个配伍判定；问卷拼写不一致 | nanple |
+| **只等 nanple** | 7 处药典不一致复核；244 个配伍判定（已落地 15 格，余 239 格）；问卷拼写不一致 | nanple |
 | **只等你决定** | 玫瑰花/茉莉花的代码改动时机 | 项目所有者 |
 | **受外部资源阻塞** | 《中华本草》列全空（取不到公开数据）；国标 A 栏是转引（正文有付费墙） | 取得资料后可解 |
 | **技术债** | 3 条食性表缺 `review_status`；`herbs.json` 缺逐条审核字段 | 开发 |

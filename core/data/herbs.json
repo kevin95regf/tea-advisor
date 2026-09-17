@@ -1,7 +1,7 @@
 {
   "_meta": {
     "title": "药食同源饮片库（demo 版）",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "review_status": "pending",
     "notice": "本文件仅收录『既是食品又是中药材的物质』方向的高频品种，属性依据中医饮食养生通行表述整理，剂量上限为保守的日常茶饮建议值。上线前必须由具备资质的中医师/中药师复核，并以国家卫健委发布的最新目录为准。",
     "field_notes": {
@@ -28,11 +28,37 @@
         "count": 10,
         "herbs": ["fuling", "chenpi", "longyanrou", "shengjiang", "yiyiren", "molihua", "juhong", "huoxiang", "zisu", "foshou"],
         "writing_rule": "只把项目自有 cautions 已明写『阴虚 / 津液不足 / 口干 / 上火』且点名该人群不宜、慎用或减量的饮片，追加进 unsuitable_for。依据是项目自身数据，不引用任何外部来源，属推导而非权威依据",
-        "why": "unsuitable_for 是硬过滤（filter_by_constitution 会移出候选集），cautions 只进 Agent2 提示词、属软约束。此前二者脱节：项目已认定生姜『阴虚内热者不宜』，却挡不住任何东西",
-        "excluded": ["heye", "xiangru"],
-        "excluded_reason": "docs/herbs-9types-draft.md 的阴虚 ✗ 列共 12 味，这两味的 cautions 措辞未提阴虚（荷叶只写『体瘦、气血偏虚者不宜久服』，香薷只写『性温发汗，表虚多汗者不宜』），依据属外推，不写入，已登记为待 nanple 判断",
+        "why": "unsuitable_for 是硬过滤（filter_by_constitution 会移出候选集）；cautions 属软约束，真实出口有两处：① matcher 兜底路径的 Recommendation.cautions，只取每味第 1 条；② safety.check_blend 把每条 caution 转成 warning 进 Basis.guardrail_applied。此前二者脱节：项目已认定生姜『阴虚内热者不宜』，却挡不住任何东西",
+        "excluded_resolved": "原 `excluded`（荷叶、香薷）已于 2026-09-17 由外部专业意见裁决：香薷走硬屏蔽（unsuitable_for，evidence），荷叶走 cautions（软通道，inference）；见同级 `rulings` 块与 docs/herbs-9types-batch2.md",
         "review_status": "pending",
         "note": "逐条对照与影响评估见 docs/herbs-cautions-yinxu-batch.md。与 5 型数据同等对待：写入 ≠ 审核通过"
+      },
+      "rulings": {
+        "date": "2026-09-17",
+        "source": "外部专业意见（项目所有者转达），非项目自有数据",
+        "scope": "5 格：香薷×阴虚、荷叶×阴虚、山楂×阴虚、山楂×气郁、槐花×血瘀",
+        "cells": [
+          {"herb": "xiangru", "constitution": "yin_deficiency", "verdict": "忌", "level": "evidence", "field": "unsuitable_for", "basis": "明确忌；另补 cautions『阴虚有热者禁用』（直接文献依据）"},
+          {"herb": "heye", "constitution": "yin_deficiency", "verdict": "慎用", "level": "inference", "field": "cautions", "basis": "不硬屏蔽，登记为 cautions-only"},
+          {"herb": "shanzha", "constitution": "yin_deficiency", "verdict": "慎用", "level": "inference", "field": "cautions", "basis": "不硬屏蔽，登记为 cautions-only"},
+          {"herb": "shanzha", "constitution": "qi_stagnation", "verdict": "宜（倾向）", "level": "inference", "field": "suitable_constitutions", "basis": "倾向判定，写入后升位至气郁候选首位，见 priority_review"},
+          {"herb": "huaihua", "constitution": "blood_stasis", "verdict": "慎用", "level": "inference", "field": "cautions", "confidence": "低", "basis": "依据为性凉；直接迁移证据不足"}
+        ],
+        "decisions": [
+          "山楂×气郁：酸涩收敛忌气郁的说法缺乏文献依据，暂不采纳",
+          "槐花×血瘀：直接迁移证据不足；慎用理由为槐花性凉，低置信"
+        ],
+        "priority_review": [
+          {
+            "cell": "shanzha × qi_stagnation",
+            "severity": "高",
+            "issue": "本格是 inference 级『倾向』判定，但写入 suitable_constitutions 后获得升位效果：山楂 catalog 下标 2，早于红枣(6)、薄荷(12)，因此跃居气郁候选清单第 1 位，直接进 Agent2 提示词首行。倾向性判定不宜带有升位效果。",
+            "options": ["改走 cautions（降为注意项，不升位）", "撤回该格", "维持现状（接受升位）"],
+            "requested_by": "项目所有者 2026-09-17"
+          }
+        ],
+        "review_status": "pending",
+        "note": "写入 ≠ 审核通过，界面照旧标「待验证」。evidence → unsuitable_for（硬屏蔽）；inference → 允许 cautions / suitable_constitutions（软通道）。该规则由 core/tests/test_safety.py 强制，不靠人记"
       }
     }
   },
@@ -79,8 +105,8 @@
       "meridians": ["脾", "胃", "肝"],
       "effects": ["消食化积", "行气散瘀"],
       "max_daily_g": 12,
-      "cautions": ["胃酸过多、胃溃疡者慎用", "孕妇不宜", "不宜空腹大量饮用"],
-      "suitable_constitutions": ["phlegm_damp", "balanced", "blood_stasis"],
+      "cautions": ["胃酸过多、胃溃疡者慎用", "孕妇不宜", "不宜空腹大量饮用", "阴虚质慎用（推断，未经人工审核）"],
+      "suitable_constitutions": ["phlegm_damp", "balanced", "blood_stasis", "qi_stagnation"],
       "unsuitable_for": ["qi_deficiency"],
       "brewing": {
         "form": "干山楂片，可略炒后用",
@@ -198,7 +224,7 @@
       "meridians": ["肝", "脾", "胃"],
       "effects": ["清暑化湿", "升发清阳"],
       "max_daily_g": 10,
-      "cautions": ["体瘦、气血偏虚者不宜久服", "孕妇不宜"],
+      "cautions": ["体瘦、气血偏虚者不宜久服", "孕妇不宜", "阴虚质慎用（推断，未经人工审核）"],
       "suitable_constitutions": ["phlegm_damp", "damp_heat"],
       "unsuitable_for": ["qi_deficiency", "yang_deficiency"],
       "brewing": {
@@ -525,7 +551,7 @@
       "meridians": ["肝", "大肠"],
       "effects": ["凉血止血", "清肝泻火"],
       "max_daily_g": 10,
-      "cautions": ["性凉，脾胃虚寒者不宜", "孕妇不宜"],
+      "cautions": ["性凉，脾胃虚寒者不宜", "孕妇不宜", "血瘀质慎用（低置信，依据为性凉，未经人工审核）"],
       "suitable_constitutions": ["damp_heat", "balanced"],
       "unsuitable_for": ["yang_deficiency", "qi_deficiency"],
       "brewing": {
@@ -593,9 +619,9 @@
       "meridians": ["肺", "胃"],
       "effects": ["发汗解表", "化湿和中"],
       "max_daily_g": 6,
-      "cautions": ["性温发汗，表虚多汗者不宜", "不宜久煮"],
+      "cautions": ["性温发汗，表虚多汗者不宜", "不宜久煮", "阴虚有热者禁用"],
       "suitable_constitutions": ["phlegm_damp"],
-      "unsuitable_for": ["qi_deficiency", "damp_heat"],
+      "unsuitable_for": ["qi_deficiency", "damp_heat", "yin_deficiency"],
       "brewing": {
         "form": "干香薷",
         "note": "夏季空调房受凉后合适",

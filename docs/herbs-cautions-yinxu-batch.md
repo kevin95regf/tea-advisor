@@ -11,7 +11,9 @@
 `herbs.json` 版本 `0.2.0` → `0.3.0`，`_meta.constitution_extension.cautions_batch`
 记录了口径、名单与排除理由。`food_properties.json` 未改动。
 
-**刻意没写**：荷叶、香薷（见 §2，依据属外推，已登记为待 nanple）。
+**后来（2026-09-17，第二批）**：荷叶、香薷两味已由外部专业意见裁决 —— 香薷走**硬屏蔽**
+（`evidence`，另补 cautions「阴虚有热者禁用」），荷叶走 `cautions`（`inference`，在
+`_meta.constitution_extension.rulings` 登记软通道豁免）。5 格详情见 `docs/herbs-9types-batch2.md`。
 
 **运行时影响（实测，不是推断）**：
 
@@ -35,8 +37,12 @@
 每条都能指回 `herbs.json` 的原文，**不含任何外推**。
 
 **为什么值得单独走一批**：`unsuitable_for` 是**硬过滤**（`safety.py:217` / `matcher.py:258`
-都是 `if constitution in unsuitable: continue`）。而 `cautions` 只进 Agent2 的提示词，
-属**软约束**——模型可以不听。
+都是 `if constitution in unsuitable: continue`）。而 `cautions` 属**软约束**——模型可以不听。
+（**2026-09-17 更正**：此处原文写「`cautions` 只进 Agent2 的提示词」，与代码不符。真实出口有两处：
+① `matcher.py` 兜底路径的 `Recommendation.cautions`，**只取每味第 1 条**；
+② `safety.check_blend` 把每条 caution 转成 warning 进 `Basis.guardrail_applied`（进 API 响应）。
+两处都比硬过滤软，方向性结论不变，但影响面比原文描述的大。
+`herbs.json` 的 `_meta.constitution_extension.cautions_batch.why` 已同步更正。）
 
 这就造成一个当时真实存在的缺口：**阴虚质只有桑椹 1 味「宜」、0 味「忌」**（Step 2 之后），
 而 `cautions` 里明明写着生姜「阴虚内热者不宜」、藿香「阴虚火旺者不宜」、
@@ -94,7 +100,7 @@
 
 ---
 
-## 2. 单列：草稿「阴虚 ✗」列里的另外 2 味（**不属于本批口径**，已登记待 nanple）
+## 2. 单列：草稿「阴虚 ✗」列里的另外 2 味（**不属于本批口径**；2026-09-17 已由第二批裁决）
 
 `docs/herbs-9types-draft.md` §4 的阴虚 ✗ 列共 **12** 味。除上面 10 味，还有两味的依据
 **不是 `cautions` 措辞**，因此不符合本批「每条都能指回项目自有数据」的定义：
@@ -104,12 +110,14 @@
 | 荷叶 `heye` | 体瘦、气血偏虚者不宜久服 | R2 淡渗利水 **+「阴虚多体瘦」的推导** | 措辞只提「体瘦/气血偏虚」，未提阴虚 → **外推，不写入** |
 | 香薷 `xiangru` | 性温发汗，表虚多汗者不宜 | R1 辛温发汗伤津（纯规则推导） | 草稿自己就注明「项目禁忌仅写『表虚多汗』，未写阴虚」→ **外推，不写入** |
 
-**已登记**：两味都写进了 `docs/pending-items.md` B3 的「需要什么」一栏，与另外 3 处
-（山楂×阴虚、山楂×气郁、槐花×血瘀）并列为**待 nanple 确认**。
+**已裁决（2026-09-17）**：这 5 处（另有山楂×阴虚、山楂×气郁、槐花×血瘀）已按外部专业意见写入，
+见 `docs/herbs-9types-batch2.md`。香薷走硬屏蔽（`unsuitable_for`，`evidence`），荷叶走 `cautions`
+（`inference`，登记为软通道豁免）。
 
 ⚠️ **香薷值得优先问**：它是 34 味里最典型的「辛温发汗」品，从中医方向看，阴虚该忌它
 比该忌茯苓更明确。**问题是项目数据里没有依据**，硬写就正是本批要避免的外推——
 所以它属于「需要人给一句话」的典型，而不是「可以自己推」的。
+→ **2026-09-17 已获外部意见**：判为「明确忌」（`evidence`），已写入 `unsuitable_for`。
 
 ---
 
@@ -144,11 +152,12 @@
 
 | 测试 | 守什么 |
 |---|---|
-| `test_cautions_naming_yinxu_must_be_blocked` | **派生不变式**：凡 `cautions` 命中山阴虚方向 5 词者，必须在 `yin_deficiency` 的 `unsuitable_for` 里。不写死名单，所以数据怎么变都仍有效；将来新增饮片命中关键词会**强制**做一次显式决定。首条断言防测试静默失效（关键词一条都没命中就报错） |
+| `test_cautions_naming_yinxu_must_be_blocked` | **派生不变式**：凡 `cautions` 命中山阴虚方向 5 词者，必须在 `yin_deficiency` 的 `unsuitable_for` 里。不写死名单，所以数据怎么变都仍有效；将来新增饮片命中关键词会**强制**做一次显式决定。首条断言防测试静默失效（关键词一条都没命中就报错）。**2026-09-17 起**，文中原本只是「或在 docs 里说明为何不写」的第二条出口已**落成代码**：可在 `_meta.constitution_extension.rulings` 登记「有意只走 cautions」，但受三条强制约束（① 豁免项必须真命中关键词；② 未登记项仍硬屏蔽；③ 走软通道者等级不得为 `evidence`），配套负控制 `test_cautions_soft_gap_negative_controls` 与格式检查 `test_rulings_cells_are_well_formed` |
 | `test_yinxu_cautions_batch_is_blocked_at_runtime` | **端到端**：用大 `limit` 取全池，验证这 10 味在运行时真的进不了候选集——因为默认 `limit=12` 的截断会让 7 味「本来就不在 top12」的逃脱**看起来很正常** |
 
-已验证非空洞：命中集合恰等于本批 10 味（双向差集为空）；负控制（抹掉生姜的屏蔽）能报出
-`shengjiang`。
+已验证非空洞：负控制（抹掉生姜的屏蔽）能报出 `shengjiang`。**2026-09-17 后**，命中集合已从 10 味扩到
+13 味（本批 10 味 + 香薷、荷叶、山楂），其中 3 味按 `rulings` 登记为硬屏蔽或软通道豁免，三类缺口均为空；
+若日后命中集合再变，首条断言仍会兜住，不会静默失效。
 
 ---
 

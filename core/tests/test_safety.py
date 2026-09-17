@@ -5,6 +5,9 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
 from app.domain import safety
@@ -268,36 +271,139 @@ CAUTIONS_BATCH_YINXU = frozenset(
     }
 )
 
+# ---- 软约束豁免登记（cautions-only）----
+# 登记表的**唯一事实源**是 herbs.json 的 _meta.constitution_extension.rulings.cells。
+# 刻意不在测试里另存一份名单：两处名单必然漂移，而漂移的方向总是「测试放过、数据漏了」。
+ROLLING_SOFT_FIELDS = ("cautions", "suitable_constitutions")
 
-def test_cautions_naming_yinxu_must_be_blocked() -> None:
-    """凡 cautions 明写阴虚方向的饮片，都必须被 `yin_deficiency` 挡在候选集外。
+CORE_DIR = Path(__file__).resolve().parent.parent
+HERBS_JSON = CORE_DIR / "data" / "herbs.json"
 
-    这是一条**派生不变式**，不是数据快照：它不写死「哪几味被屏蔽」，
-    而是从 cautions 与 unsuitable_for 的关系推出来。所以数据怎么变都仍然有效。
 
-    守的是软硬约束的脱节：`cautions` 只进 Agent2 的提示词（模型可以不听），
-    `unsuitable_for` 才是硬过滤。二者脱节就会出现「项目自己已认定阴虚不宜，
-    却照样推给阴虚用户」——而这种错误从输出表面**看不出来**。
+def load_rulings() -> dict:
+    """读 `_meta.constitution_extension.rulings`（没有则返回空 dict）。"""
+    data = json.loads(HERBS_JSON.read_text(encoding="utf-8"))
+    ext = ((data.get("_meta") or {}).get("constitution_extension") or {})
+    return ext.get("rulings") or {}
 
-    将来新增饮片若 cautions 命中关键词，本测试会失败，从而**强制**做一次显式决定：
-    写入屏蔽，或在 docs/herbs-cautions-yinxu-batch.md 里说明为何不写。
-    反过来，若哪天关键词一条都命中不了，下面第一条断言会报出来，避免测试静默失效。
+
+def load_rulings_cells() -> list[dict]:
+    """展开 rulings.cells（供豁免判定与批次块格式检查共用）。"""
+    return list(load_rulings().get("cells") or [])
+
+
+def _cautions_soft_gap(catalog: dict, cells: list[dict]) -> dict:
+    """算出『cautions 命中阴虚方向关键词』与『软通道登记』之间的三类缺口。
+
+    纯函数：不读文件、不依赖真实数据 —— 正向测试与负控制共用同一份逻辑
+    （否则负控制只是把判定又写了一遍，属假保证）。每个 key 为空列表即代表该类问题不存在。
     """
-    catalog = load_herb_catalog()
     hit = {
         herb_id
         for herb_id, item in catalog.items()
         if any(k in c for c in (item.get("cautions") or []) for k in YINXU_CAUTION_KEYWORDS)
     }
-    assert hit, "阴虚方向关键词一条都没命中，本测试已失去覆盖面，需同步更新关键词或 cautions"
+    yin = [c for c in cells if c.get("constitution") == "yin_deficiency"]
+    exempt = {c.get("herb") for c in yin}
+    soft = [c for c in yin if c.get("field") != "unsuitable_for"]
+    return {
+        "hit": hit,
+        # 规则①：豁免项必须 ∈ 命中集（登记表不能当垃圾桶/后门）
+        "stray": sorted(h for h in exempt - hit if h),
+        # 规则③：走软通道的登记项，依据等级不得为 evidence（明确忌必须硬屏蔽）
+        "soft_evidence": sorted(
+            c["herb"] for c in soft if c.get("level") == "evidence" and c.get("herb")
+        ),
+        # 规则②：命中集里未登记的仍必须硬屏蔽
+        "escaped": sorted(
+            h for h in hit - exempt
+            if "yin_deficiency" not in (catalog[h].get("unsuitable_for") or [])
+        ),
+    }
 
-    escaped = sorted(
-        h for h in hit if "yin_deficiency" not in (catalog[h].get("unsuitable_for") or [])
+
+def test_cautions_naming_yinxu_must_be_blocked() -> None:
+    """凡 cautions 明写阴虚方向的饮片，都必须被 `yin_deficiency` 挡在候选集外 ——
+    除非它在 `_meta.constitution_extension.rulings` 里**登记**为「有意只走 cautions」。
+
+    这是一条**派生不变式**，不是数据快照：它不写死「哪几味被屏蔽」，
+    而是从 cautions 与 unsuitable_for 的关系推出来，所以数据怎么变都仍然有效。
+
+    守的是软硬约束的脱节：`cautions` 只进提示词与护栏文案（模型可以不听），
+    `unsuitable_for` 才是硬过滤。二者脱节就会出现「项目自己已认定阴虚不宜，
+    却照样推给阴虚用户」—— 而这种错误从输出表面**看不出来**。
+
+    豁免出口是 2026-09-17 落地的（`docs/herbs-9types-batch2.md`）。它有三条强制约束，
+    都在 `_cautions_soft_gap` 里，缺一条闸门就漏：
+      ① 豁免项必须 ∈ 命中集 —— 登记表不能变成绕过检查的后门；
+      ② 命中集里**未登记**的仍必须硬屏蔽 —— 防线不松；
+      ③ **走软通道的登记项，依据等级不得为 `evidence`** —— 「明确忌 → 硬屏蔽」由代码强制，
+         不靠人记得（香薷是 evidence，它落在 unsuitable_for 上，想改走软通道会被挡回来）。
+    """
+    gap = _cautions_soft_gap(load_herb_catalog(), load_rulings_cells())
+
+    assert gap["hit"], "阴虚方向关键词一条都没命中，本测试已失去覆盖面，需同步更新关键词或 cautions"
+    assert not gap["stray"], (
+        f"这些饮片登记为『只走 cautions』，但 cautions 并不命中阴虚方向关键词：{gap['stray']}。"
+        "登记表必须只收录真实命中的格子，否则它就成了绕过检查的后门"
     )
-    assert not escaped, (
-        f"这些饮片的 cautions 已明写阴虚方向，却没被 yin_deficiency 屏蔽：{escaped}。"
-        "要么补 unsuitable_for，要么在 docs/herbs-cautions-yinxu-batch.md 里写明为何不写"
+    assert not gap["soft_evidence"], (
+        f"这些登记项的依据等级是 evidence，却想走 cautions 软通道：{gap['soft_evidence']}。"
+        "evidence 级（明确忌）必须写进 unsuitable_for —— 依据等级决定写哪个字段"
     )
+    assert not gap["escaped"], (
+        f"这些饮片的 cautions 已明写阴虚方向，却既没被 yin_deficiency 屏蔽、也没登记豁免：{gap['escaped']}。"
+        "要么补 unsuitable_for，要么在 `_meta` 的 rulings 块里登记为 cautions-only（等级不得为 evidence）"
+    )
+
+
+def test_cautions_soft_gap_negative_controls() -> None:
+    """人造数据必须让三类缺口各自报出来 —— 否则上一条测试可能根本没在检查。"""
+    catalog = {
+        "a": {"cautions": ["阴虚者不宜"], "unsuitable_for": ["yin_deficiency"]},
+        "b": {"cautions": ["阴虚者慎用"], "unsuitable_for": []},
+        "c": {"cautions": ["孕妇不宜"], "unsuitable_for": []},  # 不命中关键词
+    }
+    good = [{"herb": "b", "constitution": "yin_deficiency", "level": "inference", "field": "cautions"}]
+
+    g = _cautions_soft_gap(catalog, good)
+    assert g["hit"] == {"a", "b"} and not (g["stray"] or g["soft_evidence"] or g["escaped"])
+
+    # ① 登记了一个并不命中的饮片
+    g = _cautions_soft_gap(
+        catalog,
+        good + [{"herb": "c", "constitution": "yin_deficiency", "level": "inference", "field": "cautions"}],
+    )
+    assert g["stray"] == ["c"], "规则①失效：登记表可以收录没命中的格子"
+
+    # ③ 把登记项改成 evidence
+    g = _cautions_soft_gap(catalog, [{**good[0], "level": "evidence"}])
+    assert g["soft_evidence"] == ["b"], "规则③失效：明确忌可以走软通道"
+
+    # ② 抹掉一个未登记项的屏蔽
+    broken = {**catalog, "a": {"cautions": ["阴虚者不宜"], "unsuitable_for": []}}
+    g = _cautions_soft_gap(broken, good)
+    assert g["escaped"] == ["a"], "规则②失效：未登记的条目可以逃脱硬屏蔽"
+
+
+def test_rulings_cells_are_well_formed() -> None:
+    """批次块每一格都要齐备，且 level 与 field 的搭配合法：`evidence` 只能写 `unsuitable_for`。
+
+    规则③ 在阴虚方向上由 `_cautions_soft_gap` 强制；这条把它推广到**所有格子**
+    —— 因为「明确忌必须硬屏蔽」与方向无关。反向不成立：`inference` 也允许写
+    `unsuitable_for`（保守方向，cautions 批次 10 味就是这么做的）。
+    """
+    cells = load_rulings_cells()
+    assert cells, "rulings.cells 为空 —— 要么本批没落地，要么登记被误删"
+    for c in cells:
+        for k in ("herb", "constitution", "verdict", "level", "field", "basis"):
+            assert c.get(k), f"{c.get('herb')} 的登记缺字段 {k}"
+        assert c["field"] in ("unsuitable_for",) + ROLLING_SOFT_FIELDS, f"未知 field：{c['field']}"
+        if c["level"] == "evidence":
+            assert c["field"] == "unsuitable_for", (
+                f"{c['herb']}×{c['constitution']} 是 evidence 级却写了 {c['field']}："
+                "明确忌必须落 unsuitable_for"
+            )
 
 
 def test_yinxu_cautions_batch_is_blocked_at_runtime() -> None:
