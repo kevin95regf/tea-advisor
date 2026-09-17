@@ -1,7 +1,7 @@
 {
   "_meta": {
     "title": "药食同源饮片库（demo 版）",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "review_status": "pending",
     "notice": "本文件仅收录『既是食品又是中药材的物质』方向的高频品种，属性依据中医饮食养生通行表述整理，剂量上限为保守的日常茶饮建议值。上线前必须由具备资质的中医师/中药师复核，并以国家卫健委发布的最新目录为准。",
     "field_notes": {
@@ -20,7 +20,20 @@
       "writing_rule": "只写入『公开来源直接点名该饮片适用于/不适用于该体质』的组合（共 10 格）；药典功效外推与项目 cautions 推导一律不写入，留待人工审核",
       "source": "广东省中医药局《如何辨识自己的体质？九种体质调理方，一文说清楚》2023-03-22（政府网站科普，基于 2009 版学会标准）",
       "review_status": "pending",
-      "note": "这 10 格未经人工审核，与其余 5 型数据同等对待。空缺 ≠ 安全或不宜，空缺只表示『未判定』。逐条依据与推导过程见 docs/herbs-9types-draft.md"
+      "note": "这 10 格未经人工审核，与其余 5 型数据同等对待。空缺 ≠ 安全或不宜，空缺只表示『未判定』。逐条依据与推导过程见 docs/herbs-9types-draft.md",
+      "cautions_batch": {
+        "date": "2026-09-17",
+        "constitution": "yin_deficiency",
+        "field": "unsuitable_for",
+        "count": 10,
+        "herbs": ["fuling", "chenpi", "longyanrou", "shengjiang", "yiyiren", "molihua", "juhong", "huoxiang", "zisu", "foshou"],
+        "writing_rule": "只把项目自有 cautions 已明写『阴虚 / 津液不足 / 口干 / 上火』且点名该人群不宜、慎用或减量的饮片，追加进 unsuitable_for。依据是项目自身数据，不引用任何外部来源，属推导而非权威依据",
+        "why": "unsuitable_for 是硬过滤（filter_by_constitution 会移出候选集），cautions 只进 Agent2 提示词、属软约束。此前二者脱节：项目已认定生姜『阴虚内热者不宜』，却挡不住任何东西",
+        "excluded": ["heye", "xiangru"],
+        "excluded_reason": "docs/herbs-9types-draft.md 的阴虚 ✗ 列共 12 味，这两味的 cautions 措辞未提阴虚（荷叶只写『体瘦、气血偏虚者不宜久服』，香薷只写『性温发汗，表虚多汗者不宜』），依据属外推，不写入，已登记为待 nanple 判断",
+        "review_status": "pending",
+        "note": "逐条对照与影响评估见 docs/herbs-cautions-yinxu-batch.md。与 5 型数据同等对待：写入 ≠ 审核通过"
+      }
     }
   },
   "herbs": [
@@ -34,7 +47,7 @@
       "max_daily_g": 15,
       "cautions": ["阴虚津少、口干明显者不宜久服"],
       "suitable_constitutions": ["phlegm_damp", "qi_deficiency", "balanced"],
-      "unsuitable_for": [],
+      "unsuitable_for": ["yin_deficiency"],
       "brewing": {
         "form": "切块或薄片，质地坚实",
         "note": "需先煎或久煮 10 分钟以上才易出味，直接冲泡效果差",
@@ -51,7 +64,7 @@
       "max_daily_g": 10,
       "cautions": ["性偏温燥，口干咽燥、易上火者减量", "胃酸过多者不宜空腹饮用"],
       "suitable_constitutions": ["phlegm_damp", "qi_deficiency", "balanced"],
-      "unsuitable_for": ["damp_heat"],
+      "unsuitable_for": ["damp_heat", "yin_deficiency"],
       "brewing": {
         "form": "干燥老陈皮，掰成小块",
         "note": "越陈越香，建议选三年以上",
@@ -153,7 +166,7 @@
       "max_daily_g": 10,
       "cautions": ["易上火、口干舌燥者慎用", "痰湿偏重、腹胀者不宜", "含糖量高，血糖偏高者需控制"],
       "suitable_constitutions": ["qi_deficiency", "yang_deficiency"],
-      "unsuitable_for": ["damp_heat", "phlegm_damp"],
+      "unsuitable_for": ["damp_heat", "phlegm_damp", "yin_deficiency"],
       "brewing": {
         "form": "干桂圆肉",
         "note": "3–5 粒即可，多则甜腻生痰",
@@ -221,7 +234,7 @@
       "max_daily_g": 10,
       "cautions": ["阴虚内热、易上火者不宜", "不宜睡前饮用", "胃溃疡活动期慎用"],
       "suitable_constitutions": ["yang_deficiency", "phlegm_damp", "balanced", "blood_stasis"],
-      "unsuitable_for": ["damp_heat"],
+      "unsuitable_for": ["damp_heat", "yin_deficiency"],
       "brewing": {
         "form": "鲜姜切薄片 2–3 片",
         "note": "吃了生冷之后最合适，可配红枣",
@@ -306,7 +319,7 @@
       "max_daily_g": 20,
       "cautions": ["孕妇不宜", "津液不足、大便干结者不宜久服", "需煮透，冲泡效果差"],
       "suitable_constitutions": ["phlegm_damp", "damp_heat"],
-      "unsuitable_for": ["qi_deficiency", "yang_deficiency"],
+      "unsuitable_for": ["qi_deficiency", "yang_deficiency", "yin_deficiency"],
       "brewing": {
         "form": "炒薏苡仁更温和",
         "note": "质地坚硬，建议先煮 15 分钟或直接用炒制打碎款",
@@ -378,7 +391,7 @@
       "max_daily_g": 6,
       "cautions": ["性偏温，口干舌燥、易上火者减量", "不宜睡前饮用"],
       "suitable_constitutions": ["qi_deficiency", "phlegm_damp", "balanced"],
-      "unsuitable_for": ["damp_heat"],
+      "unsuitable_for": ["damp_heat", "yin_deficiency"],
       "brewing": {
         "form": "干茉莉花蕾，或茉莉花茶",
         "note": "香气易挥发，水温 85–90℃、加盖焖 3 分钟即可",
@@ -497,7 +510,7 @@
       "max_daily_g": 6,
       "cautions": ["性偏温燥，阴虚口干者不宜", "气虚者慎用"],
       "suitable_constitutions": ["phlegm_damp"],
-      "unsuitable_for": ["damp_heat", "qi_deficiency"],
+      "unsuitable_for": ["damp_heat", "qi_deficiency", "yin_deficiency"],
       "brewing": {
         "form": "橘红片或丝",
         "note": "比陈皮更偏于化痰，量宜少",
@@ -531,7 +544,7 @@
       "max_daily_g": 6,
       "cautions": ["性偏温散，阴虚火旺者不宜", "不宜久煮，香气易散"],
       "suitable_constitutions": ["phlegm_damp"],
-      "unsuitable_for": ["damp_heat"],
+      "unsuitable_for": ["damp_heat", "yin_deficiency"],
       "brewing": {
         "form": "干藿香叶",
         "note": "夏季湿重、食欲不振时合适；最后 2 分钟放入",
@@ -548,7 +561,7 @@
       "max_daily_g": 6,
       "cautions": ["性温，阴虚内热者不宜", "不宜久煮"],
       "suitable_constitutions": ["yang_deficiency", "phlegm_damp"],
-      "unsuitable_for": ["damp_heat"],
+      "unsuitable_for": ["damp_heat", "yin_deficiency"],
       "brewing": {
         "form": "干紫苏叶",
         "note": "吃了生冷海鲜之后合适",
@@ -565,7 +578,7 @@
       "max_daily_g": 6,
       "cautions": ["性温，阴虚火旺者不宜", "气虚者慎用"],
       "suitable_constitutions": ["qi_deficiency", "phlegm_damp"],
-      "unsuitable_for": ["damp_heat"],
+      "unsuitable_for": ["damp_heat", "yin_deficiency"],
       "brewing": {
         "form": "干佛手片",
         "note": "情绪不畅、饭后胀气时合适，方向与玫瑰花相近",
