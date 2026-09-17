@@ -59,6 +59,20 @@ class GuardrailResult:
     adjusted: list[str] = field(default_factory=list)
 
 
+class MissingConstitutionDataError(ValueError):
+    """herbs.json 里没有任何饮片标注该体质。
+
+    出现这种情况几乎总是意味着「枚举加了新体质，但 herbs.json 的
+    suitable_constitutions 没跟上」。
+
+    这时**必须显式失败**，不能静默降级：
+    `filter_by_constitution` 的职责是把候选集收敛到与该体质方向相符的饮片。
+    如果一条数据都没有就退化成"目录前 N 味"，模型会拿这份未经筛选的清单去配，
+    可能给出方向相反的搭配（例如阴虚质拿到龙眼肉、生姜等温补辛温之品）——
+    而这种错误从输出的表面**完全看不出来**，比直接报错危险得多。
+    """
+
+
 # ============================================================
 # 数据加载
 # ============================================================
@@ -213,8 +227,20 @@ def filter_by_constitution(
 
     这是把"越界开方"风险锁死的结构性手段：
     模型即使想自由发挥，候选集里也只有药食同源饮片。
+
+    不仅如此，它还负责**方向收敛**：把与该体质不符的饮片挡在候选集之外
+    （靠 `unsuitable_for`）并把契合的排在前面（靠 `suitable_constitutions`）。
+
+    如果该体质在数据里一条记录都没有，就**无法完成方向收敛**，
+    此时抛 `MissingConstitutionDataError` 而不是退化成未筛选清单 ——
+    详见该异常的说明。
     """
     catalog = load_herb_catalog()
+    if not catalog:
+        # 整个白名单缺失（herbs.json 没部署）。这是既有设计允许的降级路径
+        # （load_herb_catalog 缺文件返回空字典），保持原行为，不在这里报错。
+        return []
+
     suitable: list[dict] = []
     neutral_fallback: list[dict] = []
 
@@ -226,6 +252,13 @@ def filter_by_constitution(
             suitable.append(entry)
         else:
             neutral_fallback.append(entry)
+
+    if not suitable:
+        raise MissingConstitutionDataError(
+            f"herbs.json 里没有任何饮片把「{constitution}」标进 suitable_constitutions，"
+            "无法为该体质收敛候选集。请先补齐该体质的饮片标注（suitable/unsuitable），"
+            "在补齐之前不要把这个体质暴露给用户。"
+        )
 
     ordered = suitable + neutral_fallback
     return ordered[:limit]

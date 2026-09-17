@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 
-from app.domain.enums import Constitution, Nature
+from app.domain.enums import CONSTITUTION_LABELS, Constitution, Nature
 from app.domain.models import (
     Basis,
     BrewGuide,
@@ -162,6 +162,43 @@ def _make_herbs(blend: list[tuple[str, float]]) -> list[HerbInBlend]:
     return herbs
 
 
+# 体质默认搭配缺失时退到哪个体质。选平和质：
+# 它的搭配是清润平和方向、不温不燥，对任何体质都不会造成方向性偏差。
+GENERIC_FALLBACK_KEY = "balanced"
+
+
+def _constitution_default(
+    constitution: Constitution,
+) -> tuple[list[tuple[str, float]], str, str, str]:
+    """取该体质的默认搭配，返回 (blend, title, reason, 说明)。
+
+    为什么不用 `CONSTITUTION_DEFAULT[constitution.value]` 直接查：
+    这是"模型不可用"时的**最后一条兜底路径**，契约是"永远给出合法且安全的搭配"。
+    字典直接查，遇到没收录的体质会抛 KeyError，顺着 orchestrator 冒出去变成 500 ——
+    用户什么都拿不到，而这时他本来至少能拿到一份安全的通用搭配。
+
+    所以缺数据时退到 `GENERIC_FALLBACK_KEY`，并返回一句说明写进理由，
+    不能让用户误以为这是针对他体质配的。
+    """
+    entry = CONSTITUTION_DEFAULT.get(constitution.value)
+    if entry is not None:
+        blend, title, reason = entry
+        return blend, title, reason, ""
+
+    fallback = CONSTITUTION_DEFAULT.get(GENERIC_FALLBACK_KEY)
+    if fallback is None:  # pragma: no cover - 数据表被改坏才会走到
+        raise RuntimeError(
+            f"体质「{constitution.value}」没有默认搭配，"
+            f"通用兜底「{GENERIC_FALLBACK_KEY}」也缺失：请检查 CONSTITUTION_DEFAULT"
+        )
+    logger.warning(
+        "体质 %s 没有默认搭配，退到 %s 的通用搭配", constitution.value, GENERIC_FALLBACK_KEY
+    )
+    blend, title, reason = fallback
+    label = CONSTITUTION_LABELS.get(GENERIC_FALLBACK_KEY, GENERIC_FALLBACK_KEY)
+    return blend, title, reason, f"该体质的专属搭配尚未收录，已改用{label}的通用搭配"
+
+
 def fallback_recommend(
     parsed: ParsedMeal,
     constitution: Constitution,
@@ -177,9 +214,13 @@ def fallback_recommend(
     if rule:
         blend, title, reason = rule["blend"], rule["title"], rule["reason"]
         hits = [rule["id"], rule["label"]]
+        fallback_note = ""
     else:
-        blend, title, reason = CONSTITUTION_DEFAULT[constitution.value]
+        blend, title, reason, fallback_note = _constitution_default(constitution)
         hits = ["constitution_default", constitution.value]
+        if fallback_note:
+            # 让 basis.rule_hits 也看得出用的是"通用兜底"，便于事后归因
+            hits = ["constitution_default_missing", constitution.value]
 
     blend = [(name, amount) for name, amount in blend if name not in exclude]
     if not blend:
@@ -197,11 +238,16 @@ def fallback_recommend(
         if constitution.value in (entry.get("unsuitable_for") or []):
             cautions.append(f"{herb.name} 与你当前体质方向不完全契合，建议减量")
 
+    # 通用兜底时把原因写进理由，别让用户以为这是为他体质配的
+    reason_suffix = "（此建议来自规则匹配）"
+    if fallback_note:
+        reason_suffix = f"（此建议来自规则匹配；{fallback_note}）"
+
     rec = Recommendation(
         title=title,
         herbs=herbs,
         brew=DEFAULT_BREW,
-        fit_reason=f"{reason}（此建议来自规则匹配）",
+        fit_reason=f"{reason}{reason_suffix}",
         cautions=cautions[:3],
         score=0.6,
     )
