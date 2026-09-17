@@ -223,8 +223,13 @@ def render(ref: dict, project: dict[str, dict]) -> str:
             proj = f"**未收录**（id 已定：`{c['id']}`）"
         L.append(f"| **{c['label']}** | {feats} | {diet} | {proj} |")
     L.append("")
-    L.append("> 九型的 id 已于 2026-09-17 全部确认，扩到 9 型时直接使用，见 §4 的"
-             "「四个新体质的英文 id 已确认」。")
+    L.append("> 九型的 id 已于 2026-09-17 全部确认，见 §4 的「四个新体质的英文 id 已确认」。")
+    L.append("")
+    L.append("> ⚠️ **「已收录」不等于「可对外服务」。** 上表说的是 `core/data/constitution.json` "
+             "里有没有这一型的调养原则（C 栏）。一个体质能否出现在用户可选的选项里，"
+             "另由 `core/data/herbs.json` 有没有为它标注饮片决定"
+             "（判据见 `core/app/domain/safety.py` 的 `ready_constitutions()`）。"
+             "两者是分开的，别把「C 栏有内容」读成「功能已上线」。")
     L.append("")
 
     # ---------- 逐型详情 ----------
