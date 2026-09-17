@@ -43,7 +43,7 @@ python ..\ui\terminal\chat.py --resolve 冰啤酒 茉莉花茶 冰淇淋
 # ② 离线推荐：不调用模型，走规则兜底，仍然给出合规且不超剂量的搭配
 python ..\ui\terminal\chat.py --offline "中午吃了碗麻辣烫，还喝了杯冰可乐"
 
-# ③ 验证一切正常（278 项，约 0.7 秒）
+# ③ 验证一切正常（304 项，约 0.8 秒）
 python -m pytest -q
 ```
 
@@ -125,7 +125,7 @@ Copy-Item credentials.env.example credentials.env    # 可选：只有用 dsh �
 * **不配 `credentials.env`** → 完全不影响：它不含 Key，而 `DSH_HOME` 有默认值（`<仓库根>/dsh-home`）。
 
 两个真实配置文件都已被 `.gitignore` 忽略（模板文件会入库）。
-**实测：全新 clone 不配任何配置文件也能跑通 `pytest`（278 项）与 `--resolve` 纯规则链路。**
+**实测：全新 clone 不配任何配置文件也能跑通 `pytest`（304 项）与 `--resolve` 纯规则链路。**
 
 ```powershell
 # 环境与数据自检（秒级，不调模型）
@@ -346,7 +346,7 @@ tea-advisor/
 │  │     └─ orchestrator.py        双 Agent 串行编排 + 降级
 │  ├─ data/                        数据层（上表三个 JSON）
 │  ├─ scripts/                     自检与冒烟脚本
-│  └─ tests/                       278 项离线测试
+│  └─ tests/                       304 项离线测试
 ├─ start-web.cmd                   ★ Windows 双击启动网页版（自动开浏览器）
 ├─ start-terminal.cmd              ★ Windows 双击启动终端版
 └─ docs/three-layer-architecture.md
@@ -361,7 +361,7 @@ tea-advisor/
 
 ```powershell
 cd core
-python -m pytest -q          # 278 passed，约 0.7 秒，不调用模型、不需要 API Key
+python -m pytest -q          # 304 passed，约 0.8 秒，不调用模型、不需要 API Key
 ```
 
 | 文件 | 覆盖内容 | 项数 |
@@ -457,7 +457,7 @@ python scripts\smoke_agents.py          # 运行时启动 → 原始往返 → A
 ```powershell
 python scripts\check_setup.py       # 环境与数据自检
 python scripts\smoke_offline.py     # 离线全链路冒烟
-python -m pytest -q                 # 278 项
+python -m pytest -q                 # 304 项
 ```
 
 提交 PR 前请读 **[CONTRIBUTING.md](CONTRIBUTING.md)**，其中写明了：

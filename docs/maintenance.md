@@ -58,16 +58,21 @@
 |---|---|---|---|
 | `core/app/domain` | 5 | 973 | **核心判定，纯逻辑，不依赖 Web 框架** |
 | `core/app/services` | 4 | 1,102 | 编排与规则兜底 |
-| `core/app/agents` | 8 | 1,095 | LLM 层（含两个后端）+ 2 个提示词文件 |
+| `core/app/agents` | 8 | 1,164 | LLM 层（含两个后端）+ 2 个提示词文件 |
 | `core/app/api` | 3 | 115 | HTTP 适配，极薄 |
-| `core/tests` | 10 | 2,061 | **278 项，全离线，约 0.7 秒** |
-| `core/scripts` | 8 | 1,774 | 运维/自检脚本 |
+| `core/tests` | 12 | 2,598 | **304 项，全离线，约 0.8 秒** |
+| `core/scripts` | 10 | 2,681 | 运维/自检脚本 |
 | `ui/terminal` | 1 | 398 | 终端壳 |
 | `ui/web` | 1 | 449 | 网页壳 |
-| **合计** | | **7,967** | |
+| **合计** | 44 | **9,480** | |
 
 数据：`food_properties.json` 66 KB、`herbs.json` 22 KB、`constitution.json` 2.6 KB、
-`food_medicine_catalog.json` 20 KB（合规自检用，不参与判定）。
+`food_medicine_catalog.json` 19 KB（合规自检用）、`herb_nature_reference.json` 54 KB（药典核对用）。
+后两个**不参与运行时判定**。
+
+> ⚠️ **别用 PowerShell 的 `(Get-Content x).Count` 数行数。** 实测它会把
+> `core/app/agents/prompts/*.md` 数成 32/29 行，实际是 66/64 行（差一倍）。
+> 用 Python 的 `bytes.count(b"\n")` 口径重测。
 
 > 判断架构是否还健康的快速指标：**`domain` + `services` 的行数占比**。
 > 这两层是真正的资产（2,075 行），其余是壳与测试。若这两层开始膨胀，
@@ -349,7 +354,7 @@ Get-Process | Where-Object { $_.ProcessName -match 'python' } | Stop-Process -Fo
 
 | 脚本 | 测到的 | **测不到的** |
 |---|---|---|
-| `pytest` | 判定逻辑、护栏、JSON 护栏、凭据与日志安全、食药物质目录合规、体质参考文档一致性（278 项，全离线） | 真实模型行为；HTTP 层在缺 `[web]` extra 时会自动跳过 |
+| `pytest` | 判定逻辑、护栏、JSON 护栏、凭据与日志安全、食药物质目录合规、体质参考与药典核对文档一致性（304 项，全离线） | 真实模型行为；HTTP 层在缺 `[web]` extra 时会自动跳过 |
 | `test_food_accuracy.py` | **只有 Agent1 的属性判定** | **推荐质量、Agent2 的任何东西、文案措辞、注意事项是否到位** |
 | `smoke_agents.py` | 运行时启动、原始往返、Agent1 解析、全链路格式与条数 | 属性准确率（无断言，只打印）；安全性 |
 | `smoke_offline.py` | 数据层→解析→规则兜底→护栏，**不调模型** | 模型相关的任何事 |
@@ -423,7 +428,7 @@ usage["completion_tokens_details"]["reasoning_tokens"]   # 其中思考
 
 ## 9. 数据维护
 
-### 9.1 四个数据文件
+### 9.1 五个数据文件
 
 | 文件 | 内容 | 规模 |
 |---|---|---|
@@ -431,6 +436,7 @@ usage["completion_tokens_details"]["reasoning_tokens"]   # 其中思考
 | `herbs.json` | `_meta` + `herbs[]`（含剂量上限、禁忌、归经） | 34 味 |
 | `constitution.json` | 5 型体质 + `one_line` / `principles` / `avoid` | 5 型 |
 | `food_medicine_catalog.json` | 国家卫健委食药物质目录（4 批公告）汇编，**只用于合规自检，不参与判定** | 106 种 |
+| `herb_nature_reference.json` | 《中国药典》2020 年版一部的性味归经记载 + 与项目的比对结果，**只用于核对，不参与判定** | 34 味 |
 
 字段含义写在各自的 `_meta.field_notes` 里，**改结构时同步改它**。
 
@@ -508,6 +514,43 @@ python scripts/check_herb_catalog.py --strict               # 有遗留项则 ex
    不会出现"文档说改了、代码没改"的漂移。
 
 改动 `herbs.json` 的饮片名单后，**重新跑一次这个脚本并重新生成文档**。
+
+### 9.6 性味归经核对（`build_herb_crosscheck.py`）
+
+把 34 味饮片的四气/五味/归经与**《中国药典》2020 年版一部**逐条对照。
+主源是国家药典委员会「中国药典在线版」的公开只读接口，不是第三方镜像：
+
+```bash
+cd core
+python scripts/build_herb_crosscheck.py --refresh   # 联网，从官方接口重建参考数据
+python scripts/build_herb_crosscheck.py             # 离线，从参考数据渲染 Markdown
+python scripts/build_herb_crosscheck.py --check     # 离线，只校验一致性（可进 CI）
+```
+
+```python
+POST https://ydz.chp.org.cn/front-api/search   {"keyword": "...", "bookId": 1}
+GET  https://ydz.chp.org.cn/front-api/entry/{id}   # 返回 htmlContent，含【性味与归经】
+```
+
+当前结果：**34 味中一致 26、不一致 7、药典未收载 1**。不一致项见
+`docs/herb-nature-crosscheck.md` 第 3 节，**脚本只报告，不改数据**，以哪个为准由人定。
+
+维护时要知道的五件事：
+
+1. **不要用 PowerShell 数行数**（见 §1.4 的警告），也别用第三方药典镜像当主源 ——
+   官方接口能直接拿到 `htmlContent` 原文，还带页码和在线链接。
+2. **四气降档是我方约定**：药典有「微寒/微温」，项目只有 5 档，脚本按
+   `微寒→凉、微温→温` 降档。原文一律保留在 `pharmacopoeia.xingwei_verbatim` 里，
+   所以这个约定随时可以推翻重算。
+3. **`project` 字段是快照**，有测试卡住它与 `herbs.json` 实时一致。改了 `herbs.json`
+   的 nature/flavors/meridians 就必须 `--refresh` 重建，否则 `pytest` 会失败。
+4. **《中华本草》那一列本次没有数据**，原因是公开渠道取不到（药智网需登录、
+   tcmdoc.cn 403、中医世家拒连），而 yao86.com 虽引用《中华本草》但展示的是药典值。
+   完整实测记录在参考数据的 `_meta.zhonghua_bencao_status`。**该列空缺 = 未核实，
+   不等于与药典相同。**
+5. **项目 `effects` 不照抄药典【功能与主治】是刻意的**：`herbs.json` 的
+   `_meta.field_notes` 要求"必须使用养生类措辞，禁止疗效承诺"。所以别把
+   「把 effects 换成药典原文」当成修 bug。
 
 ---
 

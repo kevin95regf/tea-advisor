@@ -1,0 +1,1976 @@
+{
+  "_meta": {
+    "title": "34 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）",
+    "version": "1.0.0",
+    "compiled_at": "2026-09-17",
+    "purpose": "把项目 core/data/herbs.json 的性味归经与《中国药典》2020 年版一部逐条对照，标出不一致项，供人工判断以哪个为准。**本文件不修改任何项目数据。**",
+    "method": "通过国家药典委员会「中国药典在线版」的公开只读接口按饮片名检索词条（限定 bookId=1，即 2020 年版一部），再用词条 id 取回正文，从正文里切出【性味与归经】【功能与主治】【用法与用量】。每条都保留了逐字原文、页码与在线链接。可用 `python scripts/build_herb_crosscheck.py --refresh` 复现。",
+    "source": {
+      "label": "国家药典委员会 · 中国药典在线版",
+      "url": "https://ydz.chp.org.cn/",
+      "search_endpoint": "POST https://ydz.chp.org.cn/front-api/search",
+      "entry_endpoint": "GET https://ydz.chp.org.cn/front-api/entry/{id}",
+      "book": "中华人民共和国药典：2020年版．一部",
+      "note": "该接口为公开只读。检索页面对外说明不能复制文字，但接口返回的 htmlContent 可程序化读取。"
+    },
+    "mapping_rules": {
+      "注": "药典的四气分档比项目细，降档规则是**我方约定**，不是药典的说法。原文一律保留，便于推翻。",
+      "nature": {
+        "大寒": "cold",
+        "寒": "cold",
+        "微寒": "cool",
+        "凉": "cool",
+        "平": "neutral",
+        "微温": "warm",
+        "温": "warm",
+        "热": "hot",
+        "大热": "hot"
+      },
+      "flavors": "按字面对应：酸 sour / 苦 bitter / 甘 sweet / 辛 pungent / 咸 salty / 淡 bland / 涩 astringent；药典写「微苦」时按「苦」计。",
+      "meridians": "按字面集合比较，忽略书写顺序。"
+    },
+    "zhonghua_bencao_status": [
+      "**《中华本草》一列本次没有数据，不是遗漏，是取不到。** 已实测的途径与结果如下。",
+      "① 《中华本草》没有公开可抓取的全文库。药智网的「中华本草数据库」需登录；tcmdoc.cn 的页面标题就是「中国药典、中药大辞典、中华本草、全国中草药汇编」，但返回 403；中医世家 zysj.com.cn 直接拒绝连接；wiki8.cn 返回 403；zhongyoo.com 返回 521。",
+      "② yao86.com（药物百科）的词条页面在【参考文献】里确实引用了《中华本草》，但它展示的【药性】性味/归经是**药典**的值，不是《中华本草》的值，因此不能当作《中华本草》的来源使用。",
+      "③ 按你的判断，不值得为《中华本草》拉长工期：药典是官方标准，比《中华本草》更合规、也更可抓取。所以主列用药典，本列统一标注为「待确认」。",
+      "④ 若日后取得《中华本草》（上海科学技术出版社，国家中医药管理局《中华本草》编委会）电子版，把数据给我即可补上这一列，并可与药典列逐条比对。",
+      "⑤ 需要强调的是：《中华本草》与《中国药典》对同一味药的性味归经**多数相同但并非全部相同**（药典是药品标准，会随版次修订）。所以本列空缺意味着「未核实」，不意味着「与药典相同」。"
+    ],
+    "read_this_first": [
+      "本文件只报告差异，**不修改 herbs.json**。",
+      "药典记载的是**药品**标准，项目把它用作**食品/茶饮**方向的属性参考，用途不同。",
+      "项目 `effects` 字段刻意使用养生类措辞、不照抄药典【功能与主治】，这是合规要求（见 herbs.json 的 `_meta.field_notes`），不是笔误。",
+      "「一致」只代表四气/五味/归经三项的降档后集合相等；药典用更细档位的情况会单独说明。",
+      "《中华本草》列统一为「待确认」，原因见 `_meta.zhonghua_bencao_status`。"
+    ]
+  },
+  "herbs": [
+    {
+      "herb": "茯苓",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet",
+          "bland"
+        ],
+        "flavors_cn": [
+          "甘",
+          "淡"
+        ],
+        "meridians": [
+          "心",
+          "肺",
+          "脾",
+          "肾"
+        ],
+        "effects": [
+          "利水渗湿",
+          "健脾",
+          "宁心"
+        ],
+        "max_daily_g": 15
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "茯苓",
+        "page": 300,
+        "pinyin": "Fuling",
+        "latin": "PORIA",
+        "xingwei_verbatim": "甘、淡，平。归心、肺、脾、肾经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "sweet",
+          "bland"
+        ],
+        "flavors_cn": [
+          "甘",
+          "淡"
+        ],
+        "meridians": [
+          "心",
+          "肺",
+          "脾",
+          "肾"
+        ],
+        "effects_verbatim": "利水渗湿，健脾，宁心。用于水肿尿少，痰饮眩悸，脾虚食少，便溏泄泻，心神不安，惊悸失眠。",
+        "dosage_verbatim": "10～15g。",
+        "entry_id": 374,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=374"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "陈皮",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "辛",
+          "苦"
+        ],
+        "meridians": [
+          "脾",
+          "肺"
+        ],
+        "effects": [
+          "理气健脾",
+          "燥湿化痰"
+        ],
+        "max_daily_g": 10
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "陈皮",
+        "page": 248,
+        "pinyin": "Chenpi",
+        "latin": "CITRI RETICULATAE PERICARPIUM",
+        "xingwei_verbatim": "苦、辛，温。归肺、脾经。",
+        "nature_word": "温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "bitter",
+          "pungent"
+        ],
+        "flavors_cn": [
+          "苦",
+          "辛"
+        ],
+        "meridians": [
+          "肺",
+          "脾"
+        ],
+        "effects_verbatim": "理气健脾，燥湿化痰。用于脘腹胀满，食少吐泻，咳嗽痰多。",
+        "dosage_verbatim": "3～10g。",
+        "entry_id": 293,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=293"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "山楂",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sour",
+          "sweet"
+        ],
+        "flavors_cn": [
+          "酸",
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "肝"
+        ],
+        "effects": [
+          "消食化积",
+          "行气散瘀"
+        ],
+        "max_daily_g": 12
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "山楂",
+        "page": 82,
+        "pinyin": "Shɑnzhɑ",
+        "latin": "CRATAEGI FRUCTUS",
+        "xingwei_verbatim": "酸、甘，微温。归脾、胃、肝经。",
+        "nature_word": "微温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "sour",
+          "sweet"
+        ],
+        "flavors_cn": [
+          "酸",
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "肝"
+        ],
+        "effects_verbatim": "消食健胃，行气散瘀，化浊降脂。用于肉食积滞，胃脘胀满，泻痢腹痛，瘀血经闭，产后瘀阻，心腹刺痛，胸痹心痛，疝气疼痛，高脂血症。焦山楂消食导滞作用增强。用于肉食积滞，泻痢不爽。",
+        "dosage_verbatim": "9～12g。",
+        "entry_id": 43,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=43"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "四气：降档后一致，但药典原文用的是更细的档「微温」"
+      ],
+      "status": "一致"
+    },
+    {
+      "herb": "枸杞子",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "肝",
+          "肾"
+        ],
+        "effects": [
+          "滋补肝肾",
+          "益精明目"
+        ],
+        "max_daily_g": 15
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "枸杞子",
+        "page": 309,
+        "pinyin": "Gouqizi",
+        "latin": "LYCII FRUCTUS",
+        "xingwei_verbatim": "甘，平。归肝、肾经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "肝",
+          "肾"
+        ],
+        "effects_verbatim": "滋补肝肾，益精明目。用于虚劳精亏，腰膝酸痛，眩晕耳鸣，阳萎遗精，内热消渴，血虚萎黄，目昏不明。",
+        "dosage_verbatim": "6～12g。",
+        "entry_id": 390,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=390"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "菊花",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "甘",
+          "苦"
+        ],
+        "meridians": [
+          "肺",
+          "肝"
+        ],
+        "effects": [
+          "疏散风热",
+          "平肝明目",
+          "清热解毒"
+        ],
+        "max_daily_g": 10
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "菊花",
+        "page": 372,
+        "pinyin": "Juhuɑ",
+        "latin": "CHRYSANTHEMI FLOS",
+        "xingwei_verbatim": "甘、苦，微寒。归肺、肝经。",
+        "nature_word": "微寒",
+        "nature_mapped": "cool",
+        "nature_mapped_cn": "凉",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "甘",
+          "苦"
+        ],
+        "meridians": [
+          "肺",
+          "肝"
+        ],
+        "effects_verbatim": "散风清热，平肝明目，清热解毒。用于风热感冒，头痛眩晕，目赤肿痛，眼目昏花，疮痈肿毒。",
+        "dosage_verbatim": "5～10g。",
+        "entry_id": 490,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=490"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "四气：降档后一致，但药典原文用的是更细的档「微寒」"
+      ],
+      "status": "一致"
+    },
+    {
+      "herb": "玫瑰花",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "甘",
+          "苦"
+        ],
+        "meridians": [
+          "肝",
+          "脾"
+        ],
+        "effects": [
+          "行气解郁",
+          "和血散瘀"
+        ],
+        "max_daily_g": 6
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "玫瑰花",
+        "page": 258,
+        "pinyin": "Meiguihuɑ",
+        "latin": "ROSAE RUGOSAE FLOS",
+        "xingwei_verbatim": "甘、微苦，温。归肝、脾经。",
+        "nature_word": "温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "甘",
+          "苦"
+        ],
+        "meridians": [
+          "肝",
+          "脾"
+        ],
+        "effects_verbatim": "行气解郁，和血，止痛。用于肝胃气痛，食少呕恶，月经不调，跌扑伤痛。",
+        "dosage_verbatim": "3～6g。",
+        "entry_id": 308,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=308"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "红枣",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "胃"
+        ],
+        "effects": [
+          "补中益气",
+          "养血安神"
+        ],
+        "max_daily_g": 15
+      },
+      "bridge_note": "项目用俗称「红枣」，药典词条为「大枣」",
+      "pharmacopoeia": {
+        "matched_title": "大枣",
+        "page": 72,
+        "pinyin": "Dɑzɑo",
+        "latin": "JUJUBAE FRUCTUS",
+        "xingwei_verbatim": "甘，温。归脾、胃、心经。",
+        "nature_word": "温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "心"
+        ],
+        "effects_verbatim": "补中益气，养血安神。用于脾虚食少，乏力便溏，妇人脏躁。",
+        "dosage_verbatim": "6～15g。",
+        "entry_id": 30,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=30"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": false,
+      "differences": [
+        "**归经**：项目缺「心」"
+      ],
+      "status": "不一致"
+    },
+    {
+      "herb": "龙眼肉",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "心",
+          "脾"
+        ],
+        "effects": [
+          "补益心脾",
+          "养血安神"
+        ],
+        "max_daily_g": 10
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "龙眼肉",
+        "page": 149,
+        "pinyin": "Longyɑnrou",
+        "latin": "LONGAN ARILLUS",
+        "xingwei_verbatim": "甘，温。归心、脾经。",
+        "nature_word": "温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "心",
+          "脾"
+        ],
+        "effects_verbatim": "补益心脾，养血安神。用于气血不足，心悸怔忡，健忘失眠，血虚萎黄。",
+        "dosage_verbatim": "9～15g。",
+        "entry_id": 141,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=141"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "麦冬",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "甘",
+          "苦"
+        ],
+        "meridians": [
+          "心",
+          "肺",
+          "胃"
+        ],
+        "effects": [
+          "养阴生津",
+          "润肺清心"
+        ],
+        "max_daily_g": 12
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "麦冬",
+        "page": 211,
+        "pinyin": "Mɑidong",
+        "latin": "OPHIOPOGONIS RADIX",
+        "xingwei_verbatim": "甘、微苦，微寒。归心、肺、胃经。",
+        "nature_word": "微寒",
+        "nature_mapped": "cool",
+        "nature_mapped_cn": "凉",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "甘",
+          "苦"
+        ],
+        "meridians": [
+          "心",
+          "肺",
+          "胃"
+        ],
+        "effects_verbatim": "养阴生津，润肺清心。用于肺燥干咳，阴虚痨嗽，喉痹咽痛，津伤口渴，内热消渴，心烦失眠，肠燥便秘。",
+        "dosage_verbatim": "6～12g。",
+        "entry_id": 240,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=240"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "四气：降档后一致，但药典原文用的是更细的档「微寒」"
+      ],
+      "status": "一致"
+    },
+    {
+      "herb": "荷叶",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "bitter",
+          "bland"
+        ],
+        "flavors_cn": [
+          "苦",
+          "淡"
+        ],
+        "meridians": [
+          "肝",
+          "脾",
+          "胃"
+        ],
+        "effects": [
+          "清暑化湿",
+          "升发清阳"
+        ],
+        "max_daily_g": 10
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "荷叶",
+        "page": 336,
+        "pinyin": "Heye",
+        "latin": "NELUMBINIS FOLIUM",
+        "xingwei_verbatim": "苦，平。归肝、脾、胃经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "bitter"
+        ],
+        "flavors_cn": [
+          "苦"
+        ],
+        "meridians": [
+          "肝",
+          "脾",
+          "胃"
+        ],
+        "effects_verbatim": "清暑化湿，升发清阳，凉血止血。用于暑热烦渴，暑湿泄泻，脾虚泄泻，血热吐衄，便血崩漏。荷叶炭收涩化瘀止血。用于出血症和产后血晕。",
+        "dosage_verbatim": "3～10g；荷叶炭3～6g。",
+        "entry_id": 434,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=434"
+      },
+      "nature_match": true,
+      "flavors_match": false,
+      "meridians_match": true,
+      "differences": [
+        "**五味**：项目多「淡」"
+      ],
+      "status": "不一致"
+    },
+    {
+      "herb": "决明子",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "bitter",
+          "salty"
+        ],
+        "flavors_cn": [
+          "甘",
+          "苦",
+          "咸"
+        ],
+        "meridians": [
+          "肝",
+          "大肠"
+        ],
+        "effects": [
+          "清肝明目",
+          "润肠通便"
+        ],
+        "max_daily_g": 12
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "决明子",
+        "page": 200,
+        "pinyin": "Juemingzi",
+        "latin": "CASSIAE SEMEN",
+        "xingwei_verbatim": "甘、苦、咸，微寒。归肝、大肠经。",
+        "nature_word": "微寒",
+        "nature_mapped": "cool",
+        "nature_mapped_cn": "凉",
+        "flavors": [
+          "sweet",
+          "bitter",
+          "salty"
+        ],
+        "flavors_cn": [
+          "甘",
+          "苦",
+          "咸"
+        ],
+        "meridians": [
+          "肝",
+          "大肠"
+        ],
+        "effects_verbatim": "清热明目，润肠通便。用于目赤涩痛，羞明多泪，头痛眩晕，目暗不明，大便秘结。",
+        "dosage_verbatim": "9～15g。",
+        "entry_id": 223,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=223"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "四气：降档后一致，但药典原文用的是更细的档「微寒」"
+      ],
+      "status": "一致"
+    },
+    {
+      "herb": "生姜",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "肺",
+          "脾",
+          "胃"
+        ],
+        "effects": [
+          "温中散寒",
+          "化痰止咳",
+          "和胃止呕"
+        ],
+        "max_daily_g": 10
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "生姜",
+        "page": 153,
+        "pinyin": "Shengjiɑng",
+        "latin": "ZINGIBERIS RHIZOMA RECENS",
+        "xingwei_verbatim": "辛，微温。归肺、脾、胃经。",
+        "nature_word": "微温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "肺",
+          "脾",
+          "胃"
+        ],
+        "effects_verbatim": "解表散寒，温中止呕，化痰止咳，解鱼蟹毒。用于风寒感冒，胃寒呕吐，寒痰咳嗽，鱼蟹中毒。",
+        "dosage_verbatim": "3～10g。",
+        "entry_id": 148,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=148"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "四气：降档后一致，但药典原文用的是更细的档「微温」"
+      ],
+      "status": "一致"
+    },
+    {
+      "herb": "薄荷",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "肺",
+          "肝"
+        ],
+        "effects": [
+          "疏散风热",
+          "清利头目",
+          "疏肝行气"
+        ],
+        "max_daily_g": 6
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "薄荷",
+        "page": 443,
+        "pinyin": "Bohe",
+        "latin": "MENTHAE HAPLOCALYCIS HERBA",
+        "xingwei_verbatim": "辛，凉。归肺、肝经。",
+        "nature_word": "凉",
+        "nature_mapped": "cool",
+        "nature_mapped_cn": "凉",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "肺",
+          "肝"
+        ],
+        "effects_verbatim": "疏散风热，清利头目，利咽，透疹，疏肝行气。用于风热感冒，风温初起，头痛，目赤，喉痹，口疮，风疹，麻疹，胸胁胀闷。",
+        "dosage_verbatim": "3～6g，后下。",
+        "entry_id": 602,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=602"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "桑椹",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "sour"
+        ],
+        "flavors_cn": [
+          "甘",
+          "酸"
+        ],
+        "meridians": [
+          "心",
+          "肝",
+          "肾"
+        ],
+        "effects": [
+          "滋阴补血",
+          "生津润肠"
+        ],
+        "max_daily_g": 15
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "桑椹",
+        "page": 362,
+        "pinyin": "Sɑngshen",
+        "latin": "MORI FRUCTUS",
+        "xingwei_verbatim": "甘、酸，寒。归心、肝、肾经。",
+        "nature_word": "寒",
+        "nature_mapped": "cold",
+        "nature_mapped_cn": "寒",
+        "flavors": [
+          "sweet",
+          "sour"
+        ],
+        "flavors_cn": [
+          "甘",
+          "酸"
+        ],
+        "meridians": [
+          "心",
+          "肝",
+          "肾"
+        ],
+        "effects_verbatim": "滋阴补血，生津润燥。用于肝肾阴虚，眩晕耳鸣，心悸失眠，须发早白，津伤口渴，内热消渴，肠燥便秘。",
+        "dosage_verbatim": "9～15g。",
+        "entry_id": 475,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=475"
+      },
+      "nature_match": false,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "**四气**：项目「凉」，药典「寒」（按降档约定应为「寒」）"
+      ],
+      "status": "不一致"
+    },
+    {
+      "herb": "百合",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "心",
+          "肺"
+        ],
+        "effects": [
+          "养阴润肺",
+          "清心安神"
+        ],
+        "max_daily_g": 15
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "百合",
+        "page": 186,
+        "pinyin": "Bɑihe",
+        "latin": "LILII BULBUS",
+        "xingwei_verbatim": "甘，寒。归心、肺经。",
+        "nature_word": "寒",
+        "nature_mapped": "cold",
+        "nature_mapped_cn": "寒",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "心",
+          "肺"
+        ],
+        "effects_verbatim": "养阴润肺，清心安神。用于阴虚燥咳，劳嗽咳血，虚烦惊悸，失眠多梦，精神恍惚。",
+        "dosage_verbatim": "6～12g。",
+        "entry_id": 202,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=202"
+      },
+      "nature_match": false,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "**四气**：项目「凉」，药典「寒」（按降档约定应为「寒」）"
+      ],
+      "status": "不一致"
+    },
+    {
+      "herb": "莲子",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet",
+          "astringent"
+        ],
+        "flavors_cn": [
+          "甘",
+          "涩"
+        ],
+        "meridians": [
+          "脾",
+          "肾",
+          "心"
+        ],
+        "effects": [
+          "补脾止泻",
+          "益肾涩精",
+          "养心安神"
+        ],
+        "max_daily_g": 15
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "莲子",
+        "page": 334,
+        "pinyin": "Liɑnzi",
+        "latin": "NELUMBINIS SEMEN",
+        "xingwei_verbatim": "甘、涩，平。归脾、肾、心经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "sweet",
+          "astringent"
+        ],
+        "flavors_cn": [
+          "甘",
+          "涩"
+        ],
+        "meridians": [
+          "脾",
+          "肾",
+          "心"
+        ],
+        "effects_verbatim": "补脾止泻，止带，益肾涩精，养心安神。用于脾虚泄泻，带下，遗精，心悸失眠。",
+        "dosage_verbatim": "6～15g。",
+        "entry_id": 429,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=429"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "薏苡仁",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "bland"
+        ],
+        "flavors_cn": [
+          "甘",
+          "淡"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "肺"
+        ],
+        "effects": [
+          "利水渗湿",
+          "健脾止泻",
+          "除痹"
+        ],
+        "max_daily_g": 20
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "薏苡仁",
+        "page": 442,
+        "pinyin": "Yiyiren",
+        "latin": "COICIS SEMEN",
+        "xingwei_verbatim": "甘、淡，凉。归脾、胃、肺经。",
+        "nature_word": "凉",
+        "nature_mapped": "cool",
+        "nature_mapped_cn": "凉",
+        "flavors": [
+          "sweet",
+          "bland"
+        ],
+        "flavors_cn": [
+          "甘",
+          "淡"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "肺"
+        ],
+        "effects_verbatim": "利水渗湿，健脾止泻，除痹，排脓，解毒散结。用于水肿，脚气，小便不利，脾虚泄泻，湿痹拘挛，肺痈，肠痈，赘疣，癌肿。",
+        "dosage_verbatim": "9～30g。",
+        "entry_id": 601,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=601"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "乌梅",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sour",
+          "astringent"
+        ],
+        "flavors_cn": [
+          "酸",
+          "涩"
+        ],
+        "meridians": [
+          "肝",
+          "脾",
+          "肺",
+          "大肠"
+        ],
+        "effects": [
+          "敛肺生津",
+          "涩肠止泻",
+          "安蛔"
+        ],
+        "max_daily_g": 10
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "乌梅",
+        "page": 130,
+        "pinyin": "Wumei",
+        "latin": "MUME FRUCTUS",
+        "xingwei_verbatim": "酸、涩，平。归肝、脾、肺、大肠经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "sour",
+          "astringent"
+        ],
+        "flavors_cn": [
+          "酸",
+          "涩"
+        ],
+        "meridians": [
+          "肝",
+          "脾",
+          "肺",
+          "大肠"
+        ],
+        "effects_verbatim": "敛肺，涩肠，生津，安蛔。用于肺虚久咳，久泻久痢，虚热消渴，蛔厥呕吐腹痛。",
+        "dosage_verbatim": "6～12g。",
+        "entry_id": 114,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=114"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "罗汉果",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "肺",
+          "大肠"
+        ],
+        "effects": [
+          "清热润肺",
+          "利咽开音",
+          "滑肠通便"
+        ],
+        "max_daily_g": 10
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "罗汉果",
+        "page": 270,
+        "pinyin": "Luohɑnguo",
+        "latin": "SIRAITIAE FRUCTUS",
+        "xingwei_verbatim": "甘，凉。归肺、大肠经。",
+        "nature_word": "凉",
+        "nature_mapped": "cool",
+        "nature_mapped_cn": "凉",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "肺",
+          "大肠"
+        ],
+        "effects_verbatim": "清热润肺，利咽开音，滑肠通便。用于肺热燥咳，咽痛失音，肠燥便秘。",
+        "dosage_verbatim": "9～15g。",
+        "entry_id": 328,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=328"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "甘草",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "心",
+          "肺",
+          "脾",
+          "胃"
+        ],
+        "effects": [
+          "补脾益气",
+          "调和诸味",
+          "润肺止咳"
+        ],
+        "max_daily_g": 6
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "甘草",
+        "page": 137,
+        "pinyin": "Gɑncɑo",
+        "latin": "GLYCYRRHIZAE RADIX ET RHIZOMA",
+        "xingwei_verbatim": "甘，平。归心、肺、脾、胃经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "心",
+          "肺",
+          "脾",
+          "胃"
+        ],
+        "effects_verbatim": "补脾益气，清热解毒，祛痰止咳，缓急止痛，调和诸药。用于脾胃虚弱，倦怠乏力，心悸气短，咳嗽痰多，脘腹、四肢挛急疼痛，痈肿疮毒，缓解药物毒性、烈性。",
+        "dosage_verbatim": "2～10g。",
+        "entry_id": 126,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=126"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "茉莉花",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet",
+          "pungent"
+        ],
+        "flavors_cn": [
+          "甘",
+          "辛"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "肝"
+        ],
+        "effects": [
+          "理气开郁",
+          "和中化湿"
+        ],
+        "max_daily_g": 6
+      },
+      "bridge_note": null,
+      "pharmacopoeia": null,
+      "status": "未收载",
+      "differences": [],
+      "nature_match": null,
+      "flavors_match": null,
+      "meridians_match": null
+    },
+    {
+      "herb": "淡竹叶",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "bland"
+        ],
+        "flavors_cn": [
+          "甘",
+          "淡"
+        ],
+        "meridians": [
+          "心",
+          "胃",
+          "小肠"
+        ],
+        "effects": [
+          "清热除烦",
+          "利尿通淋"
+        ],
+        "max_daily_g": 10
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "淡竹叶",
+        "page": 391,
+        "pinyin": "Dɑnzhuye",
+        "latin": "LOPHATHERI HERBA",
+        "xingwei_verbatim": "甘、淡，寒。归心、胃、小肠经。",
+        "nature_word": "寒",
+        "nature_mapped": "cold",
+        "nature_mapped_cn": "寒",
+        "flavors": [
+          "sweet",
+          "bland"
+        ],
+        "flavors_cn": [
+          "甘",
+          "淡"
+        ],
+        "meridians": [
+          "心",
+          "胃",
+          "小肠"
+        ],
+        "effects_verbatim": "清热泻火，除烦止渴，利尿通淋。用于热病烦渴，小便短赤涩痛，口舌生疮。",
+        "dosage_verbatim": "6～10g。",
+        "entry_id": 518,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=518"
+      },
+      "nature_match": false,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "**四气**：项目「凉」，药典「寒」（按降档约定应为「寒」）"
+      ],
+      "status": "不一致"
+    },
+    {
+      "herb": "栀子",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "bitter"
+        ],
+        "flavors_cn": [
+          "苦"
+        ],
+        "meridians": [
+          "心",
+          "肺",
+          "三焦"
+        ],
+        "effects": [
+          "泻火除烦",
+          "清热利湿"
+        ],
+        "max_daily_g": 6
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "栀子",
+        "page": 308,
+        "pinyin": "Zhizi",
+        "latin": "GARDENIAE FRUCTUS",
+        "xingwei_verbatim": "苦，寒。归心、肺、三焦经。",
+        "nature_word": "寒",
+        "nature_mapped": "cold",
+        "nature_mapped_cn": "寒",
+        "flavors": [
+          "bitter"
+        ],
+        "flavors_cn": [
+          "苦"
+        ],
+        "meridians": [
+          "心",
+          "肺",
+          "三焦"
+        ],
+        "effects_verbatim": "泻火除烦，清热利湿，凉血解毒；外用消肿止痛。用于热病心烦，湿热黄疸，淋证涩痛，血热吐衄，目赤肿痛，火毒疮疡；外治扭挫伤痛。",
+        "dosage_verbatim": "6～10g。外用生品适量，研末调敷。",
+        "entry_id": 388,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=388"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "酸枣仁",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet",
+          "sour"
+        ],
+        "flavors_cn": [
+          "甘",
+          "酸"
+        ],
+        "meridians": [
+          "心",
+          "肝",
+          "胆"
+        ],
+        "effects": [
+          "养心安神",
+          "敛汗"
+        ],
+        "max_daily_g": 15
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "酸枣仁",
+        "page": 431,
+        "pinyin": "Suɑnzɑoren",
+        "latin": "ZIZIPHI SPINOSAE SEMEN",
+        "xingwei_verbatim": "甘、酸，平。归肝、胆、心经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "sweet",
+          "sour"
+        ],
+        "flavors_cn": [
+          "甘",
+          "酸"
+        ],
+        "meridians": [
+          "肝",
+          "胆",
+          "心"
+        ],
+        "effects_verbatim": "养心补肝，宁心安神，敛汗，生津。用于虚烦不眠，惊悸多梦，体虚多汗，津伤口渴。",
+        "dosage_verbatim": "10～15g。",
+        "entry_id": 583,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=583"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "山药",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "肺",
+          "肾"
+        ],
+        "effects": [
+          "补脾养胃",
+          "生津益肺"
+        ],
+        "max_daily_g": 20
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "山药",
+        "page": 79,
+        "pinyin": "Shɑnyɑo",
+        "latin": "DIOSCOREAE RHIZOMA",
+        "xingwei_verbatim": "甘，平。归脾、肺、肾经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "肺",
+          "肾"
+        ],
+        "effects_verbatim": "补脾养胃，生津益肺，补肾涩精。用于脾虚食少，久泻不止，肺虚喘咳，肾虚遗精，带下，尿频，虚热消渴。麸炒山药补脾健胃。用于脾虚食少，泄泻便溏，白带过多。",
+        "dosage_verbatim": "15～30g。",
+        "entry_id": 39,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=39"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "鸡内金",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "小肠",
+          "膀胱"
+        ],
+        "effects": [
+          "健胃消食",
+          "涩精止遗"
+        ],
+        "max_daily_g": 6
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "鸡内金",
+        "page": 251,
+        "pinyin": "Jineijin",
+        "latin": "GALLI GIGERII ENDOTHELIUM CORNEUM",
+        "xingwei_verbatim": "甘，平。归脾、胃、小肠、膀胱经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "小肠",
+          "膀胱"
+        ],
+        "effects_verbatim": "健胃消食，涩精止遗，通淋化石。用于食积不消，呕吐泻痢，小儿疳积，遗尿，遗精，石淋涩痛，胆胀胁痛。",
+        "dosage_verbatim": "3～10g。",
+        "entry_id": 296,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=296"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "白扁豆",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "胃"
+        ],
+        "effects": [
+          "健脾化湿",
+          "和中消暑"
+        ],
+        "max_daily_g": 20
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "白扁豆",
+        "page": 163,
+        "pinyin": "Bɑibiɑndou",
+        "latin": "LABLAB SEMEN ALBUM",
+        "xingwei_verbatim": "甘，微温。归脾、胃经。",
+        "nature_word": "微温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "胃"
+        ],
+        "effects_verbatim": "健脾化湿，和中消暑。用于脾胃虚弱，食欲不振，大便溏泻，白带过多，暑湿吐泻，胸闷腹胀。炒白扁豆健脾化湿。用于脾虚泄泻，白带过多。",
+        "dosage_verbatim": "9～15g。",
+        "entry_id": 162,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=162"
+      },
+      "nature_match": false,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "**四气**：项目「平」，药典「微温」（按降档约定应为「温」）"
+      ],
+      "status": "不一致"
+    },
+    {
+      "herb": "橘红",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "辛",
+          "苦"
+        ],
+        "meridians": [
+          "肺",
+          "脾"
+        ],
+        "effects": [
+          "理气宽中",
+          "燥湿化痰"
+        ],
+        "max_daily_g": 6
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "橘红",
+        "page": 444,
+        "pinyin": "Juhong",
+        "latin": "CITRI EXOCARPIUM RUBRUM",
+        "xingwei_verbatim": "辛、苦，温。归肺、脾经。",
+        "nature_word": "温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "pungent",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "辛",
+          "苦"
+        ],
+        "meridians": [
+          "肺",
+          "脾"
+        ],
+        "effects_verbatim": "理气宽中，燥湿化痰。用于咳嗽痰多，食积伤酒，呕恶痞闷。",
+        "dosage_verbatim": "3～10g。",
+        "entry_id": 604,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=604"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "槐花",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "bitter"
+        ],
+        "flavors_cn": [
+          "苦"
+        ],
+        "meridians": [
+          "肝",
+          "大肠"
+        ],
+        "effects": [
+          "凉血止血",
+          "清肝泻火"
+        ],
+        "max_daily_g": 10
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "槐花",
+        "page": 419,
+        "pinyin": "Huɑihuɑ",
+        "latin": "SOPHORAE FLOS",
+        "xingwei_verbatim": "苦，微寒。归肝、大肠经。",
+        "nature_word": "微寒",
+        "nature_mapped": "cool",
+        "nature_mapped_cn": "凉",
+        "flavors": [
+          "bitter"
+        ],
+        "flavors_cn": [
+          "苦"
+        ],
+        "meridians": [
+          "肝",
+          "大肠"
+        ],
+        "effects_verbatim": "凉血止血，清肝泻火。用于便血，痔血，血痢，崩漏，吐血，衄血，肝热目赤，头痛眩晕。",
+        "dosage_verbatim": "5～10g。",
+        "entry_id": 563,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=563"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "四气：降档后一致，但药典原文用的是更细的档「微寒」"
+      ],
+      "status": "一致"
+    },
+    {
+      "herb": "藿香",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "肺"
+        ],
+        "effects": [
+          "芳香化湿",
+          "和中止呕"
+        ],
+        "max_daily_g": 6
+      },
+      "bridge_note": "项目用「藿香」，药典词条为「广藿香」",
+      "pharmacopoeia": {
+        "matched_title": "广藿香",
+        "page": 95,
+        "pinyin": "Guɑnghuoxiɑng",
+        "latin": "POGOSTEMONIS HERBA",
+        "xingwei_verbatim": "辛，微温。归脾、胃、肺经。",
+        "nature_word": "微温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "肺"
+        ],
+        "effects_verbatim": "芳香化浊，和中止呕，发表解暑。用于湿浊中阻，脘痞呕吐，暑湿表证，湿温初起，发热倦怠，胸闷不舒，寒湿闭暑，腹痛吐泻，鼻渊头痛。",
+        "dosage_verbatim": "3～10g。",
+        "entry_id": 62,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=62"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "四气：降档后一致，但药典原文用的是更细的档「微温」"
+      ],
+      "status": "一致"
+    },
+    {
+      "herb": "紫苏",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "肺",
+          "脾"
+        ],
+        "effects": [
+          "解表散寒",
+          "行气和胃"
+        ],
+        "max_daily_g": 6
+      },
+      "bridge_note": "药典无单列「紫苏」，分列紫苏叶/紫苏子/紫苏梗；此处取「紫苏叶」",
+      "pharmacopoeia": {
+        "matched_title": "紫苏叶",
+        "page": 403,
+        "pinyin": "Zisuye",
+        "latin": "PERILLAE FOLIUM",
+        "xingwei_verbatim": "辛，温。归肺、脾经。",
+        "nature_word": "温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "肺",
+          "脾"
+        ],
+        "effects_verbatim": "解表散寒，行气和胃。用于风寒感冒，咳嗽呕恶，妊娠呕吐，鱼蟹中毒。",
+        "dosage_verbatim": "5～10g。",
+        "entry_id": 538,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=538"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致"
+    },
+    {
+      "herb": "佛手",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "辛",
+          "苦"
+        ],
+        "meridians": [
+          "肝",
+          "脾",
+          "肺"
+        ],
+        "effects": [
+          "疏肝理气",
+          "和胃止痛"
+        ],
+        "max_daily_g": 6
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "佛手",
+        "page": 234,
+        "pinyin": "Foshou",
+        "latin": "CITRI SARCODACTYLIS FRUCTUS",
+        "xingwei_verbatim": "辛、苦、酸，温。归肝、脾、胃、肺经。",
+        "nature_word": "温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "pungent",
+          "bitter",
+          "sour"
+        ],
+        "flavors_cn": [
+          "辛",
+          "苦",
+          "酸"
+        ],
+        "meridians": [
+          "肝",
+          "脾",
+          "胃",
+          "肺"
+        ],
+        "effects_verbatim": "疏肝理气，和胃止痛，燥湿化痰。用于肝胃气滞，胸胁胀痛，胃脘痞满，食少呕吐，咳嗽痰多。",
+        "dosage_verbatim": "3～10g。",
+        "entry_id": 276,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=276"
+      },
+      "nature_match": true,
+      "flavors_match": false,
+      "meridians_match": false,
+      "differences": [
+        "**五味**：项目缺「酸」",
+        "**归经**：项目缺「胃」"
+      ],
+      "status": "不一致"
+    },
+    {
+      "herb": "香薷",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "肺",
+          "胃"
+        ],
+        "effects": [
+          "发汗解表",
+          "化湿和中"
+        ],
+        "max_daily_g": 6
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "香薷",
+        "page": 320,
+        "pinyin": "Xiɑngru",
+        "latin": "MOSLAE HERBA",
+        "xingwei_verbatim": "辛，微温。归肺、胃经。",
+        "nature_word": "微温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "肺",
+          "胃"
+        ],
+        "effects_verbatim": "发汗解表，化湿和中。用于暑湿感冒，恶寒发热，头痛无汗，腹痛吐泻，水肿，小便不利。",
+        "dosage_verbatim": "3～10g。",
+        "entry_id": 408,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=408"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "四气：降档后一致，但药典原文用的是更细的档「微温」"
+      ],
+      "status": "一致"
+    },
+    {
+      "herb": "鱼腥草",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "肺"
+        ],
+        "effects": [
+          "清热解毒",
+          "消痈排脓"
+        ],
+        "max_daily_g": 15
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "鱼腥草",
+        "page": 283,
+        "pinyin": "Yuxingcɑo",
+        "latin": "HOUTTUYNIAE HERBA",
+        "xingwei_verbatim": "辛，微寒。归肺经。",
+        "nature_word": "微寒",
+        "nature_mapped": "cool",
+        "nature_mapped_cn": "凉",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "肺"
+        ],
+        "effects_verbatim": "清热解毒，消痈排脓，利尿通淋。用于肺痈吐脓，痰热喘咳，热痢，热淋，痈肿疮毒。",
+        "dosage_verbatim": "15～25g，不宜久煎；鲜品用量加倍，水煎或捣汁服。外用适量，捣敷或煎汤熏洗患处。",
+        "entry_id": 347,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=347"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "四气：降档后一致，但药典原文用的是更细的档「微寒」"
+      ],
+      "status": "一致"
+    }
+  ],
+  "open_items": [
+    {
+      "id": "discrepancies_need_human_decision",
+      "title": "不一致项需要人判断以哪个为准",
+      "status": "待确认",
+      "detail": "脚本只标出差异，不替你选。三类差异的性质不同：**四气档位差异**（如项目「凉」vs 药典「寒」）会影响三层判定里的寒热加减，改动前应确认；**五味/归经缺项**（如佛手缺「酸」、缺「胃」经）通常是收录时漏填，补齐风险较低；**项目多出的属性**（如荷叶多「淡」）需要确认是否有药典之外的依据。"
+    },
+    {
+      "id": "zhonghua_bencao_column_empty",
+      "title": "《中华本草》列全部为空",
+      "status": "待确认",
+      "detail": "原因与已实测的途径见 `_meta.zhonghua_bencao_status`。本列空缺意味着「未核实」，不意味着「与药典相同」。"
+    },
+    {
+      "id": "jasmine_not_in_pharmacopoeia",
+      "title": "茉莉花在药典 2020 年版一部中检索不到",
+      "status": "已知事实",
+      "detail": "这与第一件的结论相互印证：茉莉花既不在食药物质目录内，也不在药典一部收载范围内，其食用依据仅为广西地方标准。因此它的属性值没有国家级权威来源可比对。"
+    },
+    {
+      "id": "nature_mapping_decision",
+      "title": "四气降档约定需要你确认",
+      "status": "待确认",
+      "detail": "把药典的「微寒」降到项目的「凉」、「微温」降到「温」，是我方约定。若你认为「微寒」应当降到别的档位（或项目应增加档位），请说明，我会改映射规则并重新生成。"
+    }
+  ]
+}
