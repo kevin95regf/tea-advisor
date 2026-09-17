@@ -195,10 +195,29 @@ def test_render_reference_includes_nature_and_note() -> None:
 
 
 def test_render_reference_includes_variant_hint() -> None:
-    """带 variant_nature 的条目应渲染出处理方式带来的变化。"""
+    """带 variant_nature 的条目应渲染出处理方式带来的变化。
+
+    样本用规范名「鸡肉」，**故意不用「炸鸡」**：表里已有独立的 `zhaji` 条目
+    （炸鸡，热，咸/辛）。「炸鸡」原是 `jirou` 上的别名——属 ④-1 别名污染
+    （把不属于自己的名字挂在条目上），2026-09-17 已删除。若继续拿「炸鸡」当样本，
+    命中的会是 `zhaji`，而它没有 `variant_nature`，这条测试就会静默失效。
+    """
+    out = render_reference("吃了鸡肉")
+    assert "鸡肉" in out
+    assert "油炸" in out, f"应提示油炸后的属性变化，实际：{out}"
+
+
+def test_fried_chicken_resolves_to_its_own_entry() -> None:
+    """④-1 别名污染已修的守卫：`炸鸡` 取自身条目的值，不再借 `鸡肉`。
+
+    删别名之前，「炸鸡」会被 `jirou` 的 aliases+keywords 命中，渲染成
+    「鸡肉：温，甘」+「（油炸→热）」。删掉之后必须命中 `zhaji`（热，咸/辛），
+    且**不能**再带出 `jirou` 的处理方式提示 —— 否则说明别名又被挂回去了。
+    """
     out = render_reference("吃了炸鸡")
     assert "炸鸡" in out
-    assert "油炸" in out, f"应提示油炸后的属性变化，实际：{out}"
+    assert "热" in out, f"炸鸡应取自身条目（热，咸/辛），实际：{out}"
+    assert "油炸" not in out, f"炸鸡不应再渲染「鸡肉」的变体提示（别名污染回归）：{out}"
 
 
 def test_render_reference_empty_when_no_match() -> None:

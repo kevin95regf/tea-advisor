@@ -3,28 +3,27 @@
 > ⚠️ **本文件由脚本生成，请勿手工编辑。**
 > 生成命令：`cd core && python scripts/build_food_review_sheet.py --out ../docs/food-properties-review-sheet.md`
 > 数据源：`core/data/food_properties.json`（本脚本只读，不改数据、不改审核状态）
-> 对应挂起项：`docs/pending-items.md` **A1**（食性表 146 条全部未人工审核）
+> 来源依据：`docs/food-properties-sources.json`（逐条登记来源与原文，**人工裁定过映射**）
+> 对应挂起项：`docs/pending-items.md` **A1**（食性表全部未人工审核）
 
 ## 0. 这份单子的用法（先读）
 
-A1 不是「造数据」，是**核验已有数据**：146 条的 `nature` / `flavors` 早已填好，
+A1 不是「造数据」，是**核验已有数据**：147 条的 `nature` / `flavors` 早已填好，
 全部是 `pending`。终局动作（`approved` + `reviewed_by` / `reviewed_at`）**只有具备资质的**
 中医师/中药师能做，脚本不替你判定。
 
 难点在于**食材偏性没有官方标准**：药典只管药材（34 味有官方接口可比），
 GB/T 46939 只管体质分类与判定阈值。食材四气只有「中医饮食养生通行表述」。
-所以本单子把 146 条分四层，让审核人只看值得看的格子：
+所以本单子把 147 条分四层，让审核人只看值得看的格子：
 
 | 层 | 含义 | 谁来做 | 现状 |
 |---|---|---|---|
-| ① 来源一致 | 找到权威/通行来源且与现值一致 | 脚本抓取 + 人工确认 | 阶段二 |
-| ② 来源冲突 | 来源之间或来源与现值不一致 | 人工裁决 | 阶段二 |
-| ③ 无来源 | 找不到可引来源，标「无源可引」 | 人工凭专业判断 | 阶段二 |
-| ④ 内部矛盾 | 表内自相矛盾，与外部来源无关 | **本脚本已跑完**（§2） | ✅ 见 §2 |
+| ① 来源一致 | 找到权威/通行来源且与现值一致 | 审核人核对后可 `approved` | 已跑完，见 **§4** |
+| ② 来源冲突 | 来源之间或来源与现值不一致 | 人工裁决（**不得直接 approved**） | 已跑完，见 **§4.2** |
+| ③ 无来源 | 找不到可引来源，标「无源可引」 | 人工凭专业判断 | 已跑完，见 **§4.3** |
+| ④ 内部矛盾 | 表内自相矛盾，与外部来源无关 | **脚本可查** | 见 **§2** |
 
-来源口径（**已定**）：**官方优先 + 多源兜底 + 无源标空**——优先引国家卫健委 /
-中国营养学会的食养指南与膳食指南；其次 2–3 个通行来源交叉一致；都找不到就明确标
-「无源可引」。**不把通行表述伪装成权威依据。**
+来源口径（**已定**）：**官方优先 + 多源兜底 + 无源标空**。**不把通行表述伪装成权威依据。**
 
 ⚠️ 产物里 `approved` 永远是 0，直到真的有人审核。**不要为了让界面好看批量置 approved**
 ——标记密度就是审核进度的可见反馈（`docs/maintenance.md` §9.3）。
@@ -33,63 +32,43 @@ GB/T 46939 只管体质分类与判定阈值。食材四气只有「中医饮食
 
 | 项 | 值 |
 |---|---|
-| 总条数 | **146**（`foods` 128 + `tea_drinks.items` 18） |
-| 审核状态 | pending **146** |
-| 其中实际缺 `review_status` 字段 | **3** 条（上表按兼容回退计为 pending，见 §2） |
+| 总条数 | **147**（`foods` 129 + `tea_drinks.items` 18） |
+| 审核状态 | pending **147** |
+| 其中实际缺 `review_status` 字段 | **0** 条（上表按兼容回退计为 pending，见 §2） |
 | 文件级 `_meta.review_status` | `pending` |
-| ④ 层：矛盾 | **3** 类 |
+| 来源登记表条目数 | **47**（其中「第一批」**33** 条） |
+| 「第一批」分层 | ① **28**、② **4**、③ **1** |
+| 全部登记条目分层 | ① **37**、② **9**、③ **1** |
+| ④ 层：矛盾 | **0** 类 |
 | ④ 层：存疑 | 2 类 |
 | ④ 层：已核对正常 | 2 类 |
 
-按类分布（★ = 第一批，优先审）：
+按类分布（`第一批` 列 = 该类里属第一批的条数，优先审）：
 
-| 类别 | 条数 | 审核状态 |
-|---|---|---|
-| ★ 主食 | 20 | pending 20 |
-| ★ 水产 | 6 | pending 6 |
-| ★ 乳饮 | 3 | pending 3 |
-| 蔬菜 | 24 | pending 24 |
-| 菜肴 | 19 | pending 19 |
-| 水果 | 18 | pending 18 |
-| （无 category） | 18 | pending 18 |
-| 饮料 | 9 | pending 9 |
-| 肉类 | 8 | pending 8 |
-| 甜点 | 5 | pending 5 |
-| 调味 | 4 | pending 4 |
-| 豆制品 | 4 | pending 4 |
-| 酒类 | 3 | pending 3 |
-| 蛋类 | 2 | pending 2 |
-| 冷饮 | 1 | pending 1 |
-| 甜汤 | 1 | pending 1 |
-| 零食 | 1 | pending 1 |
+| 类别 | 条数 | 第一批 | 审核状态 |
+|---|---|---|---|
+| 蔬菜 | 25 | **21** | pending 25 |
+| 水果 | 18 | **9** | pending 18 |
+| 调味 | 4 | **3** | pending 4 |
+| 主食 | 20 | — | pending 20 |
+| 菜肴 | 19 | — | pending 19 |
+| （无 category） | 18 | — | pending 18 |
+| 饮料 | 9 | — | pending 9 |
+| 肉类 | 8 | — | pending 8 |
+| 水产 | 6 | — | pending 6 |
+| 甜点 | 5 | — | pending 5 |
+| 豆制品 | 4 | — | pending 4 |
+| 乳饮 | 3 | — | pending 3 |
+| 酒类 | 3 | — | pending 3 |
+| 蛋类 | 2 | — | pending 2 |
+| 冷饮 | 1 | — | pending 1 |
+| 甜汤 | 1 | — | pending 1 |
+| 零食 | 1 | — | pending 1 |
 
-## 2. ④ 层：内部矛盾 / 存疑（机器可查，已跑完）
+## 2. ④ 层：内部矛盾 / 存疑（机器可查）
 
 这一层不依赖任何外部来源，所以脚本当场就能跑完。**矛盾类必须先处理**——
 它们与审核无关，是数据自身或数据与代码的关系出了问题。
-
-### 🔴 同一别名指向多条**属性不同**的条目
-
-- **类型**：`别名歧义`　**级别**：矛盾
-  - `炸鸡` → jirou（温）、zhaji（热）
-- **为什么算问题**：用户说这个词时，命中哪一条取决于遍历顺序；两条四气不同，判定结果会不稳定（`maintenance.md` §10.11 记录过同类现象）。
-- **该怎么处理**：改数据：让别名只留在最贴切的那一条上，或干脆拆分/合并条目。
-
-### 🔴 `kafei`（咖啡）的变体属性与兜底规则不一致
-
-- **类型**：`变体与规则不一致`　**级别**：矛盾
-  - 本味四气 温，处理方式 `cold` 按规则应得 **平**，但 variant_nature 记的是 **凉**
-- **为什么算问题**：layer_1 优先，所以当前判定用的是记录值，**不是 bug**；但删掉 variant_nature 就会漂到另一个答案，说明两者必有一个要改。
-- **该怎么处理**：人工定：改 variant_nature，还是把该味的 base nature 改对。
-
-### 🔴 条目缺合法三态 `review_status`
-
-- **类型**：`缺 review_status`　**级别**：矛盾
-  - `bing_naicha`（冰奶茶）只有旧布尔 `reviewed=False`
-  - `qubing_naicha`（去冰奶茶）只有旧布尔 `reviewed=False`
-  - `re_naicha`（热奶茶）只有旧布尔 `reviewed=False`
-- **为什么算问题**：运行时靠 `food_lookup.py` 的兼容回退照常当 pending 处理，**行为已正确**；风险是以后有人写脚本只读 `review_status` 就会漏掉这几条（pending-items E1）。
-- **该怎么处理**：改数据：跑一次 `python scripts/patch_food_table.py`（先 --dry-run）。
 
 ### 🟡 同一别名指向多条条目（属性一致）
 
@@ -144,253 +123,345 @@ GB/T 46939 只管体质分类与判定阈值。食材四气只有「中医饮食
 > 但「去掉冰」按直觉应接近常温，这里规则与直觉有出入——属于规则讨论，要改就改
 > `nature_math` 那一处前缀表，与本次数据审核无关。
 
-## 3. 核验单骨架（146 条）
+## 3. 核验单（逐条）
 
-阶段二的来源核对结果填进最后两列。**「无源可引」也是一个合法结论**，
-不要为了让格子好看而硬找来源。
+最后一列「判定」来自来源登记表；`○` = 属第一批（有来源可引）。
+**「无源可引」也是一个合法结论**，不要为了让格子好看而硬找来源。
 
-### 主食（20 条）★ 第一批
+### 蔬菜（25 条）　○ 第一批 21 条
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `mifan` | 米饭 | 平 | sweet | pending | | |
-| 2 | `zhou` | 白粥 | 平 | sweet | pending | | |
-| 3 | `mantou` | 馒头 | 平 | sweet | pending | | |
-| 4 | `mianshi` | 面条 | 平 | sweet | pending | | |
-| 5 | `miantiao_liang` | 凉面 | 凉 | sweet | pending | | |
-| 6 | `jiazi` | 饺子 | 平 | sweet | pending | | |
-| 7 | `baozi` | 包子 | 平 | sweet | pending | | |
-| 8 | `xiaolongbao` | 小笼包 | 平 | sweet | pending | | |
-| 9 | `suantou` | 米粉 | 平 | sweet | pending | | |
-| 10 | `yumi` | 玉米 | 平 | sweet | pending | | |
-| 11 | `hongshu` | 红薯 | 平 | sweet | pending | | |
-| 12 | `tudou` | 土豆 | 平 | sweet | pending | | |
-| 13 | `youtiao` | 油条 | 热 | sweet | pending | | |
-| 14 | `hanbao` | 汉堡 | 温 | sweet | pending | | |
-| 15 | `sanmingzhi` | 三明治 | 平 | sweet | pending | | |
-| 16 | `yidali_mian` | 意大利面 | 平 | sweet | pending | | |
-| 17 | `shousi` | 寿司 | 凉 | sweet、sour、salty | pending | | |
-| 18 | `niurou_hanbao` | 牛肉汉堡 | 温 | salty、sweet | pending | | |
-| 19 | `tusi` | 吐司 | 平 | sweet | pending | | |
-| 20 | `sanmingzhi_huotui` | 火腿三明治 | 平 | salty | pending | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | ○ | `baicai` | 白菜 | 凉 | sweet | pending | 平 | 通行·教材 | ② 冲突 |
+| 2 | ○ | `qingcai` | 青菜 | 凉 | sweet | pending | 凉 | 通行·教材 | ③ 无源可引（映射未获采纳） |
+| 3 | ○ | `bocai` | 菠菜 | 凉 | sweet | pending | 凉 | 通行·教材 | ① 一致 |
+| 4 | ○ | `shengcai` | 生菜 | 凉 | sweet、bitter | pending | 凉 | 通行·教材 | ① 一致 |
+| 5 | ○ | `huanggua` | 黄瓜 | 凉 | sweet | pending | 寒 | 通行·教材 | ② 冲突 |
+| 6 | ○ | `xihongshi` | 西红柿 | 凉 | sweet、sour | pending | 微寒 | 通行·教材 | ① 一致 |
+| 7 | ○ | `luobo` | 白萝卜 | 凉 | pungent、sweet | pending | 凉 | 通行·教材 | ① 一致 |
+| 8 | ○ | `huluobo` | 胡萝卜 | 平 | sweet | pending | 平 | 通行·教材 | ① 一致 |
+| 9 | ○ | `qincai` | 芹菜 | 凉 | pungent、sweet | pending | 凉 | 通行·教材 | ① 一致 |
+| 10 | ○ | `jiecai` | 芥菜 | 温 | pungent | pending | 温 | 通行·教材 | ① 一致 |
+| 11 | ○ | `jiucai` | 韭菜 | 温 | pungent | pending | 温 | 通行·教材 | ① 一致 |
+| 12 | ○ | `jiachang` | 茄子 | 凉 | sweet | pending | 凉 | 通行·教材 | ① 一致 |
+| 13 | ○ | `donggua` | 冬瓜 | 凉 | sweet、bland | pending | 凉 | 通行·教材 | ① 一致 |
+| 14 | ○ | `nangua` | 南瓜 | 温 | sweet | pending | 温 | 通行·教材 | ① 一致 |
+| 15 | ○ | `sigua` | 丝瓜 | 凉 | sweet | pending | 凉 | 通行·教材 | ① 一致 |
+| 16 | ○ | `kugua` | 苦瓜 | 寒 | bitter | pending | 寒 | 通行·教材 | ① 一致 |
+| 17 |  | `lajiao` | 辣椒 | 热 | pungent | pending | — | — |  |
+| 18 |  | `cong` | 葱 | 温 | pungent | pending | — | — |  |
+| 19 | ○ | `suan` | 蒜 | 温 | pungent | pending | 温 | 通行·教材 | ① 一致 |
+| 20 | ○ | `jiang` | 姜 | 温 | pungent | pending | 微温 | 官方·药典 | ① 一致 |
+| 21 | ○ | `mogu` | 蘑菇 | 寒 | sweet | pending | 寒 | 通行·经典 | ① 一致 |
+| 22 |  | `xianggu` | 香菇 | 平 | sweet | pending | 平 | 通行·教材 | ① 一致 |
+| 23 | ○ | `muer` | 木耳 | 平 | sweet | pending | 平 | 通行·教材 | ① 一致 |
+| 24 | ○ | `lianou` | 莲藕 | 凉 | sweet | pending | 寒 | 通行·教材 | ② 冲突 |
+| 25 |  | `douya` | 豆芽 | 凉 | sweet | pending | — | — |  |
 
-### 水产（6 条）★ 第一批
+### 水果（18 条）　○ 第一批 9 条
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `yuxia` | 鱼 | 平 | sweet | pending | | |
-| 2 | `xia` | 虾 | 温 | sweet、salty | pending | | |
-| 3 | `pangxie` | 螃蟹 | 寒 | salty | pending | | |
-| 4 | `shengyu` | 生鱼片 | 寒 | sweet | pending | | |
-| 5 | `haili` | 海带 | 凉 | salty | pending | | |
-| 6 | `zicai` | 紫菜 | 凉 | salty、sweet | pending | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `pingguo` | 苹果 | 凉 | sweet、sour | pending | — | — |  |
+| 2 | ○ | `xiangjiao` | 香蕉 | 寒 | sweet | pending | 寒 | 通行·教材 | ① 一致 |
+| 3 |  | `juzi` | 橘子 | 凉 | sweet、sour | pending | — | — |  |
+| 4 | ○ | `xigua` | 西瓜 | 寒 | sweet | pending | 寒 | 通行·教材(有冲突) | ① 一致 |
+| 5 | ○ | `putao` | 葡萄 | 平 | sweet、sour | pending | 平 | 通行·教材 | ① 一致 |
+| 6 | ○ | `li` | 梨 | 凉 | sweet、sour | pending | 凉 | 通行·教材 | ① 一致 |
+| 7 |  | `caomei` | 草莓 | 凉 | sweet、sour | pending | — | — |  |
+| 8 |  | `mangguo` | 芒果 | 凉 | sweet、sour | pending | — | — |  |
+| 9 | ○ | `lizhi` | 荔枝 | 温 | sweet、sour | pending | 温 | 通行·教材 | ① 一致 |
+| 10 | ○ | `longyan` | 龙眼 | 温 | sweet | pending | 温 | 官方·药典 | ① 一致 |
+| 11 | ○ | `taozi` | 桃子 | 温 | sweet、sour | pending | 温 | 通行·教材 | ① 一致 |
+| 12 |  | `yingtao` | 樱桃 | 温 | sweet | pending | — | — |  |
+| 13 | ○ | `shanzha_guo` | 山楂果 | 温 | sour、sweet | pending | 微温 | 官方·药典 | ① 一致 |
+| 14 |  | `ningmeng` | 柠檬 | 凉 | sour、sweet | pending | — | — |  |
+| 15 |  | `niuyouguo` | 牛油果 | 平 | sweet | pending | — | — |  |
+| 16 |  | `huolongguo` | 火龙果 | 凉 | sweet | pending | — | — |  |
+| 17 | ○ | `shizi` | 柿子 | 寒 | sweet、astringent | pending | 寒 | 通行·经典 | ① 一致 |
+| 18 |  | `shanzhu` | 山竹 | 凉 | sweet、sour | pending | — | — |  |
 
-### 乳饮（3 条）★ 第一批
+### 调味（4 条）　○ 第一批 3 条
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `niunai` | 牛奶 | 平 | sweet | pending | | |
-| 2 | `suannai` | 酸奶 | 平 | sweet、sour | pending | | |
-| 3 | `xila_suannai` | 希腊酸奶 | 凉 | sweet、sour | pending | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `tang` | 糖 | 平 | sweet | pending | — | — |  |
+| 2 | ○ | `yan` | 盐 | 寒 | salty | pending | 寒 | 通行·经典 | ① 一致 |
+| 3 | ○ | `cu` | 醋 | 温 | sour | pending | 温 | 通行·教材 | ① 一致 |
+| 4 | ○ | `jiangyou` | 酱油 | 平 | salty | pending | 温 | 通行·经典 | ② 冲突 |
 
-### 蔬菜（24 条）
+### 主食（20 条）
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `baicai` | 白菜 | 凉 | sweet | pending | | |
-| 2 | `qingcai` | 青菜 | 凉 | sweet | pending | | |
-| 3 | `bocai` | 菠菜 | 凉 | sweet | pending | | |
-| 4 | `shengcai` | 生菜 | 凉 | sweet、bitter | pending | | |
-| 5 | `huanggua` | 黄瓜 | 凉 | sweet | pending | | |
-| 6 | `xihongshi` | 西红柿 | 凉 | sweet、sour | pending | | |
-| 7 | `luobo` | 白萝卜 | 凉 | pungent、sweet | pending | | |
-| 8 | `huluobo` | 胡萝卜 | 平 | sweet | pending | | |
-| 9 | `qincai` | 芹菜 | 凉 | pungent、sweet | pending | | |
-| 10 | `jiecai` | 芥菜 | 温 | pungent | pending | | |
-| 11 | `jiucai` | 韭菜 | 温 | pungent | pending | | |
-| 12 | `jiachang` | 茄子 | 凉 | sweet | pending | | |
-| 13 | `donggua` | 冬瓜 | 凉 | sweet、bland | pending | | |
-| 14 | `nangua` | 南瓜 | 温 | sweet | pending | | |
-| 15 | `sigua` | 丝瓜 | 凉 | sweet | pending | | |
-| 16 | `kugua` | 苦瓜 | 寒 | bitter | pending | | |
-| 17 | `lajiao` | 辣椒 | 热 | pungent | pending | | |
-| 18 | `cong` | 葱 | 温 | pungent | pending | | |
-| 19 | `suan` | 蒜 | 温 | pungent | pending | | |
-| 20 | `jiang` | 姜 | 温 | pungent | pending | | |
-| 21 | `mogu` | 蘑菇 | 平 | sweet | pending | | |
-| 22 | `muer` | 木耳 | 平 | sweet | pending | | |
-| 23 | `lianou` | 莲藕 | 凉 | sweet | pending | | |
-| 24 | `douya` | 豆芽 | 凉 | sweet | pending | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `mifan` | 米饭 | 平 | sweet | pending | — | — |  |
+| 2 |  | `zhou` | 白粥 | 平 | sweet | pending | — | — |  |
+| 3 |  | `mantou` | 馒头 | 平 | sweet | pending | — | — |  |
+| 4 |  | `mianshi` | 面条 | 平 | sweet | pending | — | — |  |
+| 5 |  | `miantiao_liang` | 凉面 | 凉 | sweet | pending | — | — |  |
+| 6 |  | `jiazi` | 饺子 | 平 | sweet | pending | — | — |  |
+| 7 |  | `baozi` | 包子 | 平 | sweet | pending | — | — |  |
+| 8 |  | `xiaolongbao` | 小笼包 | 平 | sweet | pending | — | — |  |
+| 9 |  | `suantou` | 米粉 | 平 | sweet | pending | — | — |  |
+| 10 |  | `yumi` | 玉米 | 平 | sweet | pending | 平 | 通行·教材 | ① 一致 |
+| 11 |  | `hongshu` | 红薯 | 平 | sweet | pending | — | — |  |
+| 12 |  | `tudou` | 土豆 | 平 | sweet | pending | 平 | 通行·教材 | ① 一致 |
+| 13 |  | `youtiao` | 油条 | 热 | sweet | pending | — | — |  |
+| 14 |  | `hanbao` | 汉堡 | 温 | sweet | pending | — | — |  |
+| 15 |  | `sanmingzhi` | 三明治 | 平 | sweet | pending | — | — |  |
+| 16 |  | `yidali_mian` | 意大利面 | 平 | sweet | pending | — | — |  |
+| 17 |  | `shousi` | 寿司 | 凉 | sweet、sour、salty | pending | — | — |  |
+| 18 |  | `niurou_hanbao` | 牛肉汉堡 | 温 | salty、sweet | pending | — | — |  |
+| 19 |  | `tusi` | 吐司 | 平 | sweet | pending | — | — |  |
+| 20 |  | `sanmingzhi_huotui` | 火腿三明治 | 平 | salty | pending | — | — |  |
 
 ### 菜肴（19 条）
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `mahuoguo` | 火锅 | 热 | pungent | pending | | |
-| 2 | `malatang` | 麻辣烫 | 热 | pungent、salty | pending | | |
-| 3 | `malahuoguo` | 麻辣香锅 | 热 | pungent、salty | pending | | |
-| 4 | `shaokao` | 烧烤 | 热 | pungent、salty | pending | | |
-| 5 | `hongshao` | 红烧肉 | 温 | sweet、salty | pending | | |
-| 6 | `lajiao_chao` | 辣炒菜 | 热 | pungent | pending | | |
-| 7 | `zhajiang` | 炸酱面 | 温 | salty | pending | | |
-| 8 | `guanzhudong` | 关东煮 | 温 | salty | pending | | |
-| 9 | `shala` | 沙拉 | 凉 | sweet、sour | pending | | |
-| 10 | `pisa` | 披萨 | 温 | salty、sweet | pending | | |
-| 11 | `zhaji` | 炸鸡 | 热 | salty、pungent | pending | | |
-| 12 | `shuijiao_rou` | 螺蛳粉 | 热 | pungent、sour | pending | | |
-| 13 | `huntun` | 馄饨 | 平 | sweet | pending | | |
-| 14 | `hanshi_zhaji` | 韩式炸鸡 | 热 | salty、pungent、sweet | pending | | |
-| 15 | `zhayu_shutiao` | 炸鱼薯条 | 热 | salty | pending | | |
-| 16 | `niuyouguo_shala` | 牛油果沙拉 | 凉 | sweet、sour | pending | | |
-| 17 | `hanshi_banfan` | 韩式拌饭 | 温 | pungent、salty、sweet | pending | | |
-| 18 | `rishi_lamian` | 日式拉面 | 温 | salty、sweet | pending | | |
-| 19 | `gali` | 咖喱 | 热 | pungent、salty | pending | | |
-
-### 水果（18 条）
-
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `pingguo` | 苹果 | 凉 | sweet、sour | pending | | |
-| 2 | `xiangjiao` | 香蕉 | 寒 | sweet | pending | | |
-| 3 | `juzi` | 橘子 | 凉 | sweet、sour | pending | | |
-| 4 | `xigua` | 西瓜 | 寒 | sweet | pending | | |
-| 5 | `putao` | 葡萄 | 平 | sweet、sour | pending | | |
-| 6 | `li` | 梨 | 凉 | sweet、sour | pending | | |
-| 7 | `caomei` | 草莓 | 凉 | sweet、sour | pending | | |
-| 8 | `mangguo` | 芒果 | 凉 | sweet、sour | pending | | |
-| 9 | `lizhi` | 荔枝 | 温 | sweet、sour | pending | | |
-| 10 | `longyan` | 龙眼 | 温 | sweet | pending | | |
-| 11 | `taozi` | 桃子 | 温 | sweet、sour | pending | | |
-| 12 | `yingtao` | 樱桃 | 温 | sweet | pending | | |
-| 13 | `shanzha_guo` | 山楂果 | 温 | sour、sweet | pending | | |
-| 14 | `ningmeng` | 柠檬 | 凉 | sour、sweet | pending | | |
-| 15 | `niuyouguo` | 牛油果 | 平 | sweet | pending | | |
-| 16 | `huolongguo` | 火龙果 | 凉 | sweet | pending | | |
-| 17 | `shizi` | 柿子 | 寒 | sweet、astringent | pending | | |
-| 18 | `shanzhu` | 山竹 | 凉 | sweet、sour | pending | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `mahuoguo` | 火锅 | 热 | pungent | pending | — | — |  |
+| 2 |  | `malatang` | 麻辣烫 | 热 | pungent、salty | pending | — | — |  |
+| 3 |  | `malahuoguo` | 麻辣香锅 | 热 | pungent、salty | pending | — | — |  |
+| 4 |  | `shaokao` | 烧烤 | 热 | pungent、salty | pending | — | — |  |
+| 5 |  | `hongshao` | 红烧肉 | 温 | sweet、salty | pending | — | — |  |
+| 6 |  | `lajiao_chao` | 辣炒菜 | 热 | pungent | pending | — | — |  |
+| 7 |  | `zhajiang` | 炸酱面 | 温 | salty | pending | — | — |  |
+| 8 |  | `guanzhudong` | 关东煮 | 温 | salty | pending | — | — |  |
+| 9 |  | `shala` | 沙拉 | 凉 | sweet、sour | pending | — | — |  |
+| 10 |  | `pisa` | 披萨 | 温 | salty、sweet | pending | — | — |  |
+| 11 |  | `zhaji` | 炸鸡 | 热 | salty、pungent | pending | — | — |  |
+| 12 |  | `shuijiao_rou` | 螺蛳粉 | 热 | pungent、sour | pending | — | — |  |
+| 13 |  | `huntun` | 馄饨 | 平 | sweet | pending | — | — |  |
+| 14 |  | `hanshi_zhaji` | 韩式炸鸡 | 热 | salty、pungent、sweet | pending | — | — |  |
+| 15 |  | `zhayu_shutiao` | 炸鱼薯条 | 热 | salty | pending | — | — |  |
+| 16 |  | `niuyouguo_shala` | 牛油果沙拉 | 凉 | sweet、sour | pending | — | — |  |
+| 17 |  | `hanshi_banfan` | 韩式拌饭 | 温 | pungent、salty、sweet | pending | — | — |  |
+| 18 |  | `rishi_lamian` | 日式拉面 | 温 | salty、sweet | pending | — | — |  |
+| 19 |  | `gali` | 咖喱 | 热 | pungent、salty | pending | — | — |  |
 
 ### （无 category）（18 条）
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `molihua_cha` | 茉莉花茶 | 温 | sweet、pungent | pending | | |
-| 2 | `juhua_cha` | 菊花茶 | 凉 | sweet、bitter | pending | | |
-| 3 | `gouqi_cha` | 枸杞茶 | 平 | sweet | pending | | |
-| 4 | `meigui_cha` | 玫瑰花茶 | 温 | sweet、bitter | pending | | |
-| 5 | `puerg` | 普洱茶 | 温 | bitter、sweet | pending | | |
-| 6 | `lvcha` | 绿茶 | 凉 | bitter、sweet | pending | | |
-| 7 | `hongcha` | 红茶 | 温 | sweet、bitter | pending | | |
-| 8 | `wulong` | 乌龙茶 | 平 | sweet、bitter | pending | | |
-| 9 | `damaicha` | 大麦茶 | 平 | sweet | pending | | |
-| 10 | `chenpi_cha` | 陈皮茶 | 温 | pungent、bitter | pending | | |
-| 11 | `jiangcha` | 姜茶 | 温 | pungent | pending | | |
-| 12 | `hongzao_cha` | 红枣茶 | 温 | sweet | pending | | |
-| 13 | `juemingzi_cha` | 决明子茶 | 凉 | sweet、bitter | pending | | |
-| 14 | `heye_cha` | 荷叶茶 | 平 | bitter、bland | pending | | |
-| 15 | `luohanguo_cha` | 罗汉果茶 | 凉 | sweet | pending | | |
-| 16 | `wumei_cha` | 乌梅茶 | 平 | sour、astringent | pending | | |
-| 17 | `putaoyou_cha` | 水果茶 | 凉 | sweet、sour | pending | | |
-| 18 | `naixicha` | 奶盖茶 | 平 | sweet | pending | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `molihua_cha` | 茉莉花茶 | 温 | sweet、pungent | pending | — | — |  |
+| 2 |  | `juhua_cha` | 菊花茶 | 凉 | sweet、bitter | pending | — | — |  |
+| 3 |  | `gouqi_cha` | 枸杞茶 | 平 | sweet | pending | — | — |  |
+| 4 |  | `meigui_cha` | 玫瑰花茶 | 温 | sweet、bitter | pending | — | — |  |
+| 5 |  | `puerg` | 普洱茶 | 温 | bitter、sweet | pending | — | — |  |
+| 6 |  | `lvcha` | 绿茶 | 凉 | bitter、sweet | pending | — | — |  |
+| 7 |  | `hongcha` | 红茶 | 温 | sweet、bitter | pending | — | — |  |
+| 8 |  | `wulong` | 乌龙茶 | 平 | sweet、bitter | pending | — | — |  |
+| 9 |  | `damaicha` | 大麦茶 | 平 | sweet | pending | — | — |  |
+| 10 |  | `chenpi_cha` | 陈皮茶 | 温 | pungent、bitter | pending | — | — |  |
+| 11 |  | `jiangcha` | 姜茶 | 温 | pungent | pending | — | — |  |
+| 12 |  | `hongzao_cha` | 红枣茶 | 温 | sweet | pending | — | — |  |
+| 13 |  | `juemingzi_cha` | 决明子茶 | 凉 | sweet、bitter | pending | — | — |  |
+| 14 |  | `heye_cha` | 荷叶茶 | 平 | bitter、bland | pending | — | — |  |
+| 15 |  | `luohanguo_cha` | 罗汉果茶 | 凉 | sweet | pending | — | — |  |
+| 16 |  | `wumei_cha` | 乌梅茶 | 平 | sour、astringent | pending | — | — |  |
+| 17 |  | `putaoyou_cha` | 水果茶 | 凉 | sweet、sour | pending | — | — |  |
+| 18 |  | `naixicha` | 奶盖茶 | 平 | sweet | pending | — | — |  |
 
 ### 饮料（9 条）
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `kele` | 可乐 | 凉 | sweet | pending | | |
-| 2 | `naicha` | 奶茶 | 平 | sweet | pending | | |
-| 3 | `kafei` | 咖啡 | 温 | bitter | pending | | |
-| 4 | `suanmeitang` | 酸梅汤 | 平 | sour、sweet | pending | | |
-| 5 | `liangcha` | 凉茶 | 寒 | bitter、sweet | pending | | |
-| 6 | `guozhi` | 果汁 | 凉 | sweet、sour | pending | | |
-| 7 | `bing_naicha` | 冰奶茶 | 凉 | sweet | ⚠️ 缺字段 | | |
-| 8 | `qubing_naicha` | 去冰奶茶 | 凉 | sweet | ⚠️ 缺字段 | | |
-| 9 | `re_naicha` | 热奶茶 | 温 | sweet | ⚠️ 缺字段 | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `kele` | 可乐 | 凉 | sweet | pending | — | — |  |
+| 2 |  | `naicha` | 奶茶 | 平 | sweet | pending | — | — |  |
+| 3 |  | `kafei` | 咖啡 | 温 | bitter | pending | — | — |  |
+| 4 |  | `suanmeitang` | 酸梅汤 | 平 | sour、sweet | pending | — | — |  |
+| 5 |  | `liangcha` | 凉茶 | 寒 | bitter、sweet | pending | — | — |  |
+| 6 |  | `guozhi` | 果汁 | 凉 | sweet、sour | pending | — | — |  |
+| 7 |  | `bing_naicha` | 冰奶茶 | 凉 | sweet | pending | — | — |  |
+| 8 |  | `qubing_naicha` | 去冰奶茶 | 凉 | sweet | pending | — | — |  |
+| 9 |  | `re_naicha` | 热奶茶 | 温 | sweet | pending | — | — |  |
 
 ### 肉类（8 条）
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `zhurou` | 猪肉 | 平 | sweet、salty | pending | | |
-| 2 | `niurou` | 牛肉 | 温 | sweet | pending | | |
-| 3 | `yangrou` | 羊肉 | 热 | sweet | pending | | |
-| 4 | `jirou` | 鸡肉 | 温 | sweet | pending | | |
-| 5 | `yakuai` | 鸭肉 | 凉 | sweet、salty | pending | | |
-| 6 | `lourou` | 卤肉 | 温 | salty | pending | | |
-| 7 | `huotui` | 火腿 | 温 | salty | pending | | |
-| 8 | `xiangchang` | 香肠 | 温 | salty | pending | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `zhurou` | 猪肉 | 平 | sweet、salty | pending | — | — |  |
+| 2 |  | `niurou` | 牛肉 | 温 | sweet | pending | 平 | 通行·教材 | ② 冲突 |
+| 3 |  | `yangrou` | 羊肉 | 热 | sweet | pending | 温 | 通行·教材 | ② 冲突 |
+| 4 |  | `jirou` | 鸡肉 | 温 | sweet | pending | 温 | 通行·教材 | ① 一致 |
+| 5 |  | `yakuai` | 鸭肉 | 凉 | sweet、salty | pending | 平 | 通行·教材 | ② 冲突 |
+| 6 |  | `lourou` | 卤肉 | 温 | salty | pending | — | — |  |
+| 7 |  | `huotui` | 火腿 | 温 | salty | pending | — | — |  |
+| 8 |  | `xiangchang` | 香肠 | 温 | salty | pending | — | — |  |
+
+### 水产（6 条）
+
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `yuxia` | 鱼 | 平 | sweet | pending | — | — |  |
+| 2 |  | `xia` | 虾 | 温 | sweet、salty | pending | — | — |  |
+| 3 |  | `pangxie` | 螃蟹 | 寒 | salty | pending | 寒 | 通行·教材 | ① 一致 |
+| 4 |  | `shengyu` | 生鱼片 | 寒 | sweet | pending | — | — |  |
+| 5 |  | `haili` | 海带 | 凉 | salty | pending | 寒 | 通行·经典 | ② 冲突 |
+| 6 |  | `zicai` | 紫菜 | 凉 | salty、sweet | pending | 寒 | 通行·教材 | ② 冲突 |
 
 ### 甜点（5 条）
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `dangao` | 蛋糕 | 平 | sweet | pending | | |
-| 2 | `lvdougao` | 绿豆糕 | 凉 | sweet | pending | | |
-| 3 | `qiaokeli` | 巧克力 | 温 | sweet、bitter | pending | | |
-| 4 | `binggan` | 饼干 | 温 | sweet | pending | | |
-| 5 | `suannai_wan` | 酸奶碗 | 凉 | sweet、sour | pending | | |
-
-### 调味（4 条）
-
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `tang` | 糖 | 平 | sweet | pending | | |
-| 2 | `yan` | 盐 | 寒 | salty | pending | | |
-| 3 | `cu` | 醋 | 温 | sour | pending | | |
-| 4 | `jiangyou` | 酱油 | 平 | salty | pending | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `dangao` | 蛋糕 | 平 | sweet | pending | — | — |  |
+| 2 |  | `lvdougao` | 绿豆糕 | 凉 | sweet | pending | — | — |  |
+| 3 |  | `qiaokeli` | 巧克力 | 温 | sweet、bitter | pending | — | — |  |
+| 4 |  | `binggan` | 饼干 | 温 | sweet | pending | — | — |  |
+| 5 |  | `suannai_wan` | 酸奶碗 | 凉 | sweet、sour | pending | — | — |  |
 
 ### 豆制品（4 条）
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `doufu` | 豆腐 | 凉 | sweet | pending | | |
-| 2 | `doujiang` | 豆浆 | 平 | sweet | pending | | |
-| 3 | `fuzhu` | 腐竹 | 平 | sweet | pending | | |
-| 4 | `maodou` | 毛豆 | 平 | sweet | pending | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `doufu` | 豆腐 | 凉 | sweet | pending | 凉 | 通行·教材 | ① 一致 |
+| 2 |  | `doujiang` | 豆浆 | 平 | sweet | pending | — | — |  |
+| 3 |  | `fuzhu` | 腐竹 | 平 | sweet | pending | — | — |  |
+| 4 |  | `maodou` | 毛豆 | 平 | sweet | pending | — | — |  |
+
+### 乳饮（3 条）
+
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `niunai` | 牛奶 | 平 | sweet | pending | 平 | 通行·教材 | ① 一致 |
+| 2 |  | `suannai` | 酸奶 | 平 | sweet、sour | pending | — | — |  |
+| 3 |  | `xila_suannai` | 希腊酸奶 | 凉 | sweet、sour | pending | — | — |  |
 
 ### 酒类（3 条）
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `pijiu` | 啤酒 | 凉 | bitter、sweet | pending | | |
-| 2 | `baijiu` | 白酒 | 热 | pungent、sweet | pending | | |
-| 3 | `hongjiu` | 红酒 | 温 | sweet、sour | pending | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `pijiu` | 啤酒 | 凉 | bitter、sweet | pending | — | — |  |
+| 2 |  | `baijiu` | 白酒 | 热 | pungent、sweet | pending | — | — |  |
+| 3 |  | `hongjiu` | 红酒 | 温 | sweet、sour | pending | — | — |  |
 
 ### 蛋类（2 条）
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `chadan` | 茶叶蛋 | 温 | salty | pending | | |
-| 2 | `jidan` | 鸡蛋 | 平 | sweet | pending | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `chadan` | 茶叶蛋 | 温 | salty | pending | — | — |  |
+| 2 |  | `jidan` | 鸡蛋 | 平 | sweet | pending | — | — | ① 仅身份，无四气可比 |
 
 ### 冷饮（1 条）
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `bingqilin` | 冰淇淋 | 寒 | sweet | pending | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `bingqilin` | 冰淇淋 | 寒 | sweet | pending | — | — |  |
 
 ### 甜汤（1 条）
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `yiner` | 银耳 | 平 | sweet、bland | pending | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `yiner` | 银耳 | 平 | sweet、bland | pending | 平 | 通行·教材 | ① 一致 |
 
 ### 零食（1 条）
 
-| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |
-|---|---|---|---|---|---|---|---|
-| 1 | `shujiaotiao` | 薯条 | 热 | salty | pending | | |
+| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 |  | `shujiaotiao` | 薯条 | 热 | salty | pending | — | — |  |
 
-## 4. 阶段二作业口径（已定：官方优先 + 多源兜底 + 无源标空）
+## 4. ①②③ 层：来源核对（事实源 = `docs/food-properties-sources.json`）
 
-| 优先级 | 来源 | 说明 |
-|---|---|---|
-| 1 | 国家卫健委 / 中国营养学会的**食养指南与膳食指南** | 半官方、可引用性最高；但按疾病/人群编写，**不按食材列四气**，覆盖不全 |
-| 2 | 中医饮食养生**通行表述**的多源交叉 | 2–3 源一致才记「来源一致」；结论只能是「来源一致」，**不能**写成「正确」 |
-| 3 | 找不到任何来源 | 标**「无源可引」**，留给审核人凭专业判断 |
+| 优先级 | 来源 | 强度 | 用法 |
+|---|---|---|---|
+| ① | 《中国药典》2020 年版一部 | 最高 | 可直接采用（**药品**标准用作食品参考，须注明） |
+| ① | 食药物质目录（106 种） | **仅合规身份** | **只证明合规身份，不含四气，永不作四气基准** |
+| ② | 《中医饮食营养学》（50 号文件 §2 A 档 / §3 B 档） | 次高 | 可直接采用，须引原文列 |
+| ② | §5.3 别名索引（含《本草纲目》《中药学》） | 核对方/溯源用 | 取用时须写明是谁的书；**经典层不得当教材用** |
+| ③ | 无 | — | 标「无源可引」，凭专业判断 |
 
-两条纪律：
+> ⚠️ **① 层只表示「来源与现值一致」，不等于来源足够强**。来源档为「通行·经典」
+> （《本草纲目》）者，按 50 号文件 §5.4 的规则**不得当教材用**——是否据此 `approved`
+> 由审核人判断，不要只看层号。
 
-1. **不把通行表述伪装成权威依据**——引用时必须写清是第 2 档来源，不得混入指南口径。
-2. **第一批只做 ★ 主食 / 乳饮 / 水产**：这些大类在指南里覆盖最好，最可能先产出 `approved`，
-   让 A1 的验收标准（`approved > 0`）先动起来。菜肴 / 饮料 / 冷饮 / 甜点最易错，放后面。
+### 4.1 「第一批」逐条分层（判据＝有来源可引，与类别无关）
+
+| # | id | 名称 | 类别 | 项目四气 | 来源四气 | 来源档 | 基准条目 | 层 | 状态 | 映射裁定 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | `li` | 梨 | 水果 | 凉 | 凉 | 通行·教材 | 梨 | ① | 一致 | — |
+| 2 | `lizhi` | 荔枝 | 水果 | 温 | 温 | 通行·教材 | 荔枝 | ① | 一致 | — |
+| 3 | `longyan` | 龙眼 | 水果 | 温 | 温 | 官方·药典 | 龙眼肉 | ① | 一致 | ✅ 采纳 |
+| 4 | `putao` | 葡萄 | 水果 | 平 | 平 | 通行·教材 | 葡萄 | ① | 一致 | — |
+| 5 | `shanzha_guo` | 山楂果 | 水果 | 温 | 微温 | 官方·药典 | 山楂 | ① | 一致 | ✅ 采纳 |
+| 6 | `shizi` | 柿子 | 水果 | 寒 | 寒 | 通行·经典 | 柿 | ① | 一致 | ✅ 采纳 |
+| 7 | `taozi` | 桃子 | 水果 | 温 | 温 | 通行·教材 | 桃子 | ① | 一致 | — |
+| 8 | `xiangjiao` | 香蕉 | 水果 | 寒 | 寒 | 通行·教材 | 香蕉 | ① | 一致 | — |
+| 9 | `xigua` | 西瓜 | 水果 | 寒 | 寒 | 通行·教材(有冲突) | 西瓜 | ① | 一致 | — |
+| 10 | `bocai` | 菠菜 | 蔬菜 | 凉 | 凉 | 通行·教材 | 菠菜 | ① | 一致 | — |
+| 11 | `donggua` | 冬瓜 | 蔬菜 | 凉 | 凉 | 通行·教材 | 冬瓜 | ① | 一致 | — |
+| 12 | `huluobo` | 胡萝卜 | 蔬菜 | 平 | 平 | 通行·教材 | 胡萝卜 | ① | 一致 | — |
+| 13 | `jiachang` | 茄子 | 蔬菜 | 凉 | 凉 | 通行·教材 | 茄子 | ① | 一致 | — |
+| 14 | `jiang` | 姜 | 蔬菜 | 温 | 微温 | 官方·药典 | 生姜 | ① | 一致 | ✅ 采纳 |
+| 15 | `jiecai` | 芥菜 | 蔬菜 | 温 | 温 | 通行·教材 | 芥菜 | ① | 一致 | — |
+| 16 | `jiucai` | 韭菜 | 蔬菜 | 温 | 温 | 通行·教材 | 韭菜 | ① | 一致 | — |
+| 17 | `kugua` | 苦瓜 | 蔬菜 | 寒 | 寒 | 通行·教材 | 苦瓜 | ① | 一致 | — |
+| 18 | `luobo` | 白萝卜 | 蔬菜 | 凉 | 凉 | 通行·教材 | 白萝卜 | ① | 一致 | — |
+| 19 | `mogu` | 蘑菇 | 蔬菜 | 寒 | 寒 | 通行·经典 | 蘑菰 | ① | 一致 | ✅ 采纳 |
+| 20 | `muer` | 木耳 | 蔬菜 | 平 | 平 | 通行·教材 | 木耳 | ① | 一致 | — |
+| 21 | `nangua` | 南瓜 | 蔬菜 | 温 | 温 | 通行·教材 | 南瓜 | ① | 一致 | — |
+| 22 | `qincai` | 芹菜 | 蔬菜 | 凉 | 凉 | 通行·教材 | 水芹 | ① | 一致 | ✅ 采纳 |
+| 23 | `shengcai` | 生菜 | 蔬菜 | 凉 | 凉 | 通行·教材 | 莴苣 | ① | 一致 | ✅ 采纳 |
+| 24 | `sigua` | 丝瓜 | 蔬菜 | 凉 | 凉 | 通行·教材 | 丝瓜 | ① | 一致 | — |
+| 25 | `suan` | 蒜 | 蔬菜 | 温 | 温 | 通行·教材 | 大蒜 | ① | 一致 | ✅ 采纳 |
+| 26 | `xihongshi` | 西红柿 | 蔬菜 | 凉 | 微寒 | 通行·教材 | 西红柿 | ① | 一致 | — |
+| 27 | `cu` | 醋 | 调味 | 温 | 温 | 通行·教材 | 醋 | ① | 一致 | — |
+| 28 | `yan` | 盐 | 调味 | 寒 | 寒 | 通行·经典 | 食盐 | ① | 一致 | ✅ 采纳 |
+| 29 | `baicai` | 白菜 | 蔬菜 | 凉 | 平 | 通行·教材 | 白菜 | ② | 冲突 | — |
+| 30 | `huanggua` | 黄瓜 | 蔬菜 | 凉 | 寒 | 通行·教材 | 黄瓜 | ② | 冲突 | — |
+| 31 | `lianou` | 莲藕 | 蔬菜 | 凉 | 寒 | 通行·教材 | 藕 | ② | 冲突 | ✅ 采纳 |
+| 32 | `jiangyou` | 酱油 | 调味 | 平 | 温 | 通行·经典 | 酱 | ② | 冲突 | ⏳ 待确认 |
+| 33 | `qingcai` | 青菜 | 蔬菜 | 凉 | 凉 | 通行·教材 | 油菜 | ③ | 无源可引（映射未获采纳） | ❌ **未采纳** |
+
+### 4.2 层② 来源冲突（**不得直接 approved**）
+
+| id | 名称 | 项目值 | 来源值 | 基准条目 | 来源原文 | 处置 |
+|---|---|---|---|---|---|---|
+| `baicai` | 白菜 | 凉 | 平 | 白菜 | 甘，平。入胃、肠、肝、肾、膀胱经。 | 以项目值「凉」还是来源值「平」为准？ |
+| `huanggua` | 黄瓜 | 凉 | 寒 | 黄瓜 | 甘，寒。入胃、小肠经。 | 以项目值「凉」还是来源值「寒」为准？ |
+| `jiangyou` | 酱油 | 平 | 温 | 酱 | — | 以项目值「平」还是来源值「温」为准？ |
+| `lianou` | 莲藕 | 凉 | 寒 | 藕 | 甘，寒。入心、脾、胃经。 | 以项目值「凉」还是来源值「寒」为准？ |
+
+> **这些是「口径分歧」而非「数据错」**：基准是教材/经典层，强度不足以推翻现值，
+> 所以一律**保留项目值**并在数据里加 `note` 留痕；`nature` 未改。
+
+### 4.3 层③ 无源可引
+
+- `qingcai`（青菜）：无源可引（映射未获采纳）　映射裁定：两个缺陷：① 味不符——项目 flavors 只有 sweet，而语料「油菜」为「辛、甘，凉」；② 方向可能相反——纲目 §4.9 给「芸苔（油菜）」记「辛，温」，与项目「凉」反向。「油菜」本身又有同名不同物风险（小油菜 vs 油料作物芸苔）。降级为「无源可引」，不得进入 approved 批次。
+
+> 三类（蔬菜/调味/水果）中另有 13 条在 50 号文件与目录里**均无条目**，
+> 清单见 `docs/food-properties-batch2-plan.md` 附录，未登记进来源登记表。
+
+### 4.4 非正名映射的裁定结果（条目名 ≠ 语料条目名）
+
+| id | 条目 → 基准 | 组 | 裁定 | 理由 |
+|---|---|---|---|---|
+| `jiang` | 姜 → **生姜** | A 组·药典收载名 | ✅ 采纳 | 药典「生姜」为鲜品；饮食语境下的「姜」即指它，无物种歧义。 |
+| `longyan` | 龙眼 → **龙眼肉** | A 组·药典收载名 | ✅ 采纳 | 药典正条名为「龙眼肉」，「龙眼」是通俗名，无物种歧义。 |
+| `shanzha_guo` | 山楂果 → **山楂** | A 组·药典收载名 | ✅ 采纳 | 药典正条名为「山楂」；项目加「果」是为区分加工品（山楂片等），无物种歧义。 |
+| `qincai` | 芹菜 → **水芹** | B 组·§5.3 别名词（文件直接给定） | ✅ 采纳 | 50 号文件 §5.3 自己给的对当关系（S1:574）。保留文件口径，但现代「芹菜」多指旱芹/西芹，物种不完全相同，已在 review_sheet 的存疑项里留痕。 |
+| `lianou` | 莲藕 → **藕** | C 组·等价名 | ✅ 采纳 | 同一物（莲之藕），仅省略作物名前缀。注意本条同时是 4 条口径分歧之一：值仍保留项目值「凉」。 |
+| `shengcai` | 生菜 → **莴苣** | C 组·等价名 | ✅ 采纳 | 同种不同栽培变种（叶用生菜 vs 教材「莴苣」条的茎用为主）。气、味双项全对应（甘、苦，凉），可信度高；变种差异已写进 how 留痕。 |
+| `suan` | 蒜 → **大蒜** | C 组·等价名 | ✅ 采纳 | 同一物（Allium sativum）；「大蒜」是语料用名，「蒜」是通称。气、味双项全对应（辛、温）。 |
+| `qingcai` | 青菜 → **油菜** | C 组·等价名（**未获采纳**） | ❌ **未采纳** | 两个缺陷：① 味不符——项目 flavors 只有 sweet，而语料「油菜」为「辛、甘，凉」；② 方向可能相反——纲目 §4.9 给「芸苔（油菜）」记「辛，温」，与项目「凉」反向。「油菜」本身又有同名不同物风险（小油菜 vs 油料作物芸苔）。降级为「无源可引」，不得进入 approved 批次。 |
+| `mogu` | 蘑菇 → **蘑菰** | D 组·§5.3 纲目别名 | ✅ 采纳 | 条目名「蘑菇」对应语料「蘑菰」（寒，纲目 23487）。原条目还把别名「香菇」挂在身上，而香菇对应「香蕈」（平）——一个条目代表两个四气不同的物种，属 ④ 层**条目粒度错误**，已拆两条：`mogu` 收窄为蘑菰（寒）、新增 `xianggu` 香菇（平）。 |
+| `jiangyou` | 酱油 → **酱** | D 组·§5.3 纲目别名（**仍未采纳，待确认**） | ⏳ 待确认 | 映射本身可用（酱油→酱），但基准是《本草纲目》（经典溯源层），而 50 号文件 §5.4 标题自定「仅经典有载、教材无（不得当教材用）」——强度低于教材，据此把项目值「平」改「温」不成立。故 nature 不改，单列待确认。 |
+| `shizi` | 柿子 → **柿** | D 组·§5.3 纲目别名（文件直接给定） | ✅ 采纳 | 同一物（柿），「子」为口语后缀。 |
+| `yan` | 盐 → **食盐** | D 组·§5.3 纲目别名（文件直接给定） | ✅ 采纳 | 同一物（食盐）。 |
+| `haili` | 海带 → **昆布** | §5.3 别名索引直接给定 | ✅ 采纳 | 海带→昆布，文件 §5.3 直接给定。 |
+| `niunai` | 牛奶 → **牛乳** | §5.3 别名索引直接给定 | ✅ 采纳 | 牛奶→牛乳，文件 §5.3 直接给定。 |
+| `pangxie` | 螃蟹 → **蟹** | §5.3 别名索引直接给定 | ✅ 采纳 | 螃蟹→蟹，文件 §5.3 直接给定。 |
+| `tudou` | 土豆 → **马铃薯** | §5.3 别名索引直接给定 | ✅ 采纳 | 土豆→马铃薯，文件 §5.3 直接给定。 |
+| `xianggu` | 香菇 → **香蕈** | §5.3 别名索引直接给定 | ✅ 采纳 | 香菇→香蕈，文件 §5.3 直接给定。本条由 `mogu` 拆出（④ 层条目粒度错误），与蘑菰是两个四气不同的物种。 |
+| `yumi` | 玉米 → **玉蜀黍** | §5.3 别名索引直接给定 | ✅ 采纳 | 玉米→玉蜀黍，文件 §5.3 直接给定。 |
+
+> ⚠️ 每条非正名映射都是**承重**的：这类条目通常只有 1 条证据，映射一否即落 ③ 无源。
+> 最典型的是 `lianou`（莲藕→藕）——它被判为「口径分歧」的前提正是这条映射成立。
+
+## 5. 口径与纪律
+
+1. **不把通行表述伪装成权威依据**——引用时必须写清来源档，不得混入指南口径。
+2. **第一批 = 有来源可引**（由 `docs/food-properties-sources.json` 的 `batch` 字段定义，
+   **不是类别**）。旧的「★ 主食/乳饮/水产」定义已作废：那三个大类恰是加工品最密集、
+   最没来源的区段；官方层对食材几乎零覆盖（全表能沾到官方的只有 4 条）。
+3. **`approved` 只能由具备资质的中医师/中药师填**，本单子只提供依据。
 

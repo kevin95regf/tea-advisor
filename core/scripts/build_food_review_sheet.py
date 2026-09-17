@@ -5,29 +5,33 @@
     python scripts/build_food_review_sheet.py                     # 打印摘要 + ④层矛盾
     python scripts/build_food_review_sheet.py --out ../docs/food-properties-review-sheet.md
     python scripts/build_food_review_sheet.py --check             # 校验产物是否过期（可进 CI）
-    python scripts/build_food_review_sheet.py --strict            # 有④层矛盾则 exit 1
+    python scripts/build_food_review_sheet.py --strict            # 有矛盾则 exit 1
 
 本脚本是**只读**的：不修改 food_properties.json，也不改任何审核状态。
 它不替人做审核决定。
 
 ## 它解决什么问题
 
-`docs/pending-items.md` 的 A1 要求 146 条逐条人工审核（`approved` 必须由具备资质的
+`docs/pending-items.md` 的 A1 要求 147 条逐条人工审核（`approved` 必须由具备资质的
 中医师/中药师填，并同时填 `reviewed_by` / `reviewed_at`）。难点是：**食材偏性没有官方
 标准**——药典只管药材（34 味有官方接口可比），GB/T 46939 只管体质分类与判定阈值。
 食材四气只有「中医饮食养生通行表述」。所以这项工作的形态不是「造数据」，而是
-**核验已有数据**，产物必须让审核人只聚焦有争议的格子，而不是 146 条从零判断。
+**核验已有数据**，产物必须让审核人只聚焦有争议的格子，而不是 147 条从零判断。
 
 ## 四层分级
 
-    ①  来源一致    找到权威/通行来源且与现值一致   → 审核人可直接 approved
+    ①  来源一致    找到权威/通行来源且与现值一致   → 审核人可据此 approved
     ②  来源冲突    来源之间或来源与现值不一致       → 进问题清单（按优先级排队）
     ③  无来源      找不到任何可引来源               → 标「无源可引」，凭专业判断
-    ④  内部矛盾    表内自相矛盾（与外部来源无关）   → **本阶段脚本可查，属 bug 类**
+    ④  内部矛盾    表内自相矛盾（与外部来源无关）   → 脚本可查，属 bug 类
 
-④ 层不依赖任何外部来源，所以脚本当场就能全部跑出来；①②③ 层需要外部来源，
-属阶段二（口径甲：官方食养指南优先 → 多源交叉兜底 → 无来源标空）。
-本脚本先产出**骨架 + ④层清单**，①②③ 层的列留空待填。
+④ 层不依赖任何外部来源，脚本当场能跑完；①②③ 层的事实源是
+`docs/food-properties-sources.json`（逐条登记来源与原文，**由人工逐条裁定映射**），
+本脚本读它并把三层渲染进 §4。
+
+⚠️ 「第一批」不再是**类别**的属性（曾按「主食/乳饮/水产」硬编码，那条理由已被证伪：
+全表能沾到官方来源的只有 4 条）。现在它是 **`sources.json` 里 `batch` 字段的属性** ——
+判据是「有来源可引」，与类别无关。
 
 ⚠️ 产物里 `approved` 永远是 0，直到真的有人审核。**不要为了让界面好看批量置 approved**
 ——标记密度就是审核进度的可见反馈（`docs/maintenance.md` §9.3）。
@@ -57,6 +61,7 @@ from app.domain.nature_math import CHILL_PREFIXES, HEAT_PREFIXES  # noqa: E402
 
 DEFAULT_FOOD = CORE_DIR / "data" / "food_properties.json"
 DEFAULT_HERBS = CORE_DIR / "data" / "herbs.json"
+DEFAULT_SOURCES = CORE_DIR.parent / "docs" / "food-properties-sources.json"
 DEFAULT_OUT = CORE_DIR.parent / "docs" / "food-properties-review-sheet.md"
 
 NATURE_ORDER = ("cold", "cool", "neutral", "warm", "hot")
@@ -75,9 +80,12 @@ LAYER2_DELTA = {
     "raw": 0,
 }
 
-# 第一批：优先挑官方食养指南/膳食指南覆盖得到的大类，先让 A1 的验收标准动起来
-# （验收要求 approved > 0）。菜肴/饮料/冷饮/甜点这类最易错，放后面。
-FIRST_BATCH_CATEGORIES = ("主食", "乳饮", "水产")
+# 「第一批」的定义已改：不再是**类别**的属性，而是 `docs/food-properties-sources.json`
+# 里 `batch == 第一批` 的条目（判据＝**有来源可引**）。
+# 旧定义（写死"主食/乳饮/水产"）的理由是"官方食养指南覆盖得到"——**已证伪**：
+# 全表能沾到官方来源的只有 4 条，那三个大类恰恰是加工品最密集、最没来源的区段。
+BATCH_PRIMARY = "第一批"
+SOURCE_LAYERS = ("①", "②", "③", "④")
 
 VALID_REVIEW_STATUS = ("pending", "approved", "rejected")
 
@@ -102,6 +110,22 @@ def load_herb_nature(path: Path) -> dict[str, str]:
         return {}
     raw = json.loads(path.read_text(encoding="utf-8"))
     return {item["name"]: item.get("nature") for item in raw.get("herbs", [])}
+
+
+def load_sources(path: Path) -> dict:
+    """读来源登记表（事实源）。文件不在时返回空表，脚本降级为「只有 ④ 层」。"""
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def source_entries(sources: dict) -> list[dict]:
+    return list(sources.get("entries") or [])
+
+
+def primary_batch_ids(sources: dict) -> set[str]:
+    """「第一批」= 来源登记表里 batch 标第一批的条目。数据表里没有就是空集。"""
+    return {e["id"] for e in source_entries(sources) if e.get("batch") == BATCH_PRIMARY}
 
 
 def review_status_of(entry: dict) -> str:
@@ -404,7 +428,80 @@ def check_cross_table(entries: list[dict], herb_nature: dict[str, str]) -> list[
     return issues
 
 
-def run_checks(entries: list[dict], herb_nature: dict[str, str]) -> list[dict]:
+def check_sources_consistency(entries: list[dict], sources: dict) -> list[dict]:
+    """来源登记表（`sources.json`）与数据表是否**漂移**。
+
+    只比可机器比的三项，不碰需要人判断的东西：
+      1. 登记的 id 是否还在数据表里；
+      2. 登记的 `project.nature` / `project.flavors` 是否等于数据现值；
+      3. `layer` 是否合法。
+
+    这三项一旦漂移，核验单就会拿着**旧的**依据给审核人看 —— 比没有依据更危险。
+    （真实触发场景：改完数据忘了回头更新来源登记表。）
+    """
+    if not sources:
+        return []
+    by_id = {e["id"]: e for e in entries}
+    missing, drift, bad_layer = [], [], []
+    for s in source_entries(sources):
+        entry = by_id.get(s.get("id"))
+        if entry is None:
+            missing.append(f"`{s.get('id')}`（{s.get('name')}）已不在数据表里")
+            continue
+        project = s.get("project") or {}
+        if project.get("nature") != entry.get("nature"):
+            drift.append(
+                f"`{s['id']}` 四气：登记 {project.get('nature')} vs 数据 {entry.get('nature')}"
+            )
+        registered_flavors = project.get("flavors")
+        if registered_flavors is not None and list(registered_flavors) != list(entry.get("flavors") or []):
+            drift.append(
+                f"`{s['id']}` 五味：登记 {registered_flavors} vs 数据 {entry.get('flavors')}"
+            )
+        if s.get("layer") not in SOURCE_LAYERS:
+            bad_layer.append(f"`{s['id']}`：layer={s.get('layer')!r}")
+
+    issues: list[dict] = []
+    if missing:
+        issues.append(
+            {
+                "kind": "来源登记漂移",
+                "level": "矛盾",
+                "headline": "来源登记表里的条目已不在数据表中",
+                "rows": sorted(missing),
+                "detail": "数据被删除/改名，但 `docs/food-properties-sources.json` 还记着它。",
+                "action": "改文档：从来源登记表里同步删除该条。",
+            }
+        )
+    if drift:
+        issues.append(
+            {
+                "kind": "来源登记漂移",
+                "level": "矛盾",
+                "headline": "来源登记表登记的项目值与数据现值不一致",
+                "rows": sorted(drift),
+                "detail": (
+                    "登记表是核验单的事实源。它漂了，审核人就会照旧值判断 —— "
+                    "这比没有依据更危险（看起来有据可依）。"
+                ),
+                "action": "改文档：把 `docs/food-properties-sources.json` 的 project 字段同步到现值。",
+            }
+        )
+    if bad_layer:
+        issues.append(
+            {
+                "kind": "来源登记漂移",
+                "level": "矛盾",
+                "headline": "来源登记表里的 layer 取值不合法",
+                "rows": sorted(bad_layer),
+                "detail": f"合法值只有 {SOURCE_LAYERS}。",
+                "action": "改文档：修正 layer。",
+            }
+        )
+    return issues
+
+
+def run_checks(entries: list[dict], herb_nature: dict[str, str], sources: dict | None = None) -> list[dict]:
     issues: list[dict] = []
     issues += check_duplicate_keys(entries)
     issues += check_alias_ambiguity(entries)
@@ -412,27 +509,39 @@ def run_checks(entries: list[dict], herb_nature: dict[str, str]) -> list[dict]:
     issues += check_temperature_siblings(entries)
     issues += check_schema_fields(entries)
     issues += check_cross_table(entries, herb_nature)
+    issues += check_sources_consistency(entries, sources or {})
     return issues
 
 
 # ---------------------------------------------------------------------------
 # 渲染
 # ---------------------------------------------------------------------------
-def category_order(entries: list[dict]) -> list[str]:
-    """第一批优先，其余按条目数降序 —— 让审核人先做能推动验收标准的那批。"""
+def category_order(entries: list[dict], primary_ids: set[str] | None = None) -> list[str]:
+    """含「第一批」条目的类别优先，其余按条目数降序 —— 让审核人先做能推动验收标准的那批。"""
+    primary_ids = primary_ids or set()
     counts: dict[str, int] = {}
+    primary_counts: dict[str, int] = {}
     for e in entries:
-        counts[e.get("category", "（无 category）")] = counts.get(e.get("category", "（无 category）"), 0) + 1
+        cat = e.get("category", "（无 category）")
+        counts[cat] = counts.get(cat, 0) + 1
+        if e["id"] in primary_ids:
+            primary_counts[cat] = primary_counts.get(cat, 0) + 1
 
     def sort_key(cat: str) -> tuple[int, int, str]:
-        return (0 if cat in FIRST_BATCH_CATEGORIES else 1, -counts[cat], cat)
+        return (0 if primary_counts.get(cat, 0) else 1, -counts[cat], cat)
 
     return sorted(counts, key=sort_key)
 
 
-def render(entries: list[dict], meta: dict, issues: list[dict], source_path: Path) -> str:
+def render(entries: list[dict], meta: dict, issues: list[dict], source_path: Path,
+           sources: dict | None = None) -> str:
     lines: list[str] = []
     add = lines.append
+
+    sources = sources or {}
+    src_entries = source_entries(sources)
+    src_by_id = {s.get("id"): s for s in src_entries}
+    primary_ids = primary_batch_ids(sources)
 
     total = len(entries)
     n_foods = sum(1 for e in entries if e["_group"] == "foods")
@@ -445,34 +554,55 @@ def render(entries: list[dict], meta: dict, issues: list[dict], source_path: Pat
     doubts = [i for i in issues if i["level"] == "存疑"]
     oks = [i for i in issues if i["level"] == "正常"]
 
+    def layer_counts(batch: str | None = None) -> dict[str, int]:
+        out: dict[str, int] = {}
+        for s in src_entries:
+            if batch and s.get("batch") != batch:
+                continue
+            out[str(s.get("layer"))] = out.get(str(s.get("layer")), 0) + 1
+        return out
+
+    def ref_of(s: dict) -> dict:
+        return s.get("reference") or {}
+
+    def mapping_cell(s: dict) -> str:
+        review = s.get("mapping_review")
+        if not review:
+            return "—"
+        accepted = review.get("accepted")
+        if accepted is True:
+            return "✅ 采纳"
+        if accepted is False:
+            return "❌ **未采纳**"
+        return "⏳ 待确认"
+
     add("# 食性表人工审核核验单（`food_properties.json`）")
     add("")
     add("> ⚠️ **本文件由脚本生成，请勿手工编辑。**")
     add(f"> 生成命令：`cd core && python scripts/build_food_review_sheet.py --out ../docs/"
         f"{DEFAULT_OUT.name}`")
     add(f"> 数据源：`core/data/{source_path.name}`（本脚本只读，不改数据、不改审核状态）")
-    add("> 对应挂起项：`docs/pending-items.md` **A1**（食性表 146 条全部未人工审核）")
+    add(f"> 来源依据：`docs/{DEFAULT_SOURCES.name}`（逐条登记来源与原文，**人工裁定过映射**）")
+    add("> 对应挂起项：`docs/pending-items.md` **A1**（食性表全部未人工审核）")
     add("")
     add("## 0. 这份单子的用法（先读）")
     add("")
-    add("A1 不是「造数据」，是**核验已有数据**：146 条的 `nature` / `flavors` 早已填好，")
+    add(f"A1 不是「造数据」，是**核验已有数据**：{total} 条的 `nature` / `flavors` 早已填好，")
     add("全部是 `pending`。终局动作（`approved` + `reviewed_by` / `reviewed_at`）**只有具备资质的**")
     add("中医师/中药师能做，脚本不替你判定。")
     add("")
     add("难点在于**食材偏性没有官方标准**：药典只管药材（34 味有官方接口可比），")
     add("GB/T 46939 只管体质分类与判定阈值。食材四气只有「中医饮食养生通行表述」。")
-    add("所以本单子把 146 条分四层，让审核人只看值得看的格子：")
+    add(f"所以本单子把 {total} 条分四层，让审核人只看值得看的格子：")
     add("")
     add("| 层 | 含义 | 谁来做 | 现状 |")
     add("|---|---|---|---|")
-    add("| ① 来源一致 | 找到权威/通行来源且与现值一致 | 脚本抓取 + 人工确认 | 阶段二 |")
-    add("| ② 来源冲突 | 来源之间或来源与现值不一致 | 人工裁决 | 阶段二 |")
-    add("| ③ 无来源 | 找不到可引来源，标「无源可引」 | 人工凭专业判断 | 阶段二 |")
-    add("| ④ 内部矛盾 | 表内自相矛盾，与外部来源无关 | **本脚本已跑完**（§2） | ✅ 见 §2 |")
+    add("| ① 来源一致 | 找到权威/通行来源且与现值一致 | 审核人核对后可 `approved` | 已跑完，见 **§4** |")
+    add("| ② 来源冲突 | 来源之间或来源与现值不一致 | 人工裁决（**不得直接 approved**） | 已跑完，见 **§4.2** |")
+    add("| ③ 无来源 | 找不到可引来源，标「无源可引」 | 人工凭专业判断 | 已跑完，见 **§4.3** |")
+    add("| ④ 内部矛盾 | 表内自相矛盾，与外部来源无关 | **脚本可查** | 见 **§2** |")
     add("")
-    add("来源口径（**已定**）：**官方优先 + 多源兜底 + 无源标空**——优先引国家卫健委 /")
-    add("中国营养学会的食养指南与膳食指南；其次 2–3 个通行来源交叉一致；都找不到就明确标")
-    add("「无源可引」。**不把通行表述伪装成权威依据。**")
+    add("来源口径（**已定**）：**官方优先 + 多源兜底 + 无源标空**。**不把通行表述伪装成权威依据。**")
     add("")
     add("⚠️ 产物里 `approved` 永远是 0，直到真的有人审核。**不要为了让界面好看批量置 approved**")
     add("——标记密度就是审核进度的可见反馈（`docs/maintenance.md` §9.3）。")
@@ -488,24 +618,38 @@ def render(entries: list[dict], meta: dict, issues: list[dict], source_path: Pat
     add(f"| 其中实际缺 `review_status` 字段 | **{len(missing_status)}** 条（上表按兼容回退计为 pending，"
         f"见 §2） |")
     add(f"| 文件级 `_meta.review_status` | `{meta.get('review_status')}` |")
+    if src_entries:
+        lc_all = layer_counts()
+        lc_primary = layer_counts(BATCH_PRIMARY)
+        add(f"| 来源登记表条目数 | **{len(src_entries)}**（其中「第一批」**{len(primary_ids)}** 条） |")
+        add(f"| 「第一批」分层 | " + "、".join(
+            f"{k} **{lc_primary.get(k, 0)}**"
+            for k in SOURCE_LAYERS if lc_primary.get(k)
+        ) + " |")
+        add(f"| 全部登记条目分层 | " + "、".join(
+            f"{k} **{lc_all.get(k, 0)}**"
+            for k in SOURCE_LAYERS if lc_all.get(k)
+        ) + " |")
     add(f"| ④ 层：矛盾 | **{len(contradictions)}** 类 |")
     add(f"| ④ 层：存疑 | {len(doubts)} 类 |")
     add(f"| ④ 层：已核对正常 | {len(oks)} 类 |")
     add("")
-    add("按类分布（★ = 第一批，优先审）：")
+    add("按类分布（`第一批` 列 = 该类里属第一批的条数，优先审）：")
     add("")
-    add("| 类别 | 条数 | 审核状态 |")
-    add("|---|---|---|")
-    for cat in category_order(entries):
+    add("| 类别 | 条数 | 第一批 | 审核状态 |")
+    add("|---|---|---|---|")
+    for cat in category_order(entries, primary_ids):
         group = [e for e in entries if e.get("category", "（无 category）") == cat]
         st: dict[str, int] = {}
         for e in group:
             st[review_status_of(e)] = st.get(review_status_of(e), 0) + 1
-        mark = "★ " if cat in FIRST_BATCH_CATEGORIES else ""
-        add(f"| {mark}{cat} | {len(group)} | " + "、".join(f"{k} {v}" for k, v in sorted(st.items())) + " |")
+        n_primary = sum(1 for e in group if e["id"] in primary_ids)
+        mark = f"**{n_primary}**" if n_primary else "—"
+        add(f"| {cat} | {len(group)} | {mark} | "
+            + "、".join(f"{k} {v}" for k, v in sorted(st.items())) + " |")
     add("")
 
-    add("## 2. ④ 层：内部矛盾 / 存疑（机器可查，已跑完）")
+    add("## 2. ④ 层：内部矛盾 / 存疑（机器可查）")
     add("")
     add("这一层不依赖任何外部来源，所以脚本当场就能跑完。**矛盾类必须先处理**——")
     add("它们与审核无关，是数据自身或数据与代码的关系出了问题。")
@@ -537,39 +681,140 @@ def render(entries: list[dict], meta: dict, issues: list[dict], source_path: Pat
     add("> `nature_math` 那一处前缀表，与本次数据审核无关。")
     add("")
 
-    add("## 3. 核验单骨架（146 条）")
+    add("## 3. 核验单（逐条）")
     add("")
-    add("阶段二的来源核对结果填进最后两列。**「无源可引」也是一个合法结论**，")
-    add("不要为了让格子好看而硬找来源。")
+    add("最后一列「判定」来自来源登记表；`○` = 属第一批（有来源可引）。")
+    add("**「无源可引」也是一个合法结论**，不要为了让格子好看而硬找来源。")
     add("")
-    for cat in category_order(entries):
+    for cat in category_order(entries, primary_ids):
         group = [e for e in entries if e.get("category", "（无 category）") == cat]
-        mark = "★ 第一批" if cat in FIRST_BATCH_CATEGORIES else ""
+        n_primary = sum(1 for e in group if e["id"] in primary_ids)
+        mark = f"　○ 第一批 {n_primary} 条" if n_primary else ""
         add(f"### {cat}（{len(group)} 条）{mark}")
         add("")
-        add("| # | id | 名称 | 四气 | 五味 | 审核状态 | 来源核对（阶段二） | 判定（阶段二） |")
-        add("|---|---|---|---|---|---|---|---|")
+        add("| # | | id | 名称 | 四气 | 五味 | 审核状态 | 来源值 | 来源档 | 判定（层/状态） |")
+        add("|---|---|---|---|---|---|---|---|---|---|")
         for i, e in enumerate(group, 1):
             natures = NATURE_CN.get(e.get("nature"), e.get("nature") or "—")
             flavors = "、".join(e.get("flavors") or []) or "—"
             status = review_status_of(e)
             flag = "⚠️ 缺字段" if "review_status" not in e else status
-            add(f"| {i} | `{e['id']}` | {e.get('name')} | {natures} | {flavors} | {flag} | | |")
+            s = src_by_id.get(e["id"])
+            tick = "○" if e["id"] in primary_ids else ""
+            if s:
+                ref = ref_of(s)
+                src_qi = ref.get("qi_word") or "—"
+                src_tier = ref.get("tier") or "—"
+                verdict = f"{s.get('layer')} {s.get('status')}"
+            else:
+                src_qi = src_tier = "—"
+                verdict = ""
+            add(f"| {i} | {tick} | `{e['id']}` | {e.get('name')} | {natures} | {flavors} | "
+                f"{flag} | {src_qi} | {src_tier} | {verdict} |")
         add("")
 
-    add("## 4. 阶段二作业口径（已定：官方优先 + 多源兜底 + 无源标空）")
+    if src_entries:
+        add("## 4. ①②③ 层：来源核对（事实源 = `docs/food-properties-sources.json`）")
+        add("")
+        add("| 优先级 | 来源 | 强度 | 用法 |")
+        add("|---|---|---|---|")
+        add("| ① | 《中国药典》2020 年版一部 | 最高 | 可直接采用（**药品**标准用作食品参考，须注明） |")
+        add("| ① | 食药物质目录（106 种） | **仅合规身份** | **只证明合规身份，不含四气，永不作四气基准** |")
+        add("| ② | 《中医饮食营养学》（50 号文件 §2 A 档 / §3 B 档） | 次高 | 可直接采用，须引原文列 |")
+        add("| ② | §5.3 别名索引（含《本草纲目》《中药学》） | 核对方/溯源用 | 取用时须写明是谁的书；**经典层不得当教材用** |")
+        add("| ③ | 无 | — | 标「无源可引」，凭专业判断 |")
+        add("")
+        add("> ⚠️ **① 层只表示「来源与现值一致」，不等于来源足够强**。来源档为「通行·经典」")
+        add("> （《本草纲目》）者，按 50 号文件 §5.4 的规则**不得当教材用**——是否据此 `approved`")
+        add("> 由审核人判断，不要只看层号。")
+        add("")
+
+        add("### 4.1 「第一批」逐条分层（判据＝有来源可引，与类别无关）")
+        add("")
+        add("| # | id | 名称 | 类别 | 项目四气 | 来源四气 | 来源档 | 基准条目 | 层 | 状态 | 映射裁定 |")
+        add("|---|---|---|---|---|---|---|---|---|---|---|")
+        primary = sorted(
+            (s for s in src_entries if s.get("batch") == BATCH_PRIMARY),
+            key=lambda s: (str(s.get("layer")), s.get("category") or "", s.get("id") or ""),
+        )
+        for i, s in enumerate(primary, 1):
+            ref = ref_of(s)
+            project = s.get("project") or {}
+            add(f"| {i} | `{s.get('id')}` | {s.get('name')} | {s.get('category')} | "
+                f"{project.get('nature_cn') or project.get('nature')} | {ref.get('qi_word') or '—'} | "
+                f"{ref.get('tier') or '—'} | {ref.get('matched_name') or s.get('name')} | "
+                f"{s.get('layer')} | {s.get('status')} | {mapping_cell(s)} |")
+        add("")
+
+        conflicts = sorted(
+            (s for s in src_entries if s.get("batch") == BATCH_PRIMARY and s.get("layer") == "②"),
+            key=lambda s: s.get("id") or "",
+        )
+        add("### 4.2 层② 来源冲突（**不得直接 approved**）")
+        add("")
+        if conflicts:
+            add("| id | 名称 | 项目值 | 来源值 | 基准条目 | 来源原文 | 处置 |")
+            add("|---|---|---|---|---|---|---|")
+            for s in conflicts:
+                ref = ref_of(s)
+                project = s.get("project") or {}
+                verbatim = ""
+                for ev in s.get("evidence") or []:
+                    if ev.get("verbatim") and not verbatim.startswith("（§5.3"):
+                        verbatim = ev["verbatim"]
+                        break
+                add(f"| `{s['id']}` | {s.get('name')} | {project.get('nature_cn')} | "
+                    f"{ref.get('qi_word')} | {ref.get('matched_name')} | {verbatim or '—'} | "
+                    f"{s.get('open_question') or '—'} |")
+        else:
+            add("（第一批内无冲突项。）")
+        add("")
+        add("> **这些是「口径分歧」而非「数据错」**：基准是教材/经典层，强度不足以推翻现值，")
+        add("> 所以一律**保留项目值**并在数据里加 `note` 留痕；`nature` 未改。")
+        add("")
+
+        no_source = sorted(
+            (s for s in src_entries if s.get("layer") == "③"), key=lambda s: s.get("id") or ""
+        )
+        add("### 4.3 层③ 无源可引")
+        add("")
+        if no_source:
+            for s in no_source:
+                review = s.get("mapping_review") or {}
+                add(f"- `{s.get('id')}`（{s.get('name')}）：{s.get('status')}"
+                    + (f"　映射裁定：{review.get('reason')}" if review.get("reason") else ""))
+        else:
+            add("（本批无。）")
+        add("")
+        add("> 三类（蔬菜/调味/水果）中另有 13 条在 50 号文件与目录里**均无条目**，")
+        add("> 清单见 `docs/food-properties-batch2-plan.md` 附录，未登记进来源登记表。")
+        add("")
+
+        mapped = sorted(
+            (s for s in src_entries if s.get("mapping_review")),
+            key=lambda s: (str((s.get("mapping_review") or {}).get("group") or ""), s.get("id") or ""),
+        )
+        add("### 4.4 非正名映射的裁定结果（条目名 ≠ 语料条目名）")
+        add("")
+        add("| id | 条目 → 基准 | 组 | 裁定 | 理由 |")
+        add("|---|---|---|---|---|")
+        for s in mapped:
+            review = s.get("mapping_review") or {}
+            ref = ref_of(s)
+            add(f"| `{s.get('id')}` | {s.get('name')} → **{ref.get('matched_name') or '—'}** | "
+                f"{review.get('group')} | {mapping_cell(s)} | {review.get('reason')} |")
+        add("")
+        add("> ⚠️ 每条非正名映射都是**承重**的：这类条目通常只有 1 条证据，映射一否即落 ③ 无源。")
+        add("> 最典型的是 `lianou`（莲藕→藕）——它被判为「口径分歧」的前提正是这条映射成立。")
+        add("")
+
+    add("## 5. 口径与纪律")
     add("")
-    add("| 优先级 | 来源 | 说明 |")
-    add("|---|---|---|")
-    add("| 1 | 国家卫健委 / 中国营养学会的**食养指南与膳食指南** | 半官方、可引用性最高；但按疾病/人群编写，**不按食材列四气**，覆盖不全 |")
-    add("| 2 | 中医饮食养生**通行表述**的多源交叉 | 2–3 源一致才记「来源一致」；结论只能是「来源一致」，**不能**写成「正确」 |")
-    add("| 3 | 找不到任何来源 | 标**「无源可引」**，留给审核人凭专业判断 |")
-    add("")
-    add("两条纪律：")
-    add("")
-    add("1. **不把通行表述伪装成权威依据**——引用时必须写清是第 2 档来源，不得混入指南口径。")
-    add("2. **第一批只做 ★ 主食 / 乳饮 / 水产**：这些大类在指南里覆盖最好，最可能先产出 `approved`，")
-    add("   让 A1 的验收标准（`approved > 0`）先动起来。菜肴 / 饮料 / 冷饮 / 甜点最易错，放后面。")
+    add("1. **不把通行表述伪装成权威依据**——引用时必须写清来源档，不得混入指南口径。")
+    add("2. **第一批 = 有来源可引**（由 `docs/food-properties-sources.json` 的 `batch` 字段定义，")
+    add("   **不是类别**）。旧的「★ 主食/乳饮/水产」定义已作废：那三个大类恰是加工品最密集、")
+    add("   最没来源的区段；官方层对食材几乎零覆盖（全表能沾到官方的只有 4 条）。")
+    add("3. **`approved` 只能由具备资质的中医师/中药师填**，本单子只提供依据。")
     add("")
     return "\n".join(lines) + "\n"
 
@@ -596,12 +841,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--food", type=Path, default=DEFAULT_FOOD, help="food_properties.json 路径")
     parser.add_argument("--herbs", type=Path, default=DEFAULT_HERBS, help="herbs.json 路径（跨表核对用）")
+    parser.add_argument("--sources", type=Path, default=DEFAULT_SOURCES,
+                        help="来源登记表路径（docs/food-properties-sources.json，①②③ 层的事实源）")
     parser.add_argument("--out", type=Path, default=None,
                         help=f"写入文件（默认只打印；约定路径 {DEFAULT_OUT}）")
     parser.add_argument("--check", action="store_true",
                         help="校验 --out 指到的产物是否与当前数据一致（可进 CI）")
     parser.add_argument("--strict", action="store_true",
-                        help="存在④层「矛盾」时返回 exit 1")
+                        help="存在「矛盾」（含④层与来源登记漂移）时返回 exit 1")
     args = parser.parse_args(argv)
 
     if not args.food.exists():
@@ -610,8 +857,9 @@ def main(argv: list[str] | None = None) -> int:
 
     meta, entries = load_foods(args.food)
     herb_nature = load_herb_nature(args.herbs)
-    issues = run_checks(entries, herb_nature)
-    text = render(entries, meta, issues, args.food)
+    sources = load_sources(args.sources)
+    issues = run_checks(entries, herb_nature, sources)
+    text = render(entries, meta, issues, args.food, sources)
 
     contradictions = [i for i in issues if i["level"] == "矛盾"]
 
@@ -637,6 +885,16 @@ def main(argv: list[str] | None = None) -> int:
         st[review_status_of(e)] = st.get(review_status_of(e), 0) + 1
     print("、".join(f"{k} {v}" for k, v in sorted(st.items())))
     print(f"④ 层：矛盾 {len(contradictions)} 类 / 存疑 {len([i for i in issues if i['level'] == '存疑'])} 类")
+    if sources:
+        src_entries = source_entries(sources)
+        primary = [s for s in src_entries if s.get("batch") == BATCH_PRIMARY]
+        layers: dict[str, int] = {}
+        for s in primary:
+            layers[str(s.get("layer"))] = layers.get(str(s.get("layer")), 0) + 1
+        print("来源登记表：" + f"{len(src_entries)} 条（第一批 {len(primary)} 条："
+              + "、".join(f"{k} {layers[k]}" for k in sorted(layers)) + "）")
+    else:
+        print("⚠️ 未找到来源登记表：①②③ 层无法渲染（只输出 ④ 层）")
     print()
     print(_summarize(issues))
     print()
@@ -647,7 +905,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[已写入] {args.out}（{len(text.splitlines())} 行）")
 
     if args.strict and contradictions:
-        print(f"[失败] --strict：存在 {len(contradictions)} 类④层矛盾", file=sys.stderr)
+        print(f"[失败] --strict：存在 {len(contradictions)} 类「矛盾」（含④层与来源登记漂移）", file=sys.stderr)
         return 1
     return 0
 

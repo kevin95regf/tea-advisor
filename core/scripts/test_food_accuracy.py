@@ -36,7 +36,10 @@ CASES: list[dict] = [
     {"text": "中午吃了碗兰州拉面", "expect": {"兰州拉面": "neutral"}},
     {"text": "晚上火锅吃撑了，都是肉", "expect": {"火锅": "hot"}},
     {"text": "吃了关东煮和烤红薯", "expect": {"关东煮": "warm", "烤红薯": "warm"}},
-    {"text": "中午吃了个三明治配冰美式", "expect": {"三明治": "neutral", "冰美式": ("cool", "cold")}},
+    # 冰美式：咖啡条目 base 温、冰镇变体记 neutral（温 + 冰镇 -1 = 平）。
+    # 2026-09-17 修 ④ 层矛盾时把该变体由 cool 改 neutral —— 原来它与
+    # 「可乐/红薯/鸡肉/吐司」的冰镇变体规则不一致，是表内唯一离群条目。
+    {"text": "中午吃了个三明治配冰美式", "expect": {"三明治": "neutral", "冰美式": "neutral"}},
     {"text": "喝了杯菊花茶", "expect": {"菊花茶": "cool"}},
     {"text": "晚上喝了碗银耳莲子羹", "expect": {"银耳": "neutral"}},
     {"text": "吃了根香蕉和一个苹果", "expect": {"香蕉": "cold", "苹果": "cool"}},

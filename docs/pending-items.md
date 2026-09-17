@@ -3,8 +3,8 @@
 > **这份清单是挂起事项的唯一真源。** 其他地方（`handover.md`、`maintenance.md`）只提摘要，
 > 一律以本文为准。任何一项解决了，就在这里更新状态并记录解决方式。
 >
-> 快照时间：**2026-09-17**　共 **10** 项记录在案（A/B/C/D/E 五类），
-> 其中 **D2 已解决**、**B3 的阻塞已解除**（九型已上线，余下 244 格是完备度而非功能阻塞），其余 8 项待处理。
+> 快照时间：**2026-09-17**　共 **11** 项记录在案（A/B/C/D/E 五类），
+> 其中 **D2、E1 已解决**、**B3 的阻塞已解除**（九型已上线，余下 244 格是完备度而非功能阻塞），其余 8 项待处理。
 
 ---
 
@@ -12,7 +12,8 @@
 
 | ID | 事项 | 谁来解 | 阻塞什么 | 状态 |
 |---|---|---|---|---|
-| **A1** | 食性表 146 条全部未人工审核 | 具备资质的中医师/中药师 | ⛔ **对外提供服务** | 待人工 |
+| **A1** | 食性表 147 条全部未人工审核 | 具备资质的中医师/中药师 | ⛔ **对外提供服务** | 待人工 |
+| **A2** | A1 核对遗留 4 项待确认（酱油 + 3 味菇等） | 项目所有者 | 不影响功能，影响 3 条数据的最终取值 | 待确认 |
 | **B1** | 7 处药典不一致待复核 | nanple | 数据准确性（不阻塞功能） | 待 nanple |
 | **B2** | 问卷项目 `phlegm_dampness` 拼写不一致 | nanple | 问卷接入 | 待 nanple |
 | **B3** | 244 个配伍判定（九型已上线，余下是完备度） | nanple | 推荐质量（不再阻塞体质模型 5→9 型） | 已部分解决 |
@@ -20,7 +21,7 @@
 | **C2** | 国标 A 栏是转引，非标准正文 | 需取得资料 | 逐字对齐国标 | 待外部资料 |
 | **D1** | 玫瑰花/茉莉花的代码改动 | 项目所有者定时机 | 合规处置落地 | 待实施 |
 | **D2** | 本地提交未推送 | 项目所有者 | 协作者看不到这批产出 | ✅ **已解决** |
-| **E1** | 3 条食性表缺 `review_status` | 开发 | 无（行为已正确） | 待清理 |
+| **E1** | 3 条食性表缺 `review_status` | 开发 | 无（行为已正确） | ✅ **已解决**（2026-09-17） |
 | **E2** | `herbs.json` 34 味缺逐条审核字段 | 开发 | A1 的验收标准落不到 herbs | 待清理 |
 
 **⛔ 标记的是真正的硬阻碍**：只要 A1 没解决，「对外提供服务」就不能说完成。
@@ -30,18 +31,31 @@
 
 # A 类 · 对外服务的硬阻碍
 
-## A1　食性表 146 条全部未人工审核
+## A1　食性表 147 条全部未人工审核
 
 | | |
 |---|---|
-| **现状** | `food_properties.json` 的 146 条（128 食材 + 18 茶饮），逐条 `review_status` **全部是 `pending`**，没有一条 `approved` |
+| **现状** | `food_properties.json` 的 147 条（129 食材 + 18 茶饮），逐条 `review_status` **全部是 `pending`**，没有一条 `approved` |
 | **范围** | ⚠️ **本项只覆盖 `food_properties.json`。** `herbs.json` 不是「逐条 pending」——它**根本没有逐条审核字段**，审核状态只在文件级 `_meta.review_status`。已单列为 **E2** |
 | **影响** | 所有条目虽按 0.9 置信度参与判定，但界面**必须**标「待验证」。这是刻意的保守设计，不是 bug |
 | **为何只有人能解** | `approved` 意味着「真·硬规则库、界面不再标注」，必须由具备资质的中医师/中药师逐条确认，并同时填写 `reviewed_by` / `reviewed_at` |
-| **需要什么** | 审核人 + 一份逐条审核流程（`docs/maintenance.md` §9.2/§9.3 有正确姿势）。**核验单已就绪**：`docs/food-properties-review-sheet.md`（脚本生成、只读可重跑）。④层内部矛盾（不依赖外部来源）已跑完；①②③ 层按「官方优先 + 多源兜底 + 无源标空」推进，第一批从 ★ 主食/乳饮/水产 开始 |
+| **需要什么** | 审核人 + 一份逐条审核流程（`docs/maintenance.md` §9.2/§9.3 有正确姿势）。**核验单已就绪**：`docs/food-properties-review-sheet.md`（脚本生成、只读可重跑）。④ 层内部矛盾已清零（4 类于 2026-09-17 修完）。①②③ 层按「官方优先 + 多源兜底 + 无源标空」推进，**第一批已定为「蔬菜/调味/水果中有来源可引的 33 条」**（**① 28 一致 + ② 4 冲突 + ③ 1 无源**），清单见 `docs/food-properties-batch2-confirm.md`。<br>⚠️ **原定第一批「★ 主食/水产/乳饮」已作废**——那 29 条多为加工食品（米饭、饺子、奶茶），50 号文件 §5.2「真无据清单」本就覆盖它们，是**结构性**无来源，不是核对不到位。核验单的「第一批」判据已改为**来源登记表里 `batch=第一批`**（`build_food_review_sheet.py` 里写死类别的 `FIRST_BATCH_CATEGORIES` 已删除），不再按类别判定 |
 | **验收标准** | `food_properties.json` 的 `review_status` 分布中 `approved` 条数 > 0，且每条 approved 都有 `reviewed_by` + `reviewed_at` |
 | **注意** | ⚠️ **不要为了界面好看而批量置 approved**。标记密度就是审核进度的可见反馈，批量置等于把这个反馈抹掉 |
-| **相关文件** | `core/data/food_properties.json`、`docs/food-properties-review-sheet.md`（核验单，脚本生成）、`core/scripts/build_food_review_sheet.py`（生成工具，**只读**，`--check` 可进 CI） |
+| **相关文件** | `core/data/food_properties.json`、`docs/food-properties-review-sheet.md`（核验单，脚本生成）、`core/scripts/build_food_review_sheet.py`（生成工具，**只读**，`--check` 可进 CI）、`docs/food-properties-sources.json`（47 条来源登记，①②③ 层的事实源）、`docs/food-properties-batch2-confirm.md`（第一批 33 条清单，待确认）、`docs/food-properties-batch2-plan.md`（核对方案） |
+
+## A2　A1 核对遗留的 4 项待确认（酱油 + 3 味菇）
+
+> 属于 A1 的一部分，但**不能用「来源核对」解决**——都是「数据该不该改」的决定。单列出来，
+> 免得混在 33 条清单里被当成已结案。**未确认前不改数据**。
+
+| | |
+|---|---|
+| **① 酱油（`jiangyou`）** | 项目记「平」；依据《本草纲目》「酱」记「温」。映射本身可用，但 50 号文件 §5.4 自定「仅经典有载、教材无（**不得当教材用**）」——纲目强度低于教材，**据此改判不成立**，故 nature 不改、单列待确认。核验单 §4.2 已按 ② 层登记 |
+| **② 金针菇 / 杏鲍菇 / 平菇** | 三者**暂留在 `mogu` 条目上**，因而随条目被判为**寒**（原 `mogu` 为平）。但它们是另外 3 个物种，50 号文件**无条目**，属 ③ 无源。两条路：随条目暂留（现状）／各自独立成条后标无源待核。**倾向前者**，待确认 |
+| **③ 蘑菇拆条的收尾** | `mogu` 已收窄为「蘑菰」（寒，纲目 23487）；新增 `xianggu`「香菇」（平，香蕈）。新条目 `review_status: pending`、无 `reviewed_by`，与全表一致。**待确认的是**：`xianggu` 该不该继承原 `mogu` 的任何审核痕迹（当前**不继承**，按新条目从零开始） |
+| **④ C 组 4 条来源值的限定写法** | `shengcai`（生菜→莴苣）、`lianou`（莲藕→藕）、`suan`（蒜→大蒜）三条已采纳并各带限定；`qingcai`（青菜→油菜）**未采纳**、已降级 ③。限定措辞若要调整，改 `docs/food-properties-sources.json` 的 `mapping_review.reason` 即可 |
+| **相关文件** | `docs/food-properties-sources.json`（`_meta.mapping_review` 与各条 `mapping_review`）、`docs/food-properties-review-sheet.md` §4.2/§4.3/§4.4、`core/data/food_properties.json` |
 
 ---
 
@@ -149,15 +163,16 @@
 
 ## E1　3 条食性表缺 `review_status`
 
+> **状态：已解决（2026-09-17）** —— 随 A1 的 D5 批次一并补齐，三条奶茶已写入 `review_status: "pending"`。
+
 | | |
 |---|---|
-| **现状** | `food_properties.json` 里有 3 条只有旧的 `reviewed` 布尔字段、**没有 `review_status`**：**冰奶茶、去冰奶茶、热奶茶**（其余 143 条正常） |
+| **现状** | ~~3 条缺字段~~ → **0 条**。三条奶茶（冰奶茶、去冰奶茶、热奶茶）已随 2026-09-17 的 D5 批次补上 `review_status`，现全表 147 条字段统一 |
 | **成因** | 这三条是在 `patch_food_table.py` 那次三态迁移之后加入的，漏走了迁移 |
-| **✅ 行为已正确，不是 bug** | `food_lookup.py:454-457` 有兼容回退：`status = "approved" if entry.get("reviewed") else "pending"`。这三条 `reviewed` 均为 `false` → 被正确当成 `pending` → 界面照常标「待验证」。实测 `patch_food_table.py --dry-run` 确认：迁移这 3 条后分布为**已通过 0 / 待审核 146 / 不通过 0** |
-| **影响** | 无功能影响，**仅数据字段不统一**。风险是以后有人写脚本只读 `review_status`、不做回退，就会漏掉这 3 条 |
-| **需要什么** | 跑一次 `python scripts/patch_food_table.py`（先 `--dry-run` 确认是 3 条、0 处修正） |
-| **为何没顺手做** | 项目所有者要求数据文件改动走显式决定，不擅自改 |
-| **验收标准** | 146 条全部有合法 `review_status`（三态之一） |
+| **✅ 行为本来就正确，不是 bug** | `food_lookup.py:454-457` 有兼容回退：`status = "approved" if entry.get("reviewed") else "pending"`。这三条 `reviewed` 均为 `false` → 被正确当成 `pending` → 界面照常标「待验证」。实测 `patch_food_table.py --dry-run` 确认：迁移这 3 条后分布为**已通过 0 / 待审核 147 / 不通过 0** |
+| **影响** | 原本无功能性影响，**仅数据字段不统一**。风险是以后有人写脚本只读 `review_status`、不做回退，就会漏掉这 3 条 —— 这正是后来补它的理由 |
+| **怎么解的** | 在 `core/scripts/patch_food_table.py` 的 `ENTRY_FIXES` 里给这 3 条补 `review_status: "pending"`，再跑 `python scripts/patch_food_table.py`（数据改动走正规通道，幂等、强制 LF） |
+| **验收标准** | 全表 147 条全部有合法 `review_status`（三态之一）。`core/tests/test_handover_docs.py::test_pending_e1_matches_actual_data_state` 已由「恰好 3 条缺字段」的**数据快照**改为**派生不变式**（有缺即红 + 概览状态必须已关） |
 
 ## E2　`herbs.json` 34 味缺逐条审核字段
 

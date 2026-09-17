@@ -449,8 +449,7 @@
       "name": "鸡肉",
       "aliases": [
         "鸡腿",
-        "鸡胸",
-        "炸鸡"
+        "鸡胸"
       ],
       "category": "肉类",
       "nature": "warm",
@@ -460,8 +459,7 @@
       "keywords": [
         "鸡肉",
         "鸡腿",
-        "鸡胸",
-        "炸鸡"
+        "鸡胸"
       ],
       "variant_nature": {
         "deep_fried": "hot"
@@ -469,7 +467,7 @@
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
-      "review_note": null,
+      "review_note": "移除「炸鸡」别名与关键词：它属于独立条目 zhaji（热），留着会让炸鸡被判成鸡肉（温）属性",
       "review_status": "pending"
     },
     {
@@ -719,10 +717,11 @@
         "大白菜",
         "娃娃菜"
       ],
+      "note": "口径分歧：项目值凉；《中医饮食营养学》行2541 记平。未获权威裁定前保留项目值。",
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
-      "review_note": null,
+      "review_note": "加 note 留痕（口径分歧），nature 未改",
       "review_status": "pending"
     },
     {
@@ -804,10 +803,11 @@
         "黄瓜",
         "青瓜"
       ],
+      "note": "口径分歧：项目值凉；《中医饮食营养学》行786 记寒。未获权威裁定前保留项目值。",
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
-      "review_note": null,
+      "review_note": "加 note 留痕（口径分歧），nature 未改",
       "review_status": "pending"
     },
     {
@@ -1124,19 +1124,21 @@
       "id": "mogu",
       "name": "蘑菇",
       "aliases": [
-        "香菇",
+        "蘑菰",
+        "口蘑",
         "金针菇",
         "杏鲍菇",
         "平菇"
       ],
       "category": "蔬菜",
-      "nature": "neutral",
+      "nature": "cold",
       "flavors": [
         "sweet"
       ],
       "keywords": [
         "蘑菇",
-        "香菇",
+        "蘑菰",
+        "口蘑",
         "金针菇",
         "杏鲍菇",
         "平菇"
@@ -1144,7 +1146,32 @@
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
-      "review_note": null,
+      "review_note": "拆条后收窄为「蘑菰」（寒，纲目 23487）：香菇已移至 xianggu；四气由 neutral 改 cold。金针菇/杏鲍菇/平菇是另外 3 个物种、无来源，暂留本条目，另开挂起项",
+      "review_status": "pending"
+    },
+    {
+      "id": "xianggu",
+      "name": "香菇",
+      "aliases": [
+        "香蕈",
+        "冬菇",
+        "花菇"
+      ],
+      "category": "蔬菜",
+      "nature": "neutral",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "香菇",
+        "香蕈",
+        "冬菇",
+        "花菇"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": "由 mogu 拆出（④层矛盾：一个条目代表两个四气不同的物种）",
       "review_status": "pending"
     },
     {
@@ -1183,10 +1210,11 @@
         "莲藕",
         "藕"
       ],
+      "note": "口径分歧：项目值凉；《中医饮食营养学》行609 记寒、《本草纲目》26315 正条记平（同条引《大明》作温）。未获权威裁定前保留项目值。",
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
-      "review_note": null,
+      "review_note": "加 note 留痕（口径分歧，三值并列），nature 未改",
       "review_status": "pending"
     },
     {
@@ -1789,12 +1817,12 @@
         "拿铁"
       ],
       "variant_nature": {
-        "cold": "cool"
+        "cold": "neutral"
       },
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
-      "review_note": null,
+      "review_note": "冰镇变体由 cool 改 neutral：温 + 冰镇 -1 = 平，与其余变体条目同规则",
       "review_status": "pending"
     },
     {
@@ -2475,8 +2503,8 @@
         "希腊式酸奶",
         "greek"
       ],
-      "note": "脱乳清后质地厚、味偏酸，较普通酸奶更偏凉；多为冷藏食用",
       "variant_nature": {},
+      "note": "脱乳清后质地厚、味偏酸，较普通酸奶更偏凉；多为冷藏食用",
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
@@ -2554,8 +2582,8 @@
         "寿司卷",
         "sushi"
       ],
-      "note": "米饭平，但常配生鱼与醋，整体偏凉；生食款更偏寒",
       "variant_nature": {},
+      "note": "米饭平，但常配生鱼与醋，整体偏凉；生食款更偏寒",
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
@@ -2725,10 +2753,10 @@
         "吐司",
         "toast"
       ],
-      "note": "小麦制品，属性近馒头；烤过略偏温",
       "variant_nature": {
         "grilled": "warm"
       },
+      "note": "小麦制品，属性近馒头；烤过略偏温",
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
@@ -2802,7 +2830,8 @@
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
-      "review_note": null
+      "review_note": null,
+      "review_status": "pending"
     },
     {
       "id": "qubing_naicha",
@@ -2825,7 +2854,8 @@
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
-      "review_note": null
+      "review_note": null,
+      "review_status": "pending"
     },
     {
       "id": "re_naicha",
@@ -2846,7 +2876,8 @@
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
-      "review_note": null
+      "review_note": null,
+      "review_status": "pending"
     }
   ],
   "tea_drinks": {

@@ -1,0 +1,2390 @@
+{
+  "_meta": {
+    "title": "食性表四气来源登记表（food_properties.json 核验依据）",
+    "version": "0.2.0",
+    "compiled_at": "2026-09-17",
+    "purpose": "逐条登记 food_properties.json 每条四气可引的来源与原文，供人工审核人据此判定 review_status。**本文件不修改任何项目数据。**",
+    "why_this_file": "沿用 docs/constitution-9-types.json → .md 的惯例：JSON 是事实源，docs/food-properties-review-sheet.md 是渲染产物。",
+    "scope": "第一批 = 蔬菜/调味/水果三类中「有来源可引」的条目；其余有来源条目在 batch 标「后续」。无来源条目不入本表。",
+    "mapping_rules": {
+      "注": "与 core/data/herb_nature_reference.json 的 _meta.mapping_rules.nature 完全一致，不新造映射。",
+      "大寒": "cold",
+      "寒": "cold",
+      "微寒": "cool",
+      "凉": "cool",
+      "平": "neutral",
+      "微温": "warm",
+      "温": "warm",
+      "热": "hot",
+      "大热": "hot"
+    },
+    "reference_priority": "四气比对基准按强度取：① 药典 > ② 《中医饮食营养学》A 档 > ② §5.3 别名索引。目录只给合规身份，永不作四气基准。",
+    "source_registry": {
+      "chp2020": {
+        "label": "《中华人民共和国药典》2020 年版一部",
+        "tier": "官方",
+        "strength": "最高",
+        "how": "项目既有 core/data/herb_nature_reference.json 逐条对照（可由 scripts/build_herb_crosscheck.py --refresh 复现）",
+        "url": "https://ydz.chp.org.cn/",
+        "caveat": "药典是**药品**标准；项目把它用作食品/茶饮方向的属性参考，用途不同。"
+      },
+      "fm_catalog": {
+        "label": "按照传统既是食品又是中药材的物质目录（106 种）",
+        "tier": "官方",
+        "strength": "仅合规身份",
+        "how": "core/data/food_medicine_catalog.json",
+        "caveat": "只证明合规身份，**不含四气**，不得作为四气依据。"
+      },
+      "s1_dietetics": {
+        "label": "《中医饮食营养学》（50 号文件源层 S1）",
+        "tier": "通行·教材",
+        "strength": "次高（唯一逐条食物给性味归经的教材）",
+        "how": "references/50-食物四气五味.md §2 A 档 / §3 B 档 / §5.3 别名索引",
+        "caveat": "**非官方标准**。教材口径；引用须引原文列、不可只引四气；行号绑定当前语料版本。"
+      },
+      "s2_materia": {
+        "label": "《中药学》七版（源层 S2）",
+        "tier": "通行·教材",
+        "strength": "核对方",
+        "how": "50 号文件 §5.3 部分行 locator 含 S2 行号",
+        "caveat": null
+      },
+      "s3_bencao": {
+        "label": "《本草纲目》（源层 S3）",
+        "tier": "通行·经典",
+        "strength": "溯源用",
+        "how": "50 号文件 §5.3 部分行",
+        "caveat": "明清前体系，**只能定「古籍怎么说」**，不等于现代结论；引用须写明「《本草纲目》」。"
+      }
+    },
+    "hard_rules": [
+      "① 层（来源与现状一致）才建议 approved；② 层（冲突）必须先解决方向，不得直接 approved。",
+      "③ 层（无源可引）注明「无权威来源，凭专业判断」，**不得用通行表述伪装权威依据**。",
+      "**空缺 ≠ 安全/正确**，未判定只表示未判定。",
+      "写入审核结论（reviewed_by/reviewed_at）只属于有资质的人；本表只提供依据。",
+      "how 字段为「别名/等价名」者，其对应关系**须人工确认**后才可用；结论逐条记在 entries[].mapping_review（见 _meta.mapping_review）。"
+    ],
+    "decisions_ref": {
+      "date": "2026-09-17",
+      "where": "docs/food-properties-batch2-confirm.md §0 / docs/food-properties-batch2-plan.md §6",
+      "note": "口径分歧（**性质＝来源口径之争，非数据错**）：白菜/黄瓜/莲藕「保留项目值并在数据里标注分歧」（已加 note）；酱油「不改，留作待确认」；蘑菇「拆两条」（蘑菰 寒 / 香蕈 平，**已在 D5 执行**）。另：12 条非正名映射已逐条裁定（见 _meta.mapping_review）；金针菇/杏鲍菇/平菇 归「单列待确认」，暂留 mogu、不影响现有行为（另开挂起项）。本文件 entries[].open_question **保留原问题不删改**——它记录「当时待裁决什么」，不承担记录结论的职责。"
+    },
+    "counts": {
+      "后续|一致": 8,
+      "后续|仅身份，无四气可比": 1,
+      "后续|冲突": 5,
+      "第一批|一致": 28,
+      "第一批|冲突": 4,
+      "第一批|无源可引（映射未获采纳）": 1,
+      "total": 47
+    },
+    "known_limitations": [
+      "本表由脚本从 50 号文件机械匹配生成；其中 17 条非正名映射已**逐条人工裁定**，结论见 entries[].mapping_review。",
+      "50 号文件的「四气」列是提取值，非原文；引用时应引 verbatim 列。",
+      "食性表 147 条中另有 84 条在本表与 50 号文件中均无来源（层③），16 条属 §5.2 真无据。",
+      "第一批 33 条里有 1 条（`qingcai`）因映射未获采纳而降级为 ③；三类（蔬菜/调味/水果）中另有 13 条在 50 号文件与目录里均无条目（清单见 docs/food-properties-batch2-plan.md 附录），未登记进本表。"
+    ],
+    "mapping_review": {
+      "date": "2026-09-17",
+      "method": "逐条给出「id／项目现值／语料值／依据行号／对当关系／判断理由／若否定的后果」，由项目所有者逐条裁定。汇报稿见 docs/food-properties-batch2-confirm.md「C 组详解」。",
+      "scope": "第一批 33 条中的 12 条非正名映射（A 药典收载名 3 / B §5.3 别名词 1 / C 等价名 4 / D §5.3 纲目别名 4）。另有 5 条（土豆/玉米/牛奶/螃蟹/海带）同属非正名但由 §5.3 直接给定、不属待裁定范围，也一并登记。",
+      "outcome": {
+        "accepted": 15,
+        "rejected": 1,
+        "pending": 1,
+        "accepted_note": "A 组 3 条 how 改为「正名（药典收载名）」；C 组 3 条按接受处理并各带限定；B 组 1 条、D 组 3 条（含新增的香菇）沿用文件口径。",
+        "rejected_detail": "`qingcai` 青菜→油菜 **未获采纳** → 降级为 ③ 无源可引，退出可 approved 批次（第一批一致数 28 → 27）。",
+        "pending_detail": "`jiangyou` 酱油→酱：映射本身可用，但基准（《本草纲目》）强度不足以改项目值，nature 不改，单列待确认。"
+      },
+      "burden_note": "⚠️ 每条非正名映射都是**承重**的：这些条目通常只有 1 条证据，映射一否即落 ③ 无源。`lianou` 最典型——它被判为「口径分歧」的前提正是「莲藕＝藕」成立；映射否掉，它就不是分歧而是无源。"
+    }
+  },
+  "entries": [
+    {
+      "id": "tudou",
+      "name": "土豆",
+      "category": "主食",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "马铃薯",
+          "how": "别名/等价名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1870（50 号文件 §2）",
+          "verbatim": "甘，平。入胃、大肠经。",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "马铃薯",
+        "locator": "《中医饮食营养学》行1870（50 号文件 §2）",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "§5.3 别名索引直接给定",
+        "reason": "土豆→马铃薯，文件 §5.3 直接给定。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "yumi",
+      "name": "玉米",
+      "category": "主食",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "玉蜀黍",
+          "how": "别名/等价名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1391（50 号文件 §2）",
+          "verbatim": "甘，平。入大肠、胃经。",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "玉蜀黍",
+        "locator": "《中医饮食营养学》行1391（50 号文件 §2）",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "§5.3 别名索引直接给定",
+        "reason": "玉米→玉蜀黍，文件 §5.3 直接给定。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "niunai",
+      "name": "牛奶",
+      "category": "乳饮",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "牛乳",
+          "how": "别名",
+          "alias_from": "牛奶",
+          "locator": "50 号文件 §5.3 别名索引（S1:2572）",
+          "verbatim": null,
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平",
+          "note": "语料条目名为「牛乳」，四气取自索引列。"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "牛乳",
+        "locator": "50 号文件 §5.3 别名索引（S1:2572）",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "§5.3 别名索引直接给定",
+        "reason": "牛奶→牛乳，文件 §5.3 直接给定。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "haili",
+      "name": "海带",
+      "category": "水产",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "salty"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "fm_catalog",
+          "tier": "官方·目录(仅身份)",
+          "matched_name": "昆布",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "食药物质目录（2002-51）「昆布」",
+          "verbatim": null,
+          "qi_word": null,
+          "qi_mapped": null,
+          "qi_mapped_cn": null,
+          "note": "目录只给「既是食品又是中药材」的合规身份，不含四气。"
+        },
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·经典",
+          "matched_name": "昆布",
+          "how": "别名",
+          "alias_from": "海带",
+          "locator": "50 号文件 §5.3 别名索引（纲目 17666；S2:7243）",
+          "verbatim": null,
+          "qi_word": "寒",
+          "qi_mapped": "cold",
+          "qi_mapped_cn": "寒",
+          "note": "语料条目名为「昆布」，四气取自索引列。"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·经典",
+        "matched_name": "昆布",
+        "locator": "50 号文件 §5.3 别名索引（纲目 17666；S2:7243）",
+        "qi_word": "寒",
+        "qi_mapped": "cold",
+        "qi_mapped_cn": "寒"
+      },
+      "nature_match": false,
+      "delta": "项目「凉」 vs 来源「寒」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「凉」还是来源值「寒」为准？",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "§5.3 别名索引直接给定",
+        "reason": "海带→昆布，文件 §5.3 直接给定。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "pangxie",
+      "name": "螃蟹",
+      "category": "水产",
+      "batch": "后续",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "salty"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "蟹",
+          "how": "别名/等价名",
+          "alias_from": "蟹",
+          "locator": "《中医饮食营养学》行1687（50 号文件 §2）",
+          "verbatim": "咸，寒。入肝、胃经。",
+          "qi_word": "寒",
+          "qi_mapped": "cold",
+          "qi_mapped_cn": "寒"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "蟹",
+        "locator": "《中医饮食营养学》行1687（50 号文件 §2）",
+        "qi_word": "寒",
+        "qi_mapped": "cold",
+        "qi_mapped_cn": "寒"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "§5.3 别名索引直接给定",
+        "reason": "螃蟹→蟹，文件 §5.3 直接给定。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "zicai",
+      "name": "紫菜",
+      "category": "水产",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "salty",
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "紫菜",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行962（50 号文件 §2）",
+          "verbatim": "甘、咸，寒。入肺经。",
+          "qi_word": "寒",
+          "qi_mapped": "cold",
+          "qi_mapped_cn": "寒"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "紫菜",
+        "locator": "《中医饮食营养学》行962（50 号文件 §2）",
+        "qi_word": "寒",
+        "qi_mapped": "cold",
+        "qi_mapped_cn": "寒"
+      },
+      "nature_match": false,
+      "delta": "项目「凉」 vs 来源「寒」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「凉」还是来源值「寒」为准？",
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "yiner",
+      "name": "银耳",
+      "category": "甜汤",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet",
+          "bland"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "银耳",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行2523（50 号文件 §2）",
+          "verbatim": "甘、淡，平。入肺、胃、肾经。",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "银耳",
+        "locator": "《中医饮食营养学》行2523（50 号文件 §2）",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "jirou",
+      "name": "鸡肉",
+      "category": "肉类",
+      "batch": "后续",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "鸡肉",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1989（50 号文件 §2）",
+          "verbatim": "甘，温。入脾、胃经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "鸡肉",
+        "locator": "《中医饮食营养学》行1989（50 号文件 §2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "niurou",
+      "name": "牛肉",
+      "category": "肉类",
+      "batch": "后续",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "牛肉",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行2204（50 号文件 §2）",
+          "verbatim": "甘，平。入脾、胃经。",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "牛肉",
+        "locator": "《中医饮食营养学》行2204（50 号文件 §2）",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": false,
+      "delta": "项目「温」 vs 来源「平」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「温」还是来源值「平」为准？",
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "yakuai",
+      "name": "鸭肉",
+      "category": "肉类",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "salty"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "鸭肉",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行2669（50 号文件 §2）",
+          "verbatim": "甘、咸，平。入脾、胃、肺、肾经。",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "鸭肉",
+        "locator": "《中医饮食营养学》行2669（50 号文件 §2）",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": false,
+      "delta": "项目「凉」 vs 来源「平」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「凉」还是来源值「平」为准？",
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "yangrou",
+      "name": "羊肉",
+      "category": "肉类",
+      "batch": "后续",
+      "project": {
+        "nature": "hot",
+        "nature_cn": "热",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "羊肉",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行2379（50 号文件 §2）",
+          "verbatim": "甘，温。入脾、肾经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "羊肉",
+        "locator": "《中医饮食营养学》行2379（50 号文件 §2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": false,
+      "delta": "项目「热」 vs 来源「温」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「热」还是来源值「温」为准？",
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "jidan",
+      "name": "鸡蛋",
+      "category": "蛋类",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "鸡蛋",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行2589（50 号文件 §2）",
+          "verbatim": "蛋清甘，凉。蛋黄甘，平。入心、肾经。",
+          "qi_word": "凉／平",
+          "qi_mapped": null,
+          "qi_mapped_cn": null
+        }
+      ],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "①",
+      "status": "仅身份，无四气可比",
+      "open_question": "目录仅给合规身份，四气需另找来源",
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "doufu",
+      "name": "豆腐",
+      "category": "豆制品",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "豆腐",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行712（50 号文件 §2）",
+          "verbatim": "甘，凉。入脾、胃 、大肠经。",
+          "qi_word": "凉",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "豆腐",
+        "locator": "《中医饮食营养学》行712（50 号文件 §2）",
+        "qi_word": "凉",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "li",
+      "name": "梨",
+      "category": "水果",
+      "batch": "第一批",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "sour"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "梨",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行2556（50 号文件 §2）",
+          "verbatim": "甘、微酸，凉。入肺、胃经。",
+          "qi_word": "凉",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "梨",
+        "locator": "《中医饮食营养学》行2556（50 号文件 §2）",
+        "qi_word": "凉",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "lizhi",
+      "name": "荔枝",
+      "category": "水果",
+      "batch": "第一批",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet",
+          "sour"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "荔枝",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行2166（50 号文件 §2）",
+          "verbatim": "甘、酸，温。入脾、肝经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "荔枝",
+        "locator": "《中医饮食营养学》行2166（50 号文件 §2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "longyan",
+      "name": "龙眼",
+      "category": "水果",
+      "batch": "第一批",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "龙眼肉",
+          "how": "正名（药典收载名）",
+          "alias_from": null,
+          "locator": "《中国药典》2020 年版一部 p.149「龙眼肉」",
+          "verbatim": "甘，温。归心、脾经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=141"
+        },
+        {
+          "source_id": "fm_catalog",
+          "tier": "官方·目录(仅身份)",
+          "matched_name": "龙眼肉",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "食药物质目录（2002-51）「龙眼肉（桂圆）」",
+          "verbatim": null,
+          "qi_word": null,
+          "qi_mapped": null,
+          "qi_mapped_cn": null,
+          "note": "目录只给「既是食品又是中药材」的合规身份，不含四气。"
+        },
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "龙眼肉",
+          "how": "别名/等价名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行2146（50 号文件 §2）",
+          "verbatim": "甘，温。入心、脾经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "chp2020",
+        "tier": "官方·药典",
+        "matched_name": "龙眼肉",
+        "locator": "《中国药典》2020 年版一部 p.149「龙眼肉」",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "A 组·药典收载名",
+        "reason": "药典正条名为「龙眼肉」，「龙眼」是通俗名，无物种歧义。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "putao",
+      "name": "葡萄",
+      "category": "水果",
+      "batch": "第一批",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet",
+          "sour"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "葡萄",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行2127（50 号文件 §2）",
+          "verbatim": "甘、酸，平。入肺、脾、肾经。",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "葡萄",
+        "locator": "《中医饮食营养学》行2127（50 号文件 §2）",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "shanzha_guo",
+      "name": "山楂果",
+      "category": "水果",
+      "batch": "第一批",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sour",
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "山楂",
+          "how": "正名（药典收载名）",
+          "alias_from": null,
+          "locator": "《中国药典》2020 年版一部 p.82「山楂」",
+          "verbatim": "酸、甘，微温。归脾、胃、肝经。",
+          "qi_word": "微温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=43"
+        },
+        {
+          "source_id": "fm_catalog",
+          "tier": "官方·目录(仅身份)",
+          "matched_name": "山楂",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "食药物质目录（2002-51）「山楂」",
+          "verbatim": null,
+          "qi_word": null,
+          "qi_mapped": null,
+          "qi_mapped_cn": null,
+          "note": "目录只给「既是食品又是中药材」的合规身份，不含四气。"
+        },
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "山楂",
+          "how": "别名/等价名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1124（50 号文件 §2）",
+          "verbatim": "酸、甘，微温。入脾、胃、肝经。",
+          "qi_word": "微温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "chp2020",
+        "tier": "官方·药典",
+        "matched_name": "山楂",
+        "locator": "《中国药典》2020 年版一部 p.82「山楂」",
+        "qi_word": "微温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "A 组·药典收载名",
+        "reason": "药典正条名为「山楂」；项目加「果」是为区分加工品（山楂片等），无物种歧义。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "shizi",
+      "name": "柿子",
+      "category": "水果",
+      "batch": "第一批",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "sweet",
+          "astringent"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·经典",
+          "matched_name": "柿",
+          "how": "别名",
+          "alias_from": "柿子",
+          "locator": "50 号文件 §5.3 别名索引（纲目 24517）",
+          "verbatim": null,
+          "qi_word": "寒",
+          "qi_mapped": "cold",
+          "qi_mapped_cn": "寒",
+          "note": "语料条目名为「柿」，四气取自索引列。"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·经典",
+        "matched_name": "柿",
+        "locator": "50 号文件 §5.3 别名索引（纲目 24517）",
+        "qi_word": "寒",
+        "qi_mapped": "cold",
+        "qi_mapped_cn": "寒"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "D 组·§5.3 纲目别名（文件直接给定）",
+        "reason": "同一物（柿），「子」为口语后缀。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "taozi",
+      "name": "桃子",
+      "category": "水果",
+      "batch": "第一批",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet",
+          "sour"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "桃子",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1668（50 号文件 §2）",
+          "verbatim": "甘、酸，温。入肝、大肠经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "桃子",
+        "locator": "《中医饮食营养学》行1668（50 号文件 §2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "xiangjiao",
+      "name": "香蕉",
+      "category": "水果",
+      "batch": "第一批",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "香蕉",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1527（50 号文件 §2）",
+          "verbatim": "甘，寒。入脾、胃经。",
+          "qi_word": "寒",
+          "qi_mapped": "cold",
+          "qi_mapped_cn": "寒"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "香蕉",
+        "locator": "《中医饮食营养学》行1527（50 号文件 §2）",
+        "qi_word": "寒",
+        "qi_mapped": "cold",
+        "qi_mapped_cn": "寒"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "xigua",
+      "name": "西瓜",
+      "category": "水果",
+      "batch": "第一批",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材(有冲突)",
+          "matched_name": "西瓜",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "50 号文件 §3 B 档冲突组「西瓜」",
+          "verbatim": "味甘性寒，入心、胃、膀胱经。",
+          "qi_word": "寒",
+          "qi_mapped": "cold",
+          "qi_mapped_cn": "寒",
+          "note": "同源/跨源存在分歧，须标明采用依据。"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材(有冲突)",
+        "matched_name": "西瓜",
+        "locator": "50 号文件 §3 B 档冲突组「西瓜」",
+        "qi_word": "寒",
+        "qi_mapped": "cold",
+        "qi_mapped_cn": "寒"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "baicai",
+      "name": "白菜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "白菜",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行2541（50 号文件 §2）",
+          "verbatim": "甘，平。入胃、肠、肝、肾、膀胱经。",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "白菜",
+        "locator": "《中医饮食营养学》行2541（50 号文件 §2）",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": false,
+      "delta": "项目「凉」 vs 来源「平」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「凉」还是来源值「平」为准？",
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "bocai",
+      "name": "菠菜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "菠菜",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1489（50 号文件 §2）",
+          "verbatim": "甘，凉。入肠、胃经。",
+          "qi_word": "凉",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "菠菜",
+        "locator": "《中医饮食营养学》行1489（50 号文件 §2）",
+        "qi_word": "凉",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "donggua",
+      "name": "冬瓜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "bland"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "冬瓜",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1425（50 号文件 §2）",
+          "verbatim": "甘、淡，凉。入肺、大肠、膀胱经。",
+          "qi_word": "凉",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "冬瓜",
+        "locator": "《中医饮食营养学》行1425（50 号文件 §2）",
+        "qi_word": "凉",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "huanggua",
+      "name": "黄瓜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "黄瓜",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行786（50 号文件 §2）",
+          "verbatim": "甘，寒。入胃、小肠经。",
+          "qi_word": "寒",
+          "qi_mapped": "cold",
+          "qi_mapped_cn": "寒"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "黄瓜",
+        "locator": "《中医饮食营养学》行786（50 号文件 §2）",
+        "qi_word": "寒",
+        "qi_mapped": "cold",
+        "qi_mapped_cn": "寒"
+      },
+      "nature_match": false,
+      "delta": "项目「凉」 vs 来源「寒」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「凉」还是来源值「寒」为准？",
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "huluobo",
+      "name": "胡萝卜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "胡萝卜",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行2109（50 号文件 §2）",
+          "verbatim": "甘，平。入肺、脾经。",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "胡萝卜",
+        "locator": "《中医饮食营养学》行2109（50 号文件 §2）",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "jiachang",
+      "name": "茄子",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "茄子",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行593（50 号文件 §2）",
+          "verbatim": "甘，凉。入脾、胃、大肠经。",
+          "qi_word": "凉",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "茄子",
+        "locator": "《中医饮食营养学》行593（50 号文件 §2）",
+        "qi_word": "凉",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "jiang",
+      "name": "姜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "生姜",
+          "how": "正名（药典收载名）",
+          "alias_from": null,
+          "locator": "《中国药典》2020 年版一部 p.153「生姜」",
+          "verbatim": "辛，微温。归肺、脾、胃经。",
+          "qi_word": "微温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=148"
+        },
+        {
+          "source_id": "fm_catalog",
+          "tier": "官方·目录(仅身份)",
+          "matched_name": "生姜",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "食药物质目录（2002-51）「姜（生姜、干姜）」",
+          "verbatim": null,
+          "qi_word": null,
+          "qi_mapped": null,
+          "qi_mapped_cn": null,
+          "note": "目录只给「既是食品又是中药材」的合规身份，不含四气。"
+        },
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "生姜",
+          "how": "别名/等价名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行336（50 号文件 §2）",
+          "verbatim": "辛，温。入脾、胃、肺经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "chp2020",
+        "tier": "官方·药典",
+        "matched_name": "生姜",
+        "locator": "《中国药典》2020 年版一部 p.153「生姜」",
+        "qi_word": "微温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "A 组·药典收载名",
+        "reason": "药典「生姜」为鲜品；饮食语境下的「姜」即指它，无物种歧义。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "jiecai",
+      "name": "芥菜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "芥菜",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行981（50 号文件 §2）",
+          "verbatim": "辛，温。入肺、大肠经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "芥菜",
+        "locator": "《中医饮食营养学》行981（50 号文件 §2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "jiucai",
+      "name": "韭菜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "韭菜",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行2361（50 号文件 §2）",
+          "verbatim": "辛，温。入肝、胃、肾经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "韭菜",
+        "locator": "《中医饮食营养学》行2361（50 号文件 §2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "kugua",
+      "name": "苦瓜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "bitter"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "苦瓜",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行750（50 号文件 §2）",
+          "verbatim": "苦，寒。入心、脾、胃经。",
+          "qi_word": "寒",
+          "qi_mapped": "cold",
+          "qi_mapped_cn": "寒"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "苦瓜",
+        "locator": "《中医饮食营养学》行750（50 号文件 §2）",
+        "qi_word": "寒",
+        "qi_mapped": "cold",
+        "qi_mapped_cn": "寒"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "lianou",
+      "name": "莲藕",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "藕",
+          "how": "等价名（省略作物名前缀）",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行609（50 号文件 §2）",
+          "verbatim": "甘，寒。入心、脾、胃经。",
+          "qi_word": "寒",
+          "qi_mapped": "cold",
+          "qi_mapped_cn": "寒"
+        },
+        {
+          "source_id": "s3_bencao",
+          "tier": "通行·经典",
+          "matched_name": "藕",
+          "how": "别名/等价名",
+          "alias_from": null,
+          "locator": "50 号文件 §3 表格行323 / §4.9 表格行439（纲目 26315）",
+          "verbatim": "正条「甘，平」，同条「大明曰∶温」",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平",
+          "note": "同一物名下的第二个值。教材记「寒」、纲目正条记「平」、纲目同条引《大明》记「温」——基准自身不稳定，是判定「保留项目值＋标注分歧」的直接依据。"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "藕",
+        "locator": "《中医饮食营养学》行609（50 号文件 §2）",
+        "qi_word": "寒",
+        "qi_mapped": "cold",
+        "qi_mapped_cn": "寒"
+      },
+      "nature_match": false,
+      "delta": "项目「凉」 vs 来源「寒」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「凉」还是来源值「寒」为准？",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "C 组·等价名",
+        "reason": "同一物（莲之藕），仅省略作物名前缀。注意本条同时是 4 条口径分歧之一：值仍保留项目值「凉」。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "luobo",
+      "name": "白萝卜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "pungent",
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "白萝卜",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1107（50 号文件 §2）",
+          "verbatim": "辛、甘，凉。入肺、胃经。",
+          "qi_word": "凉",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "白萝卜",
+        "locator": "《中医饮食营养学》行1107（50 号文件 §2）",
+        "qi_word": "凉",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "mogu",
+      "name": "蘑菇",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·经典",
+          "matched_name": "蘑菰",
+          "how": "别名",
+          "alias_from": "蘑菇",
+          "locator": "50 号文件 §5.3 别名索引（纲目 23487）",
+          "verbatim": "（§5.3 索引列，未附原文）",
+          "qi_word": "寒",
+          "qi_mapped": "cold",
+          "qi_mapped_cn": "寒",
+          "note": "条目**正名**「蘑菇」对应的语料条目。此路给出「寒」。"
+        },
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "香蕈",
+          "how": "别名",
+          "alias_from": "香菇",
+          "locator": "50 号文件 §5.3 别名索引（S1:1887；纲目 23455）",
+          "verbatim": "（同上）",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平",
+          "note": "条目**别名**「香菇」对应的语料条目。此路给出「平」，即项目现取值。"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·经典",
+        "matched_name": "蘑菰",
+        "locator": "50 号文件 §5.3 别名索引（纲目 23487）",
+        "qi_word": "寒",
+        "qi_mapped": "cold",
+        "qi_mapped_cn": "寒"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": "拆成两条（香菇/蘑菇），还是保留一条并明确它代表哪个物种？",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "alias_conflict": {
+        "四气取值": [
+          "寒(蘑菰/纲目23487)",
+          "平(香蕈/S1:1887)"
+        ],
+        "说明": "两条路径四气不同，项目现取「平」（即香菇一路）。这不是'哪个值错'，而是条目把两个物种合了。"
+      },
+      "mapping_review": {
+        "accepted": true,
+        "group": "D 组·§5.3 纲目别名",
+        "reason": "条目名「蘑菇」对应语料「蘑菰」（寒，纲目 23487）。原条目还把别名「香菇」挂在身上，而香菇对应「香蕈」（平）——一个条目代表两个四气不同的物种，属 ④ 层**条目粒度错误**，已拆两条：`mogu` 收窄为蘑菰（寒）、新增 `xianggu` 香菇（平）。",
+        "by": "项目所有者",
+        "at": "2026-09-17",
+        "note": "④ 层已修（2026-09-17）：拆两条——新增 `xianggu` 香菇（香蕈 平），本条收窄为蘑菰（寒）。金针菇/杏鲍菇/平菇 是另外 3 个物种、50 号文件无条目，暂留本条（随条目判为寒，原为平），已另开挂起项待确认。"
+      }
+    },
+    {
+      "id": "xianggu",
+      "name": "香菇",
+      "category": "蔬菜",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "香蕈",
+          "how": "别名",
+          "alias_from": "香菇",
+          "locator": "50 号文件 §5.3 别名索引（S1:1887；纲目 23455）",
+          "verbatim": "（§5.3 索引列，未附原文）",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "香蕈",
+        "locator": "50 号文件 §5.3 别名索引（S1:1887）",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "§5.3 别名索引直接给定",
+        "reason": "香菇→香蕈，文件 §5.3 直接给定。本条由 `mogu` 拆出（④ 层条目粒度错误），与蘑菰是两个四气不同的物种。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      },
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "muer",
+      "name": "木耳",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "木耳",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行629（50 号文件 §2）",
+          "verbatim": "甘，平。入胃、大肠经。",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "木耳",
+        "locator": "《中医饮食营养学》行629（50 号文件 §2）",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "nangua",
+      "name": "南瓜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "南瓜",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1170（50 号文件 §2）",
+          "verbatim": "甘，温。入脾、胃经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "南瓜",
+        "locator": "《中医饮食营养学》行1170（50 号文件 §2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "qincai",
+      "name": "芹菜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "pungent",
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "水芹",
+          "how": "别名",
+          "alias_from": "芹菜",
+          "locator": "50 号文件 §5.3 别名索引（S1:574）",
+          "verbatim": null,
+          "qi_word": "凉",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉",
+          "note": "语料条目名为「水芹」，四气取自索引列。"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "水芹",
+        "locator": "50 号文件 §5.3 别名索引（S1:574）",
+        "qi_word": "凉",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "B 组·§5.3 别名词（文件直接给定）",
+        "reason": "50 号文件 §5.3 自己给的对当关系（S1:574）。保留文件口径，但现代「芹菜」多指旱芹/西芹，物种不完全相同，已在 review_sheet 的存疑项里留痕。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "qingcai",
+      "name": "青菜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "油菜",
+          "how": "别名/等价名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1634（50 号文件 §2）",
+          "verbatim": "辛、甘，凉。入肺、肝、脾经。",
+          "qi_word": "凉",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "油菜",
+        "locator": "《中医饮食营养学》行1634（50 号文件 §2）",
+        "qi_word": "凉",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（映射未获采纳）",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "C 组·等价名（**未获采纳**）",
+        "reason": "两个缺陷：① 味不符——项目 flavors 只有 sweet，而语料「油菜」为「辛、甘，凉」；② 方向可能相反——纲目 §4.9 给「芸苔（油菜）」记「辛，温」，与项目「凉」反向。「油菜」本身又有同名不同物风险（小油菜 vs 油料作物芸苔）。降级为「无源可引」，不得进入 approved 批次。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "shengcai",
+      "name": "生菜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "莴苣",
+          "how": "等价名（叶用变种，参照莴苣）",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1442（50 号文件 §2）",
+          "verbatim": "甘、苦，凉。入肠、胃经。",
+          "qi_word": "凉",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "莴苣",
+        "locator": "《中医饮食营养学》行1442（50 号文件 §2）",
+        "qi_word": "凉",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "C 组·等价名",
+        "reason": "同种不同栽培变种（叶用生菜 vs 教材「莴苣」条的茎用为主）。气、味双项全对应（甘、苦，凉），可信度高；变种差异已写进 how 留痕。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "sigua",
+      "name": "丝瓜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "丝瓜",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行931（50 号文件 §2）",
+          "verbatim": "甘，凉。入肝、胃经。",
+          "qi_word": "凉",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "丝瓜",
+        "locator": "《中医饮食营养学》行931（50 号文件 §2）",
+        "qi_word": "凉",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "suan",
+      "name": "蒜",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "大蒜",
+          "how": "等价名（通称差异）",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行2845（50 号文件 §2）",
+          "verbatim": "辛、温。归脾、胃、肺经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "大蒜",
+        "locator": "《中医饮食营养学》行2845（50 号文件 §2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "C 组·等价名",
+        "reason": "同一物（Allium sativum）；「大蒜」是语料用名，「蒜」是通称。气、味双项全对应（辛、温）。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "xihongshi",
+      "name": "西红柿",
+      "category": "蔬菜",
+      "batch": "第一批",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "sour"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "西红柿",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1544（50 号文件 §2）",
+          "verbatim": "甘酸，微寒。入肝、脾、胃经。",
+          "qi_word": "微寒",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "西红柿",
+        "locator": "《中医饮食营养学》行1544（50 号文件 §2）",
+        "qi_word": "微寒",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "cu",
+      "name": "醋",
+      "category": "调味",
+      "batch": "第一批",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sour"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "醋",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1703（50 号文件 §2）",
+          "verbatim": "酸、苦，温。入肝、胃经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "醋",
+        "locator": "《中医饮食营养学》行1703（50 号文件 §2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null
+    },
+    {
+      "id": "jiangyou",
+      "name": "酱油",
+      "category": "调味",
+      "batch": "第一批",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "salty"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·经典",
+          "matched_name": "酱",
+          "how": "别名",
+          "alias_from": "酱油",
+          "locator": "50 号文件 §5.3 别名索引（纲目 9948（辛，温））",
+          "verbatim": null,
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温",
+          "note": "语料条目名为「酱」，四气取自索引列。"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·经典",
+        "matched_name": "酱",
+        "locator": "50 号文件 §5.3 别名索引（纲目 9948（辛，温））",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": false,
+      "delta": "项目「平」 vs 来源「温」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「平」还是来源值「温」为准？",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": null,
+        "group": "D 组·§5.3 纲目别名（**仍未采纳，待确认**）",
+        "reason": "映射本身可用（酱油→酱），但基准是《本草纲目》（经典溯源层），而 50 号文件 §5.4 标题自定「仅经典有载、教材无（不得当教材用）」——强度低于教材，据此把项目值「平」改「温」不成立。故 nature 不改，单列待确认。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "yan",
+      "name": "盐",
+      "category": "调味",
+      "batch": "第一批",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "salty"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·经典",
+          "matched_name": "食盐",
+          "how": "别名",
+          "alias_from": "盐",
+          "locator": "50 号文件 §5.3 别名索引（纲目 7015（甘、咸，寒））",
+          "verbatim": null,
+          "qi_word": "寒",
+          "qi_mapped": "cold",
+          "qi_mapped_cn": "寒",
+          "note": "语料条目名为「食盐」，四气取自索引列。"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·经典",
+        "matched_name": "食盐",
+        "locator": "50 号文件 §5.3 别名索引（纲目 7015（甘、咸，寒））",
+        "qi_word": "寒",
+        "qi_mapped": "cold",
+        "qi_mapped_cn": "寒"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "D 组·§5.3 纲目别名（文件直接给定）",
+        "reason": "同一物（食盐）。",
+        "by": "项目所有者",
+        "at": "2026-09-17"
+      }
+    }
+  ]
+}

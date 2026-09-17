@@ -1,12 +1,18 @@
 """数据表结构升级与条目修正（幂等，可重复运行）。
 
-本脚本做三件事：
+本脚本做四件事：
   1. 把二值 `reviewed` 升级为三态 `review_status`：
      approved（已审核通过）/ pending（待审核）/ rejected（审核不通过）
      为什么需要三态：`reviewed: false` 无法区分"还没审"和"审了但不认可"。
      后者绝不能被当作高置信度硬规则使用。
   2. 修正内容重叠的条目（这类重叠会让短名条目抢走具体菜名的匹配）。
   3. 记录修正原因到 review_note，便于日后追溯。
+  4. 新增条目（`NEW_ENTRIES`）——用于**条目粒度错误**的拆分，例如
+     「蘑菇」一条代表蘑菰/香蕈两个四气不同的物种，只能拆成两条。
+     拆分不是"补缺口"而是"修矛盾"：两个物种必须各自成条，删别名解决不了。
+
+**它是数据修正的唯一正规通道**：幂等（重复跑结果不变）、每条修正都留 `review_note`、
+强制 LF（避免 Windows CRLF 在 git 里造成假 diff）。不要手工改 `food_properties.json`。
 
 用法（在 core 目录下）：
     python scripts/patch_food_table.py --dry-run
@@ -33,6 +39,24 @@ TABLE = CORE_DIR / "data" / "food_properties.json"
 
 VALID_STATUS = ("approved", "pending", "rejected")
 
+# 条目字段的**规范顺序**。新字段要插到这个位置，不能一律 append 到末尾——
+# 否则同一张表里会同时存在两种键序（`note` 在 `keywords` 后 vs 在 `review_status` 后），
+# diff 和人工阅读都会变难。表里既有 34 条带 `note` 的条目都在 `keywords` 之后。
+FIELD_ORDER = (
+    "id", "name", "aliases", "category", "nature", "flavors", "keywords",
+    "variant_nature", "note", "base_form",
+    "reviewed", "reviewed_by", "reviewed_at", "review_note", "review_status",
+)
+
+
+def normalize_key_order(entry: dict) -> dict:
+    """按 `FIELD_ORDER` 重排键；未登记的字段保持相对顺序、排在其后。"""
+    ordered = {k: entry[k] for k in FIELD_ORDER if k in entry}
+    for key, value in entry.items():
+        if key not in ordered:
+            ordered[key] = value
+    return ordered
+
 # 条目修正：id -> 要改的字段
 ENTRY_FIXES: dict[str, dict] = {
     # 「寿司」与「生鱼片」关键词重叠（生鱼片的关键词含"寿司"），
@@ -58,6 +82,72 @@ ENTRY_FIXES: dict[str, dict] = {
     "shujiaotiao": {
         "keywords": ["薯条", "薯片"],
         "review_note": "关键词归一，避免与「炸鱼薯条」相互抢占匹配",
+    },
+    # ---------- ④ 层：内部矛盾（属数据错，与外部来源无关） ----------
+    # ④-1 别名污染：把不属于自己的名字挂在条目上。
+    # 「炸鸡」是独立条目 zhaji（热，菜肴），同时挂在 jirou 的 aliases 与 keywords 里，
+    # 导致 names_match("炸鸡","鸡肉") 为真（且反向为假，不对称），炸鸡会被判成鸡肉属性。
+    # 删别名即解——注意 jirou 的 aliases 与 keywords **两处都要清**。
+    "jirou": {
+        "aliases": ["鸡腿", "鸡胸"],
+        "keywords": ["鸡肉", "鸡腿", "鸡胸"],
+        "review_note": "移除「炸鸡」别名与关键词：它属于独立条目 zhaji（热），留着会让炸鸡被判成鸡肉（温）属性",
+    },
+    # ④-2 变体与兜底规则差一档：base 温 + 冰镇 -1 = 平，原值记「凉」。
+    # 可乐/红薯/鸡肉/吐司的冰镇/加热变体都符合规则，咖啡是唯一离群条目。
+    "kafei": {
+        "variant_nature": {"cold": "neutral"},
+        "review_note": "冰镇变体由 cool 改 neutral：温 + 冰镇 -1 = 平，与其余变体条目同规则",
+    },
+    # ---------- D4a 口径分歧：保留项目值，只在数据里留痕 ----------
+    # 这 3 条不是「数据错」而是「来源口径之争」（基准是《中医饮食营养学》教材层，
+    # 强度不足以推翻现值）。无权威裁定前不改 nature，只把双方值写进 note。
+    "baicai": {
+        "note": "口径分歧：项目值凉；《中医饮食营养学》行2541 记平。未获权威裁定前保留项目值。",
+        "review_note": "加 note 留痕（口径分歧），nature 未改",
+    },
+    "huanggua": {
+        "note": "口径分歧：项目值凉；《中医饮食营养学》行786 记寒。未获权威裁定前保留项目值。",
+        "review_note": "加 note 留痕（口径分歧），nature 未改",
+    },
+    "lianou": {
+        "note": (
+            "口径分歧：项目值凉；《中医饮食营养学》行609 记寒、"
+            "《本草纲目》26315 正条记平（同条引《大明》作温）。未获权威裁定前保留项目值。"
+        ),
+        "review_note": "加 note 留痕（口径分歧，三值并列），nature 未改",
+    },
+    # ④-4 别名跨物种：条目名「蘑菇」→ 蘑菰（寒），别名「香菇」→ 香蕈（平），
+    # 一个条目代表两个四气不同的物种。香菇已拆出为独立条目 xianggu（见 NEW_ENTRIES），
+    # 这里把 mogu 收窄为蘑菰，并补齐 §5.3 的对应名。
+    "mogu": {
+        "aliases": ["蘑菰", "口蘑", "金针菇", "杏鲍菇", "平菇"],
+        "keywords": ["蘑菇", "蘑菰", "口蘑", "金针菇", "杏鲍菇", "平菇"],
+        "nature": "cold",
+        "review_note": (
+            "拆条后收窄为「蘑菰」（寒，纲目 23487）：香菇已移至 xianggu；"
+            "四气由 neutral 改 cold。金针菇/杏鲍菇/平菇是另外 3 个物种、无来源，暂留本条目，另开挂起项"
+        ),
+    },
+}
+
+# 新增条目：id -> 字段字典（`_after` 指定插到哪个条目之后）
+# 只用于「修矛盾」类拆分，不用于补缺口——无来源的新食材不在这里加。
+NEW_ENTRIES: dict[str, dict] = {
+    "xianggu": {
+        "id": "xianggu",
+        "name": "香菇",
+        "aliases": ["香蕈", "冬菇", "花菇"],
+        "category": "蔬菜",
+        "nature": "neutral",
+        "flavors": ["sweet"],
+        "keywords": ["香菇", "香蕈", "冬菇", "花菇"],
+        "reviewed": False,
+        "reviewed_by": None,
+        "reviewed_at": None,
+        "review_note": "由 mogu 拆出（④层矛盾：一个条目代表两个四气不同的物种）",
+        "review_status": "pending",
+        "_after": "mogu",
     },
 }
 
@@ -102,6 +192,30 @@ def main() -> int:
             entry[key] = value
             fixes_applied.append(f"{entry.get('name')}.{key}")
 
+    # ---------- 2b. 新增条目（拆条） ----------
+    # 注意：foods 与 groups 里的是**同一个列表对象**，insert 之后后面的统计与校验
+    # 会自动带上新条目，不需要再手动同步。
+    foods = raw.get("foods", [])
+    added: list[str] = []
+    for entry_id, spec in NEW_ENTRIES.items():
+        if entry_id in by_id:
+            continue
+        new_entry = {k: v for k, v in spec.items() if not k.startswith("_")}
+        anchor = spec.get("_after")
+        index = next((i for i, e in enumerate(foods) if e.get("id") == anchor), len(foods) - 1)
+        foods.insert(index + 1, new_entry)
+        by_id[entry_id] = new_entry
+        added.append(f"{new_entry['name']}（{entry_id}，插在 {anchor} 之后）")
+
+    # ---------- 2c. 统一字段顺序 ----------
+    reordered = 0
+    for _, items in groups:
+        for i, entry in enumerate(items):
+            normalized = normalize_key_order(entry)
+            if list(normalized) != list(entry):
+                items[i] = normalized
+                reordered += 1
+
     # ---------- 3. 校验 ----------
     problems: list[str] = []
     for _, items in groups:
@@ -109,7 +223,6 @@ def main() -> int:
             status = entry.get("review_status")
             if status not in VALID_STATUS:
                 problems.append(f"{entry.get('name')}: review_status={status!r} 非法")
-
     print("=" * 66)
     print("数据表结构升级与条目修正")
     print("=" * 66)
@@ -117,6 +230,10 @@ def main() -> int:
     print(f"  条目修正：{len(fixes_applied)} 处")
     for f in fixes_applied:
         print(f"    - {f}")
+    print(f"  新增条目：{len(added)} 条")
+    for a in added:
+        print(f"    + {a}")
+    print(f"  字段顺序归一：{reordered} 条")
     if problems:
         print(f"  校验问题：{len(problems)} 处")
         for p in problems:

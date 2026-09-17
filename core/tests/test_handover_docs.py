@@ -280,13 +280,21 @@ def test_handover_documents_the_layering_rule(handover):
 
 
 def test_pending_e1_matches_actual_data_state():
-    """E1 说只有 3 条缺 review_status —— 断言这个数字仍然准确。"""
+    """E1 已关闭：三态迁移补齐后，数据表里不应再出现缺 `review_status` 的条目。
+
+    这条原先断言「恰好 3 条缺字段」。那是**数据快照**而非不变式：补齐那天它必然失败，
+    而且失败信息分不清「数据出问题了」还是「已经补完了」。改成两条派生断言：
+
+    1. 数据表里**每条**都必须有合法的 `review_status`（不是数几条，是有没有）；
+    2. E1 在概览里的状态必须已从「待」改成「已」—— 数据补了但清单没关，等于没关。
+    """
     import json
 
     d = json.loads((CORE_DIR / "data" / "food_properties.json").read_text(encoding="utf-8"))
     recs = d["foods"] + d["tea_drinks"]["items"]
     missing = [r["name"] for r in recs if not r.get("review_status")]
-    assert len(missing) == 3, f"缺 review_status 的条数变了：{missing}"
+    assert not missing, f"又有条目缺 review_status：{missing}"
     text = PENDING.read_text(encoding="utf-8")
-    for name in missing:
-        assert name in text, f"E1 没列出 {name}"
+    e1_rows = [ln for ln in text.splitlines() if ln.startswith("|") and "**E1**" in ln]
+    assert e1_rows, "概览里找不到 E1 行"
+    assert "已" in e1_rows[0], f"E1 已无遗留，概览状态列应改为「已…」：{e1_rows[0]}"

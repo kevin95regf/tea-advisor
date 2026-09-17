@@ -43,9 +43,9 @@
 | 网页壳 | ✅ 含测试指引、置信度标注、API Key 输入 |
 | **用户自带 API Key（逐请求）** | ✅ 默认直连后端支持 |
 | 服务端内置 Key | ❌ **不存在**（曾有的"兜底 Key"已按需求移除）；Key 只由调用方传入 |
-| 数据表**人工审核** | ❌ **146 条全部 `pending`**（刻意的，见 §9.3） |
+| 数据表**人工审核** | ❌ **147 条全部 `pending`**（刻意的，见 §9.3） |
 | 第二层 `combine()` 接入主流程 | ❌ 已实现并测试，但未接线 |
-| 食性表规模 | 146 条（128 食材 + 18 茶饮） |
+| 食性表规模 | 147 条（129 食材 + 18 茶饮） |
 | 饮片白名单 | 34 味 |
 | 体质 | 5 型 |
 
@@ -462,7 +462,7 @@ usage["completion_tokens_details"]["reasoning_tokens"]   # 其中思考
 
 | 文件 | 内容 | 规模 |
 |---|---|---|
-| `food_properties.json` | `foods[]` + `tea_drinks.items[]` + `_meta` | 146 条 |
+| `food_properties.json` | `foods[]` + `tea_drinks.items[]` + `_meta` | 147 条 |
 | `herbs.json` | `_meta` + `herbs[]`（含剂量上限、禁忌、归经） | 34 味 |
 | `constitution.json` | 5 型体质 + `one_line` / `principles` / `avoid` | 5 型 |
 | `food_medicine_catalog.json` | 国家卫健委食药物质目录（4 批公告）汇编，**只用于合规自检，不参与判定** | 106 种 |
@@ -479,7 +479,7 @@ usage["completion_tokens_details"]["reasoning_tokens"]   # 其中思考
 | 状态 | 效果 |
 |---|---|
 | `approved` | 真·硬规则库，0.9，界面**不**标注 |
-| `pending` | 0.9，但界面必须标「待验证」（**当前 146 条全部是这个**） |
+| `pending` | 0.9，但界面必须标「待验证」（**当前 147 条全部是这个**） |
 | `rejected` | 降为组合推理档 0.6，不再作硬规则 |
 
 `approved` 只应由具备资质的中医师/中药师填写，并同时填 `reviewed_by` / `reviewed_at`。
@@ -490,7 +490,7 @@ usage["completion_tokens_details"]["reasoning_tokens"]   # 其中思考
 | 脚本 | 真相 |
 |---|---|
 | `add_food_entries.py` | `NEW_ENTRIES` 是**源码里硬编码的 16 条历史批次**，**不是通用加条目工具**。会全量重写整个文件（大 diff）。幂等靠 id+name 双重去重；但去重集合在循环外算一次，往列表里追加时要自己保证 id 唯一 |
-| `add_review_fields.py` | 加布尔 `reviewed`。**现在跑是空操作**（146 条都已有该字段） |
+| `add_review_fields.py` | 加布尔 `reviewed`。**现在跑是空操作**（147 条都已有该字段） |
 | `patch_food_table.py` | `reviewed` → `review_status` 三态迁移 + 4 条写死的条目修正 |
 
 **历史执行顺序不可颠倒**：
@@ -731,7 +731,7 @@ python -m venv .venv
 1. 规范名精确命中时不叠加模型给的烹饪修正（需要时在表里单列 `variant_nature`）
 2. 关键词子串会拉进无关条目
 3. **第二层 `combine()` 未接入主流程**（已实现并测试，`resolve_food` 目前只做单食材）
-4. 数据未人工审核（146 条全 `pending`）
+4. 数据未人工审核（147 条全 `pending`）
 5. `--offline` 只能识别表内条目
 6. 中文标签虽已收敛到 `/api/meta`，但 `cooking` 标签的展示仍只在前端用到（终端壳未展示）
 
@@ -818,7 +818,7 @@ python -m venv .venv
 
 ## 13. 后续路线建议（按性价比排序）
 
-1. **人工审核 146 条食性数据** —— 唯一阻碍"对外提供服务"的事项，且只有人能解。
+1. **人工审核 147 条食性数据** —— 唯一阻碍"对外提供服务"的事项，且只有人能解。
    核验单已就绪：`docs/food-properties-review-sheet.md`（由 `scripts/build_food_review_sheet.py`
    生成，**只读**、可重跑、`--check` 可进 CI）。④层内部矛盾（不依赖外部来源）已经跑完，
    可先清；①②③ 层需外部来源，按「官方优先 + 多源兜底 + 无源标空」推进，

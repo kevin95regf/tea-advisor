@@ -33,6 +33,11 @@ miniprogram_npm/
 NOTES.local.md
 *.local.md
 
+# ---------- 内部草稿：不进仓库 ----------
+# 九型相关的提问稿与阶段交接稿：内容未定/过程性，等项目所有者点头后再决定是否入库。
+docs/herbs-9types-questions.md
+docs/herbs-9types-P1A-handoff.md
+
 # ---------- 杂项 ----------
 logs/
 var/

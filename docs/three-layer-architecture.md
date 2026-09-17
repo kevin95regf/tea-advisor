@@ -40,7 +40,7 @@
 | `app/services/food_lookup.py` | 匹配、`resolve_food()` 确定性判定 |
 | `app/agents/agent1_diet.py::calibrate_parsed` | 用判定结果覆盖/标注模型输出 |
 | `app/agents/agent2_recommend.py::_build_unverified_section` | 把未验证项隔离给推荐器 |
-| `data/food_properties.json` | 146 条食性数据（128 食材 + 18 茶饮）+ 逐条审核状态 |
+| `data/food_properties.json` | 147 条食性数据（129 食材 + 18 茶饮）+ 逐条审核状态 |
 | `ui/terminal/chat.py`、`ui/web/index.html` | 按置信度决定显示与标注（两个壳各自实现，规则一致） |
 
 ## 四性数值编码
@@ -169,7 +169,7 @@ class TemperatureSignal(NamedTuple):
 | `pending` | 待审核（默认） | 高置信度但必须标注 |
 | `rejected` | 审核不通过 | 降为组合推理档，不再作硬规则 |
 
-当前表内 146 条全部为 `pending`，所以**界面会普遍显示「待验证」标记**——
+当前表内 147 条全部为 `pending`，所以**界面会普遍显示「待验证」标记**——
 这是刻意的：标记密度就是审核进度的可见反馈。
 
 ## 审核工作流
