@@ -1,0 +1,828 @@
+{
+  "_meta": {
+    "title": "按照传统既是食品又是中药材的物质目录（食药物质目录）",
+    "version": "1.0.0",
+    "compiled_at": "2026-09-17",
+    "total": 106,
+    "counts": {
+      "2002-51": 87,
+      "2019-08": 6,
+      "2023-09": 9,
+      "2024-04": 4
+    },
+    "notice": "本文件是为项目合规自检而整理的汇编版，依据国家卫生健康委员会会同国家市场监督管理总局发布的四批公告整理，共 106 种。每个批次保留 verbatim 原文串以供逐字核对。本文件不构成法律意见；判断食品生产经营合规性请以国家卫健委发布的最新目录原文为准。",
+    "field_notes": {
+      "name": "目录条目主名（公告原文写法去掉括号部分）",
+      "full": "公告原文的完整写法，含括号",
+      "paren": "括号内的原文内容，无括号则为 null",
+      "alternates": "括号内属于「同物异名」的可用名称，可参与匹配；基源/品种限定词不列入此处",
+      "qualifier_note": "括号内容被判定为限定词（非别名）时的理由",
+      "batch": "所属公告批次 id，见 batches"
+    },
+    "related_lists": [
+      {
+        "label": "卫法监发〔2002〕51 号 附件 2《可用于保健食品的物品名单》",
+        "url": "https://zwfw.nhc.gov.cn/kzx/zcfg/xspylsp_237/200202/t20020228_1316.html",
+        "note": "与食药物质目录是两套不同的名单。本项目的饮片若只出现在此名单（例如玫瑰花），不属于食药物质目录范围。"
+      },
+      {
+        "label": "卫法监发〔2002〕51 号 附件 3《保健食品禁用物品名单》",
+        "url": "https://zwfw.nhc.gov.cn/kzx/zcfg/xspylsp_237/200202/t20020228_1316.html",
+        "note": "保健食品禁用原料，与食药物质目录无关，一并记录以便后续核对。"
+      }
+    ]
+  },
+  "batches": [
+    {
+      "id": "2002-51",
+      "label": "卫法监发〔2002〕51 号 附件 1《既是食品又是药品的物品名单》",
+      "date": "2002-02-28",
+      "issuer": "卫生部",
+      "url": "https://zwfw.nhc.gov.cn/kzx/zcfg/xspylsp_237/200202/t20020228_1316.html",
+      "verbatim": "丁香、八角茴香、刀豆、小茴香、小蓟、山药、山楂、马齿苋、乌梢蛇、乌梅、木瓜、火麻仁、代代花、玉竹、甘草、白芷、白果、白扁豆、白扁豆花、龙眼肉（桂圆）、决明子、百合、肉豆蔻、肉桂、余甘子、佛手、杏仁（甜、苦）、沙棘、牡蛎、芡实、花椒、赤小豆、阿胶、鸡内金、麦芽、昆布、枣（大枣、酸枣、黑枣）、罗汉果、郁李仁、金银花、青果、鱼腥草、姜（生姜、干姜）、枳椇子、枸杞子、栀子、砂仁、胖大海、茯苓、香橼、香薷、桃仁、桑叶、桑椹、桔红、桔梗、益智仁、荷叶、莱菔子、莲子、高良姜、淡竹叶、淡豆豉、菊花、菊苣、黄芥子、黄精、紫苏、紫苏籽、葛根、黑芝麻、黑胡椒、槐米、槐花、蒲公英、蜂蜜、榧子、酸枣仁、鲜白茅根、鲜芦根、蝮蛇、橘皮、薄荷、薏苡仁、薤白、覆盆子、藿香",
+      "count": 87
+    },
+    {
+      "id": "2019-08",
+      "label": "2019 年第 8 号公告《关于当归等 6 种新增按照传统既是食品又是中药材的物质公告》",
+      "date": "2019-11-25",
+      "issuer": "国家卫生健康委、国家市场监督管理总局",
+      "url": "https://www.nhc.gov.cn/wjw/c100175/202001/60977058ce3b4449b1b1d46cff283e73.shtml",
+      "verbatim": "当归、山柰、西红花、草果、姜黄、荜茇",
+      "count": 6
+    },
+    {
+      "id": "2023-09",
+      "label": "2023 年第 9 号公告《关于党参等 9 种新增按照传统既是食品又是中药材的物质公告》",
+      "date": "2023-11-09",
+      "issuer": "国家卫生健康委、国家市场监督管理总局",
+      "url": "https://wsjkwyh.tangshan.gov.cn/tswjw/zw_lvyoujuylwsjksy/20231124/1575713.html",
+      "verbatim": "党参、肉苁蓉（荒漠）、铁皮石斛、西洋参、黄芪、灵芝、山茱萸、天麻、杜仲叶",
+      "count": 9
+    },
+    {
+      "id": "2024-04",
+      "label": "2024 年第 4 号公告《关于地黄等 4 种按照传统既是食品又是中药材的物质的公告》",
+      "date": "2024-08-12",
+      "issuer": "国家卫生健康委、国家市场监督管理总局",
+      "url": "https://wjw.ah.gov.cn/public/7001/57497111.html",
+      "verbatim": "地黄、麦冬、天冬、化橘红",
+      "count": 4
+    }
+  ],
+  "items": [
+    {
+      "name": "丁香",
+      "full": "丁香",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "八角茴香",
+      "full": "八角茴香",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "刀豆",
+      "full": "刀豆",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "小茴香",
+      "full": "小茴香",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "小蓟",
+      "full": "小蓟",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "山药",
+      "full": "山药",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "山楂",
+      "full": "山楂",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "马齿苋",
+      "full": "马齿苋",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "乌梢蛇",
+      "full": "乌梢蛇",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "乌梅",
+      "full": "乌梅",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "木瓜",
+      "full": "木瓜",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "火麻仁",
+      "full": "火麻仁",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "代代花",
+      "full": "代代花",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "玉竹",
+      "full": "玉竹",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "甘草",
+      "full": "甘草",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "白芷",
+      "full": "白芷",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "白果",
+      "full": "白果",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "白扁豆",
+      "full": "白扁豆",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "白扁豆花",
+      "full": "白扁豆花",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "龙眼肉",
+      "full": "龙眼肉（桂圆）",
+      "paren": "桂圆",
+      "alternates": [
+        "桂圆"
+      ],
+      "batch": "2002-51"
+    },
+    {
+      "name": "决明子",
+      "full": "决明子",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "百合",
+      "full": "百合",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "肉豆蔻",
+      "full": "肉豆蔻",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "肉桂",
+      "full": "肉桂",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "余甘子",
+      "full": "余甘子",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "佛手",
+      "full": "佛手",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "杏仁",
+      "full": "杏仁（甜、苦）",
+      "paren": "甜、苦",
+      "alternates": [],
+      "batch": "2002-51",
+      "qualifier_note": "括号内「甜、苦」指品种（甜杏仁/苦杏仁），不是别名，故不生成匹配名"
+    },
+    {
+      "name": "沙棘",
+      "full": "沙棘",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "牡蛎",
+      "full": "牡蛎",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "芡实",
+      "full": "芡实",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "花椒",
+      "full": "花椒",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "赤小豆",
+      "full": "赤小豆",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "阿胶",
+      "full": "阿胶",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "鸡内金",
+      "full": "鸡内金",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "麦芽",
+      "full": "麦芽",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "昆布",
+      "full": "昆布",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "枣",
+      "full": "枣（大枣、酸枣、黑枣）",
+      "paren": "大枣、酸枣、黑枣",
+      "alternates": [
+        "大枣",
+        "酸枣",
+        "黑枣"
+      ],
+      "batch": "2002-51"
+    },
+    {
+      "name": "罗汉果",
+      "full": "罗汉果",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "郁李仁",
+      "full": "郁李仁",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "金银花",
+      "full": "金银花",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "青果",
+      "full": "青果",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "鱼腥草",
+      "full": "鱼腥草",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "姜",
+      "full": "姜（生姜、干姜）",
+      "paren": "生姜、干姜",
+      "alternates": [
+        "生姜",
+        "干姜"
+      ],
+      "batch": "2002-51"
+    },
+    {
+      "name": "枳椇子",
+      "full": "枳椇子",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "枸杞子",
+      "full": "枸杞子",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "栀子",
+      "full": "栀子",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "砂仁",
+      "full": "砂仁",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "胖大海",
+      "full": "胖大海",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "茯苓",
+      "full": "茯苓",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "香橼",
+      "full": "香橼",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "香薷",
+      "full": "香薷",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "桃仁",
+      "full": "桃仁",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "桑叶",
+      "full": "桑叶",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "桑椹",
+      "full": "桑椹",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "桔红",
+      "full": "桔红",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "桔梗",
+      "full": "桔梗",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "益智仁",
+      "full": "益智仁",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "荷叶",
+      "full": "荷叶",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "莱菔子",
+      "full": "莱菔子",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "莲子",
+      "full": "莲子",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "高良姜",
+      "full": "高良姜",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "淡竹叶",
+      "full": "淡竹叶",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "淡豆豉",
+      "full": "淡豆豉",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "菊花",
+      "full": "菊花",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "菊苣",
+      "full": "菊苣",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "黄芥子",
+      "full": "黄芥子",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "黄精",
+      "full": "黄精",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "紫苏",
+      "full": "紫苏",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "紫苏籽",
+      "full": "紫苏籽",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "葛根",
+      "full": "葛根",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "黑芝麻",
+      "full": "黑芝麻",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "黑胡椒",
+      "full": "黑胡椒",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "槐米",
+      "full": "槐米",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "槐花",
+      "full": "槐花",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "蒲公英",
+      "full": "蒲公英",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "蜂蜜",
+      "full": "蜂蜜",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "榧子",
+      "full": "榧子",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "酸枣仁",
+      "full": "酸枣仁",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "鲜白茅根",
+      "full": "鲜白茅根",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "鲜芦根",
+      "full": "鲜芦根",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "蝮蛇",
+      "full": "蝮蛇",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "橘皮",
+      "full": "橘皮",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "薄荷",
+      "full": "薄荷",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "薏苡仁",
+      "full": "薏苡仁",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "薤白",
+      "full": "薤白",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "覆盆子",
+      "full": "覆盆子",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "藿香",
+      "full": "藿香",
+      "paren": null,
+      "alternates": [],
+      "batch": "2002-51"
+    },
+    {
+      "name": "当归",
+      "full": "当归",
+      "paren": null,
+      "alternates": [],
+      "batch": "2019-08"
+    },
+    {
+      "name": "山柰",
+      "full": "山柰",
+      "paren": null,
+      "alternates": [],
+      "batch": "2019-08"
+    },
+    {
+      "name": "西红花",
+      "full": "西红花",
+      "paren": null,
+      "alternates": [],
+      "batch": "2019-08"
+    },
+    {
+      "name": "草果",
+      "full": "草果",
+      "paren": null,
+      "alternates": [],
+      "batch": "2019-08"
+    },
+    {
+      "name": "姜黄",
+      "full": "姜黄",
+      "paren": null,
+      "alternates": [],
+      "batch": "2019-08"
+    },
+    {
+      "name": "荜茇",
+      "full": "荜茇",
+      "paren": null,
+      "alternates": [],
+      "batch": "2019-08"
+    },
+    {
+      "name": "党参",
+      "full": "党参",
+      "paren": null,
+      "alternates": [],
+      "batch": "2023-09"
+    },
+    {
+      "name": "肉苁蓉",
+      "full": "肉苁蓉（荒漠）",
+      "paren": "荒漠",
+      "alternates": [],
+      "batch": "2023-09",
+      "qualifier_note": "括号内「荒漠」限定基源为荒漠肉苁蓉 Cistanche deserticola，不是别名，故不生成匹配名"
+    },
+    {
+      "name": "铁皮石斛",
+      "full": "铁皮石斛",
+      "paren": null,
+      "alternates": [],
+      "batch": "2023-09"
+    },
+    {
+      "name": "西洋参",
+      "full": "西洋参",
+      "paren": null,
+      "alternates": [],
+      "batch": "2023-09"
+    },
+    {
+      "name": "黄芪",
+      "full": "黄芪",
+      "paren": null,
+      "alternates": [],
+      "batch": "2023-09"
+    },
+    {
+      "name": "灵芝",
+      "full": "灵芝",
+      "paren": null,
+      "alternates": [],
+      "batch": "2023-09"
+    },
+    {
+      "name": "山茱萸",
+      "full": "山茱萸",
+      "paren": null,
+      "alternates": [],
+      "batch": "2023-09"
+    },
+    {
+      "name": "天麻",
+      "full": "天麻",
+      "paren": null,
+      "alternates": [],
+      "batch": "2023-09"
+    },
+    {
+      "name": "杜仲叶",
+      "full": "杜仲叶",
+      "paren": null,
+      "alternates": [],
+      "batch": "2023-09"
+    },
+    {
+      "name": "地黄",
+      "full": "地黄",
+      "paren": null,
+      "alternates": [],
+      "batch": "2024-04"
+    },
+    {
+      "name": "麦冬",
+      "full": "麦冬",
+      "paren": null,
+      "alternates": [],
+      "batch": "2024-04"
+    },
+    {
+      "name": "天冬",
+      "full": "天冬",
+      "paren": null,
+      "alternates": [],
+      "batch": "2024-04"
+    },
+    {
+      "name": "化橘红",
+      "full": "化橘红",
+      "paren": null,
+      "alternates": [],
+      "batch": "2024-04"
+    }
+  ]
+}

@@ -51,22 +51,26 @@
 
 ### 1.4 规模（随代码变动，更新时请重测）
 
+重测口径：只统计该层的源码文件（`.py`；`ui/web` 为 `.html`；`agents` 另含 `prompts/*.md`），
+排除 `__pycache__`，行数按 `\n` 计。
+
 | 层 | 文件 | 行数 | 说明 |
 |---|---|---|---|
-| `core/app/domain` | 5 | 828 | **核心判定，纯逻辑，不依赖 Web 框架** |
-| `core/app/services` | 4 | 940 | 编排与规则兜底 |
-| `core/app/agents` | 8 | 972 | LLM 层（含两个后端） |
-| `core/app/api` | 3 | 90 | HTTP 适配，极薄 |
-| `core/tests` | 9 | 1,696 | **230 项，全离线，约 0.7 秒** |
-| `core/scripts` | 7 | 1,221 | 运维/自检脚本 |
-| `ui/terminal` | 1 | 358 | 终端壳 |
-| `ui/web` | 1 | 434 | 网页壳 |
-| **合计** | | **6,539** | |
+| `core/app/domain` | 5 | 973 | **核心判定，纯逻辑，不依赖 Web 框架** |
+| `core/app/services` | 4 | 1,102 | 编排与规则兜底 |
+| `core/app/agents` | 8 | 1,095 | LLM 层（含两个后端）+ 2 个提示词文件 |
+| `core/app/api` | 3 | 115 | HTTP 适配，极薄 |
+| `core/tests` | 10 | 2,061 | **252 项，全离线，约 0.7 秒** |
+| `core/scripts` | 8 | 1,774 | 运维/自检脚本 |
+| `ui/terminal` | 1 | 398 | 终端壳 |
+| `ui/web` | 1 | 449 | 网页壳 |
+| **合计** | | **7,967** | |
 
-数据：`food_properties.json` 66 KB、`herbs.json` 22 KB、`constitution.json` 2.6 KB。
+数据：`food_properties.json` 66 KB、`herbs.json` 22 KB、`constitution.json` 2.6 KB、
+`food_medicine_catalog.json` 20 KB（合规自检用，不参与判定）。
 
 > 判断架构是否还健康的快速指标：**`domain` + `services` 的行数占比**。
-> 这两层是真正的资产（1,768 行），其余是壳与测试。若这两层开始膨胀，
+> 这两层是真正的资产（2,075 行），其余是壳与测试。若这两层开始膨胀，
 > 说明有人在把界面逻辑或模型逻辑塞进核心层。
 
 ---
@@ -345,7 +349,7 @@ Get-Process | Where-Object { $_.ProcessName -match 'python' } | Stop-Process -Fo
 
 | 脚本 | 测到的 | **测不到的** |
 |---|---|---|
-| `pytest` | 判定逻辑、护栏、JSON 护栏、凭据与日志安全（230 项，全离线） | 真实模型行为；HTTP 层在缺 `[web]` extra 时会自动跳过 |
+| `pytest` | 判定逻辑、护栏、JSON 护栏、凭据与日志安全、食药物质目录合规（252 项，全离线） | 真实模型行为；HTTP 层在缺 `[web]` extra 时会自动跳过 |
 | `test_food_accuracy.py` | **只有 Agent1 的属性判定** | **推荐质量、Agent2 的任何东西、文案措辞、注意事项是否到位** |
 | `smoke_agents.py` | 运行时启动、原始往返、Agent1 解析、全链路格式与条数 | 属性准确率（无断言，只打印）；安全性 |
 | `smoke_offline.py` | 数据层→解析→规则兜底→护栏，**不调模型** | 模型相关的任何事 |
@@ -419,13 +423,14 @@ usage["completion_tokens_details"]["reasoning_tokens"]   # 其中思考
 
 ## 9. 数据维护
 
-### 9.1 三个数据文件
+### 9.1 四个数据文件
 
 | 文件 | 内容 | 规模 |
 |---|---|---|
 | `food_properties.json` | `foods[]` + `tea_drinks.items[]` + `_meta` | 146 条 |
 | `herbs.json` | `_meta` + `herbs[]`（含剂量上限、禁忌、归经） | 34 味 |
 | `constitution.json` | 5 型体质 + `one_line` / `principles` / `avoid` | 5 型 |
+| `food_medicine_catalog.json` | 国家卫健委食药物质目录（4 批公告）汇编，**只用于合规自检，不参与判定** | 106 种 |
 
 字段含义写在各自的 `_meta.field_notes` 里，**改结构时同步改它**。
 
@@ -460,6 +465,44 @@ add_review_fields.py   →   patch_food_table.py
 ```
 
 三者都支持 `--dry-run`。**改任何数据文件前先跑 `--dry-run`。**
+
+### 9.5 食药物质目录与合规自检（`check_herb_catalog.py`）
+
+**与 §9.4 那三个脚本不同，`scripts/check_herb_catalog.py` 是长期可重复运行的只读工具，不是一次性批次脚本。**
+
+它把 `herbs.json` 的 34 味饮片白名单逐条对照 `food_medicine_catalog.json`
+（国家卫健委"按照传统既是食品又是中药材的物质目录"，4 批公告共 106 种），输出三类清单：
+
+| 状态 | 含义 | 该做什么 |
+|---|---|---|
+| 在目录内 | 目录里有对应条目 | 无需处理 |
+| 不在目录内 | 四批公告均未收录 | 人工决定「删掉」还是「标注仅作参考」 |
+| 需人工判断 | 目录里有相近但可能不是同一物的条目 | 人工判断，脚本不替你选 |
+
+```bash
+cd core
+python scripts/check_herb_catalog.py                        # 人读表格
+python scripts/check_herb_catalog.py --format md --out ../docs/catalog-compliance.md
+python scripts/check_herb_catalog.py --strict               # 有遗留项则 exit 1，可进 CI
+```
+
+`docs/catalog-compliance.md` 是**脚本生成的，不要手工编辑**。
+
+维护时要知道的三件事：
+
+1. **目录数据自证。** 每个批次在 `batches[].verbatim` 里保留了公告原文串，
+   任何人都能拿它和政府网页逐字对照。脚本启动时会用 `split_items()` 校验
+   「verbatim 数出来的条数 == 声明的 count」，不一致就打警告。
+   ⚠️ 解析陷阱：括号内的顿号不是分隔符 —— `枣（大枣、酸枣、黑枣）` 是 **1** 条不是 3 条。
+2. **名称桥接是人工判断，刻意放在脚本里而不是数据文件里**（`HERB_ALIASES` /
+   `NEEDS_HUMAN_JUDGMENT` 两个常量，每条都写明理由），这样"外部权威数据"和
+   "我方的映射判断"不会混在一起。当前登记：陈皮→橘皮、红枣→大枣、生姜→生姜（目录括号内并列名）；
+   橘红走 `NEEDS_HUMAN_JUDGMENT`。
+3. **「不在食药物质目录」≠「不能当食品用」。** 例如玫瑰花走的是卫生部公告
+   2010 年第 3 号（允许重瓣红玫瑰作为普通食品生产经营）这条路。所以脚本只做目录比对，
+   不会输出"违规"结论。各味的具体背景见 `docs/catalog-compliance.md` 的「待决策项与合规背景」。
+
+改动 `herbs.json` 的饮片名单后，**重新跑一次这个脚本并重新生成文档**。
 
 ---
 
