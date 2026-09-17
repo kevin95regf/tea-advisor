@@ -27,26 +27,31 @@ pip install -e ".[dev,web]"
 > 只用终端界面（`ui/terminal/chat.py`）的话可以省掉它：
 > `pip install -e ".[dev]"`。
 
-### 1.2 两份配置文件（**分工不能混**）
+### 1.2 配置文件与 API Key
 
 | 文件 | 放什么 | 为什么 |
 |---|---|---|
-| `.env` | 应用配置：`TA_*` 模型参数、`APP_*` 端口、超时 | 可以入库模板 |
-| `credentials.env` | `DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DSH_HOME` | **不能放 `.env`** |
+| `.env` | 应用配置：`TA_*` 模型参数、`APP_*` 端口、超时 | 可选（都有默认值），可以入库模板 |
+| `credentials.env` | `DSH_HOME`、可选的 `DEEPSEEK_BASE_URL` | **不能放 `.env`**；**不存 API Key** |
 
-**为什么凭据必须单独一个文件**：`dsh` 启动时会扫描 workspace 根目录的 `.env`，
-一旦发现 `DSH_HOME` 这类 `DSH_*` 变量或凭据变量就**直接拒绝启动**：
+**API Key 不放在任何文件里。** 本项目不使用服务端内置 Key（曾有的"兜底 Key"已移除），
+Key 只有一个来源——调用方显式传入：
+
+* 网页：`Authorization: Bearer <key>` 头，逐请求
+* 终端与脚本：环境变量 `DEEPSEEK_API_KEY`（`config.api_key_from_env()` 读取）
+
+**为什么 `DSH_HOME` 必须单独一个文件**：`dsh` 启动时会扫描 workspace 根目录的 `.env`，
+一旦发现 `DSH_HOME` 这类 `DSH_*` 变量就**直接拒绝启动**：
 
 ```
 Error: dsh: .env sets "DSH_HOME", which only the launching environment may set
 ```
 
 因为它们决定进程如何启动、从哪里加载代码与指令、如何联网，属于「启动环境专属」变量。
-所以约定：`.env` 里只出现 `TA_*` 与 `APP_*`，凭据与 `DSH_HOME` 放 `credentials.env`，
+所以约定：`.env` 里只出现 `TA_*` 与 `APP_*`，`DSH_HOME` 放 `credentials.env`，
 由 `app/config.py` 读取、`app/agents/runtime.py` 注入子进程环境。
 
-> 如果你**不使用 DSH** 开发（例如只改数据层），可以只填 `credentials.env` 里的
-> `DSH_HOME` 为一个纯英文绝对路径——但 `.env` 仍然不能出现 `DSH_*`。
+> 只有 `TA_BACKEND=dsh`（调试用）才需要 `credentials.env`；默认的 direct 后端不用它。
 
 两个真实配置文件都已被 `.gitignore` 忽略，模板文件会入库。**提交前请确认你没有把
 自己的 Key 提交上去**（`git diff --cached` 看一眼）。
@@ -281,13 +286,23 @@ python scripts\patch_food_table.py --dry-run
    python -m pytest tests\test_key_handling.py -q
    ```
 
-10. **凭据缺失 / 后端不支持时，报错要"可操作"，且不得静默降级。**
+10. **本项目不使用服务端内置 Key。任何"偷偷用某个 Key"的降级都不允许。**
 
-   * 没有可用 Key → `NO_API_KEY`，信息里指明 `credentials.env`，
-     并警告 **不能**写进 `.env`（`dsh` 会因为 `.env` 出现该变量而拒绝启动）。
-     这条文案曾经写错并坑过用户，已有回归测试钉住。
-   * `TA_BACKEND=dsh` 时用户带了 Key → 必须报 `USER_KEY_UNSUPPORTED` 并说明怎么解决。
-     **绝不能静默改用服务端 Key**：那会让用户以为费用记在自己账上。
+   这是产品底线，不是实现细节：Key 由调用方提供，**没有 Key 就必须明确失败**，
+   绝不能回退到"服务端配的那个"。用户看不到自己的钱是怎么被花掉的，是最坏的情况。
+
+   * 没有 Key → `NO_API_KEY`（400），信息里说清去哪儿给：
+     网页的「API Key」一栏，或终端/脚本的环境变量 `DEEPSEEK_API_KEY`。
+     **不得**再指引用户把 Key 写进任何配置文件——本项目不从文件读 Key。
+     这条文案历史上错过两次（先教用户写 `.env`，后教用户写 `credentials.env`），
+     已有回归测试钉住。
+   * Key 被模型服务方拒绝 → `API_KEY_REJECTED`（400），提示去改 Key，
+     而不是 `AGENT1_FAILED`（那会把人引向"我描述得不对"）。
+   * `TA_BACKEND=dsh` 且带了 Key → `USER_KEY_UNSUPPORTED`（400）并说明怎么解决。
+     dsh 的 Key 与子进程绑定，**不能**静默复用旧 Key。
+   * **安全分支必须无条件可用**：高风险人群检查放在凭据校验**之前**，
+     因为那个分支不调用模型、不花钱 —— 没填 Key 的用户输入"我怀孕了"，
+     应该看到"请先咨询执业医师"，而不是"缺少 API Key"。
    * 凭据类错误的 HTTP 状态码用 **400**（配置问题，换个说法重试没用），
      而不是 422（解析失败）。
 

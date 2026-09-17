@@ -171,14 +171,15 @@
     <div class="row" style="margin-top:0">
       <label for="key">API Key</label>
       <input id="key" type="password" autocomplete="off" spellcheck="false"
-             placeholder="sk-…（留空则用服务端配置的 Key）" />
+             placeholder="sk-…（必填；本服务不内置 Key）" />
       <label class="chk" title="勾选后写入浏览器 localStorage；不勾选只存在本次标签页，关掉即失效">
         <input id="remember" type="checkbox" /> 记住 Key
       </label>
     </div>
     <div class="hint" id="keyHint">
       你的 Key 只随本次请求通过 Authorization 头发给本机后端，再由后端转给模型服务；
-      <b>不写入服务器日志、不落盘</b>。默认不勾选「记住 Key」，只保存在本标签页内。
+      <b>不写入服务器日志、不落盘、不入库</b>。
+      默认不勾选「记住 Key」，只保存在本标签页内。
     </div>
   </div>
 
@@ -241,17 +242,18 @@ async function refreshKeyHint() {
     const h = await fetch('/healthz').then(r => r.json());
     const notes = [];
     if (h.user_key_supported === false) {
+      // dsh 后端的 Key 与子进程绑定，无法按请求切换
       notes.push('<span class="badge bad">当前后端不支持自带 Key</span>'
-        + '（<code>TA_BACKEND=' + esc(h.backend) + '</code>）—— 填了也不会生效，'
-        + '请改用服务端配置的 Key，或把后端切到 direct。');
-    } else if (h.credentials_ok) {
-      notes.push('服务端已配置兜底 Key：<b>这里留空也能用</b>，此时结果里会标注「本次使用服务端 Key」。');
+        + '（<code>TA_BACKEND=' + esc(h.backend) + '</code>）。'
+        + '请把后端切到 direct（默认）后再用。');
     } else {
-      notes.push('<span class="badge warn">服务端未配置 Key</span>'
-        + '你必须填自己的 Key 才能得到建议。');
+      notes.push('<span class="badge warn">必须填你自己的 Key</span>'
+        + '本服务<b>不内置、也不保存任何 API Key</b> —— 留空会直接报错，'
+        + '不会消耗任何人的额度。');
     }
     notes.push('你的 Key 只通过 <code>Authorization</code> 头发给本机后端，'
-      + '<b>不写入服务器日志、不落盘</b>。默认不勾选「记住 Key」，只存在本标签页内。');
+      + '<b>不写入服务器日志、不落盘、不入库</b>。'
+      + '默认不勾选「记住 Key」，只存在本标签页内。');
     keyHintEl.innerHTML = notes.join('<br>');
   } catch (e) {
     keyHintEl.innerHTML = KEY_HINT_DEFAULT;
@@ -373,7 +375,7 @@ async function run() {
   try {
     const headers = { 'Content-Type': 'application/json' };
     // 用户自带 Key：逐请求通过 Authorization 头发给本机后端。
-    // 只有填了才带这个头；不填则后端用服务端兜底 Key。
+    // 只有填了才带这个头。本项目不内置 Key，所以不填会被后端拒绝（NO_API_KEY）。
     if (userKey) headers['Authorization'] = 'Bearer ' + userKey;
 
     const res = await fetch('/api/analyze', {
@@ -416,20 +418,16 @@ async function run() {
 }
 
 /**
- * 标明本次用的是谁的 Key。
- * 这一行是必须的：用户填了自己的 Key 却因为格式问题回退到服务端 Key 时，
- * 只有靠它才看得出来 —— 否则用户会以为自己花的钱。
+ * 标明本次有没有调用模型、用的是谁的 Key。
+ * 本项目不内置 Key，所以只可能是 "user"（用了你填的）或 "not_used"
+ * （高风险分支，没调用模型、无费用）。
  */
 function renderKeySource(meta) {
   const ks = (meta && meta.key_source) || '';
   const backend = meta && meta.backend ? `，后端 ${esc(meta.backend)}` : '';
   if (ks === 'user') {
-    return `<div class="hint"><span class="badge ok">本次使用你自带的 Key</span>`
+    return `<div class="hint"><span class="badge ok">本次使用你填的 Key</span>`
       + `费用记在你的账号上${backend}。</div>`;
-  }
-  if (ks === 'server') {
-    return `<div class="hint"><span class="badge warn">本次使用服务端 Key</span>`
-      + `没有收到你填的 Key，本次费用记在服务端账号${backend}。</div>`;
   }
   return `<div class="hint"><span class="badge">本次未调用模型</span>`
     + `（规则分支，无费用）${backend}。</div>`;

@@ -4,9 +4,10 @@
     python scripts/check_setup.py
 
 它会检查：
-  1. .env 是否存在、DEEPSEEK_API_KEY 是否已填
-  2. DSH_HOME 路径是否合法（纯英文）
-  3. deepseek-harness-sdk 是否安装
+  1. .env 是否存在（可选文件），以及环境变量里有没有 API Key
+     （本项目不使用服务端内置 Key，Key 只影响需要真实模型的自检脚本）
+  2. DSH_HOME 路径是否合法（纯英文，仅 dsh 后端需要）
+  3. deepseek-harness-sdk 是否安装（仅 dsh 后端需要）
   4. herbs.json / constitution.json 是否能通过 Pydantic 校验
   5. 安全护栏的若干基本行为
 """
@@ -45,7 +46,7 @@ def main() -> int:
 
     # ---------- 1. 配置 ----------
     print("\n[1/5] 配置与环境变量")
-    from app.config import CORE_DIR, PROJECT_ROOT, get_settings
+    from app.config import CORE_DIR, PROJECT_ROOT, api_key_from_env, get_settings
 
     settings = get_settings()
     line(OK, f"项目根目录: {PROJECT_ROOT}")
@@ -55,15 +56,19 @@ def main() -> int:
     if env_file.exists():
         line(OK, f".env 已存在: {env_file}")
     else:
-        line(WARN, ".env 不存在，请复制 .env.example 为 .env 并填入 API Key")
-        problems.append("缺少 .env")
+        # 不是问题：所有参数都有默认值，不配 .env 也能跑
+        line(WARN, ".env 不存在 —— 会用内置默认值（可选文件，不影响跑通）")
 
-    if settings.has_credentials:
-        key = settings.deepseek_api_key or ""
-        line(OK, f"DEEPSEEK_API_KEY 已设置（{key[:6]}...{key[-4:] if len(key) > 10 else ''}）")
+    # 本项目不内置 Key。这里只报告"环境里有没有"，因为它只影响需要真实模型的自检脚本。
+    key = api_key_from_env()
+    if key:
+        line(OK, f"环境变量里有 DEEPSEEK_API_KEY（{key[:6]}...{key[-4:] if len(key) > 10 else ''}）")
+        line(OK, "真实模型自检（smoke_agents / test_food_accuracy）可直接运行")
     else:
-        line(FAIL, "DEEPSEEK_API_KEY 未设置 —— 无法调用模型")
-        problems.append("缺少 DEEPSEEK_API_KEY")
+        line(WARN, "环境变量里没有 DEEPSEEK_API_KEY —— 不影响数据层与测试（它们全离线）")
+        line(WARN, "  · 网页/终端：在界面里填自己的 Key 即可")
+        line(WARN, '  · 跑真实模型脚本：先 $env:DEEPSEEK_API_KEY = "sk-..."')
+        line(OK, "本项目不使用服务端内置 Key（不会消耗任何人的额度）")
 
     line(OK, f"模型: {settings.model}（provider={settings.provider}）")
 

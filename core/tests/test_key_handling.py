@@ -65,10 +65,10 @@ def test_extract_api_key_accepts_valid_bearer(header: str, expected: str) -> Non
     ],
 )
 def test_extract_api_key_rejects_bad_input(header: str | None) -> None:
-    """格式不对一律返回 None（回退服务端 Key），不抛异常。
+    """格式不对一律返回 None（当作"没给 Key"），不抛异常。
 
-    回退是安全的：meta.key_source 会变成 server，前端会显示
-    「本次使用服务端 Key」，用户因此能看出自己填的 Key 没生效。
+    本项目不内置 Key，所以 None 的后果是明确的 400 `NO_API_KEY`，
+    而不是"偷偷用了谁的额度"—— 这也正是"格式不对不报 500"的前提。
     """
     assert extract_api_key(header) is None
 
@@ -110,21 +110,26 @@ def test_thinking_unknown_falls_back_to_low(weird: str | None) -> None:
 
 
 # ============================================================
-# 3. 凭据提示文案（曾把用户带进 .env 的坑）
+# 3. 凭据提示文案（历史坑：曾教用户把 Key 写进文件）
 # ============================================================
-def test_missing_credentials_hint_does_not_tell_user_to_use_dotenv() -> None:
-    """回归：提示文案必须指向 credentials.env，不能教用户写进 .env。
+def test_missing_credentials_hint_points_to_ui_and_env_var() -> None:
+    """提示要让用户知道去哪儿给 Key：界面 或 环境变量。
 
-    历史 bug：文案写着「在 .env 中填入 DEEPSEEK_API_KEY」，
-    而 dsh 会因为 .env 里出现该变量而**拒绝启动** —— 照着做必踩坑。
+    历史 bug（两次）：文案曾写「在 .env 中填入 DEEPSEEK_API_KEY」，
+    后又写「放 credentials.env」—— 后者虽然能工作，但在
+    「本项目不保存 Key」的新设计下同样是指错方向。
     """
     hint = get_settings().missing_credentials_hint()
-    assert "credentials.env" in hint, "必须指明正确位置是 credentials.env"
-    # 关键断言：不得出现"在 .env 中填入 DEEPSEEK_API_KEY"这类指令
-    assert "在 .env 中填入 DEEPSEEK_API_KEY" not in hint
-    assert "不能放 .env" in hint or "必须放 credentials.env" in hint, (
-        "要明确警告不能放 .env，否则用户还是会踩坑"
-    )
+    assert "不使用服务端内置 Key" in hint, "要讲清为什么不给兜底"
+    assert "API Key" in hint
+    # 两个正确入口都要提到
+    assert "Authorization" in hint, "网页版走 Authorization 头"
+    assert "DEEPSEEK_API_KEY" in hint and "环境变量" in hint, "终端/脚本走环境变量"
+    # 不得再指引用户把 Key 写进任何配置文件
+    assert ".env 中填入" not in hint
+    assert "credentials.env" not in hint, "本项目不再从文件读 Key"
+    # 隐私承诺要写出来
+    assert "不落盘" in hint or "不写入日志" in hint
 
 
 # ============================================================
@@ -184,10 +189,8 @@ def stub_agents(monkeypatch: pytest.MonkeyPatch) -> dict:
 def test_user_key_is_threaded_to_both_agents(
     monkeypatch: pytest.MonkeyPatch, stub_agents: dict
 ) -> None:
-    """用户自带的 Key 必须一路传到 Agent1 和 Agent2。"""
-    settings = get_settings()
-    monkeypatch.setattr(settings, "backend", "direct")
-    monkeypatch.setattr(settings, "deepseek_api_key", "sk-server-fallback")
+    """调用方给的 Key 必须一路传到 Agent1 和 Agent2。"""
+    monkeypatch.setattr(get_settings(), "backend", "direct")
 
     resp = orchestrator.analyze(
         AnalyzeRequest(text="中午吃了碗麻辣烫"), api_key=SENTINEL_KEY
@@ -199,44 +202,45 @@ def test_user_key_is_threaded_to_both_agents(
     assert resp.meta.backend == "direct"
 
 
-def test_no_user_key_falls_back_to_server_and_is_marked(
+def test_no_key_is_rejected_without_calling_model(
     monkeypatch: pytest.MonkeyPatch, stub_agents: dict
 ) -> None:
-    """没带 Key → 用服务端兜底，且必须标注出来（前端要显示）。"""
-    settings = get_settings()
-    monkeypatch.setattr(settings, "backend", "direct")
-    monkeypatch.setattr(settings, "deepseek_api_key", "sk-server-fallback")
+    """不带 Key → 直接 NO_API_KEY，**且一次模型调用都不发**。
 
-    resp = orchestrator.analyze(AnalyzeRequest(text="中午吃了碗麻辣烫"))
-
-    assert stub_agents["agent1"] == [None], "没有用户 Key 时应传 None，由运行时回退"
-    assert resp.meta.key_source == "server"
-
-
-def test_no_key_anywhere_raises_actionable_error(
-    monkeypatch: pytest.MonkeyPatch, stub_agents: dict
-) -> None:
-    settings = get_settings()
-    monkeypatch.setattr(settings, "backend", "direct")
-    monkeypatch.setattr(settings, "deepseek_api_key", None)
+    本项目不使用服务端内置 Key（曾有过的"兜底 Key"已移除），
+    所以没有 Key 就没有任何可退的地方，必须明确失败而不是偷偷用谁的额度。
+    """
+    monkeypatch.setattr(get_settings(), "backend", "direct")
 
     with pytest.raises(orchestrator.AnalyzeError) as ei:
         orchestrator.analyze(AnalyzeRequest(text="中午吃了碗麻辣烫"))
 
     assert ei.value.code == "NO_API_KEY"
-    assert "credentials.env" in ei.value.message
+    assert "不使用服务端内置 Key" in ei.value.message
+    assert stub_agents["agent1"] == [], "校验应在调用模型之前就拦住"
+
+
+def test_blank_or_whitespace_key_is_rejected(
+    monkeypatch: pytest.MonkeyPatch, stub_agents: dict
+) -> None:
+    """空串/纯空白等同于没给 Key，不能被当成有效 Key。"""
+    monkeypatch.setattr(get_settings(), "backend", "direct")
+    for blank in ("", "   ", "\t\n"):
+        with pytest.raises(orchestrator.AnalyzeError) as ei:
+            orchestrator.analyze(AnalyzeRequest(text="中午吃了碗麻辣烫"), api_key=blank)
+        assert ei.value.code == "NO_API_KEY", blank
+    assert stub_agents["agent1"] == []
 
 
 def test_dsh_backend_rejects_user_key_with_clear_error(
     monkeypatch: pytest.MonkeyPatch, stub_agents: dict
 ) -> None:
-    """dsh 后端不支持逐请求 Key：必须明确报错，不能静默改用服务端 Key。
+    """dsh 后端不支持逐请求 Key：必须明确报错，不能静默换用别的 Key。
 
-    静默回退会让用户以为自己填的 Key 生效了、以为费用记在自己账上。
+    dsh 的 Key 与子进程绑定，一个进程只能有一个；静默复用旧 Key
+    会让用户以为自己填的 Key 生效了、以为费用记在自己账上。
     """
-    settings = get_settings()
-    monkeypatch.setattr(settings, "backend", "dsh")
-    monkeypatch.setattr(settings, "deepseek_api_key", "sk-server-fallback")
+    monkeypatch.setattr(get_settings(), "backend", "dsh")
 
     with pytest.raises(orchestrator.AnalyzeError) as ei:
         orchestrator.analyze(AnalyzeRequest(text="中午吃了碗麻辣烫"), api_key=SENTINEL_KEY)
@@ -246,18 +250,18 @@ def test_dsh_backend_rejects_user_key_with_clear_error(
     assert stub_agents["agent1"] == [], "报错应发生在调用模型之前"
 
 
-def test_high_risk_branch_marks_key_not_used(
-    monkeypatch: pytest.MonkeyPatch, stub_agents: dict
-) -> None:
-    """高风险分支不调用模型，key_source 应为 not_used，不要误标成用了某个 Key。"""
-    monkeypatch.setattr(get_settings(), "backend", "direct")
-    monkeypatch.setattr(get_settings(), "deepseek_api_key", "sk-server-fallback")
+def test_high_risk_branch_works_without_any_key(stub_agents: dict) -> None:
+    """**安全分支必须无条件可用**：一个还没填 Key 的用户输入"我怀孕了"，
+    应该看到"请先咨询执业医师"，而不是"缺少 API Key"。
 
+    这个分支不调用模型、不花一分钱，所以凭据校验刻意放在它之后。
+    """
     resp = orchestrator.analyze(AnalyzeRequest(text="我怀孕了，今天吃了火锅"))
 
     assert resp.recommendations == []
     assert resp.meta.key_source == "not_used"
-    assert stub_agents["agent1"] == []
+    assert "医师" in resp.user_message or "药师" in resp.user_message
+    assert stub_agents["agent1"] == [], "安全分支不应调用模型"
 
 
 def test_rejected_key_maps_to_dedicated_error_code(
@@ -265,14 +269,12 @@ def test_rejected_key_maps_to_dedicated_error_code(
 ) -> None:
     """Key 被模型服务方拒绝时，要回"去改 Key"，不能是"饮食解析失败"。
 
-    用户自带 Key 模式下，填错 Key 是最常见的第一个错误；
+    填错 Key 是这个模式下最常见的第一个错误；
     回 AGENT1_FAILED 会把人的注意力引向"我描述得不对"。
     """
     from app.agents.runtime import CredentialError
 
-    settings = get_settings()
-    monkeypatch.setattr(settings, "backend", "direct")
-    monkeypatch.setattr(settings, "deepseek_api_key", "sk-server-fallback")
+    monkeypatch.setattr(get_settings(), "backend", "direct")
 
     def boom(*args, **kwargs):
         raise CredentialError("API Key 无效或已失效（HTTP 401）。")
@@ -293,10 +295,8 @@ def test_rejected_key_maps_to_dedicated_error_code(
 def test_key_never_appears_in_logs(
     monkeypatch: pytest.MonkeyPatch, stub_agents: dict, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """带用户 Key 跑完整编排，日志里绝不能出现这个 Key。"""
-    settings = get_settings()
-    monkeypatch.setattr(settings, "backend", "direct")
-    monkeypatch.setattr(settings, "deepseek_api_key", "sk-server-fallback")
+    """带 Key 跑完整编排，日志里绝不能出现这个 Key。"""
+    monkeypatch.setattr(get_settings(), "backend", "direct")
 
     with caplog.at_level(logging.DEBUG):
         orchestrator.analyze(AnalyzeRequest(text="中午吃了碗麻辣烫"), api_key=SENTINEL_KEY)
@@ -312,9 +312,7 @@ def test_key_never_appears_in_response(
     monkeypatch: pytest.MonkeyPatch, stub_agents: dict
 ) -> None:
     """响应体（含 meta / 错误详情）绝不能回显 Key。"""
-    settings = get_settings()
-    monkeypatch.setattr(settings, "backend", "direct")
-    monkeypatch.setattr(settings, "deepseek_api_key", "sk-server-fallback")
+    monkeypatch.setattr(get_settings(), "backend", "direct")
 
     resp = orchestrator.analyze(
         AnalyzeRequest(text="中午吃了碗麻辣烫"), api_key=SENTINEL_KEY
@@ -328,9 +326,7 @@ def test_key_never_appears_in_error_messages(
     monkeypatch: pytest.MonkeyPatch, stub_agents: dict
 ) -> None:
     """报错信息里也不能带 Key。"""
-    settings = get_settings()
-    monkeypatch.setattr(settings, "backend", "dsh")
-    monkeypatch.setattr(settings, "deepseek_api_key", "sk-server-fallback")
+    monkeypatch.setattr(get_settings(), "backend", "dsh")
 
     with pytest.raises(orchestrator.AnalyzeError) as ei:
         orchestrator.analyze(AnalyzeRequest(text="中午吃了碗麻辣烫"), api_key=SENTINEL_KEY)
@@ -369,9 +365,7 @@ def test_http_authorization_header_reaches_orchestrator(
     monkeypatch: pytest.MonkeyPatch, stub_agents: dict, http_client
 ) -> None:
     """整条 HTTP 路径：Authorization 头 → HTTP 层 → 编排层 → 两个 Agent。"""
-    settings = get_settings()
-    monkeypatch.setattr(settings, "backend", "direct")
-    monkeypatch.setattr(settings, "deepseek_api_key", "sk-server-fallback")
+    monkeypatch.setattr(get_settings(), "backend", "direct")
 
     r = http_client.post(
         "/api/analyze",
@@ -386,47 +380,47 @@ def test_http_authorization_header_reaches_orchestrator(
     assert SENTINEL_KEY not in r.text, "响应体里出现了 Key"
 
 
-def test_http_without_authorization_uses_server_key(
+def test_http_without_authorization_is_rejected(
     monkeypatch: pytest.MonkeyPatch, stub_agents: dict, http_client
 ) -> None:
-    settings = get_settings()
-    monkeypatch.setattr(settings, "backend", "direct")
-    monkeypatch.setattr(settings, "deepseek_api_key", "sk-server-fallback")
+    """不带 Authorization → 400 NO_API_KEY（本服务不内置 Key，没有兜底可退）。"""
+    monkeypatch.setattr(get_settings(), "backend", "direct")
 
     r = http_client.post("/api/analyze", json={"text": "中午吃了碗麻辣烫"})
-    assert r.status_code == 200
-    assert r.json()["meta"]["key_source"] == "server"
+    assert r.status_code == 400
+    assert r.json()["detail"]["code"] == "NO_API_KEY"
+    assert stub_agents["agent1"] == [], "不该发出任何模型调用"
 
 
 def test_http_no_key_returns_400_with_actionable_code(
     monkeypatch: pytest.MonkeyPatch, stub_agents: dict, http_client
 ) -> None:
     """没有 Key 时用 400（配置问题），不是 422（换种说法也没用）。"""
-    settings = get_settings()
-    monkeypatch.setattr(settings, "backend", "direct")
-    monkeypatch.setattr(settings, "deepseek_api_key", None)
+    monkeypatch.setattr(get_settings(), "backend", "direct")
 
     r = http_client.post("/api/analyze", json={"text": "中午吃了碗麻辣烫"})
     assert r.status_code == 400
     assert r.json()["detail"]["code"] == "NO_API_KEY"
+    msg = r.json()["detail"]["message"]
+    assert "不使用服务端内置 Key" in msg
+    assert "Authorization" in msg or "环境变量" in msg, "要告诉用户去哪儿给 Key"
 
 
-def test_http_malformed_authorization_falls_back_not_500(
+def test_http_malformed_authorization_is_not_500(
     monkeypatch: pytest.MonkeyPatch, stub_agents: dict, http_client
 ) -> None:
-    """头写得不对也不能 500：回退服务端 Key，并标注出来。"""
-    settings = get_settings()
-    monkeypatch.setattr(settings, "backend", "direct")
-    monkeypatch.setattr(settings, "deepseek_api_key", "sk-server-fallback")
+    """头写得不对也不能 500：当作"没给 Key"，回 400 并说明。"""
+    monkeypatch.setattr(get_settings(), "backend", "direct")
 
     for bad in ["sk-no-bearer", "Basic xyz", "Bearer"]:
         r = http_client.post(
             "/api/analyze", json={"text": "中午吃了碗麻辣烫"},
             headers={"Authorization": bad},
         )
-        assert r.status_code == 200, bad
-        assert r.json()["meta"]["key_source"] == "server", bad
+        assert r.status_code == 400, bad
+        assert r.json()["detail"]["code"] == "NO_API_KEY", bad
         assert bad not in r.text
+    assert stub_agents["agent1"] == [], "格式不对时也不该调用模型"
 
 
 def test_healthz_exposes_backend_and_key_support(http_client) -> None:
@@ -437,6 +431,8 @@ def test_healthz_exposes_backend_and_key_support(http_client) -> None:
     assert "backend" in body
     assert "user_key_supported" in body
     assert isinstance(body["user_key_supported"], bool)
+    # 刻意没有 credentials_ok —— 本项目不使用服务端内置 Key
+    assert "credentials_ok" not in body
     assert SENTINEL_KEY not in r.text
 
 
@@ -446,9 +442,7 @@ def test_http_rejected_key_returns_400_not_422(
     """Key 被拒 → 400 + API_KEY_REJECTED，前端据此把焦点移到 Key 输入框。"""
     from app.agents.runtime import CredentialError
 
-    settings = get_settings()
-    monkeypatch.setattr(settings, "backend", "direct")
-    monkeypatch.setattr(settings, "deepseek_api_key", "sk-server-fallback")
+    monkeypatch.setattr(get_settings(), "backend", "direct")
 
     def boom(*args, **kwargs):
         raise CredentialError("API Key 无效或已失效（HTTP 401）。")
@@ -463,6 +457,18 @@ def test_http_rejected_key_returns_400_not_422(
     assert r.status_code == 400
     assert r.json()["detail"]["code"] == "API_KEY_REJECTED"
     assert SENTINEL_KEY not in r.text
+
+
+def test_http_high_risk_works_without_key(http_client) -> None:
+    """安全分支在 HTTP 层也必须无需 Key 就能给出引导就医。"""
+    r = http_client.post(
+        "/api/analyze", json={"text": "我怀孕了，今天吃了火锅，能喝什么茶"}
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["recommendations"] == []
+    assert body["meta"]["key_source"] == "not_used"
+    assert "医师" in body["user_message"] or "药师" in body["user_message"]
 
 
 def test_openapi_declares_authorization_header(http_client) -> None:

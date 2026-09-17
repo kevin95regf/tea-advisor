@@ -142,8 +142,8 @@ def parse_diet(
     返回 (ParsedMeal, 耗时毫秒, session_id)。
     解析或校验失败会抛 JsonGuardError / RuntimeError，由上层决定是否降级。
 
-    `api_key`：用户自带的 Key（HTTP 层从 Authorization 头取）。
-    为空则由运行时回退到服务端兜底 Key。
+    `api_key`：调用方提供的 Key（HTTP 层从 Authorization 头取，
+    终端与脚本从环境变量取）。本项目**不使用服务端内置 Key**，为空会直接失败。
     """
     settings = get_settings()
     runtime = get_runtime()

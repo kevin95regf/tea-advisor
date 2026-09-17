@@ -104,34 +104,27 @@ def _sanitize_recommendations(
 def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeResponse:
     """执行完整分析流程。
 
-    `api_key`：调用方（HTTP 层从 `Authorization` 头里取）传入的**用户自带** Key。
-    为空则回退到服务端 credentials.env 的兜底 Key，并在 `meta.key_source` 里标注 ——
-    前端必须把"本次使用服务端 Key"显示出来，否则用户会以为自己填的 Key 生效了。
+    `api_key`：调用方传入的 API Key（HTTP 层从 `Authorization` 头取，
+    终端与脚本从环境变量取）。**本项目不使用服务端内置 Key**，所以这里为空
+    就意味着这次请求无法调用模型，直接报 `NO_API_KEY`。
     """
     settings = get_settings()
     request_id = uuid.uuid4().hex[:16]
     started = time.perf_counter()
 
     user_key = (api_key or "").strip()
-    key_source = "user" if user_key else "server"
-
-    # ---------- 凭据前置校验 ----------
-    # 放在最前面（早于高风险分支）：配置类问题要一眼看出是配置问题，
-    # 而不是被包装成"饮食解析失败"。
-    if user_key and not settings.user_key_supported:
-        raise AnalyzeError(
-            "USER_KEY_UNSUPPORTED",
-            f"当前后端（{settings.backend}）不支持逐请求 API Key。"
-            "请把 TA_BACKEND 设为 direct；或清空界面里的 Key，改用服务端配置的 Key。",
-        )
-    if not user_key and not settings.has_credentials:
-        raise AnalyzeError("NO_API_KEY", settings.missing_credentials_hint())
+    # 只要走到调用模型这一步，用的就是调用方的 Key。字段保留是为了让前端
+    # 能区分"本次用了你的 Key"与"本次根本没调用模型"（高风险分支）。
+    key_source = "user" if user_key else "not_used"
 
     constitution = _constitution_of(request)
     label = CONSTITUTION_LABELS.get(constitution.value, constitution.value)
     disclaimer = Disclaimer()
 
-    # ---------- 0. 高风险人群 ----------
+    # ---------- 0. 高风险人群（放在凭据校验【之前】）----------
+    # 这个分支不调用模型、不花一分钱，所以必须无条件可用：
+    # 一个还没填 Key 的用户输入"我怀孕了"，应该看到"请先咨询执业医师"，
+    # 而不是"缺少 API Key"。安全提示的优先级高于配置校验。
     high_risk = detect_high_risk(request.text)
     if high_risk:
         parsed = ParsedMeal(
@@ -154,7 +147,7 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
                 degraded=True,
                 degraded_reason="high_risk_group",
                 # 本分支不调用模型，key_source 如实标 not_used，
-                # 免得前端显示"本次使用服务端 Key"却根本没有调用
+                # 免得前端显示"本次使用你的 Key"却根本没有调用
                 key_source="not_used",
                 backend=settings.backend,
             ),
@@ -164,10 +157,22 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
             ),
         )
 
+    # ---------- 凭据校验（刻意放在安全分支之后）----------
+    # 本项目不使用服务端内置 Key，所以没带 Key 就无法调用模型。
+    if not user_key:
+        raise AnalyzeError("NO_API_KEY", settings.missing_credentials_hint())
+    if not settings.user_key_supported:
+        raise AnalyzeError(
+            "USER_KEY_UNSUPPORTED",
+            f"当前后端（{settings.backend}）不支持逐请求 API Key"
+            "（dsh 的 Key 与子进程绑定，一个进程只能有一个 Key）。"
+            "请把 TA_BACKEND 设为 direct（默认）后重试。",
+        )
+
     # ---------- 1. Agent1 ----------
     try:
         parsed, agent1_ms, _ = parse_diet(
-            request.text, request.meal_time, api_key=user_key or None
+            request.text, request.meal_time, api_key=user_key
         )
     except CredentialError as exc:
         # 凭据被拒（Key 无效 / 余额不足 / 无权限）——这不是"没看懂你吃了什么"，

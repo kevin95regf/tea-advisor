@@ -171,7 +171,8 @@ def main() -> int:
             print(f"  - {f}")
         return 1
     print("冒烟结果：全部通过。数据层、护栏、规则兜底均已就绪。")
-    print("下一步：配好凭据后运行 python scripts/smoke_agents.py 验证真实模型调用。")
+    print("下一步：设好环境变量后运行 python scripts/smoke_agents.py 验证真实模型调用。")
+    print('        $env:DEEPSEEK_API_KEY = "sk-..."   （本项目不内置 Key）')
     return 0
 
 

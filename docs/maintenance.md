@@ -28,7 +28,7 @@
 | 用法 | 入口 | 是否需要 API Key |
 |---|---|---|
 | 当**库**用（只要判定） | `resolve_food()` / `match_foods()` / `nature_math.*` | **不需要**，零成本、零网络 |
-| 当**助手**用（要建议） | `ui/terminal/chat.py`、`ui/web/`、`POST /api/analyze` | 需要（用户自带或服务端兜底） |
+| 当**助手**用（要建议） | `ui/terminal/chat.py`、`ui/web/`、`POST /api/analyze` | 需要（**只能由调用方提供，无兜底**） |
 
 ### 1.3 当前状态
 
@@ -42,7 +42,7 @@
 | 终端壳 | ✅ `--resolve` / `--offline` / 交互三种用法 |
 | 网页壳 | ✅ 含测试指引、置信度标注、API Key 输入 |
 | **用户自带 API Key（逐请求）** | ✅ 默认直连后端支持 |
-| 服务端兜底 Key | ✅ 可选，响应标注 `key_source` |
+| 服务端内置 Key | ❌ **不存在**（曾有的"兜底 Key"已按需求移除）；Key 只由调用方传入 |
 | 数据表**人工审核** | ❌ **146 条全部 `pending`**（刻意的，见 §9.3） |
 | 第二层 `combine()` 接入主流程 | ❌ 已实现并测试，但未接线 |
 | 食性表规模 | 146 条（128 食材 + 18 茶饮） |
@@ -207,18 +207,26 @@ AnalyzeResponse  ← 必带 disclaimer；meta 带 key_source / backend / 耗时 
 
 ### 5.2 行为矩阵（维护时最常查的表）
 
-| 后端 | 用户带 Key | 服务端有兜底 Key | 结果 |
-|---|---|---|---|
-| direct | ✅ | 任意 | 用用户 Key，`meta.key_source="user"` |
-| direct | ❌ | ✅ | 用兜底 Key，`meta.key_source="server"` |
-| direct | ❌ | ❌ | `400 NO_API_KEY`（提示指向 `credentials.env`） |
-| direct | ✅ 但被服务方拒绝 | 任意 | `400 API_KEY_REJECTED`（401/402/403 映射） |
-| dsh | ✅ | ✅ | `400 USER_KEY_UNSUPPORTED` — **绝不静默改用服务端 Key** |
-| dsh | ❌ | ✅ | 用兜底 Key，`key_source="server"` |
-| 任意 | 任意 | 任意，且命中高风险人群 | 不调用模型，`key_source="not_used"` |
+**前提：本项目不使用服务端内置 Key。** Key 只有一个来源——调用方显式传入
+（网页走 `Authorization` 头，终端与脚本走环境变量 `DEEPSEEK_API_KEY`）。
+没有任何"配置文件里的兜底"可以退。
 
-> **为什么 dsh + 用户 Key 要报错而不是回退**：静默回退会让用户以为自己填的 Key 生效了、
-> 以为费用记在自己账上。报错比"看起来能用"更安全。
+| 后端 | 带了 Key | 结果 |
+|---|---|---|
+| direct | ✅ | 正常调用，`meta.key_source="user"` |
+| direct | ❌ | `400 NO_API_KEY`，提示去界面填或设环境变量；**不发任何模型调用** |
+| direct | ✅ 但被服务方拒绝（401/402/403） | `400 API_KEY_REJECTED` |
+| dsh | ✅ | `400 USER_KEY_UNSUPPORTED` —— dsh 无法按请求换 Key，**绝不静默复用** |
+| dsh | ❌ | `400 NO_API_KEY`（同上） |
+| 任意 | 命中高风险人群 | **先于凭据校验**返回：不调用模型、`key_source="not_used"`、引导就医 |
+
+> **安全分支为什么排在凭据校验之前**：它不花一分钱，所以必须无条件可用。
+> 一个还没填 Key 的用户输入"我怀孕了"，应该看到"请先咨询执业医师"，
+> 而不是"缺少 API Key"。这个顺序有测试钉住
+> （`test_high_risk_branch_works_without_any_key`）。
+
+> **为什么 dsh + Key 要报错而不是回退**：dsh 的 Key 与子进程绑定，一个进程只能有一个；
+> 静默复用旧 Key 会让用户以为自己填的 Key 生效了、以为费用记在自己账上。
 
 ### 5.3 Key 的流向与安全规则
 
@@ -276,7 +284,8 @@ core\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'core'); from ap
 | CORS | 只放行 `http://127.0.0.1:<port>` 与 `http://localhost:<port>` | 界面与接口同源，本来不需要 CORS；**绝不要改回 `["*"]`** |
 
 > ⚠️ 若用 `--host 0.0.0.0` 暴露到局域网：CORS 只能挡浏览器 JS，**挡不住直连**。
-> 那个场景请把 `credentials.env` 留空（强制用户自带 Key），否则任何人都能消耗你的额度。
+> 好消息是这不再涉及额度风险——本服务不持有任何 Key，每个请求必须自带。
+> 要担心的变成"任何人都能拿它当模型代理用"，必要时在前面加一层访问控制。
 
 ### 6.3 日志
 
@@ -504,13 +513,29 @@ python -m venv .venv
 ### 10.6 设了环境变量却不生效
 
 **原因**：`config.py` 用 `load_dotenv(..., override=True)` 加载 `.env` 与 `credentials.env`，
-**文件里的值会覆盖进程环境变量**。
-**处置**：改文件，别改环境变量。这条是刻意的——为了让项目配置压过 DSH 自己设的 `DSH_HOME`。
+**文件里定义过的键会覆盖进程环境变量**；文件里没有的键则不受影响。
+**处置**：`TA_*` / `APP_*` 这类应用配置改文件（刻意的——为了让项目配置压过 DSH 自己设的 `DSH_HOME`）。
+但 **`DEEPSEEK_API_KEY` 不受此影响**：配置文件里不再定义它，
+所以 `$env:DEEPSEEK_API_KEY` 能正常生效（这也是终端与脚本给 Key 的方式）。
 
 ### 10.7 `dsh: .env sets "DSH_HOME", which only the launching environment may set`
 
 **原因**：`.env`（**含注释里**）出现了任何 `DSH_*` 变量。
-**处置**：把 `DSH_*` 与凭据移到 `credentials.env`（dsh 不扫描该文件名）。
+**处置**：把 `DSH_HOME` 移到 `credentials.env`（dsh 不扫描该文件名）。
+（API Key 不在文件里，所以与这条无关。）
+
+### 10.7b 界面填了 Key 却报 `NO_API_KEY`
+
+**原因**：`Authorization` 头格式不对（缺 `Bearer` 前缀、含空白、超长）→
+`extract_api_key()` 返回 `None` → 当作"没给 Key"。
+**处置**：这是**刻意**的（宁可回 400 也不要 500）。检查前端拼头的方式。
+注意 HTTP 头只能是 ASCII，Key 里混入中文会导致请求在客户端就发不出去。
+
+### 10.7c 用户没填 Key 时连"请咨询医师"都看不到
+
+**原因**：凭据校验写在了高风险分支**之前**。
+**处置**：安全分支必须排在前面——它不调用模型、不花钱，理应无条件可用。
+见 `test_high_risk_branch_works_without_any_key`。
 
 ### 10.8 模型返回空正文（`content` 为空串）
 
@@ -519,11 +544,15 @@ python -m venv .venv
 **处置**：调大 `TA_MAX_TOKENS`（默认 8192 足够），或设 `TA_REASONING_EFFORT=off`。
 `DirectAPIRuntime` 已对这个情况给出明确报错。
 
-### 10.9 在界面填了 Key 却显示「本次使用服务端 Key」
+### 10.9 在界面填了 Key 却报 `NO_API_KEY`
 
-**原因**：`Authorization` 头格式不对（缺 `Bearer` 前缀、含空格、超长）→ `extract_api_key` 返回 `None` 回退。
-**处置**：这是**刻意**的（宁可回退也不要 500），且 `meta.key_source` 会让它可见。
-检查前端拼头的方式。
+**原因**：`Authorization` 头格式不对（缺 `Bearer` 前缀、含空格、超长）→
+`extract_api_key()` 返回 `None` → 当作"没给 Key"。
+**处置**：这是**刻意**的（宁可回 400 也不要 500）。检查前端拼头的方式。
+另外注意 HTTP 头只能是 ASCII —— Key 里混入中文会让请求在客户端就发不出去。
+
+> 历史提醒：本项在 v0.1 时表现为"静默回退到服务端兜底 Key"，靠 `meta.key_source="server"`
+> 才能察觉。v0.2 移除了兜底，所以现在会直接报 `NO_API_KEY` —— 更吵，但不会有人在你不知情时花钱。
 
 ### 10.10 关键词子串把无关条目拉进表
 

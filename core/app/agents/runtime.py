@@ -66,13 +66,19 @@ class HarnessRuntime:
     def __init__(self) -> None:
         self._lock = threading.RLock()
         self._harness = None
+        self._key = ""  # 当前子进程用的 Key，用于检测"换 Key"的请求
         self._settings = get_settings()
 
     # ------------------------------------------------------------
     # 生命周期
     # ------------------------------------------------------------
-    def ensure_started(self) -> None:
-        """按需启动运行时。重复调用不会重复启动。"""
+    def ensure_started(self, api_key: str | None = None) -> None:
+        """按需启动运行时。重复调用不会重复启动。
+
+        `api_key` 必传：本项目不使用服务端内置 Key，Key 由调用方提供。
+        由于 dsh 的 Key 与子进程绑定，**只有首次启动时传入的 Key 生效**；
+        之后若请求不同的 Key，run() 会明确报错而不是静默复用旧 Key。
+        """
         with self._lock:
             if self._harness is not None:
                 return
@@ -81,7 +87,9 @@ class HarnessRuntime:
                 raise RuntimeError(
                     "未安装 deepseek-harness-sdk。请执行：pip install deepseek-harness-sdk"
                 )
-            if not self._settings.has_credentials:
+
+            key = (api_key or "").strip()
+            if not key:
                 raise RuntimeError(self._settings.missing_credentials_hint())
 
             dsh_home = Path(self._settings.dsh_home)
@@ -102,8 +110,7 @@ class HarnessRuntime:
                 os.environ.pop(var, None)
 
             os.environ["DSH_HOME"] = str(dsh_home)
-            if self._settings.deepseek_api_key:
-                os.environ["DEEPSEEK_API_KEY"] = self._settings.deepseek_api_key
+            os.environ["DEEPSEEK_API_KEY"] = key
             if self._settings.deepseek_base_url:
                 os.environ["DEEPSEEK_BASE_URL"] = self._settings.deepseek_base_url
 
@@ -116,14 +123,14 @@ class HarnessRuntime:
             }
             if self._settings.reasoning_effort:
                 kwargs["reasoning_effort"] = self._settings.reasoning_effort
-            # 凭据优先用 kwargs 显式传入（SDK 会用它覆盖子进程环境）
-            if self._settings.deepseek_api_key:
-                kwargs["api_key"] = self._settings.deepseek_api_key
+            # 凭据显式传入（SDK 会用它覆盖子进程环境）
+            kwargs["api_key"] = key
             if self._settings.deepseek_base_url:
                 kwargs["base_url"] = self._settings.deepseek_base_url
 
             logger.info("正在启动 DSH 运行时: model=%s home=%s", self._settings.model, dsh_home)
             self._harness = DeepSeekHarness(**kwargs)
+            self._key = key
             # DeepSeekHarness 是上下文管理器；这里手动进入以长期持有
             self._harness.__enter__()
             logger.info("DSH 运行时已就绪")
@@ -155,21 +162,24 @@ class HarnessRuntime:
         系统提示词，需要用 patch 文件为每个 profile 单独配置（见 README 的"待验证事项"）。
         因此当前实现把 system_prompt 作为 user 消息的前缀注入，稳妥且无副作用。
 
-        `api_key`：dsh 后端**不支持**逐请求 Key。传了一个与服务端不同的 Key 时
-        宁可明确报错，也不能静默改用服务端 Key —— 那会让用户以为自己填的 Key 生效了。
+        `api_key` 必传。dsh 后端**不支持**逐请求换 Key：子进程只认第一次启动时
+        传入的那个 Key。请求了不同的 Key 时宁可明确报错，也不静默复用旧 Key ——
+        那会让用户以为自己填的 Key 生效了、以为费用记在自己账上。
         """
-        # 先校验凭据来源，再启动子进程：避免为一个用不了的请求付出 2.2s 启动成本
-        if api_key and api_key.strip():
-            server_key = (self._settings.deepseek_api_key or "").strip()
-            if api_key.strip() != server_key:
-                raise RuntimeError(
-                    "当前后端是 dsh，不支持逐请求 API Key"
-                    "（dsh 的 Key 与 harness 子进程绑定，一个进程只能有一个 Key）。"
-                    "请把 TA_BACKEND 设为 direct 后重试，"
-                    "或清空界面里的 Key 以使用服务端配置的 Key。"
-                )
+        key = (api_key or "").strip()
+        if not key:
+            raise RuntimeError(self._settings.missing_credentials_hint())
 
-        self.ensure_started()
+        # 先比对再启动子进程：避免为一个用不了的请求付出 ~2 秒启动成本
+        if self._harness is not None and key != self._key:
+            raise RuntimeError(
+                "当前 dsh 运行时已用另一个 API Key 启动，"
+                "dsh 不支持逐请求换 Key（Key 与 harness 子进程绑定）。"
+                "请把 TA_BACKEND 设为 direct（默认）后重试，"
+                "或重启进程以换用新 Key。"
+            )
+
+        self.ensure_started(key)
         assert self._harness is not None
 
         if system_prompt:

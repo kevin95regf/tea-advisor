@@ -49,7 +49,7 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """启动时校验数据与凭据，关闭时释放运行时。"""
+    """启动时校验数据，关闭时释放运行时。"""
     herbs = load_herb_catalog()
     logger.info("已加载 %d 味饮片", len(herbs))
     logger.info(
@@ -57,12 +57,10 @@ async def lifespan(app: FastAPI):
         settings.backend,
         "支持" if settings.user_key_supported else "不支持",
     )
-    if not settings.has_credentials:
-        # 不是错误：direct 后端下用户可以自带 Key，服务仍然可用
-        logger.warning(
-            "未配置服务端兜底 DEEPSEEK_API_KEY。"
-            "用户需在界面里填入自己的 Key；未填且无兜底时会返回 NO_API_KEY。"
-        )
+    logger.info(
+        "本项目不使用服务端内置 API Key：Key 由调用方提供"
+        "（网页读 Authorization 头，终端与脚本读环境变量 DEEPSEEK_API_KEY）。"
+    )
     logger.warning(
         "本服务输出仅供饮食养生参考，不构成医疗建议。上线前请由专业人员复核 herbs.json"
     )
@@ -112,7 +110,6 @@ async def healthz() -> HealthResponse:
     ).exists()
     return HealthResponse(
         status="ok",
-        credentials_ok=settings.has_credentials,
         herbs_loaded=len(catalog),
         data_files_ok=data_files_ok,
         dsh_home=str(dsh_home),

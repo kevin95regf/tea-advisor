@@ -15,10 +15,14 @@
     # 2) 离线确定性推荐（不调用模型，走规则兜底）
     python ui/terminal/chat.py --offline "中午吃了碗麻辣烫，还喝了杯冰可乐"
 
-    # 3) 默认：双 Agent 全链路（需 DEEPSEEK_API_KEY，约 12–18 秒）
+    # 3) 默认：双 Agent 全链路 —— 需要**你自己的** API Key，从环境变量取：
+    #        $env:DEEPSEEK_API_KEY = "sk-..."   （约 12–18 秒）
+    #    本项目不内置 Key，所以没设这个变量时会明确提示并退出。
     python ui/terminal/chat.py
     python ui/terminal/chat.py "晚上火锅吃撑了，都是肉" --constitution damp_heat
 """
+
+# 注意：本文件属于 ui/ 层，只 import app.*；核心层不知道界面的存在。
 
 from __future__ import annotations
 
@@ -242,18 +246,39 @@ def cmd_offline(text: str, constitution: Constitution) -> int:
 
 def cmd_full(text: str, constitution: Constitution) -> int:
     """双 Agent 全链路。需 API Key；耗时 12–18 秒。"""
+    from app.config import api_key_from_env
     from app.services.orchestrator import AnalyzeError, analyze
+
+    # 本项目不内置 Key：终端这条线从**环境变量**取你自己填的 Key。
+    api_key = api_key_from_env()
+    if not api_key:
+        hr("需要 API Key")
+        print("  本项目不使用服务端内置 Key（不会消耗任何人的额度），")
+        print("  所以完整助手需要你自己提供一个。先设环境变量再运行：")
+        print()
+        print('      $env:DEEPSEEK_API_KEY = "sk-..."')
+        print()
+        print("  申请地址：https://platform.deepseek.com/api_keys")
+        print()
+        print("  想零成本试的话，不需要 Key 的两条路：")
+        print("      python ui\\terminal\\chat.py --resolve 冰啤酒")
+        print("      python ui\\terminal\\chat.py --offline \"中午吃了碗麻辣烫\"")
+        return 1
 
     hr(f"正在解析你的饮食…（双 Agent 串行，通常 10–30 秒）")
     print(f"  {text}")
     t0 = time.perf_counter()
     try:
         resp = analyze(
-            AnalyzeRequest(text=text, constitution_override=constitution)
+            AnalyzeRequest(text=text, constitution_override=constitution),
+            api_key=api_key,
         )
     except AnalyzeError as exc:
         print(f"\n  [解析失败] {exc.code}：{exc.message}")
-        print("  提示：换个更具体的说法；若反复失败，检查 credentials.env 里的 API Key。")
+        if exc.code in ("NO_API_KEY", "API_KEY_REJECTED", "USER_KEY_UNSUPPORTED"):
+            print("  提示：见上面的凭据说明。")
+        else:
+            print("  提示：换个更具体的说法重试。")
         return 1
     except Exception as exc:  # pragma: no cover - 兜底
         print(f"\n  [请求失败] {type(exc).__name__}: {exc}")

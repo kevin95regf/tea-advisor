@@ -1,13 +1,16 @@
-"""真实模型冒烟：验证 dsh Python SDK 能跑通，并单测 Agent1 / Agent2 / 串联。
+"""真实模型冒烟：验证 Agent1 / Agent2 / 全链路能跑通。
 
-用法（在 core 目录下，需先配好 .env 里的 DEEPSEEK_API_KEY）：
+用法（在 core 目录下）。本项目不使用服务端内置 Key，
+所以要先把你自己的 Key 放进**环境变量**（不是写进文件）：
 
+    $env:DEEPSEEK_API_KEY = "sk-..."
     python scripts/smoke_agents.py            # 跑默认 3 条语料，全链路
     python scripts/smoke_agents.py --only a1  # 只测 Agent1
     python scripts/smoke_agents.py --case 1   # 只跑第 1 条语料
 
-第一次运行会启动 dsh 子进程并生成 profile，约需十几秒。
-子进程的 stderr 会写到 var/dsh_runtime.log，排查启动问题先看它。
+默认后端是 direct（直连官方 API），不启动子进程。
+若把 TA_BACKEND 设为 dsh，首次运行会启动 dsh 子进程并生成 profile（约十几秒），
+子进程的 stderr 写到 var/dsh_runtime.log，排查启动问题先看它。
 """
 
 from __future__ import annotations
@@ -58,15 +61,18 @@ def main() -> int:
     parser.add_argument("--case", type=int, default=None, help="只跑指定序号（从 1 开始）")
     args = parser.parse_args()
 
-    from app.config import get_settings
+    from app.config import api_key_from_env, get_settings
 
     settings = get_settings()
 
     hr("0. 前置检查")
-    if not settings.has_credentials:
-        print("  [失败] " + settings.missing_credentials_hint())
+    # 本项目不内置 Key，Key 只从环境变量取（不读任何文件）
+    api_key = api_key_from_env()
+    if not api_key:
+        print("  [失败] 缺少 API Key。本脚本要调用真实模型，请先设环境变量：")
+        print('           $env:DEEPSEEK_API_KEY = "sk-..."')
         return 1
-    print(f"  [通过] API Key 已配置：{settings.deepseek_api_key[:6]}...")
+    print(f"  [通过] API Key 已从环境变量读取：{api_key[:6]}...")
     print(f"  [通过] 模型：{settings.model} / {settings.provider}")
     print(f"  [通过] DSH_HOME：{settings.dsh_home}")
 
@@ -87,15 +93,16 @@ def main() -> int:
 
     runtime = get_runtime()
 
-    hr("1. 启动 DSH 运行时")
+    hr("1. 启动运行时")
     t0 = time.perf_counter()
     try:
-        runtime.ensure_started()
+        # dsh 后端需要启动时就把 Key 传进去；direct 后端则是惰性的，这里传了也无害
+        runtime.ensure_started(api_key)
     except Exception as exc:
         print(f"  [失败] 启动失败：{exc}")
         print("\n排查建议：")
-        print("  1) 确认 .env 里的 DEEPSEEK_API_KEY 正确")
-        print("  2) 确认 DSH_HOME 是纯英文绝对路径且可写")
+        print("  1) 确认环境变量 DEEPSEEK_API_KEY 是正确的 Key（本项目不从文件读 Key）")
+        print("  2) 确认 DSH_HOME 是纯英文绝对路径且可写（仅 dsh 后端需要）")
         print(f"  3) 查看日志：{log_file}")
         return 1
     print(f"  [通过] 运行时就绪，耗时 {time.perf_counter() - t0:.1f}s")
@@ -104,7 +111,11 @@ def main() -> int:
     try:
         # session id 必须唯一：复用同一个 id 会延续同一段持久对话，
         # 重复跑本脚本时会直接报 "session already exists"。
-        run = runtime.run("只回复两个字：收到", session_id=f"ta-smoke-ping-{time.time_ns()}")
+        run = runtime.run(
+            "只回复两个字：收到",
+            session_id=f"ta-smoke-ping-{time.time_ns()}",
+            api_key=api_key,
+        )
         print(f"  [通过] 模型回复：{run.text.strip()[:60]!r}（{run.elapsed_ms}ms）")
     except Exception as exc:
         print(f"  [失败] 往返失败：{exc}")
@@ -122,7 +133,7 @@ def main() -> int:
             case = CASES[i]
             label = f"用例{i + 1}"
             try:
-                parsed, ms, _ = parse_diet(case["text"])
+                parsed, ms, _ = parse_diet(case["text"], api_key=api_key)
                 foods = "、".join(
                     f"{f.name}({f.nature.value})" for f in parsed.foods
                 )
@@ -159,7 +170,8 @@ def main() -> int:
                     AnalyzeRequest(
                         text=case["text"],
                         constitution_override=Constitution(case["constitution"]),
-                    )
+                    ),
+                    api_key=api_key,
                 )
                 print(f"\n  {label}：{case['text']}")
                 print(f"    → 体质：{resp.basis.constitution_label}")

@@ -145,12 +145,13 @@ class Meta(BaseModel):
     degraded_reason: str | None = None
 
     # --- 凭据与后端来源 ---
-    # 前端必须把 key_source="server" 显式展示出来，否则用户会以为
-    # 自己填在界面里的 Key 生效了，而实际上用的是服务端兜底 Key。
-    key_source: Literal["user", "server", "not_used"] = Field(
-        default="server",
+    # key_source 让前端能区分"本次用了你填的 Key"与"本次根本没调用模型"
+    # （后者是高风险人群分支，不花钱）。本项目只用调用方提供的 Key，
+    # 不存在"服务端内置 Key"这回事。
+    key_source: Literal["user", "not_used"] = Field(
+        default="user",
         description=(
-            "user = 本次用用户自带的 Key；server = 本次用服务端兜底 Key；"
+            "user = 本次用了调用方提供的 Key；"
             "not_used = 本次未调用模型（如高风险人群分支）"
         ),
     )
@@ -204,7 +205,6 @@ class ProfileUpdateRequest(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str
-    credentials_ok: bool
     herbs_loaded: int
     data_files_ok: bool
     dsh_home: str
@@ -212,10 +212,11 @@ class HealthResponse(BaseModel):
     model: str
     disclaimer_version: str
 
-    # 凭据模式的可见性：前端据此决定是否提示"需要填自己的 Key"
+    # 前端据此决定怎么提示用户。刻意没有 credentials_ok ——
+    # 本项目不使用服务端内置 Key，"服务端有没有 Key"不是一个有意义的状态。
     backend: str = Field(default="direct", description="Agent 后端：direct / dsh")
     user_key_supported: bool = Field(
-        default=True, description="是否支持用户在界面里自带 API Key"
+        default=True, description="是否支持用户自带 API Key（dsh 后端不支持）"
     )
 
 

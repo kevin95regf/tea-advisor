@@ -3,8 +3,8 @@
 凭据来源
 --------
 用户的 API Key 通过 `Authorization: Bearer <key>` 头传入（前端填的 Key）。
-没带或格式不对时，回退到服务端 credentials.env 的兜底 Key，
-并在响应的 `meta.key_source` 里标明 —— 前端必须把"本次使用服务端 Key"显示出来。
+**本项目不使用服务端内置 Key**：没带 Key 就返回 400 `NO_API_KEY`，
+不会回退到任何配置文件里的凭据（曾有的「服务端兜底 Key」已按需求移除）。
 
 安全约定（硬规则，配套测试见 tests/test_key_handling.py）
 -------------------------------------------------------
@@ -38,8 +38,8 @@ _CONFIG_ERROR_CODES = {"NO_API_KEY", "USER_KEY_UNSUPPORTED", "API_KEY_REJECTED"}
     summary="解析饮食并推荐药食同源茶饮",
     description=(
         "输入用户原始口述与体质，返回结构化解析结果与 1-3 条茶饮推荐。"
-        "可用 Authorization: Bearer ^<你的 DeepSeek API Key^> 头传入自带 Key；"
-        "不传则使用服务端配置的 Key，并在 meta.key_source 标注。"
+        "必须用 Authorization: Bearer ^<你的 DeepSeek API Key^> 头传入你自己的 Key；"
+        "本服务不内置 Key，所以不带这个头会返回 400 NO_API_KEY。"
         "所有响应均携带 disclaimer 字段，不构成医疗建议。"
     ),
 )

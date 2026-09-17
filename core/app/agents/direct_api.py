@@ -109,11 +109,14 @@ class DirectAPIRuntime:
     ) -> AgentRun:
         """跑一轮 agent。
 
-        `api_key` 是本后端存在的意义：逐次传入，缺省才回退到服务端配置的 Key。
+        `api_key` **必传**：本项目不使用服务端内置 Key，Key 由调用方显式提供
+        （网页来自 Authorization 头，终端与脚本来自环境变量）。
         `session_id` 不参与请求（直连无状态），仅用于日志串联。
         """
-        key = (api_key or self._settings.deepseek_api_key or "").strip()
+        key = (api_key or "").strip()
         if not key:
+            # 正常情况下编排层会先拦下并给出更精确的 NO_API_KEY；
+            # 走到这里说明有调用方绕过了校验，属于代码缺陷，要显式暴露。
             raise RuntimeError(self._settings.missing_credentials_hint())
 
         messages: list[dict[str, str]] = []

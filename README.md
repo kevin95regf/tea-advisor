@@ -43,7 +43,7 @@ python ..\ui\terminal\chat.py --resolve 冰啤酒 茉莉花茶 冰淇淋
 # ② 离线推荐：不调用模型，走规则兜底，仍然给出合规且不超剂量的搭配
 python ..\ui\terminal\chat.py --offline "中午吃了碗麻辣烫，还喝了杯冰可乐"
 
-# ③ 验证一切正常（230 项，约 0.7 秒）
+# ③ 验证一切正常（231 项，约 0.7 秒）
 python -m pytest -q
 ```
 
@@ -61,65 +61,71 @@ python -m pytest -q
     来源：查表   置信度：0.9   待验证：是
 ```
 
-### 用完整助手：两种凭据模式
+### 用完整助手：需要你自己的 API Key
 
-助手需要一个 DeepSeek API Key 才能给建议。有两种给法：
+**本项目不在服务端保存任何 API Key，也没有内置的兜底 Key。**
+要用完整助手（让模型解析饮食、写建议），你必须提供自己的 Key，有两种给法：
 
-| 模式 | 怎么用 | 费用记在 |
+| 界面 | 怎么给 | 费用 |
 |---|---|---|
-| **用户自带 Key**（默认后端支持） | 在网页的 API Key 一栏填入 | 你自己的账号 |
-| **服务端兜底 Key** | 在 `credentials.env` 里配一个，界面留空即可用 | 配 Key 的那个账号 |
+| **网页版** | 在页面上的「API Key」一栏填入 | 记在你自己的账号 |
+| **终端 / 脚本** | 先设环境变量再运行：`$env:DEEPSEEK_API_KEY = "sk-..."` | 同上 |
 
-自带 Key 是**逐请求生效**的：Key 通过 `Authorization: Bearer <key>` 头发给本机后端，
-再由后端转给模型服务，**不写入服务器日志、不落盘**。网页里默认**不勾选**「记住 Key」，
-Key 只存在当前标签页；勾选后才写入浏览器 `localStorage`（跨会话保留）。
+**不填就一定失败**：网页不填会返回 `400 NO_API_KEY`，终端会打印怎么设置环境变量。
+这样做是刻意的——不会有人在你不知情时消耗你的额度。
 
-每次响应都会标注本次用的是谁的 Key（`meta.key_source`），网页上显示为
-「本次使用你自带的 Key」/「本次使用服务端 Key」。**这一行是必须的**：
-填了 Key 却因为格式问题回退到服务端时，只有靠它才看得出来 —— 否则你会以为费用记在自己账上。
+Key 是**逐请求生效**的：通过 `Authorization: Bearer <key>` 头发给本机后端，
+再由后端转给模型服务，**不写入日志、不落盘、不入库**。
+网页里默认**不勾选**「记住 Key」，Key 只存在当前标签页；勾选后才写入浏览器 `localStorage`。
+
+每次响应都会标注本次有没有调用模型（`meta.key_source`）：网页上显示
+「本次使用你填的 Key」或「本次未调用模型（规则分支，无费用）」。
+
+> **申请 Key**：<https://platform.deepseek.com/api_keys>
+>
+> **不想填 Key 也想试**：`--resolve`（纯查表）与 `--offline`（规则推荐）
+> 两条路完全不调用模型，见上面的「30 秒体验」。它们也是本项目真正的核心。
 
 #### 后端选型：`TA_BACKEND`
 
 | 值 | 行为 |
 |---|---|
-| `direct`（默认） | 直连 DeepSeek 官方 API。Key 逐请求传入，**支持自带 Key** |
-| `dsh` | 走 DeepSeekHarness 子进程。Key 与子进程绑定（一个进程一个 Key），**不支持逐请求换 Key**；保留用于调试 |
+| `direct`（默认） | 直连 DeepSeek 官方 API。Key 逐请求传入，**支持界面/环境变量给 Key** |
+| `dsh` | 走 DeepSeekHarness 子进程。Key 与子进程绑定（一个进程一个 Key），**无法按请求换 Key**；保留用于调试 |
 
-> ⚠️ `dsh` 后端下在界面填 Key 会直接返回 `USER_KEY_UNSUPPORTED`，**不会静默改用服务端 Key** ——
-> 静默回退会让你以为费用记在自己账上。原因见 [踩过的坑](#2-dsh-的-key-粒度是一个-harness-实例)。
+> ⚠️ `dsh` 后端下在界面填 Key 会直接返回 `USER_KEY_UNSUPPORTED`，**不会静默换用别的 Key** ——
+> 静默复用会让你以为费用记在自己账上。原因见 [踩过的坑](#2-dsh-的-key-粒度是一个-harness-实例)。
 
 #### 配置文件
 
 | 文件 | 放什么 | 说明 |
 |---|---|---|
-| `.env` | `TA_BACKEND`、`TA_*` 模型参数、`APP_*` 端口、超时 | 可以入库模板 |
-| `credentials.env` | `DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DSH_HOME` | **可选**，仅"服务端兜底 Key"模式需要 |
+| `.env` | `TA_BACKEND`、`TA_*` 模型参数、`APP_*` 端口、超时 | 可选，全部有默认值；模板入库 |
+| `credentials.env` | `DSH_HOME`、可选的 `DEEPSEEK_BASE_URL` | 可选；**不存 API Key** |
 
-**为什么凭据要单独一个文件**：`dsh` 启动时会扫描 workspace 根目录的 `.env`，
-一旦发现 `DSH_HOME` / `DSH_MAX_TOKENS` 这类 `DSH_*` 变量或凭据变量就**直接拒绝启动**：
+**为什么 `DSH_HOME` 要单独一个文件**：`dsh` 启动时会扫描 workspace 根目录的 `.env`，
+一旦发现 `DSH_HOME` 这类 `DSH_*` 变量就**直接拒绝启动**：
 
 ```
 Error: dsh: .env sets "DSH_HOME", which only the launching environment may set
 ```
 
 因为它们决定进程如何启动、从哪里加载代码与指令、如何联网，属于「启动环境专属」变量。
-所以约定：`.env` 里只出现 `TA_*` 与 `APP_*`，凭据与 `DSH_HOME` 放 `credentials.env`。
+所以约定：`.env` 里只出现 `TA_*` 与 `APP_*`，`DSH_HOME` 放 `credentials.env`。
 
 ```powershell
 cd <仓库根>
 Copy-Item .env.example .env                          # 可选：不配也能跑，全部参数都有默认值
-Copy-Item credentials.env.example credentials.env    # 可选：想用服务端兜底 Key 才需要
-notepad credentials.env      # 填入 DEEPSEEK_API_KEY 与 DSH_HOME（纯英文绝对路径）
+Copy-Item credentials.env.example credentials.env    # 可选：只有用 dsh 后端才需要
 ```
 
-两份 .env 都是**可选**的：
+两份配置都是**可选**的：
 
 * **不配 `.env`** → 用内置默认值（`TA_BACKEND=direct`、`deepseek-v4-flash`、`TA_REASONING_EFFORT=low`）。
-  这反而更安全：少一个文件就少一次"把 `DSH_*` 写进 `.env` 导致 dsh 拒绝启动"的机会。
-* **不配 `credentials.env`** → 用户在界面里填自己的 Key 即可；不填则返回 `NO_API_KEY`。
+* **不配 `credentials.env`** → 完全不影响：它不含 Key，而 `DSH_HOME` 有默认值（`<仓库根>/dsh-home`）。
 
 两个真实配置文件都已被 `.gitignore` 忽略（模板文件会入库）。
-**实测：全新 clone 不配任何 .env 也能跑通 `pytest`（230 项）与 `--resolve` 纯规则链路。**
+**实测：全新 clone 不配任何配置文件也能跑通 `pytest`（231 项）与 `--resolve` 纯规则链路。**
 
 ```powershell
 # 环境与数据自检（秒级，不调模型）
@@ -310,7 +316,7 @@ tea-advisor/
 ├─ CONTRIBUTING.md                 贡献指南（数据表怎么改、哪些是契约）
 ├─ LICENSE                         MIT
 ├─ .env.example                    应用配置模板（TA_* / APP_*）
-├─ credentials.env.example         凭据模板（API Key / DSH_HOME，不能放 .env）
+├─ credentials.env.example         运行配置模板（DSH_HOME / 自定义接口地址；不含 Key）
 ├─ ui/                             ★ 前端交互层：所有"壳"都在这里
 │  ├─ terminal/chat.py             终端壳（仅标准库）：--resolve / --offline / 交互
 │  └─ web/index.html               本地 Web 界面（由 FastAPI 同源提供）
@@ -340,7 +346,7 @@ tea-advisor/
 │  │     └─ orchestrator.py        双 Agent 串行编排 + 降级
 │  ├─ data/                        数据层（上表三个 JSON）
 │  ├─ scripts/                     自检与冒烟脚本
-│  └─ tests/                       230 项离线测试
+│  └─ tests/                       231 项离线测试
 ├─ start-web.cmd                   ★ Windows 双击启动网页版（自动开浏览器）
 ├─ start-terminal.cmd              ★ Windows 双击启动终端版
 └─ docs/three-layer-architecture.md
@@ -355,7 +361,7 @@ tea-advisor/
 
 ```powershell
 cd core
-python -m pytest -q          # 230 passed，约 0.7 秒，不调用模型、不需要 API Key
+python -m pytest -q          # 231 passed，约 0.7 秒，不调用模型、不需要 API Key
 ```
 
 | 文件 | 覆盖内容 | 项数 |
@@ -366,7 +372,7 @@ python -m pytest -q          # 230 passed，约 0.7 秒，不调用模型、不�
 | `tests/test_food_lookup.py` | 表完整性、匹配准确性、渲染、名称对齐 | 22 |
 | `tests/test_calibration.py` | 校准接线、来源标记、Agent2 隔离、已知局限固化 | 20 |
 | `tests/test_json_guard.py` | 围栏剥离、对象提取、schema 校验、失败重试 | 14 |
-| `tests/test_key_handling.py` | Authorization 解析、思考模式映射、**Key 不进日志/响应/异常**、凭据错误码 | 47 |
+| `tests/test_key_handling.py` | Authorization 解析、思考模式映射、**Key 不进日志/响应/异常**、凭据错误码、无 Key 即拒绝 | 48 |
 
 需要 API Key 的端到端（**不在 pytest 内**，会产生调用费用）：
 
@@ -451,7 +457,7 @@ python scripts\smoke_agents.py          # 运行时启动 → 原始往返 → A
 ```powershell
 python scripts\check_setup.py       # 环境与数据自检
 python scripts\smoke_offline.py     # 离线全链路冒烟
-python -m pytest -q                 # 230 项
+python -m pytest -q                 # 231 项
 ```
 
 提交 PR 前请读 **[CONTRIBUTING.md](CONTRIBUTING.md)**，其中写明了：
@@ -472,8 +478,11 @@ python -m pytest -q                 # 230 项
 本项目 `cwd` = 项目根，所以任何 `DSH_HOME` / `DSH_MAX_TOKENS` / `DEEPSEEK_API_KEY`
 都不能出现在 `.env` 里，**注释里出现这些字符串也可能被扫描到**。
 
-**解决**：`DSH_*` 与凭据放 `credentials.env`（`dsh` 不扫描该文件名），
+**解决**：`DSH_HOME` 放 `credentials.env`（`dsh` 不扫描该文件名），
 由 `app/agents/runtime.py` 注入子进程 `os.environ`；`.env` 只留 `TA_*` / `APP_*`。
+
+> 补充：从 v0.2 起本项目**不再保存 API Key**（`DEEPSEEK_API_KEY` 由调用方逐请求传入）。
+> 但这条 `dsh` 约束依然成立——只要 `TA_BACKEND=dsh`，`DSH_HOME` 就不能进 `.env`。
 
 ### 2. `DeepSeekHarness` 构造参数 ✅ 已验证可用
 

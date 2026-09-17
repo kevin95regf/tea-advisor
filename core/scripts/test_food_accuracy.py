@@ -71,7 +71,15 @@ def match(expected_name: str, actual_name: str) -> bool:
 
 def main() -> int:
     from app.agents.agent1_diet import parse_diet
+    from app.config import api_key_from_env
     from app.services.food_lookup import table_stats
+
+    # 本项目不内置 Key，所以这个脚本需要你自己提供（只从环境变量取，不读文件）
+    api_key = api_key_from_env()
+    if not api_key:
+        print("缺少 API Key。本脚本要调用真实模型，请先设置环境变量再运行：")
+        print('    $env:DEEPSEEK_API_KEY = "sk-..."')
+        return 1
 
     stats = table_stats()
     print("=" * 78)
@@ -90,7 +98,7 @@ def main() -> int:
         text = case["text"]
         expect = case["expect"]
         try:
-            parsed, ms, _ = parse_diet(text)
+            parsed, ms, _ = parse_diet(text, api_key=api_key)
         except Exception as exc:
             print(f"\n{i:2d}. [解析失败] {text}\n    {str(exc)[:90]}")
             failures.append(f"{text} → 解析失败")

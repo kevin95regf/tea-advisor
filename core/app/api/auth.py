@@ -28,12 +28,11 @@ _MAX_KEY_LEN = 256
 def extract_api_key(authorization: str | None) -> str | None:
     """从 Authorization 头解析 Bearer Key。
 
-    返回 `None` 表示"没有可用 Key"，调用方应回退到服务端兜底 Key。
+    返回 `None` 表示"这次请求没有可用的 Key"。调用方据此返回
+    400 `NO_API_KEY` —— **本项目不使用服务端内置 Key，没有兜底可退**。
 
     格式不对（缺少 Bearer 前缀、含空白、超长）时也返回 `None`，不抛异常：
-    宁可回退，也不要让用户拿到一个难懂的 500。
-    这种情况下 `meta.key_source` 会是 `server`，前端会把
-    「本次使用服务端 Key」显示出来 —— 用户因此能看出自己填的 Key 没生效。
+    宁可回一个明确的"请填 Key"，也不要让用户拿到一个难懂的 500。
     """
     if not authorization:
         return None
