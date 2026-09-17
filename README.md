@@ -405,6 +405,10 @@ python scripts\smoke_agents.py          # 运行时启动 → 原始往返 → A
 | **low（默认）** | **8.2 s** | **3** |
 | off | 2.7 s | 1 |
 
+**这就是默认取 `low` 而不是 `off` 的原因**：`off` 快约 3 倍、成本降一个量级，但推荐常只剩 1 条
+（2026-09-17 复测：3 个用例给出 3 / 1 / 1 条）。需要压延迟或压成本时可自行设
+`TA_REASONING_EFFORT=off`，代价就是上面这一行。取舍详解见 `docs/maintenance.md` §7.2。
+
 本模型支持 `max` / `high` / `low` / `off`；`medium`、`none`、`minimal` 会导致启动失败。
 
 > ⚠️ 13 秒以上的等待对交互体验偏长。若在意响应速度，优先用 `--resolve`（毫秒级）

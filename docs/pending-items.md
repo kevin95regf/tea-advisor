@@ -3,8 +3,8 @@
 > **这份清单是挂起事项的唯一真源。** 其他地方（`handover.md`、`maintenance.md`）只提摘要，
 > 一律以本文为准。任何一项解决了，就在这里更新状态并记录解决方式。
 >
-> 快照时间：**2026-09-17**　共 **9** 项记录在案（A/B/C/D/E 五类），
-> 其中 **D2 已于本次推送解决**，其余 8 项待处理。
+> 快照时间：**2026-09-17**　共 **10** 项记录在案（A/B/C/D/E 五类），
+> 其中 **D2 已于本次推送解决**，其余 9 项待处理。
 
 ---
 
@@ -12,7 +12,7 @@
 
 | ID | 事项 | 谁来解 | 阻塞什么 | 状态 |
 |---|---|---|---|---|
-| **A1** | 146 条食性数据全部未人工审核 | 具备资质的中医师/中药师 | ⛔ **对外提供服务** | 待人工 |
+| **A1** | 食性表 146 条全部未人工审核 | 具备资质的中医师/中药师 | ⛔ **对外提供服务** | 待人工 |
 | **B1** | 7 处药典不一致待复核 | nanple | 数据准确性（不阻塞功能） | 待 nanple |
 | **B2** | 问卷项目 `phlegm_dampness` 拼写不一致 | nanple | 问卷接入 | 待 nanple |
 | **B3** | 244 个配伍判定 | nanple | ⛔ **体质模型 5→9 型** | 待 nanple |
@@ -21,6 +21,7 @@
 | **D1** | 玫瑰花/茉莉花的代码改动 | 项目所有者定时机 | 合规处置落地 | 待实施 |
 | **D2** | 本地提交未推送 | 项目所有者 | 协作者看不到这批产出 | ✅ **已解决** |
 | **E1** | 3 条食性表缺 `review_status` | 开发 | 无（行为已正确） | 待清理 |
+| **E2** | `herbs.json` 34 味缺逐条审核字段 | 开发 | A1 的验收标准落不到 herbs | 待清理 |
 
 **⛔ 标记的两项是真正的硬阻碍**：只要 A1 和 B3 没解决，「对外提供服务」和「体质模型扩到 9 型」就不能说完成。
 
@@ -28,16 +29,18 @@
 
 # A 类 · 对外服务的硬阻碍
 
-## A1　146 条食性数据全部未人工审核
+## A1　食性表 146 条全部未人工审核
 
 | | |
 |---|---|
-| **现状** | `food_properties.json` 的 146 条（128 食材 + 18 茶饮）与 `herbs.json` 的 34 味，`review_status` **全部是 `pending`**，没有一条 `approved` |
+| **现状** | `food_properties.json` 的 146 条（128 食材 + 18 茶饮），逐条 `review_status` **全部是 `pending`**，没有一条 `approved` |
+| **范围** | ⚠️ **本项只覆盖 `food_properties.json`。** `herbs.json` 不是「逐条 pending」——它**根本没有逐条审核字段**，审核状态只在文件级 `_meta.review_status`。已单列为 **E2** |
 | **影响** | 所有条目虽按 0.9 置信度参与判定，但界面**必须**标「待验证」。这是刻意的保守设计，不是 bug |
 | **为何只有人能解** | `approved` 意味着「真·硬规则库、界面不再标注」，必须由具备资质的中医师/中药师逐条确认，并同时填写 `reviewed_by` / `reviewed_at` |
 | **需要什么** | 审核人 + 一份逐条审核流程（`docs/maintenance.md` §9.2/§9.3 有正确姿势） |
-| **验收标准** | `review_status` 分布中 `approved` 条数 > 0，且每条 approved 都有 `reviewed_by` + `reviewed_at` |
+| **验收标准** | `food_properties.json` 的 `review_status` 分布中 `approved` 条数 > 0，且每条 approved 都有 `reviewed_by` + `reviewed_at` |
 | **注意** | ⚠️ **不要为了界面好看而批量置 approved**。标记密度就是审核进度的可见反馈，批量置等于把这个反馈抹掉 |
+| **相关文件** | `core/data/food_properties.json` |
 
 ---
 
@@ -154,6 +157,18 @@
 | **为何没顺手做** | 项目所有者要求数据文件改动走显式决定，不擅自改 |
 | **验收标准** | 146 条全部有合法 `review_status`（三态之一） |
 
+## E2　`herbs.json` 34 味缺逐条审核字段
+
+| | |
+|---|---|
+| **现状** | `herbs.json` 的 34 味条目**完全没有逐条审核字段**：既无 `review_status`，也无 `reviewed` / `reviewed_by` / `reviewed_at`。审核状态只存在于文件级的 `_meta.review_status`（值为 `pending`） |
+| **为何单列** | A1 原先把 `food_properties.json` 与 `herbs.json` 并列描述成「逐条 `review_status` 全 pending」。实测对 herbs **不成立**——34 味里没有一条含该字段 |
+| **影响** | ① A1 的验收标准（每条 approved 都要有 `reviewed_by` + `reviewed_at`）对 herbs 无从落地，那些字段在 herbs 里根本不存在；② 以后有人写脚本按 `review_status` 过滤 herbs 会**全部落空且不报错**，属于静默失败 |
+| **为什么现在没补** | 补字段要先定方案：照搬 `food_properties.json` 的三态 + 审核人字段，还是只加 `review_status`。**这决定审核流程怎么走**，属于数据结构的决定——按项目所有者的规则不擅自改（同 E1 的处理原则） |
+| **需要什么** | 先定字段方案（**建议与 `food_properties.json` 对齐**：三态 + `reviewed_by` / `reviewed_at` / `review_note`），再一次性补齐 34 味 |
+| **验收标准** | 34 味全部有合法 `review_status`（三态之一），且审核时能填 `reviewed_by` / `reviewed_at` |
+| **相关文件** | `core/data/herbs.json`、`core/data/food_properties.json`（参照其后者的条目字段体系） |
+
 ---
 
 # 本次巡检的其他发现
@@ -162,7 +177,7 @@
 
 | 项 | 结论 |
 |---|---|
-| 仓库根残留一个半成品 `.venv` | 只有 16 个包，缺 pytest/fastapi/httpx/dotenv。**真正可用的是 `core/.venv`（64 个包）**。用错会报 `No module named pytest`。建议删掉根 `.venv` |
+| 仓库根残留一个半成品 `.venv` | 已装发行版数约为 `core/.venv` 的 1/5，缺 pytest/fastapi/httpx/dotenv。**真正可用的是 `core/.venv`**。用错会报 `No module named pytest`。建议删掉根 `.venv`（绝对包数随安装而变，故不写死） |
 | 全仓库无残留 API Key | 扫描 `sk-` 长串（排除 `.git`/`.venv`/`dsh-home`）**无命中**；`credentials.env` 只剩 `DSH_HOME` |
 | `miniprogram/` 空目录已删除 | 转型遗留 |
 | 三份生成型文档的测试已就位 | 分别有 18 / 23 / 26 项测试守着「层次不混淆」「快照不漂移」「差异不被静默改成一致」 |
@@ -170,6 +185,7 @@
 | 之前一处文档写错了影响面 | 参考数据曾写「四气差异会影响三层判定里的寒热加减」，经代码取证**是错的**，已更正（见 B1 的差异影响） |
 | 维护文档的规模数字整体过时 | 已按 Python 口径重测更新（§1.4 与 §3 两张表）；顺带记录「别用 PowerShell 数行数」的陷阱 |
 | 两个 venv 的 Python 都是 3.13.13 | 与 `pyproject.toml` 的 `requires-python = ">=3.10"` 兼容 |
+| `NOTES.local.md` 已部分过期 | 仍写「尚无远程」「`miniprogram/` 空目录待删」「全部提交都是占位符身份」「pytest 230 项」，均与现状不符。它不入版本控制、不会随文档同步；已在 `docs/handover.md` §9.2 加了「以 `docs/` 为准」的提醒 |
 
 ---
 
