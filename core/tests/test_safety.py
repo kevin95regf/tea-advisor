@@ -253,6 +253,69 @@ def test_yang_deficiency_excludes_cold_herbs() -> None:
     assert "决明子" not in candidates
 
 
+# ============================================================
+# cautions → unsuitable_for 的一致性（阴虚方向）
+# ============================================================
+# 阴虚方向的关键词。刻意只取这 5 个明确指向阴虚的词，不含宽泛的「燥」——
+# 宽词会把「性质平和、不燥」这类正面描述也命中。
+YINXU_CAUTION_KEYWORDS = ("阴虚", "津液", "口干", "上火", "内热")
+
+# 2026-09-17 落地的批次（docs/herbs-cautions-yinxu-batch.md）
+CAUTIONS_BATCH_YINXU = frozenset(
+    {
+        "fuling", "chenpi", "longyanrou", "shengjiang", "yiyiren",
+        "molihua", "juhong", "huoxiang", "zisu", "foshou",
+    }
+)
+
+
+def test_cautions_naming_yinxu_must_be_blocked() -> None:
+    """凡 cautions 明写阴虚方向的饮片，都必须被 `yin_deficiency` 挡在候选集外。
+
+    这是一条**派生不变式**，不是数据快照：它不写死「哪几味被屏蔽」，
+    而是从 cautions 与 unsuitable_for 的关系推出来。所以数据怎么变都仍然有效。
+
+    守的是软硬约束的脱节：`cautions` 只进 Agent2 的提示词（模型可以不听），
+    `unsuitable_for` 才是硬过滤。二者脱节就会出现「项目自己已认定阴虚不宜，
+    却照样推给阴虚用户」——而这种错误从输出表面**看不出来**。
+
+    将来新增饮片若 cautions 命中关键词，本测试会失败，从而**强制**做一次显式决定：
+    写入屏蔽，或在 docs/herbs-cautions-yinxu-batch.md 里说明为何不写。
+    反过来，若哪天关键词一条都命中不了，下面第一条断言会报出来，避免测试静默失效。
+    """
+    catalog = load_herb_catalog()
+    hit = {
+        herb_id
+        for herb_id, item in catalog.items()
+        if any(k in c for c in (item.get("cautions") or []) for k in YINXU_CAUTION_KEYWORDS)
+    }
+    assert hit, "阴虚方向关键词一条都没命中，本测试已失去覆盖面，需同步更新关键词或 cautions"
+
+    escaped = sorted(
+        h for h in hit if "yin_deficiency" not in (catalog[h].get("unsuitable_for") or [])
+    )
+    assert not escaped, (
+        f"这些饮片的 cautions 已明写阴虚方向，却没被 yin_deficiency 屏蔽：{escaped}。"
+        "要么补 unsuitable_for，要么在 docs/herbs-cautions-yinxu-batch.md 里写明为何不写"
+    )
+
+
+def test_yinxu_cautions_batch_is_blocked_at_runtime() -> None:
+    """批次的 10 味必须在**运行时**真的进不了阴虚候选集——不只是数据里有标注。
+
+    用大 `limit` 取全池，避免被 `filter_by_constitution` 默认的 `limit=12` 截断掩盖：
+    被截断的条目本来就不在 top12 里，「没出现」说明不了它被屏蔽了。
+    本批的实际效果正是**换个位置**——茯苓/陈皮/龙眼肉被挤出 top12，
+    而池子本身从 34 缩到 24，其余 7 味（生姜/藿香/紫苏/佛手/橘红/薏苡仁/茉莉花）
+    本来排在截断线之外，只靠 top12 是**完全看不出来**的。
+    """
+    pool = {item["id"] for item in filter_by_constitution("yin_deficiency", limit=999)}
+    leaked = sorted(CAUTIONS_BATCH_YINXU & pool)
+    assert not leaked, f"这些不该出现在阴虚候选集里：{leaked}"
+    assert "sangshen" in pool, "桑椹是阴虚唯一的『宜』，不该被挡住"
+
+
+
 def test_damp_heat_excludes_warm_tonics() -> None:
     candidates = {item["name"] for item in filter_by_constitution("damp_heat")}
     assert "龙眼肉" not in candidates
