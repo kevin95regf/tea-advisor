@@ -22,7 +22,7 @@
 |---|---|
 | 代码 | 45 个源文件 / 10,027 行，其中 `domain` + `services`（真正的资产）2,075 行 |
 | 测试 | **335 项，全离线，约 0.9 秒** |
-| 数据 | 食性表 146 条、饮片 34 味、体质 5 型、食药物质目录 106 种、药典核对 34 味 |
+| 数据 | 食性表 146 条、饮片 34 味、体质 9 型（全部就绪）、食药物质目录 106 种、药典核对 34 味 |
 
 **它明确不是什么**：不是医疗器械、不做体质辨识诊断、不承诺任何疗效。所有输出都带免责声明，且禁用「治疗/根治」这类表述（有护栏强制）。
 
@@ -152,7 +152,7 @@ tea-advisor/
 |---|---|---|---|
 | `core/data/food_properties.json` | 食材 + 茶饮食性表，逐条审核状态 | 146 条（128 食材 + 18 茶饮） | ✅ 是 |
 | `core/data/herbs.json` | 饮片白名单（剂量上限、禁忌、归经、宜忌体质） | 34 味 | ✅ 是 |
-| `core/data/constitution.json` | 体质定义 + 调养原则 | 5 型 | ✅ 是 |
+| `core/data/constitution.json` | 体质定义 + 调养原则 | 9 型（全部就绪） | ✅ 是 |
 | `core/data/food_medicine_catalog.json` | 国家卫健委食药物质目录（4 批公告汇编） | 106 种 | ❌ 只用于合规自检 |
 | `core/data/herb_nature_reference.json` | 药典 2020 一部记载 + 与项目的比对结果 | 34 味 | ❌ 只用于核对 |
 
@@ -161,6 +161,12 @@ tea-advisor/
 > ⚠️ **当前 146 条全部是 `pending`，没有一条经人工审核。** 这是「对外提供服务」的唯一硬阻碍，且只有具备资质的中医师/中药师能解。详见 §7 挂起事项。
 
 字段含义写在各自的 `_meta.field_notes` 里，**改结构时同步改它**。
+
+> ⚠️ **「收录」与「可对外服务」是两件事，判据由数据派生。** `constitution.json` 与 `enums.py` 含国标九型，
+> 但某个体质能否对外服务，取决于 `herbs.json` 里是否至少有 1 味把它标进 `suitable_constitutions`
+> （判据函数 `safety.ready_constitutions()`）。2026-09-17 写入四型的配伍标注后，**九型已全部就绪**，
+> `GET /api/constitutions` 返回 9 项。这条闸门不会消失：将来任何新增体质，数据没备齐就不会被暴露
+> ——下拉框里不出现，手搓请求指定则得到 422 而非 500。详见 `docs/pending-items.md` B3。
 
 ---
 
@@ -279,7 +285,7 @@ python scripts/test_food_accuracy.py   # 属性准确率，只测 Agent1
 | 21 | **橘红：归属 2002 年附件 1 的「桔红」，视为在目录内** | ✅ 已实施（无需改代码） |
 | 22 | **药典与项目不一致的 7 处：先保留项目值**，文档标注药典值与差异影响，等 nanple 复核 | ⏳ 待 nanple 复核 |
 | 23 | **四气降档约定：微寒→凉、微温→温**。**这是项目约定，不是药典原文**；药典原文用词一律保留 | ✅ 已认可 |
-| 24 | **九型体质 id 全部确认**：`balanced` / `qi_deficiency` / `yang_deficiency` / `yin_deficiency` / `phlegm_damp` / `damp_heat` / `blood_stasis` / `qi_stagnation` / `special_diathesis` | ✅ 已确认，5→9 时直接用 |
+| 24 | **九型体质 id 全部确认**：`balanced` / `qi_deficiency` / `yang_deficiency` / `yin_deficiency` / `phlegm_damp` / `damp_heat` / `blood_stasis` / `qi_stagnation` / `special_diathesis` | ✅ **已实施（Step 1 + Step 2，2026-09-17）**：枚举 / `constitution.json` / 就绪闸门已扩到 9 型，`herbs.json` 补入 10 格来源点名的配伍标注，九型全部就绪且对外可见。244 格的完整判定仍待 nanple，见 B3 |
 | 25 | **国标 A 栏（九型特征）用官方解读/起草人访谈的转引，逐条标注「非标准正文」** | ✅ 已实施 |
 | 26 | **《中华本草》列统一标「待确认」，不猜** | ✅ 已实施（取不到数据，见挂起事项） |
 
