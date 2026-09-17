@@ -183,3 +183,44 @@ def test_json_output_is_parseable(capsys, tmp_path):
     payload = json.loads(out.read_text(encoding="utf-8"))
     assert payload["summary"]["total"] == len(payload["results"])
     assert payload["catalog"]["total"] == EXPECTED_TOTAL
+
+
+# --------------------------- 已登记的处置决定 ------------------------------
+
+# 这三个决定是人作出的，登记在脚本里以防丢失。改动这里意味着决定被推翻，必须显式确认。
+EXPECTED_DECISIONS = {
+    "玫瑰花": ("保留", "待实施"),
+    "茉莉花": ("标注「仅作参考」，推荐时排除", "待实施"),
+    "橘红": ("归属 2002 年附件 1 的「桔红」，视为在目录内", "已实施"),
+}
+
+
+def test_decisions_are_registered(mod):
+    for herb, (decision, status) in EXPECTED_DECISIONS.items():
+        assert herb in mod.DECISIONS, f"{herb} 的处置决定丢失了"
+        d = mod.DECISIONS[herb]
+        assert d["decision"] == decision
+        assert d["status"] == status
+
+
+def test_every_decision_is_traceable(mod):
+    """每个决定都要有日期、依据、待办，否则日后无从追溯。"""
+    for herb, d in mod.DECISIONS.items():
+        assert d["decided_at"], herb
+        assert d["basis"].strip(), herb
+        assert d["action"].strip(), herb
+        assert d["status"] in {"已实施", "待实施"}, herb
+
+
+def test_pending_decisions_are_not_reported_as_done(mod):
+    """待实施的决定不能被渲染成已完成。"""
+    results = mod.check(
+        json.loads(HERBS_PATH.read_text(encoding="utf-8"))["herbs"],
+        json.loads(CATALOG_PATH.read_text(encoding="utf-8"))["items"],
+    )
+    catalog = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+    summary = mod.summarise(results)
+    md = mod.render_markdown(results, summary, catalog)
+    for herb, (_, status) in EXPECTED_DECISIONS.items():
+        assert f"`{status}`" in md, herb
+    assert "**不要当成已经生效**" in md

@@ -74,6 +74,55 @@ NEEDS_HUMAN_JUDGMENT: dict[str, str] = {
     ),
 }
 
+# ---------------------------------------------------------------------------
+# 已作出的处置决定
+#
+# 这是**人作出的决定**，不是脚本的推断，所以单独登记、带日期，并可追溯。
+# status 只有两个值：
+#   已实施 —— herbs.json / 代码已按此决定改好
+#   待实施 —— 决定已定，代码尚未改（不要把它当成已经生效）
+# ---------------------------------------------------------------------------
+DECISIONS: dict[str, dict[str, str]] = {
+    "玫瑰花": {
+        "decided_at": "2026-09-17",
+        "decision": "保留",
+        "action": (
+            "把 herbs.json 中的名称改为「玫瑰花（重瓣红玫瑰）」，明确品种；"
+            "并同步加别名「玫瑰花」，否则 check_blend 会因名称不匹配把模型输出的"
+            "「玫瑰花」判成白名单外饮片而拦掉。"
+            "⚠️ 该品种约束是**采购/供应链要求**，代码只能表达它、无法核实原料；"
+            "若无法保证原料确为重瓣红玫瑰，本条应降级为「仅作参考」。"
+        ),
+        "status": "待实施",
+        "basis": (
+            "卫生部公告 2010 年第 3 号允许「玫瑰花（重瓣红玫瑰）」作为普通食品生产经营"
+        ),
+    },
+    "茉莉花": {
+        "decided_at": "2026-09-17",
+        "decision": "标注「仅作参考」，推荐时排除",
+        "action": (
+            "在 herbs.json 上标记为仅作参考，并让推荐链路（filter_by_constitution 的候选集、"
+            "matcher.fallback_recommend）永不选中它。需要新增目录级排除能力——"
+            "现有 exclude_herbs 是每个请求的用户自选排除，不是目录级开关。"
+        ),
+        "status": "待实施",
+        "basis": (
+            "食用依据仅为广西地方标准（效力限广西），不承担全国范围的合规风险"
+        ),
+    },
+    "橘红": {
+        "decided_at": "2026-09-17",
+        "decision": "归属 2002 年附件 1 的「桔红」，视为在目录内",
+        "action": "无需改动代码或数据。若日后新增饮片出现「化橘红」，应作为独立条目单列。",
+        "status": "已实施",
+        "basis": (
+            "herbs.json 中「橘红」的功效「理气宽中、燥湿化痰」与药典 2020 年版一部"
+            "「橘红」原文逐字一致，而与同文件「陈皮」的「理气健脾、燥湿化痰」刻意区分"
+        ),
+    },
+}
+
 # 字形归一：目录与我方对同一味药存在异体/通假写法时用于匹配。
 # 只做无歧义的字形替换，不改变语义。
 VARIANT_CHARS = {
@@ -296,6 +345,17 @@ def render_table(results: list[dict], summary: dict) -> str:
             lines.append(f"   [{r['herb']}]")
             for item in EXTRA_CONTEXT[r["herb"]]:
                 lines.append(f"     · {item}")
+    decided = [r for r in results if r["herb"] in DECISIONS]
+    if decided:
+        lines.append("")
+        lines.append("── 已登记的处置决定（人作出的，非脚本推断）")
+        for r in decided:
+            d = DECISIONS[r["herb"]]
+            lines.append("")
+            lines.append(f"   [{r['herb']}] {d['decision']}   状态={d['status']}"
+                         f"（{d['decided_at']}）")
+            lines.append(f"     · 依据：{d['basis']}")
+            lines.append(f"     · 要做的事：{d['action']}")
     lines.append("")
     return "\n".join(lines)
 
@@ -344,6 +404,27 @@ def render_markdown(results: list[dict], summary: dict, catalog: dict) -> str:
             lines.append(
                 f"| {r['herb']} | {r['status_label']} | {r['catalog_name'] or '—'} | {note} |"
             )
+        lines.append("")
+
+    lines.append("## 处置决定（已登记）")
+    lines.append("")
+    lines.append(
+        "以下是**人作出的处置决定**，带决定日期与依据，与上面的机械核对结果分开记录。"
+        "`待实施` 表示决定已定但代码/数据尚未改，**不要当成已经生效**。"
+    )
+    lines.append("")
+    decided = [r for r in results if r["herb"] in DECISIONS]
+    if not decided:
+        lines.append("（暂无已登记的决定）")
+        lines.append("")
+    for r in decided:
+        d = DECISIONS[r["herb"]]
+        lines.append(f"### {r['herb']} —— {d['decision']}")
+        lines.append("")
+        lines.append(f"- **决定日期**：{d['decided_at']}")
+        lines.append(f"- **实施状态**：`{d['status']}`")
+        lines.append(f"- **决定依据**：{d['basis']}")
+        lines.append(f"- **要做的事**：{d['action']}")
         lines.append("")
 
     lines.append("## 待决策项与合规背景")
