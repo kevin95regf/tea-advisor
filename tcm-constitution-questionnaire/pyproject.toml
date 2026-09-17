@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tcm-constitution-questionnaire"
+version = "1.0.0"
+description = "GB/T 46939-2025 中医九种体质问卷与 Python 计分工具"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Project contributors"}]
+keywords = ["TCM", "questionnaire", "CCMQ", "中医体质"]
+
+[project.scripts]
+tcm-constitution = "tcm_constitution.cli:main"
+
+[tool.setuptools]
+packages = ["tcm_constitution"]
