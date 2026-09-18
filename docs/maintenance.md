@@ -47,7 +47,7 @@
 | 第二层 `combine()` 接入主流程 | ❌ 已实现并测试，但未接线 |
 | 食性表规模 | 147 条（129 食材 + 18 茶饮） |
 | 饮片白名单 | 34 味 |
-| 体质 | 5 型 |
+| 体质 | 9 型 |
 
 ### 1.4 规模（随代码变动，更新时请重测）
 
@@ -464,7 +464,7 @@ usage["completion_tokens_details"]["reasoning_tokens"]   # 其中思考
 |---|---|---|
 | `food_properties.json` | `foods[]` + `tea_drinks.items[]` + `_meta` | 147 条 |
 | `herbs.json` | `_meta` + `herbs[]`（含剂量上限、禁忌、归经） | 34 味 |
-| `constitution.json` | 5 型体质 + `one_line` / `principles` / `avoid` | 5 型 |
+| `constitution.json` | 9 型体质 + `one_line` / `principles` / `avoid` | 9 型 |
 | `food_medicine_catalog.json` | 国家卫健委食药物质目录（4 批公告）汇编，**只用于合规自检，不参与判定** | 106 种 |
 | `herb_nature_reference.json` | 《中国药典》2020 年版一部的性味归经记载 + 与项目的比对结果，**只用于核对，不参与判定** | 34 味 |
 
@@ -473,6 +473,12 @@ usage["completion_tokens_details"]["reasoning_tokens"]   # 其中思考
 ### 9.2 加条目的正确姿势
 
 **直接编辑 JSON**，按 `indent=2` 的现有风格插入，并补齐 `review_*` 字段。理由：diff 干净、可评审。
+
+**若新条目「必须煎煮」**（质地坚实、保温杯焖不出味），在它的 `brewing` 里加
+`"requires_cooking": true` —— 候选清单会据此标「⚠️ 须煎煮」，兜底与护栏会自动改用煎煮方式
+（机制见 `docs/agent2-9types-brew-plan.md`）。前提是 `brewing.note` / `prep` 里**真的写着**
+「煮/煎/炖」依据：`tests/test_safety.py::test_cook_required_flag_has_textual_basis` 会检查这一点，
+标记不能凭空出现。反过来，写「久煮尽失」的后下类饮片**不要**加这个标记。
 
 ### 9.3 审核三态（**不要为了界面好看而批量置 approved**）
 
@@ -745,7 +751,7 @@ python -m venv .venv
 | 4 | `ui/web` 展示判定过程 | 现在只有悬停 tooltip；可考虑铺开成终端那种逐项列表 |
 | 5 | Web 壳支持 `--offline` | 需要把离线装配逻辑暴露成接口或前端实现（注意别越过 `ui/`→`core/` 的分层线） |
 | 6 | 异步任务 + 进度反馈 | 全链路 5–25 秒是主要体验瓶颈 |
-| 7 | **体质模型 5 型 → 9 型**（补阴虚/血瘀/气郁/特禀，对齐 GB/T 46939-2025） | **卡在数据，不在代码。** 代码约 100 行（枚举、`constitution.json` 4 条、提示词 4 行、测试 +6 项）；数据才是大头：`herbs.json` 里 34 味 × `suitable_constitutions` + 27 味 × `unsuitable_for`，针对 4 个新体质共约 **244 个配伍判定**（2026-09-17 已落地 15 格，余 239 格）。而 **GB/T 46939-2025 只规定体质分类、问卷、计分与判定阈值，不提供任何饮食或饮片建议** —— 这 244 条无标准可依，必须由懂中医的人判定。防错已就位（见下），所以"只加枚举忘了补数据"现在是**安全的失败**，可以分次推进 |
+| 7 | **体质模型 5 型 → 9 型**（补阴虚/血瘀/气郁/特禀，对齐 GB/T 46939-2025） | **卡在数据，不在代码。** 代码约 100 行（枚举、`constitution.json` 4 条、提示词 9 行（2026-09-18 已补齐 9 型方向提要）、测试 +6 项）；数据才是大头：`herbs.json` 里 34 味 × `suitable_constitutions` + 27 味 × `unsuitable_for`，针对 4 个新体质共约 **244 个配伍判定**（2026-09-17 已落地 15 格，余 239 格）。而 **GB/T 46939-2025 只规定体质分类、问卷、计分与判定阈值，不提供任何饮食或饮片建议** —— 这 244 条无标准可依，必须由懂中医的人判定。防错已就位（见下），所以"只加枚举忘了补数据"现在是**安全的失败**，可以分次推进 |
 
 > **第 7 项的前期资料已备好（2026-09-17 加）：`docs/constitution-9-types.md`**
 >

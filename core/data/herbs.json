@@ -1,7 +1,7 @@
 {
   "_meta": {
     "title": "药食同源饮片库（demo 版）",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "review_status": "pending",
     "notice": "本文件仅收录『既是食品又是中药材的物质』方向的高频品种，属性依据中医饮食养生通行表述整理，剂量上限为保守的日常茶饮建议值。上线前必须由具备资质的中医师/中药师复核，并以国家卫健委发布的最新目录为准。",
     "field_notes": {
@@ -12,7 +12,7 @@
       "max_daily_g": "单日茶饮建议用量上限（克）",
       "suitable_constitutions": "契合的体质",
       "unsuitable_for": "不适宜体质的 id 列表（如 damp_heat / yin_deficiency）：命中的饮片会被 filter_by_constitution 移出候选集，由 safety.py 强制检查。不是自然语言人群关键词——人群类禁忌写在 cautions",
-      "brewing": "该饮片的处理与冲泡要点"
+      "brewing": "该饮片的处理与冲泡要点；子键 requires_cooking=true 表示必须煎煮（保温杯焖泡出不了味），依据见同对象的 note/prep"
     },
     "constitution_extension": {
       "date": "2026-09-17",
@@ -77,7 +77,8 @@
       "brewing": {
         "form": "切块或薄片，质地坚实",
         "note": "需先煎或久煮 10 分钟以上才易出味，直接冲泡效果差",
-        "prep": "可先用温水浸泡 10 分钟再煮"
+        "prep": "可先用温水浸泡 10 分钟再煮",
+        "requires_cooking": true
       }
     },
     {
@@ -315,7 +316,8 @@
       "brewing": {
         "form": "干百合片",
         "note": "需煮 8–10 分钟，冲泡难以出味",
-        "prep": "温水泡发 20 分钟更易煮软"
+        "prep": "温水泡发 20 分钟更易煮软",
+        "requires_cooking": true
       }
     },
     {
@@ -332,7 +334,8 @@
       "brewing": {
         "form": "干莲子，建议去芯",
         "note": "莲子心偏苦寒，不喜苦味可去芯",
-        "prep": "需煮 10 分钟以上"
+        "prep": "需煮 10 分钟以上",
+        "requires_cooking": true
       }
     },
     {
@@ -349,7 +352,8 @@
       "brewing": {
         "form": "炒薏苡仁更温和",
         "note": "质地坚硬，建议先煮 15 分钟或直接用炒制打碎款",
-        "prep": "生薏苡仁偏凉，炒后偏健脾"
+        "prep": "生薏苡仁偏凉，炒后偏健脾",
+        "requires_cooking": true
       }
     },
     {
@@ -489,7 +493,8 @@
       "brewing": {
         "form": "干山药片（淮山）",
         "note": "需煮 10 分钟以上，冲泡难出味",
-        "prep": "温水泡 20 分钟后煮"
+        "prep": "温水泡 20 分钟后煮",
+        "requires_cooking": true
       }
     },
     {
@@ -523,7 +528,8 @@
       "brewing": {
         "form": "炒白扁豆，捣碎",
         "note": "质地坚硬，务必先煮 15 分钟",
-        "prep": "炒后捣碎更易出味"
+        "prep": "炒后捣碎更易出味",
+        "requires_cooking": true
       }
     },
     {

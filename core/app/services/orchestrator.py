@@ -5,7 +5,7 @@
 1. 高风险人群检查（命中则直接返回提示，不调用推荐）
 2. Agent1 解析饮食 → ParsedMeal
 3. Agent2 基于 ParsedMeal + 体质生成推荐
-4. 护栏校验（白名单 / 剂量 / 禁用表述 / 体质契合）
+4. 护栏校验（白名单 / 剂量 / 禁用表述 / 体质契合 / 冲泡方式）
 5. Agent2 失败则降级到规则匹配（degraded=True）
 """
 
@@ -31,6 +31,7 @@ from app.domain.models import (
 )
 from app.domain.safety import (
     check_blend,
+    check_brew_adequacy,
     check_constitution_fit,
     detect_high_risk,
     ready_constitutions,
@@ -123,6 +124,15 @@ def _sanitize_recommendations(
             if warning not in rec.cautions:
                 rec.cautions.append(warning)
         applied.extend(fit.warnings)
+
+        # 冲泡方式要跟着饮片走：模型可能给须煎煮的饮片配了保温杯焖泡
+        # （提示词已标「⚠️ 须煎煮」，但模型不保证听）。与剂量处理同构——
+        # **自动换成煎煮方式并留痕**，不静默、也不整条作废。
+        brew_fix = check_brew_adequacy([h.model_dump() for h in rec.herbs], rec.brew)
+        if brew_fix.warnings:
+            rec.brew = matcher.COOK_BREW
+            for warning in brew_fix.warnings:
+                applied.append(f"冲泡方式已调整为煎煮：{warning}")
 
         cleaned.append(rec)
 

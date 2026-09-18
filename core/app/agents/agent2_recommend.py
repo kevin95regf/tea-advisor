@@ -21,7 +21,7 @@ from app.agents.runtime import get_runtime
 from app.config import get_settings
 from app.domain.enums import CONSTITUTION_LABELS, NATURE_LABELS, Constitution
 from app.domain.models import BrewGuide, HerbInBlend, ParsedMeal, Recommendation
-from app.domain.safety import filter_by_constitution
+from app.domain.safety import filter_by_constitution, herb_requires_cooking
 from app.services.food_lookup import CONF_SHOW_THRESHOLD
 
 logger = logging.getLogger(__name__)
@@ -55,16 +55,23 @@ def _constitution_brief(constitution: Constitution) -> dict:
 
 
 def _candidate_lines(constitution: Constitution, limit: int = 12) -> str:
-    """把候选饮片渲染成紧凑清单，注入提示词。这是收敛模型自由度的关键。"""
+    """把候选饮片渲染成紧凑清单，注入提示词。这是收敛模型自由度的关键。
+
+    标了 `brewing.requires_cooking` 的饮片额外带一句「⚠️ 须煎煮」——
+    这类饮片质地坚实，保温杯焖泡出不了味，而模型看不到 `brewing` 原文
+    （曾因此把「茯苓 + 保温杯焖 8 分钟」当成正面示例教出去）。
+    未标记的 28 味渲染结果**逐字节不变**，提示词 diff 最小。
+    """
     candidates = filter_by_constitution(constitution.value, limit=limit)
     lines: list[str] = []
     for item in candidates:
         nature = NATURE_LABELS.get(item.get("nature", "unknown"), "未知")
         flavors = "/".join(item.get("flavors", []))
         effects = "、".join(item.get("effects", []))
+        cook_hint = "｜⚠️ 须煎煮，不可只冲泡" if herb_requires_cooking(item) else ""
         lines.append(
             f"- {item['name']}（{nature}，{flavors}，归{'/'.join(item.get('meridians', []))}）"
-            f"｜功效方向：{effects}｜单日上限：{item.get('max_daily_g')}g"
+            f"｜功效方向：{effects}｜单日上限：{item.get('max_daily_g')}g{cook_hint}"
         )
     return "\n".join(lines)
 

@@ -16,7 +16,7 @@ from app.domain.models import (
     ParsedMeal,
     Recommendation,
 )
-from app.domain.safety import herb_by_name
+from app.domain.safety import blend_needs_cooking, herb_by_name
 
 logger = logging.getLogger(__name__)
 
@@ -91,9 +91,13 @@ CONSTITUTION_DEFAULT: dict[str, tuple[list[tuple[str, float]], str, str]] = {
         "生姜红枣温阳饮",
         "阳虚方向偏温，避开寒凉饮片。",
     ),
+    # 2026-09-18：本组原为「茯苓 8g + 陈皮 5g（茯苓陈皮化湿饮）」。
+    # 茯苓须煮透才出味，而默认搭配走的是保温杯焖泡 → 按「默认搭配选择纪律」
+    # （见本文件末尾注释）换成不必煎煮的等价搭配：陈皮理气健脾燥湿 + 荷叶清暑化湿，
+    # 两味都在痰湿质的 suitable 段里。
     Constitution.PHLEGM_DAMP.value: (
-        [("茯苓", 8), ("陈皮", 5)],
-        "茯苓陈皮化湿饮",
+        [("陈皮", 5), ("荷叶", 5)],
+        "陈皮荷叶化湿饮",
         "痰湿方向偏于健脾利湿，少用甜腻补品。",
     ),
     Constitution.DAMP_HEAT.value: (
@@ -136,6 +140,42 @@ DEFAULT_BREW = BrewGuide(
     steep_min=8,
     refill_times=1,
 )
+
+# ---- 煎煮路径（2026-09-18，见 docs/agent2-9types-brew-plan.md）----
+# 含「须煎煮」饮片的搭配不能走保温杯焖泡：这类饮片质地坚实，焖泡出不了味
+# （茯苓的数据原文就是「需先煎或久煮 10 分钟以上才易出味，直接冲泡效果差」）。
+# 与 DEFAULT_BREW **并存**，由 `blend_needs_cooking` 决定用哪一份，不是全局替换——
+# 不标须煎煮的 28 味行为完全不变。
+COOK_BREW = BrewGuide(
+    vessel="养生壶或小锅",
+    water_ml=600,
+    water_temp_c=100,
+    steps=[
+        "原料温水快速冲洗，质地坚硬的先浸泡 20 分钟",
+        "放入壶中，加约 600 ml 清水煮开",
+        "转小火煮 20–30 分钟，豆类与薏苡仁须彻底熟透",
+        "温热饮用，当天喝完不留隔夜",
+    ],
+    steep_min=30,
+    refill_times=0,
+)
+
+# ---- 默认搭配选择纪律（2026-09-18）----
+# 默认搭配（CONSTITUTION_DEFAULT 与 RULES）**优先选不必煎煮的饮片**：
+# 主路径仍是「保温杯焖泡」，不该因为一条默认推荐就要求用户备一口养生壶。
+#
+# 例外：该方向在候选集里找不到等价的非煎煮饮片时，**保留原味并走 COOK_BREW**
+# （不是删掉它 —— 删了等于承认「这个产品给不出茯苓」）。目前三处例外：
+#   · 特禀质默认（山药 10 + 红枣 8）：平补固表方向只有「红枣、山药」两味 suitable，
+#     山药是其中唯一的平补味，没有替代。
+#   · RULES.sweet_heavy（茯苓 6 + 陈皮 4）：茯苓在此承担渗湿，与陈皮燥湿是两层；
+#     且它已由 CONSTITUTION_DEFAULT 的痰湿搭配改用陈皮荷叶 —— 两处同时换成同一组
+#     会让「甜腻餐后」与「痰湿体质」给出完全一样的搭配，反而丢掉区分度。
+#   · RULES.late_night（陈皮 4 + 茯苓 6）：「和胃安神」依赖茯苓的宁心，
+#     白名单内没有不必煎煮的等价物。
+#
+# 「模型自选」这条路不受本条约束（模型是自由选料的），由 `check_brew_adequacy`
+# 在护栏层兜住 —— 这正是方案 C「两条都做」的第二条。
 
 
 def _pick_rule(parsed: ParsedMeal) -> dict | None:
@@ -258,6 +298,15 @@ def fallback_recommend(
         if constitution.value in (entry.get("unsuitable_for") or []):
             cautions.append(f"{herb.name} 与你当前体质方向不完全契合，建议减量")
 
+    # 含须煎煮的饮片就换煎煮方式：保温杯焖泡出不了味（茯苓、百合等质地坚实）。
+    # 换法记进 rule_hits —— 事后归因看得出这组为什么不是焖泡。
+    cook_names = blend_needs_cooking([h.name for h in herbs])
+    if cook_names:
+        brew = COOK_BREW
+        hits = [*hits, "brew_cook_required"]
+    else:
+        brew = DEFAULT_BREW
+
     # 通用兜底时把原因写进理由，别让用户以为这是为他体质配的
     reason_suffix = "（此建议来自规则匹配）"
     if fallback_note:
@@ -266,7 +315,7 @@ def fallback_recommend(
     rec = Recommendation(
         title=title,
         herbs=herbs,
-        brew=DEFAULT_BREW,
+        brew=brew,
         fit_reason=f"{reason}{reason_suffix}",
         cautions=cautions[:3],
         score=0.6,

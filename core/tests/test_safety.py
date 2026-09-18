@@ -17,10 +17,13 @@ from app.domain.safety import (
     MAX_HERBS_PER_BLEND,
     MissingConstitutionDataError,
     check_blend,
+    check_brew_adequacy,
     check_constitution_fit,
     contains_forbidden_phrase,
+    cook_required_without_basis,
     detect_high_risk,
     filter_by_constitution,
+    herb_requires_cooking,
     herb_whitelist_names,
     load_herb_catalog,
     ready_constitutions,
@@ -467,3 +470,154 @@ def test_matcher_does_not_crash_when_constitution_default_missing(
     # 确认真的退到了平和质的搭配，而不是随手编一组
     balanced_blend = {name for name, _ in matcher.CONSTITUTION_DEFAULT["balanced"][0]}
     assert {h.name for h in recs[0].herbs} == balanced_blend
+
+
+# ============================================================
+# 须煎煮 / 焖泡（2026-09-18，见 docs/agent2-9types-brew-plan.md）
+# ============================================================
+# 人裁定登记表：这 6 味是「质地坚实、保温杯焖泡出不了味」的品种，
+# 依据是各自 herbs.json 的 brewing 原文（下面逐条断言依据真的在数据里）。
+# ⚠️ 这是**人裁定快照**，允许因为数据治理而变红 —— 与上面的派生不变式不同，
+# 它记录的是「人做过的决定」，漂移时应当有人看一眼，而不是自动跟随。
+EXPECTED_COOK_REQUIRED = {
+    "茯苓": "需先煎或久煮 10 分钟以上才易出味，直接冲泡效果差",
+    "百合": "需煮 8–10 分钟，冲泡难以出味",
+    "莲子": "需煮 10 分钟以上",
+    "薏苡仁": "质地坚硬，建议先煮 15 分钟或直接用炒制打碎款",
+    "山药": "需煮 10 分钟以上，冲泡难出味",
+    "白扁豆": "质地坚硬，务必先煮 15 分钟",
+}
+
+
+def _brewing_text(entry: dict) -> str:
+    brewing = entry.get("brewing") or {}
+    return "".join(str(brewing.get(k) or "") for k in ("form", "note", "prep"))
+
+
+def test_cook_required_list_is_registered() -> None:
+    """须煎煮清单是人裁定的，逐条登记依据，漂移即报出来。"""
+    catalog = load_herb_catalog()
+    by_name = {item["name"]: item for item in catalog.values()}
+
+    for name, basis in EXPECTED_COOK_REQUIRED.items():
+        assert name in by_name, f"{name} 不在饮片库里"
+        entry = by_name[name]
+        assert herb_requires_cooking(entry), f"{name} 的 requires_cooking 标记丢了"
+        assert basis in _brewing_text(entry), (
+            f"{name} 的登记依据在数据里找不到：{basis!r} —— 改了 note/prep 请同步登记表"
+        )
+
+    actual = {item["name"] for item in catalog.values() if herb_requires_cooking(item)}
+    assert actual == set(EXPECTED_COOK_REQUIRED), (
+        f"须煎煮清单漂移：新增 {sorted(actual - set(EXPECTED_COOK_REQUIRED))}、"
+        f"减少 {sorted(set(EXPECTED_COOK_REQUIRED) - actual)}"
+    )
+
+
+def test_cook_required_flag_has_textual_basis() -> None:
+    """标了 `requires_cooking` 的，必须在自己的 brewing 文本里读得到「煮/煎/炖」依据。
+
+    派生不变式，不写死名单：标记不能凭空出现，否则「为什么要煮」只剩一个布尔值，
+    后来者无从复核。关键词刻意不含「熬」—— 它会命中麦冬、桑椹的「适合熬夜后口干」。
+    """
+    bad = cook_required_without_basis(load_herb_catalog())
+    assert not bad, f"这些饮片标了须煎煮，但 brewing 文本里找不到依据：{bad}"
+
+    flagged = [i["id"] for i in load_herb_catalog().values() if herb_requires_cooking(i)]
+    assert flagged, "一条 requires_cooking 都没有 —— 上面那条检查已失去覆盖面"
+
+
+def test_cook_required_basis_check_negative_control() -> None:
+    """人造一条「标了须煎煮、文本里却没依据」的数据，断言被报出来。"""
+    catalog = {
+        "x": {"brewing": {"note": "香气易挥发，加盖焖 3 分钟即可", "requires_cooking": True}},
+        "y": {"brewing": {"note": "需煮 10 分钟以上", "requires_cooking": True}},
+        "z": {"brewing": {"note": "需煮 5 分钟"}},  # 没标，不该被算进来
+    }
+    assert cook_required_without_basis(catalog) == ["x"]
+
+
+def test_check_brew_adequacy_negative_control() -> None:
+    """护栏必须「该报的报、不该报的不报」——只测一边等于没测。"""
+    from app.domain.models import BrewGuide
+
+    warm = BrewGuide(
+        vessel="保温杯", water_ml=400, water_temp_c=95, steps=["a"], steep_min=8, refill_times=1
+    )
+    cook = BrewGuide(
+        vessel="养生壶", water_ml=600, water_temp_c=100, steps=["a"], steep_min=30, refill_times=0
+    )
+    long_in_cup = BrewGuide(
+        vessel="保温杯", water_ml=400, water_temp_c=100, steps=["a"], steep_min=30, refill_times=0
+    )
+
+    # ① 须煎煮 + 焖泡 → 报（且是「改写」不是「拦截」，ok 仍为 True）
+    result = check_brew_adequacy([{"name": "茯苓", "amount_g": 8}], warm)
+    assert result.ok is True
+    assert result.warnings and "茯苓" in result.warnings[0]
+
+    # ② 须煎煮 + 已煎煮 → 不报
+    assert not check_brew_adequacy([{"name": "茯苓", "amount_g": 8}], cook).warnings
+
+    # ③ 不必煎煮 + 焖泡 → 不报（防过报）
+    assert not check_brew_adequacy([{"name": "陈皮", "amount_g": 5}], warm).warnings
+
+    # ④ 只看时长不看器具会漏判：保温杯焖 30 分钟依然是焖泡
+    assert check_brew_adequacy([{"name": "茯苓", "amount_g": 8}], long_in_cup).warnings
+
+
+def test_fallback_uses_cook_brew_for_cook_required_blend(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """兜底搭配含须煎煮的饮片时，必须换成煎煮方式并把原因记进 rule_hits。
+
+    用特禀质默认（山药 10 + 红枣 8）—— 它是「没有非煎煮等价物」的保留项，
+    所以真的会走到煎煮路径；痰湿质默认已在 2026-09-18 换成不必煎煮的陈皮荷叶。
+    """
+    from app.domain.models import ParsedMeal
+    from app.services import matcher
+
+    monkeypatch.setattr(matcher, "_pick_rule", lambda parsed: None)
+    meal = ParsedMeal(foods=[], overall_nature=Nature.NEUTRAL)
+
+    recs, _, hits = matcher.fallback_recommend(meal, Constitution.SPECIAL_DIATHESIS)
+    assert recs, "特禀质默认搭配应当有推荐"
+    brew = recs[0].brew
+    assert brew.steep_min >= safety.COOK_BREW_MIN_STEEP_MIN, brew
+    assert brew.water_temp_c >= 100, brew
+    assert "保温杯" not in brew.vessel, brew
+    assert "brew_cook_required" in hits, hits
+
+
+def test_fallback_keeps_default_brew_when_no_cook_required(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """搭配里没有须煎煮的饮片时，兜底必须保持焖泡、且不留下换法记录。"""
+    from app.domain.models import ParsedMeal
+    from app.services import matcher
+
+    monkeypatch.setattr(matcher, "_pick_rule", lambda parsed: None)
+    meal = ParsedMeal(foods=[], overall_nature=Nature.NEUTRAL)
+
+    recs, _, hits = matcher.fallback_recommend(meal, Constitution.QI_STAGNATION)
+    assert recs[0].brew.vessel == matcher.DEFAULT_BREW.vessel
+    assert recs[0].brew.steep_min == matcher.DEFAULT_BREW.steep_min
+    assert "brew_cook_required" not in hits, hits
+
+
+def test_phlegm_damp_default_avoids_cook_required() -> None:
+    """痰湿质默认搭配必须是「不必煎煮」的 —— 2026-09-18 落地的默认搭配选择纪律。
+
+    原值「茯苓 8 + 陈皮 5」里的茯苓须煮透才出味，而默认搭配走保温杯焖泡。
+    改成陈皮 + 荷叶后，主路径不再要求用户备一口养生壶。
+    **要改回去之前，请先读 `app/services/matcher.py` 末尾的「默认搭配选择纪律」。**
+    """
+    from app.services import matcher
+
+    blend, title, _ = matcher.CONSTITUTION_DEFAULT[Constitution.PHLEGM_DAMP.value]
+    names = [name for name, _ in blend]
+    assert not safety.blend_needs_cooking(names), (
+        f"痰湿质默认搭配又含了须煎煮的饮片：{names}"
+    )
+    assert "荷叶" in names, names
+    assert title == "陈皮荷叶化湿饮", title

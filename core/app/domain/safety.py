@@ -219,6 +219,109 @@ def check_constitution_fit(
     return GuardrailResult(ok=True, warnings=warnings)
 
 
+# ============================================================
+# 煎煮 / 焖泡（2026-09-18 落地，见 docs/agent2-9types-brew-plan.md）
+# ============================================================
+# 判定关键词。刻意**不含「熬」** —— 它会命中麦冬、桑椹的「适合熬夜后口干」，
+# 把两味明显不必煎煮的饮片误判进来（第一版方案正是这么误报的）。
+COOK_KEYWORDS: tuple[str, ...] = ("煮", "煎", "炖")
+
+# 判定「这算煎煮方式」的下限。低于它就是焖泡，须煎煮的饮片出不了味。
+COOK_BREW_MIN_STEEP_MIN: int = 20
+
+
+def herb_requires_cooking(entry: dict) -> bool:
+    """该饮片是否标记为「必须煎煮」。
+
+    读的是**数据标记**而不是现场猜文本：标记与它的依据（`brewing.note` 原文）
+    放在同一个对象里，改的时候看得见理由。这也让「百合」这类新增判定
+    不必去改代码常量 —— 常量与数据必然漂移，漂移方向总是「数据改了、常量没改」。
+    """
+    brewing = entry.get("brewing") or {}
+    return bool(brewing.get("requires_cooking"))
+
+
+def cook_required_without_basis(catalog: dict[str, dict]) -> list[str]:
+    """纯函数：标记了 `requires_cooking` 却在自身处理要点里找不到「煮/煎/炖」依据的条目。
+
+    派生不变式用 —— 标记不能凭空出现，必须能在自己的 `brewing` 文本里读到依据。
+    返回按 id 排序的列表，空列表代表没有这类问题。
+    """
+    bad: list[str] = []
+    for herb_id, entry in catalog.items():
+        if not herb_requires_cooking(entry):
+            continue
+        brewing = entry.get("brewing") or {}
+        text = "".join(
+            str(brewing.get(k) or "") for k in ("form", "note", "prep")
+        )
+        if not any(k in text for k in COOK_KEYWORDS):
+            bad.append(herb_id)
+    return sorted(bad)
+
+
+def blend_needs_cooking(names: list[str]) -> list[str]:
+    """搭配里需要煎煮的饮片名（按传入顺序，去重）。
+
+    经 `herb_by_name()` 查目录，未知名字直接跳过（不报错）：
+    调用点在兜底与护栏路径上，这两处的契约都是「永远给出结果」。
+    """
+    catalog = herb_by_name()
+    out: list[str] = []
+    for name in names:
+        entry = catalog.get(name)
+        if entry and herb_requires_cooking(entry) and name not in out:
+            out.append(name)
+    return out
+
+
+def _brew_get(brew: object, key: str, default: object = None) -> object:
+    """从 BrewGuide 或等价 dict 里取值（护栏要能同时吃两种形状）。"""
+    if isinstance(brew, dict):
+        return brew.get(key, default)
+    return getattr(brew, key, default)
+
+
+def brew_is_cook_style(brew: object) -> bool:
+    """这组冲泡说明是否是「煎煮」而不是「焖泡」。
+
+    三条同时满足才算：水温到 100、焖煮不少于 20 分钟、器具有煮的条件。
+    只看时长不看器具会漏判「保温杯焖 30 分钟」——那依然出不了味。
+    """
+    vessel = str(_brew_get(brew, "vessel", "") or "")
+    steep = _brew_get(brew, "steep_min", 0) or 0
+    temp = _brew_get(brew, "water_temp_c", 0) or 0
+    try:
+        steep_ok = float(steep) >= COOK_BREW_MIN_STEEP_MIN
+        temp_ok = float(temp) >= 100
+    except (TypeError, ValueError):
+        return False
+    return steep_ok and temp_ok and ("壶" in vessel or "锅" in vessel)
+
+
+def check_brew_adequacy(herbs: list[dict], brew: object) -> GuardrailResult:
+    """搭配里有须煎煮的饮片、而冲泡方式仍是焖泡时，给出改法。
+
+    调用方约定（与 `check_blend` 的剂量处理同构）：**自动换用煎煮方式，
+    并把 `warnings` 记进 `guardrail_applied`** —— 项目原则是「不静默改写」，
+    不是「不许改写」。换法必须留痕，用户与事后归因都看得见。
+
+    这里只负责*发现*与*措辞*，换哪一份冲泡说明由调用方决定（orchestrator 用
+    `matcher.COOK_BREW`）—— 否则 safety 就要反向依赖 matcher，形成循环导入。
+    """
+    names = blend_needs_cooking([str(h.get("name", "")).strip() for h in herbs])
+    if not names:
+        return GuardrailResult()
+    if brew_is_cook_style(brew):
+        return GuardrailResult()
+    joined = "、".join(names)
+    return GuardrailResult(
+        warnings=[
+            f"{joined}：须煎煮，保温杯焖泡出不了味，应改用养生壶或小锅煮 20–30 分钟"
+        ]
+    )
+
+
 def filter_by_constitution(
     constitution: str,
     limit: int = 12,
