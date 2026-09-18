@@ -23,7 +23,7 @@ CONSTITUTION_NAMES: dict[str, str] = {
     "qi_deficiency": "气虚质",
     "yang_deficiency": "阳虚质",
     "yin_deficiency": "阴虚质",
-    "phlegm_dampness": "痰湿质",
+    "phlegm_damp": "痰湿质",
     "damp_heat": "湿热质",
     "blood_stasis": "血瘀质",
     "qi_stagnation": "气郁质",
@@ -90,13 +90,13 @@ QUESTIONS: tuple[Question, ...] = (
     Question(
         "q12",
         "您感到身体沉重不轻松或不爽快吗？",
-        (ScaleUse("phlegm_dampness"),),
+        (ScaleUse("phlegm_damp"),),
     ),
     Question(
-        "q13", "您腹部肥满松软吗？", (ScaleUse("phlegm_dampness"),)
+        "q13", "您腹部肥满松软吗？", (ScaleUse("phlegm_damp"),)
     ),
     Question(
-        "q14", "您嘴里有黏黏的感觉吗？", (ScaleUse("phlegm_dampness"),)
+        "q14", "您嘴里有黏黏的感觉吗？", (ScaleUse("phlegm_damp"),)
     ),
     Question(
         "q15",

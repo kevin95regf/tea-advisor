@@ -4,7 +4,7 @@
 > 一律以本文为准。任何一项解决了，就在这里更新状态并记录解决方式。
 >
 > 快照时间：**2026-09-18**　共 **15** 项记录在案（A/B/C/D/E 五类），
-> 其中 **A2、D2、E1、E3 已解决**、**B3 的阻塞已解除**（九型已上线；244 格的布局中已落地 15 格，余 239 格是完备度而非功能阻塞），其余 10 项待处理。
+> 其中 **A2、B2、D2、E1、E3 已解决**、**B3 的阻塞已解除**（九型已上线；244 格的布局中已落地 15 格，余 239 格是完备度而非功能阻塞），其余 9 项待处理。
 
 ---
 
@@ -16,7 +16,7 @@
 | **A2** | A1 核对遗留 4 项待确认（酱油 + 3 味菇等） | 项目所有者 | 不影响功能，影响 3 条数据的最终取值 | ✅ **已解决**（2026-09-18） |
 | **A3** | `口蘑` 无来源行却挂在 `mogu` 别名上（凭项目判断保留） | 具备资质的中医师/中药师 | A1 的审核质量（「无证据却挂别名」的状态） | 待确认 |
 | **B1** | 7 处药典不一致待复核 | nanple | 数据准确性（不阻塞功能） | 待 nanple |
-| **B2** | 问卷项目 `phlegm_dampness` 拼写不一致 | nanple | 问卷接入 | 待 nanple |
+| **B2** | 问卷子包 `phlegm_dampness` 拼写不一致 | 开发 | 问卷接入 | ✅ **已解决**（2026-09-18，方案① 问卷侧改名） |
 | **B3** | 244 个配伍判定（九型已上线，余下是完备度；第二批落地后余 239 格） | nanple | 推荐质量（不再阻塞体质模型 5→9 型） | 已部分解决 |
 | **C1** | 《中华本草》列全空 | 需取得资料 | 三源交叉验证 | 待外部资料 |
 | **C2** | 国标 A 栏是转引，非标准正文 | 需取得资料 | 逐字对齐国标 | 待外部资料 |
@@ -108,12 +108,13 @@
 
 | | |
 |---|---|
-| **现状** | nanple 的 `tcm-constitution-questionnaire/` 用 `phlegm_dampness` 表示痰湿质；本项目 `core/data/constitution.json` 与 `enums.py` 用 `phlegm_damp` |
-| **影响** | 两边的体质标识无法直接对接。**这也独立证明了 `tcm-constitution-questionnaire/` 目前尚未接入本项目**——如果接过，这个不一致早在跑测试时就暴露了 |
-| **决定** | **2026-09-17 已定：作为第一个 Issue 提给 nanple** |
-| **需要什么** | 二选一：① 问卷侧改成 `phlegm_damp`；② 项目侧加一层适配映射。**建议 ①**，因为项目侧的 id 已在 9 型里全部确认（见 B3） |
-| **验收标准** | 两边对同一体质给出同一个标识串 |
-| **相关文件** | `tcm-constitution-questionnaire/tcm_constitution/questions.py`、`core/app/domain/enums.py` |
+| **现状** | ✅ **已解决（2026-09-18）。** 原状：`tcm-constitution-questionnaire/` 用 `phlegm_dampness` 表示痰湿质；本项目 `core/data/constitution.json` 与 `enums.py` 用 `phlegm_damp`。9 个体质 id 里**只有这 1 个**不同 |
+| **影响（原）** | 两边的体质标识无法直接对接。**这也独立证明了 `tcm-constitution-questionnaire/` 当时尚未接入本项目**——如果接过，这个不一致早在跑测试时就暴露了 |
+| **决定** | **2026-09-17 已定：作为第一个 Issue 提给 nanple。** 2026-09-18 由项目侧自行解决：二选一里**选 ①（问卷侧改名）**，因为项目侧的 id 已在 9 型里全部确认（见 B3），是承重的那一套 |
+| **解决方式** | **方案① 问卷侧改名（2026-09-18 已执行）**：把仓库内 `tcm-constitution-questionnaire/` 的 `phlegm_dampness` 全部改为 `phlegm_damp`，共 **3 文件 8 处**（`tcm-constitution-questionnaire/tcm_constitution/questions.py` 4、`tcm-constitution-questionnaire/questionnaire.csv` 3、`tcm-constitution-questionnaire/tests/test_scoring.py` 1）；`core/` **一个字未动**。方案②（API 边界加 `CONSTITUTION_ID_ALIASES` 适配映射）**不采纳** —— 它会让两种标识串长期并存，漏用一处即静默失效。完整决策过程、取证与改动清单见 **`docs/b2-constitution-id-alignment.md`** |
+| **验收标准** | ✅ **已达成**：两边对同一体质给出同一个标识串 `phlegm_damp`；`core/` 无需任何适配层即可直接用问卷输出的体质 id。防回潮由 `core/tests/test_questionnaire_id_alignment.py`（4 守卫 × 正负控 = 8 条）守住 |
+| **相关文件** | `docs/b2-constitution-id-alignment.md`（方案与执行记录）、`tcm-constitution-questionnaire/tcm_constitution/questions.py`、`tcm-constitution-questionnaire/questionnaire.csv`、`core/tests/test_questionnaire_id_alignment.py`（守卫）、`core/app/domain/enums.py`（事实源，未改） |
+| **仍未解决** | ⚠️ **本项只解决标识对齐，不解决问卷的接入。** 分叉里的问卷 API 文件 `questionnaire.py` 未并入（题库是 T/CACM 1460—2023 附录 A 的 60 题版，主线是 GB/T 46939-2025 的 27 题版，换标准不是小事；该文件现存档于项目外的 `tea-advisor-fork-keep`）。真正接入前还有一道坎：问卷输出的是**倾向性体质**，进推荐前必须过 `ready_constitutions()` 就绪闸门 |
 
 ## B3　244 个配伍判定（已落地 15 格，余 239 格）
 

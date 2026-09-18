@@ -819,7 +819,10 @@ python -m venv .venv
 >    改了项目数据而没更新 JSON 快照，`pytest` 会直接失败，不会静默渲染一份错文档。
 > 4. **九型的 id 已于 2026-09-17 全部确认**（阴虚质 `yin_deficiency`、血瘀质 `blood_stasis`、
 >    气郁质 `qi_stagnation`、特禀质 `special_diathesis`），扩到 9 型时直接用。
->    注意 nanple 的问卷项目用 `phlegm_dampness`，和本项目的 `phlegm_damp` 拼写不同，接入要适配。
+>    ~~注意 nanple 的问卷项目用 `phlegm_dampness`，和本项目的 `phlegm_damp` 拼写不同，接入要适配。~~
+>    **2026-09-18 已对齐**：仓库内 `tcm-constitution-questionnaire/` 已按方案①改为 `phlegm_damp`
+>    （3 文件 8 处），接入**不再需要适配层**。防回潮由 `core/tests/test_questionnaire_id_alignment.py` 守住；
+>    方案与改动清单见 `docs/b2-constitution-id-alignment.md`。
 
 > **关于第 7 项的防错（2026-09-17 加）**
 >

@@ -63,7 +63,7 @@ class ScoringTests(unittest.TestCase):
                 "qi_deficiency": 3,
                 "yang_deficiency": 3,
                 "yin_deficiency": 3,
-                "phlegm_dampness": 3,
+                "phlegm_damp": 3,
                 "damp_heat": 3,
                 "blood_stasis": 3,
                 "qi_stagnation": 3,

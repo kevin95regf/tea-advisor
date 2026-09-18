@@ -304,7 +304,7 @@ python scripts/test_food_accuracy.py   # 属性准确率，只测 Agent1
 | # | 决策 | 理由 |
 |---|---|---|
 | 27 | **244 个配伍判定提给 nanple**（34 味 × `suitable_constitutions` + 27 味 × `unsuitable_for`，针对 4 个新体质） | 无标准可依，必须由懂中医的人判定 |
-| 28 | **nanple 问卷项目的 `phlegm_dampness` vs 本项目 `phlegm_damp` 拼写不一致，作为第一个 Issue** | 接入前必须解决 |
+| 28 | **问卷子包的 `phlegm_dampness` vs 本项目 `phlegm_damp` 拼写不一致，作为第一个 Issue** —— **2026-09-18 已由方案①（问卷侧改名）解决**：`tcm-constitution-questionnaire/` 内 3 文件 8 处改为 `phlegm_damp`，`core/` 未动；方案②（边界适配映射）不采纳。详见 `docs/b2-constitution-id-alignment.md` | 接入前必须解决（**已解决**） |
 | 29 | **区分「冻结的一次性批次脚本」与「可重跑的只读工具」** | `scripts/` 下 `add_food_entries.py` / `add_review_fields.py` / `patch_food_table.py` 是**冻结的历史批次脚本**，改数据前必须 `--dry-run`；`check_herb_catalog.py` / `build_*.py` 是**可反复运行的只读工具** |
 | 30 | **生成的文档不手工编辑** | `catalog-compliance.md`、`constitution-9-types.md`、`herb-nature-crosscheck.md` 三份都由脚本从 JSON 渲染，JSON 是事实源 |
 | 31 | **仓库强制 LF**（`* text=auto eol=lf`，`*.cmd`/`*.bat` 例外） | 避免 Windows 上的假 diff；Python 写文件要显式 `newline="\n"` |
@@ -336,6 +336,7 @@ python scripts/test_food_accuracy.py   # 属性准确率，只测 Agent1
 | `docs/pending-items.md` | **挂起事项清单（唯一真源）** | 接力/排期时 |
 | `docs/catalog-compliance.md` | 饮片白名单 × 食药物质目录核对 + 处置决定 | 涉合规时 |
 | `docs/constitution-9-types.md` | 国标九型特征与饮食方向（A/B/C 三层，带出处） | 做 5→9 时 |
+| `docs/b2-constitution-id-alignment.md` | **体质标识对齐（B2）**：问卷侧 `phlegm_dampness`→`phlegm_damp` 的方案、取证与改动清单（已执行） | 接问卷 / 动体质 id 时 |
 | `docs/herb-nature-crosscheck.md` | 34 味药典对照表 + 差异影响分析 | 涉药典数据时 |
 
 **三份生成型文档不要手工编辑**（重新生成命令写在各自开头的引用块里）：

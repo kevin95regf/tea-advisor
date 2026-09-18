@@ -12,9 +12,9 @@ yang_deficiency,阳虚质,3,q04,您比一般人耐受不了寒冷（冬天的寒
 yin_deficiency,阴虚质,1,q09,您感觉身体、脸上发热吗？,false,all
 yin_deficiency,阴虚质,2,q10,您皮肤或口唇干吗？,false,all
 yin_deficiency,阴虚质,3,q11,您面部两颧潮红或偏红吗？,false,all
-phlegm_dampness,痰湿质,1,q12,您感到身体沉重不轻松或不爽快吗？,false,all
-phlegm_dampness,痰湿质,2,q13,您腹部肥满松软吗？,false,all
-phlegm_dampness,痰湿质,3,q14,您嘴里有黏黏的感觉吗？,false,all
+phlegm_damp,痰湿质,1,q12,您感到身体沉重不轻松或不爽快吗？,false,all
+phlegm_damp,痰湿质,2,q13,您腹部肥满松软吗？,false,all
+phlegm_damp,痰湿质,3,q14,您嘴里有黏黏的感觉吗？,false,all
 damp_heat,湿热质,1,q15,您面部或鼻部有油腻感或者油亮发光吗？,false,all
 damp_heat,湿热质,2,q16,您小便时尿道有发热感、尿色浓（深）吗？,false,all
 damp_heat,湿热质,3,q17_female,您带下色黄（白带颜色发黄）吗？,false,female

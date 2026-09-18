@@ -278,7 +278,7 @@ GB/T 46939-2025 只规定体质分类与判定方法，不含任何饮食或饮�
 
 ### 四个新体质的英文 id 已确认　`已确认`
 
-**2026-09-17 已认可**，以后 5→9 直接用这套：阴虚质 `yin_deficiency`、血瘀质 `blood_stasis`、气郁质 `qi_stagnation`、特禀质 `special_diathesis`，与项目现有 `balanced` / `qi_deficiency` / `yang_deficiency` / `phlegm_damp` / `damp_heat` 命名风格一致。另注：nanple 的体质问卷项目用 `phlegm_dampness`，与本项目的 `phlegm_damp` 拼写不一致，接入时需适配（这一条与本决定无关，仍然待处理）。
+**2026-09-17 已认可**，以后 5→9 直接用这套：阴虚质 `yin_deficiency`、血瘀质 `blood_stasis`、气郁质 `qi_stagnation`、特禀质 `special_diathesis`，与项目现有 `balanced` / `qi_deficiency` / `yang_deficiency` / `phlegm_damp` / `damp_heat` 命名风格一致。另注（**2026-09-18 已解决，不再待处理**）：体质问卷子包曾用 `phlegm_dampness`，与本项目的 `phlegm_damp` 拼写不一致；已按方案①把 `tcm-constitution-questionnaire/` 内 3 文件 8 处改为 `phlegm_damp`，接入不再需要适配层，详见 `docs/b2-constitution-id-alignment.md`。
 
 ### 判定阈值 40 分的口径需以标准正文核对　`待确认`
 

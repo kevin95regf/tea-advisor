@@ -532,13 +532,13 @@
     {
       "id": "four_types_missing_in_project",
       "title": "四型已纳入项目并就绪（Step 1 + Step 2 完成）",
-      "detail": "**2026-09-17 结算**。Step 1：`Constitution` 枚举 +4 成员（顺序同国标）、`constitution.json` +4 条（含 C 栏）、`matcher.CONSTITUTION_DEFAULT` +4 组默认搭配、本文件四型 `in_project` 翻真并补齐 C 栏快照。Step 2：向 `herbs.json` 写入 10 格「公开来源直接点名」的配伍标注（宜：桑椹×阴虚，山楂/红枣/生姜×血瘀，红枣/薄荷×气郁，红枣/山药×特禀；忌：乌梅×血瘀、乌梅×气郁），四型因此全部就绪，`/api/constitutions` 自动返回 9 型，运行时闸门一并放行，无需翻任何开关。写入口径：只写『来源直接点名』的组合，药典功效外推与项目 cautions 推导一律不写（逐条依据与推导过程见 `docs/herbs-9types-draft.md`）。\n\n**仍未完成**：244 格的完整判定仍待懂中医的人给出；另有 3 处待确认已单列（山楂×阴虚、山楂×气郁、槐花×血瘀）。按 A1 口径，已写入的 10 格属**未人工审核数据**，界面仍标「待验证」；**空缺 ≠ 安全或不宜，空缺只表示「未判定」**。",
+      "detail": "**2026-09-17 结算**。Step 1：`Constitution` 枚举 +4 成员（顺序同国标）、`constitution.json` +4 条（含 C 栏）、`matcher.CONSTITUTION_DEFAULT` +4 组默认搭配、本文件四型 `in_project` 翻真并补齐 C 栏快照。Step 2：向 `herbs.json` 写入 10 格「公开来源直接点名」的配伍标注（宜：桑椹×阴虚，山楂/红枣/生姜×血瘀，红枣/薄荷×气郁，红枣/山药×特禀；忌：乌梅×血瘀、乌梅×气郁），四型因此全部就绪，`/api/constitutions` 自动返回 9 型，运行时闸门一并放行，无需翻任何开关。写入口径：只写『来源直接点名』的组合，药典功效外推与项目 cautions 推导一律不写（逐条依据与推导过程见 `docs/herbs-9types-draft.md`）。\n\n**仍未完成**：244 格里余下 239 格的完整判定仍待懂中医的人给出。原单列的 5 处（山楂×阴虚、山楂×气郁、槐花×血瘀、香薷×阴虚、荷叶×阴虚）已于 2026-09-17 由外部专业意见裁定并写入，见 `docs/herbs-9types-batch2.md`；其中**山楂×气郁「升位过强」**请优先复核。按 A1 口径，所有已写入的格子都属**未人工审核数据**，界面仍标「待验证」；**空缺 ≠ 安全或不宜，空缺只表示「未判定」**。",
       "status": "已结算（余项待 nanple）"
     },
     {
       "id": "ids_confirmed",
       "title": "四个新体质的英文 id 已确认",
-      "detail": "**2026-09-17 已认可**，以后 5→9 直接用这套：阴虚质 `yin_deficiency`、血瘀质 `blood_stasis`、气郁质 `qi_stagnation`、特禀质 `special_diathesis`，与项目现有 `balanced` / `qi_deficiency` / `yang_deficiency` / `phlegm_damp` / `damp_heat` 命名风格一致。另注：nanple 的体质问卷项目用 `phlegm_dampness`，与本项目的 `phlegm_damp` 拼写不一致，接入时需适配（这一条与本决定无关，仍然待处理）。",
+      "detail": "**2026-09-17 已认可**，以后 5→9 直接用这套：阴虚质 `yin_deficiency`、血瘀质 `blood_stasis`、气郁质 `qi_stagnation`、特禀质 `special_diathesis`，与项目现有 `balanced` / `qi_deficiency` / `yang_deficiency` / `phlegm_damp` / `damp_heat` 命名风格一致。另注（**2026-09-18 已解决，不再待处理**）：体质问卷子包曾用 `phlegm_dampness`，与本项目的 `phlegm_damp` 拼写不一致；已按方案①把 `tcm-constitution-questionnaire/` 内 3 文件 8 处改为 `phlegm_damp`，接入不再需要适配层，详见 `docs/b2-constitution-id-alignment.md`。",
       "status": "已确认"
     },
     {
