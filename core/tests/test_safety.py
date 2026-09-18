@@ -621,3 +621,79 @@ def test_phlegm_damp_default_avoids_cook_required() -> None:
     )
     assert "荷叶" in names, names
     assert title == "陈皮荷叶化湿饮", title
+
+
+# ============================================================
+# 兼体质屏蔽集 avoid（B2 接入 · 提交 2）
+# ============================================================
+# 合成数据，不拿真实饮片当样本：真实标注会随数据补齐而变，
+# 测的是「avoid 有没有生效」，不是「现在哪味饮片标了什么」。
+_FAKE_CATALOG: dict[str, dict] = {
+    "陈皮": {
+        "name": "陈皮",
+        "nature": "warm",
+        "flavors": ["pungent"],
+        "meridians": ["脾"],
+        "effects": ["理气"],
+        "max_daily_g": 6,
+        "suitable_constitutions": ["qi_deficiency"],
+        "unsuitable_for": [],
+        "brewing": {"requires_cooking": False},
+    },
+    "金银花": {
+        "name": "金银花",
+        "nature": "cold",
+        "flavors": ["sweet"],
+        "meridians": ["肺"],
+        "effects": ["清热"],
+        "max_daily_g": 6,
+        "suitable_constitutions": ["qi_deficiency"],
+        "unsuitable_for": ["yang_deficiency"],
+        "brewing": {"requires_cooking": False},
+    },
+}
+
+
+def test_avoid_blocks_herbs_unsuitable_for_secondary_constitution(
+    monkeypatch,
+) -> None:
+    """屏蔽集里体质标为「不宜」的饮片必须被挡在候选集外。
+
+    兼体质只能有一个收敛方向（主导体质），其余体质不改方向、只做排除 ——
+    所以这里断言的是「排除」，不是「换方向」。
+    """
+    monkeypatch.setattr(safety, "load_herb_catalog", lambda: _FAKE_CATALOG)
+
+    plain = [h["name"] for h in filter_by_constitution("qi_deficiency")]
+    both = [
+        h["name"]
+        for h in filter_by_constitution("qi_deficiency", avoid=("yang_deficiency",))
+    ]
+
+    # 负控制：不给 avoid 时它还在 ⇒ 上面的消失确实由 avoid 造成，不是碰巧没数据
+    assert "金银花" in plain
+    assert "金银花" not in both
+    assert "陈皮" in both, "主导体质契合且未被屏蔽的饮片必须留下"
+
+    # 透传：Agent2 的候选清单里也必须看不到它（模型看不见 ⇒ 不可能被选上）
+    from app.agents.agent2_recommend import _candidate_lines
+
+    lines = _candidate_lines(Constitution.QI_DEFICIENCY, avoid=("yang_deficiency",))
+    assert "金银花" not in lines
+    assert "陈皮" in lines
+
+
+def test_avoid_empty_is_equivalent_to_no_avoid(monkeypatch) -> None:
+    """收口判据：既有调用方不传 avoid 时，行为必须与改动前**完全一致**。
+
+    遍历全部就绪体质，而不是抽查一个 —— 只改一处最容易漏的就是「别的体质变了」。
+    """
+    for cid in sorted(ready_constitutions()):
+        assert filter_by_constitution(cid, avoid=()) == filter_by_constitution(cid), cid
+
+    # 负控制：判据非真空 —— 非空 avoid 在合成数据上确实会改变结果，
+    # 否则上面那条等式可能只是「两边都返回同一个东西」。
+    monkeypatch.setattr(safety, "load_herb_catalog", lambda: _FAKE_CATALOG)
+    assert filter_by_constitution(
+        "qi_deficiency", avoid=("yang_deficiency",)
+    ) != filter_by_constitution("qi_deficiency")

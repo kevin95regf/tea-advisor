@@ -10,6 +10,7 @@ import json
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
+from typing import Sequence
 
 from app.config import get_settings
 
@@ -344,6 +345,8 @@ def check_brew_adequacy(herbs: list[dict], brew: object) -> GuardrailResult:
 def filter_by_constitution(
     constitution: str,
     limit: int = 12,
+    *,
+    avoid: Sequence[str] = (),
 ) -> list[dict]:
     """按体质筛出候选饮片，供 Agent 2 在受限集合内选择。
 
@@ -359,6 +362,17 @@ def filter_by_constitution(
 
     某体质何时算「数据备齐、可以对外」，判据由 `ready_constitutions()` 给出，
     两者用的是同一个条件。
+
+    兼体质（B2 接入）
+    ----------------
+    `avoid` 是**屏蔽集**：主导体质决定收敛方向（只能有一个），
+    其余被判定为「是」的体质不改方向，只把它们标为不宜的饮片一并排除。
+
+    ⚠️ `avoid` 只影响排除，**不参与 `suitable_constitutions` 的排序** ——
+    否则两份体质的契合度会混在一起，方向就不唯一了。
+
+    默认空 ⇒ 既有调用方行为**逐字节不变**（`{constitution} & blocked` 退化为原来的
+    `constitution in unsuitable`）。
     """
     catalog = load_herb_catalog()
     if not catalog:
@@ -366,12 +380,13 @@ def filter_by_constitution(
         # （load_herb_catalog 缺文件返回空字典），保持原行为，不在这里报错。
         return []
 
+    blocked = {str(constitution), *(str(a) for a in avoid)}
     suitable: list[dict] = []
     neutral_fallback: list[dict] = []
 
     for entry in catalog.values():
-        unsuitable = entry.get("unsuitable_for") or []
-        if constitution in unsuitable:
+        unsuitable = {str(x) for x in (entry.get("unsuitable_for") or [])}
+        if unsuitable & blocked:
             continue
         if constitution in (entry.get("suitable_constitutions") or []):
             suitable.append(entry)

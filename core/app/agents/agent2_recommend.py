@@ -13,6 +13,7 @@ import json
 import logging
 import time
 from functools import lru_cache
+from typing import Sequence
 
 from pydantic import BaseModel, Field
 
@@ -54,15 +55,25 @@ def _constitution_brief(constitution: Constitution) -> dict:
     return {"id": constitution.value, "label": CONSTITUTION_LABELS.get(constitution.value, "")}
 
 
-def _candidate_lines(constitution: Constitution, limit: int = 12) -> str:
+def _candidate_lines(
+    constitution: Constitution,
+    limit: int = 12,
+    *,
+    avoid: Sequence[str] = (),
+) -> str:
     """把候选饮片渲染成紧凑清单，注入提示词。这是收敛模型自由度的关键。
 
     标了 `brewing.requires_cooking` 的饮片额外带一句「⚠️ 须煎煮」——
     这类饮片质地坚实，保温杯焖泡出不了味，而模型看不到 `brewing` 原文
     （曾因此把「茯苓 + 保温杯焖 8 分钟」当成正面示例教出去）。
     未标记的 28 味渲染结果**逐字节不变**，提示词 diff 最小。
+
+    `avoid`（兼体质屏蔽集）直接透传给 `filter_by_constitution`：模型**看不到**它，
+    屏蔽发生在候选集构造阶段 —— 看不见的饮片就不可能被选上。默认空 ⇒ 渲染结果不变。
     """
-    candidates = filter_by_constitution(constitution.value, limit=limit)
+    candidates = filter_by_constitution(
+        constitution.value, limit=limit, avoid=[str(a) for a in avoid]
+    )
     lines: list[str] = []
     for item in candidates:
         nature = NATURE_LABELS.get(item.get("nature", "unknown"), "未知")
@@ -116,6 +127,8 @@ def build_user_prompt(
     parsed: ParsedMeal,
     constitution: Constitution,
     exclude_herbs: list[str] | None = None,
+    *,
+    avoid: Sequence[str] = (),
 ) -> str:
     """构造 Agent2 的输入。注意：这里传的是 Agent1 的 JSON，不是用户原话。"""
     brief = _constitution_brief(constitution)
@@ -129,7 +142,8 @@ def build_user_prompt(
         f"用户已排除的饮片：{exclude}",
         "## 这一餐（由解析器输出）\n"
         f"```json\n{parsed.model_dump_json(indent=2)}\n```",
-        "## 可选饮片清单（只能从这里挑，不得超出）\n" f"{_candidate_lines(constitution)}",
+        "## 可选饮片清单（只能从这里挑，不得超出）\n"
+        f"{_candidate_lines(constitution, avoid=avoid)}",
     ]
 
     unverified_section = _build_unverified_section(parsed)
@@ -147,6 +161,7 @@ def recommend(
     session_id: str | None = None,
     *,
     api_key: str | None = None,
+    avoid: Sequence[str] = (),
 ) -> tuple[list[Recommendation], str, int]:
     """生成推荐。
 
@@ -154,11 +169,14 @@ def recommend(
 
     `api_key`：调用方提供的 Key（HTTP 层从 Authorization 头取，
     终端与脚本从环境变量取）。本项目**不使用服务端内置 Key**，为空会直接失败。
+
+    `avoid`：兼体质屏蔽集（B2 接入）。只影响候选集，不影响体质简述与饮食原则 ——
+    收敛方向仍由 `constitution` 唯一决定。
     """
     settings = get_settings()
     runtime = get_runtime()
     system_prompt = load_system_prompt()
-    user_prompt = build_user_prompt(parsed, constitution, exclude_herbs)
+    user_prompt = build_user_prompt(parsed, constitution, exclude_herbs, avoid=avoid)
     # 每次调用都用全新会话 id，避免重复内容累积上文（见 agent1 同样说明）
     sid = session_id or f"ta-a2-{time.time_ns()}"
 
