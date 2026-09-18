@@ -43,9 +43,39 @@ python ..\ui\terminal\chat.py --resolve 冰啤酒 茉莉花茶 冰淇淋
 # ② 离线推荐：不调用模型，走规则兜底，仍然给出合规且不超剂量的搭配
 python ..\ui\terminal\chat.py --offline "中午吃了碗麻辣烫，还喝了杯冰可乐"
 
-# ③ 验证一切正常（335 项，约 0.9 秒）
+# ③ 验证一切正常
 python -m pytest -q
 ```
+
+### 想让助手用上你的体质：跑国标问卷（可选）
+
+问卷子包 `tcm-constitution-questionnaire/` 是**可选**依赖 —— `core/` 里的任何模块都不 import 它，
+不装只是用不上这个功能，其它一切照常。要装就装进同一个虚拟环境：
+
+```powershell
+cd ..                                   # 回到仓库根
+core\.venv\Scripts\python.exe -m pip install -e tcm-constitution-questionnaire
+```
+
+之后（`--offline` 也能用，问卷本身不调模型）：
+
+```powershell
+python ..\ui\terminal\chat.py --questionnaire "中午吃了碗麻辣烫"
+python ..\ui\terminal\chat.py --questionnaire --offline "中午吃了碗麻辣烫"
+```
+
+交互模式里输入 `:qz` 可以随时跑一次；装上后 `python scripts/check_setup.py` 的第 6 节会报「可用」。
+
+⚠️ 三点要说清：
+
+- 问卷判定的是**倾向性体质，不是诊断**。国标允许多种偏颇体质同时判为「是」；
+  此时按**分数最高者**收敛推荐方向，其余体质**只做屏蔽**（把标为不宜的饮片排除），
+  并在输出里写明兼了哪几型。
+- 转化分 30–40 的「**倾向是**」**不是判定**。只有在没有任何「是」时它才顶上来当主导体质，
+  且一定会提示「问卷未达判定阈值，按倾向处理」。
+- 判不出时**不会**默认平和质，而是请你手动选（`:c <体质>`）——冒充平和质等于给一份无依据的推荐。
+
+`--questionnaire` 与 `--constitution` 只能二选一。
 
 `--resolve` 的实际输出（`detail` 会告诉你**每一档是怎么来的**）：
 

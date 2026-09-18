@@ -10,10 +10,12 @@
   3. deepseek-harness-sdk 是否安装（仅 dsh 后端需要）
   4. herbs.json / constitution.json 是否能通过 Pydantic 校验
   5. 安全护栏的若干基本行为
+  6. 中医体质问卷子包是否可用（**可选**依赖，缺失只影响终端的 --questionnaire）
 """
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import sys
 from pathlib import Path
@@ -45,7 +47,7 @@ def main() -> int:
     print("=" * 62)
 
     # ---------- 1. 配置 ----------
-    print("\n[1/5] 配置与环境变量")
+    print("\n[1/6] 配置与环境变量")
     from app.config import CORE_DIR, PROJECT_ROOT, api_key_from_env, get_settings
 
     settings = get_settings()
@@ -73,7 +75,7 @@ def main() -> int:
     line(OK, f"模型: {settings.model}（provider={settings.provider}）")
 
     # ---------- 2. DSH_HOME ----------
-    print("\n[2/5] DSH 运行时目录")
+    print("\n[2/6] DSH 运行时目录")
     dsh_home = Path(settings.dsh_home)
     if any("\u4e00" <= ch <= "\u9fff" for ch in str(dsh_home)):
         line(FAIL, f"DSH_HOME 含中文，子进程链路可能出问题: {dsh_home}")
@@ -111,7 +113,7 @@ def main() -> int:
         problems.append("SDK 未安装")
 
     # ---------- 3. 数据文件 ----------
-    print("\n[3/5] 数据文件")
+    print("\n[3/6] 数据文件")
     import json
 
     from app.domain.models import CatalogHerb
@@ -156,7 +158,7 @@ def main() -> int:
         problems.append("缺少 constitution.json")
 
     # ---------- 4. 提示词 ----------
-    print("\n[4/5] 提示词文件")
+    print("\n[4/6] 提示词文件")
     for name in ("agent1_system.md", "agent2_system.md"):
         path = settings.prompts_dir / name
         if path.exists():
@@ -167,7 +169,7 @@ def main() -> int:
             problems.append(f"缺少 {name}")
 
     # ---------- 5. 护栏行为 ----------
-    print("\n[5/5] 安全护栏行为抽查")
+    print("\n[5/6] 安全护栏行为抽查")
     from app.domain.safety import (
         check_blend,
         detect_high_risk,
@@ -192,6 +194,17 @@ def main() -> int:
         except Exception as exc:
             line(FAIL, f"{desc} —— 抛异常: {exc}")
             problems.append(desc)
+
+    # ---------- 6. 问卷子包（可选依赖）----------
+    # ⚠️ 这里是 WARN 不是 FAIL：问卷是**可选**依赖（core 的任何模块都不 import 它），
+    # 缺了只影响终端的 --questionnaire。标 FAIL 会让本脚本退出码变 1，
+    # 把「没装问卷」误报成环境不健康 —— 那才是真的掩盖问题。
+    print("\n[6/6] 中医体质问卷子包（可选依赖）")
+    if importlib.util.find_spec("tcm_constitution") is None:
+        line(WARN, "问卷子包未安装 —— 终端 --questionnaire 不可用（不影响其它功能）")
+        line(WARN, "  安装：pip install -e tcm-constitution-questionnaire")
+    else:
+        line(OK, "问卷子包可用（终端 --questionnaire / :qz 可直接跑）")
 
     # ---------- 汇总 ----------
     print("\n" + "=" * 62)

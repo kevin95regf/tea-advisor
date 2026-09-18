@@ -56,6 +56,10 @@ from app.domain.enums import (  # noqa: E402
     MealTime,
     Nature,
 )
+from app.domain.constitution_resolver import (  # noqa: E402
+    UndeterminedConstitutionError,
+    resolve_from_scores,
+)
 from app.domain.models import AnalyzeRequest, ParsedFood, ParsedMeal  # noqa: E402
 from app.services import matcher  # noqa: E402
 from app.services.food_lookup import (  # noqa: E402
@@ -200,7 +204,11 @@ def cmd_resolve(names: list[str]) -> int:
     return 0
 
 
-def _offline_analyze(text: str, constitution: Constitution):
+def _offline_analyze(
+    text: str,
+    constitution: Constitution,
+    avoid: list[Constitution] | None = None,
+):
     """离线确定性链路：口述 → match_foods → resolve_food → 规则兜底推荐。
 
     全程不调用模型，无 API Key 也能出结果；代价是识别粒度取决于关键词表。
@@ -228,14 +236,35 @@ def _offline_analyze(text: str, constitution: Constitution):
         confidence=conf,
         summary="（离线模式：由关键词匹配 + 查表装配，未使用模型）",
     )
-    recs, msg, rule_hits = matcher.fallback_recommend(parsed, constitution)
+    recs, msg, rule_hits = matcher.fallback_recommend(
+        parsed, constitution, avoid=[c.value for c in (avoid or [])]
+    )
     return (parsed, recs, msg, rule_hits), None
 
 
-def cmd_offline(text: str, constitution: Constitution) -> int:
+def _constitution_line(
+    constitution: Constitution, avoid: list[Constitution] | None, note: str
+) -> str:
+    """体质那一行：主导体质 + 屏蔽集 + 换算层给的说明。"""
+    line = f"  体质：{CONSTITUTION_LABELS.get(constitution.value, constitution.value)}"
+    if avoid:
+        line += " ｜ 同时屏蔽：" + "、".join(
+            CONSTITUTION_LABELS.get(c.value, c.value) for c in avoid
+        )
+    if note:
+        line += f"\n  {note}"
+    return line
+
+
+def cmd_offline(
+    text: str,
+    constitution: Constitution,
+    avoid: list[Constitution] | None = None,
+    note: str = "",
+) -> int:
     hr(f"离线确定性模式（不调用模型）：{text}")
     t0 = time.perf_counter()
-    result, err = _offline_analyze(text, constitution)
+    result, err = _offline_analyze(text, constitution, avoid)
     if err:
         print(f"\n  {err}")
         return 1
@@ -245,8 +274,8 @@ def cmd_offline(text: str, constitution: Constitution) -> int:
         print(f"\n  {msg}")
     render_recommendations(recs)
     print("\n" + "-" * 62)
-    print(f"  体质：{CONSTITUTION_LABELS.get(constitution.value, constitution.value)}"
-          f" ｜ 命中规则：{'、'.join(rule_hits)} ｜ 耗时 {time.perf_counter() - t0:.2f}s")
+    print(_constitution_line(constitution, avoid, note))
+    print(f"  ｜ 命中规则：{'、'.join(rule_hits)} ｜ 耗时 {time.perf_counter() - t0:.2f}s")
     print("  说明：本模式全程未调用模型，属性仅覆盖食性表内条目。")
     from app.domain.models import Disclaimer
     print(f"\n  {Disclaimer().text}")
@@ -254,7 +283,12 @@ def cmd_offline(text: str, constitution: Constitution) -> int:
     return 0 if recs else 1
 
 
-def cmd_full(text: str, constitution: Constitution) -> int:
+def cmd_full(
+    text: str,
+    constitution: Constitution,
+    avoid: list[Constitution] | None = None,
+    note: str = "",
+) -> int:
     """双 Agent 全链路。需 API Key；耗时 12–18 秒。"""
     from app.config import api_key_from_env
     from app.services.orchestrator import AnalyzeError, analyze
@@ -275,12 +309,18 @@ def cmd_full(text: str, constitution: Constitution) -> int:
         print("      python ui\\terminal\\chat.py --offline \"中午吃了碗麻辣烫\"")
         return 1
 
+    if note:
+        print(f"  {note}")
     hr(f"正在解析你的饮食…（双 Agent 串行，通常 10–30 秒）")
     print(f"  {text}")
     t0 = time.perf_counter()
     try:
         resp = analyze(
-            AnalyzeRequest(text=text, constitution_override=constitution),
+            AnalyzeRequest(
+                text=text,
+                constitution_override=constitution,
+                avoid_constitutions=list(avoid or []),
+            ),
             api_key=api_key,
         )
     except AnalyzeError as exc:
@@ -306,6 +346,45 @@ def cmd_full(text: str, constitution: Constitution) -> int:
 # ============================================================
 # 交互循环
 # ============================================================
+def run_questionnaire() -> tuple[Constitution, list[Constitution], str] | None:
+    """跑国标问卷并换算成推荐链路的输入，返回 (主导体质, 屏蔽集, 说明)。
+
+    失败（子包没装 / 判不出 / 用户取消）返回 `None` 并**已打印原因** ——
+    不抛 `ModuleNotFoundError`，那会让人以为程序坏了。
+
+    ⚠️ 终端是**外部调用方**，可以 import 问卷子包；`core/` 里的任何模块都不许
+    import 它（决策 D5）。所以子包是**可选**依赖，缺了只影响这一个功能。
+    """
+    try:
+        from tcm_constitution.cli import run_interactive
+        from tcm_constitution.scoring import score_questionnaire
+    except ImportError:
+        hr("问卷子包未安装")
+        print("  问卷是**可选**依赖（core 不依赖它），用之前先装进虚拟环境：")
+        print()
+        print(
+            "      core\\.venv\\Scripts\\python.exe -m pip install -e tcm-constitution-questionnaire"
+        )
+        print()
+        return None
+
+    try:
+        answers, sex = run_interactive()
+        resolution = resolve_from_scores(score_questionnaire(answers, sex)["scores"])
+    except UndeterminedConstitutionError as exc:
+        print(f"\n  {exc}")
+        print("  请改用 :c <体质> 手动选择。")
+        return None
+    except (KeyboardInterrupt, EOFError):
+        print("\n  已取消。")
+        return None
+    except ValueError as exc:  # 计分参数不合法等
+        print(f"\n  问卷计分失败：{exc}")
+        return None
+
+    return resolution.primary, list(resolution.avoid), resolution.note
+
+
 def pick_constitution(explicit: str | None) -> Constitution:
     if explicit:
         try:
@@ -316,13 +395,18 @@ def pick_constitution(explicit: str | None) -> Constitution:
     return Constitution.BALANCED
 
 
-def repl(offline: bool) -> int:
-    constitution = Constitution.BALANCED
+def repl(
+    offline: bool,
+    constitution: Constitution = Constitution.BALANCED,
+    avoid: list[Constitution] | None = None,
+    note: str = "",
+) -> int:
+    avoid = list(avoid or [])
     mode = "离线确定性模式（不调用模型）" if offline else "双 Agent 全链路"
     hr("中医饮食茶饮助手 · 终端版")
     print(f"  模式：{mode}")
-    print(f"  体质：{CONSTITUTION_LABELS.get(constitution.value, constitution.value)}")
-    print("  直接输入你吃了什么；输入 :q 退出，:c <体质> 切换体质，:e 看示例。")
+    print(_constitution_line(constitution, avoid, note))
+    print("  直接输入你吃了什么；输入 :q 退出，:c <体质> 切换体质，:qz 跑体质问卷，:e 看示例。")
     print("  ⚠ 输出仅供日常饮食参考，不构成医疗建议。")
 
     while True:
@@ -341,6 +425,14 @@ def repl(offline: bool) -> int:
             for i, ex in enumerate(EXAMPLES, 1):
                 print(f"  {i}. {ex}")
             continue
+        if line == ":qz":
+            got = run_questionnaire()
+            if got is None:
+                continue
+            constitution, avoid, note = got
+            print()
+            print(_constitution_line(constitution, avoid, note))
+            continue
         if line.startswith(":c"):
             arg = line[2:].strip()
             if not arg:
@@ -348,13 +440,16 @@ def repl(offline: bool) -> int:
                 print(f"  可选：{'、'.join(c.value for c in Constitution)}")
                 continue
             constitution = pick_constitution(arg)
+            # 手选是**单值**输入：上一轮的兼体质屏蔽集与问卷说明都要清掉，
+            # 否则会出现「手动选了 A，却还带着问卷算出的屏蔽集」这种说不清的组合
+            avoid, note = [], ""
             print(f"  体质已切换为：{CONSTITUTION_LABELS.get(constitution.value, constitution.value)}")
             continue
 
         if offline:
-            cmd_offline(line, constitution)
+            cmd_offline(line, constitution, avoid, note)
         else:
-            cmd_full(line, constitution)
+            cmd_full(line, constitution, avoid, note)
 
 
 def main() -> int:
@@ -366,6 +461,7 @@ def main() -> int:
             "  python ui/terminal/chat.py --resolve 冰啤酒 白米饭\n"
             "  python ui/terminal/chat.py --offline \"中午吃了碗麻辣烫\"\n"
             "  python ui/terminal/chat.py \"夜宵吃了炸鸡配奶茶\" --constitution damp_heat\n"
+            "  python ui/terminal/chat.py --questionnaire \"中午吃了碗麻辣烫\"\n"
         ),
     )
     parser.add_argument("text", nargs="*", help="一句话描述你吃了什么；不传则进入交互模式")
@@ -375,8 +471,13 @@ def main() -> int:
                         help="离线确定性模式：不调用模型，走规则兜底")
     parser.add_argument("--constitution", default=None,
                         help=f"体质，可选：{'、'.join(c.value for c in Constitution)}")
+    parser.add_argument("--questionnaire", action="store_true",
+                        help="先跑中医体质问卷（GB/T 46939-2025），用判定结果作为本次体质")
     parser.add_argument("--json", action="store_true", help="以 JSON 输出（便于脚本化）")
     args = parser.parse_args()
+
+    if args.questionnaire and args.constitution:
+        parser.error("--questionnaire 与 --constitution 只能二选一")
 
     if args.resolve:
         if args.json:
@@ -395,13 +496,22 @@ def main() -> int:
         return cmd_resolve(args.resolve)
 
     text = " ".join(args.text).strip()
-    if not text:
-        return repl(args.offline)
 
     constitution = pick_constitution(args.constitution)
+    avoid: list[Constitution] = []
+    note = ""
+    if args.questionnaire:
+        got = run_questionnaire()
+        if got is None:
+            return 2
+        constitution, avoid, note = got
+
+    if not text:
+        return repl(args.offline, constitution, avoid, note)
+
     if args.offline:
-        return cmd_offline(text, constitution)
-    return cmd_full(text, constitution)
+        return cmd_offline(text, constitution, avoid, note)
+    return cmd_full(text, constitution, avoid, note)
 
 
 if __name__ == "__main__":
