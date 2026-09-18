@@ -27,15 +27,17 @@
           "别名",
           "等价名（叶用变种）",
           "等价名（省略作物名前缀）",
-          "等价名（通称差异）"
+          "等价名（通称差异）",
+          "制品·原料继承"
         ],
         "语义": {
           "正名": "项目条目名与依据条目的**主名完全相同**，无需映射",
           "正名（药典收载名）": "项目条目名 ≠ 药典收载名，但**以药典正名为准**登记（历史命名，保留；含义是「药典的正名」，不是「与项目条目同名」）",
           "别名": "项目名是依据条目主名的**别称／通俗名**（依据 §5.3 索引或目录对应）",
-          "等价名（…）": "同一物的不同称法；括号内是**限定**（叶用变种／省略作物名前缀／通称差异）。新增等价名前必须先想清限定词写什么"
+          "等价名（…）": "同一物的不同称法；括号内是**限定**（叶用变种／省略作物名前缀／通称差异）。新增等价名前必须先想清限定词写什么",
+          "制品·原料继承": "项目条目是**制品**（冲泡/加工品），依据条目是它的**原料**；四气沿用原料。⚠️ 这是**继承关系，不是同名**——50 号文件 §5.2 明令「不可默认继承」，故每条都必须显式留痕（推翻理由见该条 `mapping_review.reason`）。"
         },
-        "history": "2026-09-18 归一：原混用值「别名/等价名」已取消（8 处拆为「别名」与「等价名（省略作物名前缀）」），目录档里 matched_name ≠ 项目名的 4 处由「正名」改为「别名」，「等价名（叶用变种，参照莴苣）」改为不带说明的「等价名（叶用变种）」（「参照莴苣」本来就在 mapping_review.reason 里）。"
+        "history": "2026-09-18 归一：原混用值「别名/等价名」已取消（8 处拆为「别名」与「等价名（省略作物名前缀）」），目录档里 matched_name ≠ 项目名的 4 处由「正名」改为「别名」，「等价名（叶用变种，参照莴苣）」改为不带说明的「等价名（叶用变种）」（「参照莴苣」本来就在 mapping_review.reason 里）。　2026-09-18 新增「制品·原料继承」，用于 B1 茶饮 11 条（E 组）。"
       },
       "tier": {
         "取值": [
@@ -107,30 +109,31 @@
       "note": "口径分歧（**性质＝来源口径之争，非数据错**）：白菜/黄瓜/莲藕「保留项目值并在数据里标注分歧」（已加 note）；酱油「映射采纳、值不改，已加 note」（2026-09-18 落定）；蘑菇「拆两条」（蘑菰 寒 / 香蕈 平，**已在 D5 执行**）。另：18 条非正名映射已逐条裁定（见 entries[].mapping_review）。金针菇/杏鲍菇/平菇 已于 2026-09-18 **从 `aliases` + `keywords` 两处移出**（不随 `mogu` 判寒），口蘑保留别名但依据为项目专业判断（挂起项 A3）。**本文件 entries[].open_question 的用法（2026-09-18 起）**：**已裁定者置 `null`**（结论见 `mapping_review`，不在此处重复）；**未获权威裁定者保留原问题**——`baicai`/`huanggua`/`lianou` 三条的口径分歧即属此类（值保留、分歧未裁定）。"
     },
     "counts": {
-      "后续|一致": 8,
+      "后续|一致": 18,
       "后续|仅身份，无四气可比": 1,
       "后续|冲突": 5,
+      "后续|无源可引（基准三处无据）": 1,
       "第一批|一致": 28,
       "第一批|冲突": 4,
       "第一批|无源可引（映射未获采纳）": 1,
-      "total": 47
+      "total": 58
     },
     "known_limitations": [
       "本表由脚本从 50 号文件机械匹配生成；其中 18 条非正名映射已**逐条人工裁定**，结论见 entries[].mapping_review。",
       "50 号文件的「四气」列是提取值，非原文；引用时应引 verbatim 列。",
-      "食性表 147 条中另有 84 条在本表与 50 号文件中均无来源（层③），16 条属 §5.2 真无据。",
+      "食性表 147 条中，本表已登记 **58** 条；其余 **89** 条未登记（**未登记 ≠ 无源**：剩余 100 条已按 L1/L2/L3 分层，见 `docs/food-properties-remaining-plan.md`，B1 从中共取走 11 条茶饮）。",
       "第一批 33 条里有 1 条（`qingcai`）因映射未获采纳而降级为 ③；三类（蔬菜/调味/水果）中另有 13 条在 50 号文件与目录里均无条目（清单见 docs/food-properties-batch2-plan.md 附录），未登记进本表。"
     ],
     "mapping_review": {
       "date": "2026-09-17",
       "method": "逐条给出「id／项目现值／语料值／依据行号／对当关系／判断理由／若否定的后果」，由项目所有者逐条裁定。汇报稿见 docs/food-properties-batch2-confirm.md「C 组详解」。",
-      "scope": "第一批 33 条中的 12 条非正名映射（A 药典收载名 3 / B §5.3 别名词 1 / C 等价名 4 / D §5.3 纲目别名 4）。另有 5 条（土豆/玉米/牛奶/螃蟹/海带）同属非正名但由 §5.3 直接给定、不属待裁定范围，也一并登记。**第 18 条 `xianggu`（香菇→香蕈）为 2026-09-17 ④ 层拆条时新增，随拆条一并登记（2026-09-18 补记，此前 `outcome` 只数了 17 条）。**",
+      "scope": "第一批 33 条中的 12 条非正名映射（A 药典收载名 3 / B §5.3 别名词 1 / C 等价名 4 / D §5.3 纲目别名 4）。另有 5 条（土豆/玉米/牛奶/螃蟹/海带）同属非正名但由 §5.3 直接给定、不属待裁定范围，也一并登记。**第 18 条 `xianggu`（香菇→香蕈）为 2026-09-17 ④ 层拆条时新增，随拆条一并登记（2026-09-18 补记，此前 `outcome` 只数了 17 条）。**　**B1 茶饮 11 条（2026-09-18 登记，E 组·制品·原料继承）。**",
       "outcome": {
-        "accepted": 17,
-        "rejected": 1,
+        "accepted": 27,
+        "rejected": 2,
         "pending": 0,
-        "accepted_note": "A 组 3 条 how 改为「正名（药典收载名）」；C 组 3 条按接受处理并各带限定；B 组 1 条、D 组 4 条（含新增的香菇）沿用文件口径。**2026-09-18：`jiangyou` 由「待确认」改为「采纳」**（映射可用、值不改，见 pending_detail）。",
-        "rejected_detail": "`qingcai` 青菜→油菜 **未获采纳** → 降级为 ③ 无源可引，退出可 approved 批次。按**本表**口径：该条从「一致」落入 ③，故**第一批 ① 由 29 降为 28** —— 以 `_meta.counts[\"第一批|一致\"]` 为准。（确认稿 `docs/food-properties-batch2-confirm.md` 里写作「28 → 27」是它自己的编号体系——那份稿子的 ①28 含 `qingcai`，本表不沿用。）",
+        "accepted_note": "A 组 3 条 how 改为「正名（药典收载名）」；C 组 3 条按接受处理并各带限定；B 组 1 条、D 组 4 条（含新增的香菇）沿用文件口径。**2026-09-18：`jiangyou` 由「待确认」改为「采纳」**（映射可用、值不改，见 pending_detail）。　**2026-09-18 B1：茶饮 11 条按「制品·原料继承」登记，accepted +10 / rejected +1。**",
+        "rejected_detail": "`qingcai` 青菜→油菜 **未获采纳** → 降级为 ③ 无源可引，退出可 approved 批次。按**本表**口径：该条从「一致」落入 ③，故**第一批 ① 由 29 降为 28** —— 以 `_meta.counts[\"第一批|一致\"]` 为准。（确认稿 `docs/food-properties-batch2-confirm.md` 里写作「28 → 27」是它自己的编号体系——那份稿子的 ①28 含 `qingcai`，本表不沿用。）　**2026-09-18 B1 追加 `molihua_cha`（茉莉花茶）：映射成立但基准三处无据 ⇒ 落 ③。**",
         "pending_detail": "（已清零）`jiangyou` 酱油→酱 曾列待确认：映射本身可用，但基准（《本草纲目》）强度不足以改项目值。**2026-09-18 落定：采纳映射、`nature` 保持「平」，并在数据里补 `note` 留痕。**"
       },
       "burden_note": "⚠️ 每条非正名映射都是**承重**的：这些条目通常只有 1 条证据，映射一否即落 ③ 无源。`lianou` 最典型——它被判为「口径分歧」的前提正是「莲藕＝藕」成立；映射否掉，它就不是分歧而是无源。"
@@ -2421,6 +2424,601 @@
         "reason": "同一物（食盐）。",
         "by": "项目所有者",
         "at": "2026-09-17"
+      }
+    },
+    {
+      "id": "juhua_cha",
+      "name": "菊花茶",
+      "category": "茶饮",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "菊花",
+          "how": "制品·原料继承",
+          "alias_from": null,
+          "locator": "《中国药典》2020 年版一部 p.372「菊花」",
+          "verbatim": "甘、苦，微寒。归肺、肝经。",
+          "qi_word": "微寒",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=490"
+        },
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "菊花",
+          "how": "制品·原料继承",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行400（50 号文件 §2）",
+          "verbatim": "辛、甘、苦，微寒。归肺、肝经。",
+          "qi_word": "微寒",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉"
+        }
+      ],
+      "reference": {
+        "source_id": "chp2020",
+        "tier": "官方·药典",
+        "matched_name": "菊花",
+        "locator": "《中国药典》2020 年版一部 p.372「菊花」",
+        "qi_word": "微寒",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": "《本草纲目》行 10732 记「苦，平，无毒」，与 S1 行 400／药典（微寒）**方向相反**。纲目属通行·经典档，低于教材与药典 ⇒ `layer` 仍记 ①、**值不动**（沿用第一批「冲突不动值」口径）。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "E 组·制品·原料继承",
+        "reason": "⚠️ **本条显式推翻 50 号文件的既有定性**：该文件 §5.2（行 478）明令「凡『茶』『糖』『汁』『粉』类后缀…**不可默认继承原料的四气**」，行 396 更把「乌龙茶、普洱、菊花茶」直接判为 **C 档（全库无条目）**。本项目选择**认继承**，理由是：18 条茶饮里有 11 条，其值与 `herbs.json` 同名原料**11/11 完全相等**（脚本逐条比对，非目测）—— 不可能是巧合。**推翻动作按项目所有者 2026 年 9 月 18 日裁定在此留痕**，不是「没看到那条规则」。 原料在《中医饮食营养学》有独立条目（行 400，原文已引于本条 `evidence`），故本条**不只是药典孤证**。",
+        "by": "项目所有者",
+        "at": "2026-09-18"
+      }
+    },
+    {
+      "id": "jiangcha",
+      "name": "姜茶",
+      "category": "茶饮",
+      "batch": "后续",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "生姜",
+          "how": "制品·原料继承",
+          "alias_from": null,
+          "locator": "《中国药典》2020 年版一部 p.153「生姜」",
+          "verbatim": "辛，微温。归肺、脾、胃经。",
+          "qi_word": "微温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=148"
+        },
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "生姜",
+          "how": "制品·原料继承",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行336（50 号文件 §2）",
+          "verbatim": "辛，温。入脾、胃、肺经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "chp2020",
+        "tier": "官方·药典",
+        "matched_name": "生姜",
+        "locator": "《中国药典》2020 年版一部 p.153「生姜」",
+        "qi_word": "微温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "E 组·制品·原料继承",
+        "reason": "⚠️ **本条显式推翻 50 号文件的既有定性**：该文件 §5.2（行 478）明令「凡『茶』『糖』『汁』『粉』类后缀…**不可默认继承原料的四气**」，行 396 更把「乌龙茶、普洱、菊花茶」直接判为 **C 档（全库无条目）**。本项目选择**认继承**，理由是：18 条茶饮里有 11 条，其值与 `herbs.json` 同名原料**11/11 完全相等**（脚本逐条比对，非目测）—— 不可能是巧合。**推翻动作按项目所有者 2026 年 9 月 18 日裁定在此留痕**，不是「没看到那条规则」。 原料在《中医饮食营养学》有独立条目（行 336，原文已引于本条 `evidence`），故本条**不只是药典孤证**。",
+        "by": "项目所有者",
+        "at": "2026-09-18"
+      }
+    },
+    {
+      "id": "hongzao_cha",
+      "name": "红枣茶",
+      "category": "茶饮",
+      "batch": "后续",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "红枣",
+          "how": "制品·原料继承",
+          "alias_from": null,
+          "locator": "《中国药典》2020 年版一部 p.72「大枣」（药典正条名；本项目 `herbs.json` 作「红枣」）",
+          "verbatim": "甘，温。归脾、胃、心经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=30"
+        },
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "红枣",
+          "how": "制品·原料继承",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1187（50 号文件 §2）",
+          "verbatim": "甘，温。入脾、胃经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温",
+          "note": "S1 条目名「大枣」，其【异名】列含「红枣」（行 1186）。"
+        }
+      ],
+      "reference": {
+        "source_id": "chp2020",
+        "tier": "官方·药典",
+        "matched_name": "红枣",
+        "locator": "《中国药典》2020 年版一部 p.72「大枣」（药典正条名；本项目 `herbs.json` 作「红枣」）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": "《本草纲目》行 24156 记「甘，平，无毒」，与 S1 行 1187／药典（温）**方向相反**。处置同 `juhua_cha`（冲突不动值）。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "E 组·制品·原料继承",
+        "reason": "⚠️ **本条显式推翻 50 号文件的既有定性**：该文件 §5.2（行 478）明令「凡『茶』『糖』『汁』『粉』类后缀…**不可默认继承原料的四气**」，行 396 更把「乌龙茶、普洱、菊花茶」直接判为 **C 档（全库无条目）**。本项目选择**认继承**，理由是：18 条茶饮里有 11 条，其值与 `herbs.json` 同名原料**11/11 完全相等**（脚本逐条比对，非目测）—— 不可能是巧合。**推翻动作按项目所有者 2026 年 9 月 18 日裁定在此留痕**，不是「没看到那条规则」。 原料在《中医饮食营养学》有独立条目（行 1187，原文已引于本条 `evidence`），故本条**不只是药典孤证**。",
+        "by": "项目所有者",
+        "at": "2026-09-18"
+      }
+    },
+    {
+      "id": "luohanguo_cha",
+      "name": "罗汉果茶",
+      "category": "茶饮",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "罗汉果",
+          "how": "制品·原料继承",
+          "alias_from": null,
+          "locator": "《中国药典》2020 年版一部 p.270「罗汉果」",
+          "verbatim": "甘，凉。归肺、大肠经。",
+          "qi_word": "凉",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=328"
+        },
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "罗汉果",
+          "how": "制品·原料继承",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1013（50 号文件 §2）",
+          "verbatim": "甘，凉，无毒。入肺、脾经。",
+          "qi_word": "凉",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉"
+        }
+      ],
+      "reference": {
+        "source_id": "chp2020",
+        "tier": "官方·药典",
+        "matched_name": "罗汉果",
+        "locator": "《中国药典》2020 年版一部 p.270「罗汉果」",
+        "qi_word": "凉",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "E 组·制品·原料继承",
+        "reason": "⚠️ **本条显式推翻 50 号文件的既有定性**：该文件 §5.2（行 478）明令「凡『茶』『糖』『汁』『粉』类后缀…**不可默认继承原料的四气**」，行 396 更把「乌龙茶、普洱、菊花茶」直接判为 **C 档（全库无条目）**。本项目选择**认继承**，理由是：18 条茶饮里有 11 条，其值与 `herbs.json` 同名原料**11/11 完全相等**（脚本逐条比对，非目测）—— 不可能是巧合。**推翻动作按项目所有者 2026 年 9 月 18 日裁定在此留痕**，不是「没看到那条规则」。 原料在《中医饮食营养学》有独立条目（行 1013，原文已引于本条 `evidence`），故本条**不只是药典孤证**。",
+        "by": "项目所有者",
+        "at": "2026-09-18"
+      }
+    },
+    {
+      "id": "gouqi_cha",
+      "name": "枸杞茶",
+      "category": "茶饮",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "枸杞子",
+          "how": "制品·原料继承",
+          "alias_from": null,
+          "locator": "《中国药典》2020 年版一部 p.309「枸杞子」",
+          "verbatim": "甘，平。归肝、肾经。",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=390"
+        }
+      ],
+      "reference": {
+        "source_id": "chp2020",
+        "tier": "官方·药典",
+        "matched_name": "枸杞子",
+        "locator": "《中国药典》2020 年版一部 p.309「枸杞子」",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": "唯一依据是药典（**药品**标准）；原料在《中医饮食营养学》无独立条目。**不得据此宣称来源确凿**。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "E 组·制品·原料继承",
+        "reason": "⚠️ **本条显式推翻 50 号文件的既有定性**：该文件 §5.2（行 478）明令「凡『茶』『糖』『汁』『粉』类后缀…**不可默认继承原料的四气**」，行 396 更把「乌龙茶、普洱、菊花茶」直接判为 **C 档（全库无条目）**。本项目选择**认继承**，理由是：18 条茶饮里有 11 条，其值与 `herbs.json` 同名原料**11/11 完全相等**（脚本逐条比对，非目测）—— 不可能是巧合。**推翻动作按项目所有者 2026 年 9 月 18 日裁定在此留痕**，不是「没看到那条规则」。 原料在《中医饮食营养学》**无独立条目**，唯一依据是药典（**药品**标准）；`_meta.source_registry.chp2020.caveat` 自述「用途不同」⇒ **不得写成来源确凿**，是否 `approved` 由审核人判断。",
+        "by": "项目所有者",
+        "at": "2026-09-18"
+      }
+    },
+    {
+      "id": "meigui_cha",
+      "name": "玫瑰花茶",
+      "category": "茶饮",
+      "batch": "后续",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "玫瑰花",
+          "how": "制品·原料继承",
+          "alias_from": null,
+          "locator": "《中国药典》2020 年版一部 p.258「玫瑰花」",
+          "verbatim": "甘、微苦，温。归肝、脾经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=308"
+        }
+      ],
+      "reference": {
+        "source_id": "chp2020",
+        "tier": "官方·药典",
+        "matched_name": "玫瑰花",
+        "locator": "《中国药典》2020 年版一部 p.258「玫瑰花」",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": "唯一依据是药典（**药品**标准）；原料在《中医饮食营养学》无独立条目。**不得据此宣称来源确凿**。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "E 组·制品·原料继承",
+        "reason": "⚠️ **本条显式推翻 50 号文件的既有定性**：该文件 §5.2（行 478）明令「凡『茶』『糖』『汁』『粉』类后缀…**不可默认继承原料的四气**」，行 396 更把「乌龙茶、普洱、菊花茶」直接判为 **C 档（全库无条目）**。本项目选择**认继承**，理由是：18 条茶饮里有 11 条，其值与 `herbs.json` 同名原料**11/11 完全相等**（脚本逐条比对，非目测）—— 不可能是巧合。**推翻动作按项目所有者 2026 年 9 月 18 日裁定在此留痕**，不是「没看到那条规则」。 原料在《中医饮食营养学》**无独立条目**，唯一依据是药典（**药品**标准）；`_meta.source_registry.chp2020.caveat` 自述「用途不同」⇒ **不得写成来源确凿**，是否 `approved` 由审核人判断。",
+        "by": "项目所有者",
+        "at": "2026-09-18"
+      }
+    },
+    {
+      "id": "chenpi_cha",
+      "name": "陈皮茶",
+      "category": "茶饮",
+      "batch": "后续",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent",
+          "bitter"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "陈皮",
+          "how": "制品·原料继承",
+          "alias_from": null,
+          "locator": "《中国药典》2020 年版一部 p.248「陈皮」",
+          "verbatim": "苦、辛，温。归肺、脾经。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=293"
+        }
+      ],
+      "reference": {
+        "source_id": "chp2020",
+        "tier": "官方·药典",
+        "matched_name": "陈皮",
+        "locator": "《中国药典》2020 年版一部 p.248「陈皮」",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": "唯一依据是药典（**药品**标准）；原料在《中医饮食营养学》无独立条目。**不得据此宣称来源确凿**。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "E 组·制品·原料继承",
+        "reason": "⚠️ **本条显式推翻 50 号文件的既有定性**：该文件 §5.2（行 478）明令「凡『茶』『糖』『汁』『粉』类后缀…**不可默认继承原料的四气**」，行 396 更把「乌龙茶、普洱、菊花茶」直接判为 **C 档（全库无条目）**。本项目选择**认继承**，理由是：18 条茶饮里有 11 条，其值与 `herbs.json` 同名原料**11/11 完全相等**（脚本逐条比对，非目测）—— 不可能是巧合。**推翻动作按项目所有者 2026 年 9 月 18 日裁定在此留痕**，不是「没看到那条规则」。 原料在《中医饮食营养学》**无独立条目**，唯一依据是药典（**药品**标准）；`_meta.source_registry.chp2020.caveat` 自述「用途不同」⇒ **不得写成来源确凿**，是否 `approved` 由审核人判断。",
+        "by": "项目所有者",
+        "at": "2026-09-18"
+      }
+    },
+    {
+      "id": "juemingzi_cha",
+      "name": "决明子茶",
+      "category": "茶饮",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "决明子",
+          "how": "制品·原料继承",
+          "alias_from": null,
+          "locator": "《中国药典》2020 年版一部 p.200「决明子」",
+          "verbatim": "甘、苦、咸，微寒。归肝、大肠经。",
+          "qi_word": "微寒",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=223"
+        }
+      ],
+      "reference": {
+        "source_id": "chp2020",
+        "tier": "官方·药典",
+        "matched_name": "决明子",
+        "locator": "《中国药典》2020 年版一部 p.200「决明子」",
+        "qi_word": "微寒",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": "唯一依据是药典（**药品**标准）；原料在《中医饮食营养学》无独立条目。**不得据此宣称来源确凿**。 味不全等：项目 [sweet, bitter]，药典「甘、苦、咸」（缺咸）。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "E 组·制品·原料继承",
+        "reason": "⚠️ **本条显式推翻 50 号文件的既有定性**：该文件 §5.2（行 478）明令「凡『茶』『糖』『汁』『粉』类后缀…**不可默认继承原料的四气**」，行 396 更把「乌龙茶、普洱、菊花茶」直接判为 **C 档（全库无条目）**。本项目选择**认继承**，理由是：18 条茶饮里有 11 条，其值与 `herbs.json` 同名原料**11/11 完全相等**（脚本逐条比对，非目测）—— 不可能是巧合。**推翻动作按项目所有者 2026 年 9 月 18 日裁定在此留痕**，不是「没看到那条规则」。 原料在《中医饮食营养学》**无独立条目**，唯一依据是药典（**药品**标准）；`_meta.source_registry.chp2020.caveat` 自述「用途不同」⇒ **不得写成来源确凿**，是否 `approved` 由审核人判断。",
+        "by": "项目所有者",
+        "at": "2026-09-18"
+      }
+    },
+    {
+      "id": "heye_cha",
+      "name": "荷叶茶",
+      "category": "茶饮",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "bitter",
+          "bland"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "荷叶",
+          "how": "制品·原料继承",
+          "alias_from": null,
+          "locator": "《中国药典》2020 年版一部 p.336「荷叶」",
+          "verbatim": "苦，平。归肝、脾、胃经。",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=434"
+        }
+      ],
+      "reference": {
+        "source_id": "chp2020",
+        "tier": "官方·药典",
+        "matched_name": "荷叶",
+        "locator": "《中国药典》2020 年版一部 p.336「荷叶」",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": "唯一依据是药典（**药品**标准）；原料在《中医饮食营养学》无独立条目。**不得据此宣称来源确凿**。 味不全等：项目 [bitter, bland]，药典「苦」（多淡）。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "E 组·制品·原料继承",
+        "reason": "⚠️ **本条显式推翻 50 号文件的既有定性**：该文件 §5.2（行 478）明令「凡『茶』『糖』『汁』『粉』类后缀…**不可默认继承原料的四气**」，行 396 更把「乌龙茶、普洱、菊花茶」直接判为 **C 档（全库无条目）**。本项目选择**认继承**，理由是：18 条茶饮里有 11 条，其值与 `herbs.json` 同名原料**11/11 完全相等**（脚本逐条比对，非目测）—— 不可能是巧合。**推翻动作按项目所有者 2026 年 9 月 18 日裁定在此留痕**，不是「没看到那条规则」。 原料在《中医饮食营养学》**无独立条目**，唯一依据是药典（**药品**标准）；`_meta.source_registry.chp2020.caveat` 自述「用途不同」⇒ **不得写成来源确凿**，是否 `approved` 由审核人判断。",
+        "by": "项目所有者",
+        "at": "2026-09-18"
+      }
+    },
+    {
+      "id": "wumei_cha",
+      "name": "乌梅茶",
+      "category": "茶饮",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sour",
+          "astringent"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "乌梅",
+          "how": "制品·原料继承",
+          "alias_from": null,
+          "locator": "《中国药典》2020 年版一部 p.130「乌梅」",
+          "verbatim": "酸、涩，平。归肝、脾、肺、大肠经。",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=114"
+        }
+      ],
+      "reference": {
+        "source_id": "chp2020",
+        "tier": "官方·药典",
+        "matched_name": "乌梅",
+        "locator": "《中国药典》2020 年版一部 p.130「乌梅」",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": "唯一依据是药典（**药品**标准）；原料在《中医饮食营养学》无独立条目。**不得据此宣称来源确凿**。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "E 组·制品·原料继承",
+        "reason": "⚠️ **本条显式推翻 50 号文件的既有定性**：该文件 §5.2（行 478）明令「凡『茶』『糖』『汁』『粉』类后缀…**不可默认继承原料的四气**」，行 396 更把「乌龙茶、普洱、菊花茶」直接判为 **C 档（全库无条目）**。本项目选择**认继承**，理由是：18 条茶饮里有 11 条，其值与 `herbs.json` 同名原料**11/11 完全相等**（脚本逐条比对，非目测）—— 不可能是巧合。**推翻动作按项目所有者 2026 年 9 月 18 日裁定在此留痕**，不是「没看到那条规则」。 原料在《中医饮食营养学》**无独立条目**，唯一依据是药典（**药品**标准）；`_meta.source_registry.chp2020.caveat` 自述「用途不同」⇒ **不得写成来源确凿**，是否 `approved` 由审核人判断。",
+        "by": "项目所有者",
+        "at": "2026-09-18"
+      }
+    },
+    {
+      "id": "molihua_cha",
+      "name": "茉莉花茶",
+      "category": "茶饮",
+      "batch": "后续",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet",
+          "pungent"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（基准三处无据）",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "E 组·制品·原料继承",
+        "reason": "映射「茉莉花茶 → 茉莉花」**本身成立**（确为茉莉花所制），问题在**基准三处无据**：① 药典 2020 **未收载**（已登记为 `herb_nature_reference.json` 的 `open_items.jasmine_not_in_pharmacopoeia`）；②《中医饮食营养学》**零命中**；③《本草纲目》行 10187「茉莉」只有【释名】【主治】、**无【气味】**（行 10194「热，有毒」是**根**不是花）。⇒ 映射不能承重，落 ③。**值 `warm` 保留**：③ 层不是数据错，只是**不宣称有来源**。",
+        "by": "项目所有者",
+        "at": "2026-09-18"
       }
     }
   ]
