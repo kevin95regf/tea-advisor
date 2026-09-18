@@ -201,6 +201,43 @@ def test_unready_constitution_raises_with_actionable_code(
     assert "阴虚质" in ei.value.message, "错误文案要给出人话名称，不能只给 id"
 
 
+def test_unready_constitution_in_avoid_is_also_blocked(
+    monkeypatch: pytest.MonkeyPatch, catalog_snapshot: dict[str, dict]
+) -> None:
+    """屏蔽集里的体质**同样**要过就绪闸门（B2 接入 · 接入点 ①）。
+
+    主导体质备齐、屏蔽集里某一型没备齐是完全可能的：屏蔽靠 `unsuitable_for`，
+    而就绪判据看的是 `suitable_constitutions`，两者不是同一份数据。
+    放过去就会出现「这个体质没数据、却照样拿它来屏蔽饮片」的静默不一致。
+    """
+    from app.services.orchestrator import AnalyzeError, analyze
+
+    monkeypatch.setattr(
+        safety, "load_herb_catalog", lambda: _without_suitable(catalog_snapshot, "yin_deficiency")
+    )
+
+    with pytest.raises(AnalyzeError) as ei:
+        analyze(
+            AnalyzeRequest(
+                text="晚上吃了火锅",
+                constitution_override=Constitution.QI_DEFICIENCY,  # 主导体质是就绪的
+                avoid_constitutions=[Constitution.YIN_DEFICIENCY],
+            ),
+            api_key=None,
+        )
+    assert ei.value.code == "CONSTITUTION_NOT_READY"
+    assert "阴虚质" in ei.value.message
+
+    # 负控制：同一个请求不带 avoid 时能过闸门（停在 NO_API_KEY）——
+    # 证明上面那条错误确实来自屏蔽集，不是主导体质本身没备齐
+    with pytest.raises(AnalyzeError) as ok:
+        analyze(
+            AnalyzeRequest(text="晚上吃了火锅", constitution_override=Constitution.QI_DEFICIENCY),
+            api_key=None,
+        )
+    assert ok.value.code == "NO_API_KEY"
+
+
 def test_new_four_constitutions_pass_the_gate() -> None:
     """Step 2 的直接验收：四个新体质都能过闸门。
 

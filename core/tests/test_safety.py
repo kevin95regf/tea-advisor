@@ -697,3 +697,61 @@ def test_avoid_empty_is_equivalent_to_no_avoid(monkeypatch) -> None:
     assert filter_by_constitution(
         "qi_deficiency", avoid=("yang_deficiency",)
     ) != filter_by_constitution("qi_deficiency")
+
+
+# ============================================================
+# 离线路径的兼体质屏蔽（B2 接入 · 提交 3，D6-A′ 硬剔除）
+# ============================================================
+def _warm_meal():
+    from app.domain.models import ParsedFood, ParsedMeal
+
+    # 命中 RULES 里的 greasy（陈皮 + 山楂）。刻意**不** monkeypatch `_pick_rule`：
+    # 场景规则分支才是正常流程真正走的那条，而它原本完全不经过体质。
+    return ParsedMeal(
+        foods=[ParsedFood(name="牛肉", amount_desc="一盘")],
+        overall_nature=Nature.WARM,
+    )
+
+
+def test_offline_avoid_removes_blocked_herbs_on_rule_branch() -> None:
+    """离线路径命中场景规则时，屏蔽集同样要生效（§0.1 的核心）。
+
+    陈皮对阴虚质标不宜、山楂对气虚质标不宜 —— 这两条都来自真实 herbs.json，
+    不靠合成数据（拿真实标注当样本在这里是安全的：断言的是「剔除动作发生了」，
+    且饮片名在测试里写死，数据一改这里就会红，正是想要的）。
+    """
+    from app.services import matcher
+
+    plain, _, _ = matcher.fallback_recommend(_warm_meal(), Constitution.BALANCED)
+    plain_names = {h.name for h in plain[0].herbs}
+    # 负控制：不给 avoid 时两味都在 ⇒ 下面的消失确实是屏蔽造成的
+    assert plain_names == {"陈皮", "山楂"}, plain_names
+
+    recs, _, _ = matcher.fallback_recommend(
+        _warm_meal(), Constitution.BALANCED, avoid=("yin_deficiency",)
+    )
+    names = {h.name for h in recs[0].herbs}
+    assert "陈皮" not in names, names
+    assert "山楂" in names, names
+
+
+def test_offline_avoid_never_returns_empty_or_unsafe_blend() -> None:
+    """硬剔除把整组剔空 ⇒ 退通用兜底，并留痕。契约是「永远给出合法且安全的搭配」。
+
+    不能因为屏蔽就把推荐清空 —— 那等于用「没答案」代替「安全答案」。
+    """
+    from app.services import matcher
+
+    avoid = ("yin_deficiency", "qi_deficiency")  # 陈皮 + 山楂 都会被剔掉
+    recs, _, hits = matcher.fallback_recommend(
+        _warm_meal(), Constitution.BALANCED, avoid=avoid
+    )
+
+    assert recs, "剔空后必须退通用兜底，不能返回空推荐"
+    assert recs[0].herbs
+    assert "avoid_cleared_blend" in hits, hits
+    assert "原搭配对兼夹体质不宜" in recs[0].fit_reason, "必须说明这不是原配的那组"
+
+    # 兜底上来的饮片同样要过屏蔽集 —— 否则只是把不安全往后挪了一层
+    blocked = matcher._herbs_unsuitable_for_any(set(avoid))
+    assert not ({h.name for h in recs[0].herbs} & blocked)

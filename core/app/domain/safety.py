@@ -222,11 +222,18 @@ def check_blend(
 def check_constitution_fit(
     herbs: list[dict],
     constitution: str,
+    *,
+    avoid: Sequence[str] = (),
 ) -> GuardrailResult:
     """检查搭配是否与用户体质方向冲突。
 
     规则简单但有效：饮片标记的不适宜人群命中体质时，给出警告并建议换料。
+
+    `avoid`（兼体质屏蔽集，B2 接入）：命中任一体质即提示，与主导体质同等看待 ——
+    输出护栏这一层对两者都是「提示」而非「剔除」，剔除发生在候选集/默认搭配阶段。
+    默认空 ⇒ 既有行为不变。
     """
+    blocked = {str(constitution), *(str(a) for a in avoid)}
     warnings: list[str] = []
     catalog = herb_by_name()
     for herb in herbs:
@@ -234,7 +241,8 @@ def check_constitution_fit(
         entry = catalog.get(name)
         if not entry:
             continue
-        if constitution in (entry.get("unsuitable_for") or []):
+        unsuitable = {str(x) for x in (entry.get("unsuitable_for") or [])}
+        if unsuitable & blocked:
             warnings.append(f"{name} 与你当前体质方向不完全契合，建议减量或更换")
     return GuardrailResult(ok=True, warnings=warnings)
 

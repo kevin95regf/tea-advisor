@@ -224,7 +224,18 @@ def stub_agents(monkeypatch: pytest.MonkeyPatch) -> dict:
         seen["agent1"].append(api_key)
         return _fake_parsed(), 1, "sid-a1"
 
-    def fake_agent2(parsed, constitution, exclude_herbs=None, session_id=None, *, api_key=None):
+    def fake_agent2(
+        parsed,
+        constitution,
+        exclude_herbs=None,
+        session_id=None,
+        *,
+        api_key=None,
+        avoid=(),
+    ):
+        # 签名跟着 agent2_recommend 走（B2 接入新增 avoid）。
+        # 桩不接这个关键字的话，analyze 会当成 Agent2 失败而静默降级到规则兜底，
+        # 表现是「agent2 一次都没被调用」——看不出是签名没跟上。
         seen["agent2"].append(api_key)
         return _fake_recs()
 

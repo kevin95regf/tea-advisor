@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 import time
 import uuid
+from typing import Sequence
 
 from app.agents.agent1_diet import parse_diet
 from app.agents.agent2_recommend import recommend as agent2_recommend
@@ -57,7 +58,10 @@ def _constitution_of(request: AnalyzeRequest) -> Constitution:
     return request.constitution_override or Constitution.BALANCED
 
 
-def _ensure_constitution_ready(constitution: Constitution) -> None:
+def _ensure_constitution_ready(
+    constitution: Constitution,
+    avoid: Sequence[Constitution] | Sequence[str] = (),
+) -> None:
     """挡住「数据未备齐」的体质，不让它走到需要配伍数据的那几步。
 
     这里是 HTTP / 终端 / 脚本的**唯一入口**（三者都经 `analyze`），
@@ -73,15 +77,22 @@ def _ensure_constitution_ready(constitution: Constitution) -> None:
     调用时机很讲究：**必须排在高风险分支之后**。安全提示（孕期/服药/儿童等）
     是"无条件可用"的，不该被数据就绪这种配置问题挡在前面——
     而它排在凭据校验之前，是因为体质问题连"填个 Key"都解决不了。
+
+    **兼体质（`avoid`）同样要过闸**（B2 接入）。主导体质备齐、屏蔽集里某一型没备齐
+    是可能的：屏蔽靠的是 `unsuitable_for`，而就绪判据看的是 `suitable_constitutions`，
+    两者不是同一份数据。放过去就会出现"体质没数据却照样被拿来屏蔽"的静默不一致。
     """
-    if constitution.value in ready_constitutions():
-        return
-    label = CONSTITUTION_LABELS.get(constitution.value, constitution.value)
-    raise AnalyzeError(
-        "CONSTITUTION_NOT_READY",
-        f"「{label}」暂未启用：尚无可用的饮片配伍数据。"
-        "请先补齐该体质的标注，在此之前该体质不会出现在选项中。",
-    )
+    ready = ready_constitutions()
+    for cid in [constitution, *avoid]:
+        value = cid.value if isinstance(cid, Constitution) else str(cid)
+        if value in ready:
+            continue
+        label = CONSTITUTION_LABELS.get(value, value)
+        raise AnalyzeError(
+            "CONSTITUTION_NOT_READY",
+            f"「{label}」暂未启用：尚无可用的饮片配伍数据。"
+            "请先补齐该体质的标注，在此之前该体质不会出现在选项中。",
+        )
 
 
 def _build_basis(
@@ -118,8 +129,13 @@ def _sanitize_recommendations(
     recs: list[Recommendation],
     constitution: Constitution,
     exclude_herbs: list[str],
+    avoid: Sequence[str] = (),
 ) -> tuple[list[Recommendation], list[str]]:
-    """护栏过滤。返回 (清洗后的推荐, 护栏说明)。"""
+    """护栏过滤。返回 (清洗后的推荐, 护栏说明)。
+
+    `avoid`：兼体质屏蔽集（第 ④ 处接入点）。LLM 路径的候选集、离线路径的默认搭配
+    都已各自硬剔除过，这里是最后一道 —— 兼体质同样要参与契合度提示。
+    """
     applied: list[str] = []
     cleaned: list[Recommendation] = []
 
@@ -150,7 +166,9 @@ def _sanitize_recommendations(
             continue
 
         # 体质契合度提示
-        fit = check_constitution_fit([h.model_dump() for h in rec.herbs], constitution.value)
+        fit = check_constitution_fit(
+            [h.model_dump() for h in rec.herbs], constitution.value, avoid=avoid
+        )
         for warning in fit.warnings:
             if warning not in rec.cautions:
                 rec.cautions.append(warning)
@@ -187,6 +205,8 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
     key_source = "user" if user_key else "not_used"
 
     constitution = _constitution_of(request)
+    # 兼体质屏蔽集（B2 接入）。默认空 ⇒ 与既有调用方行为完全一致。
+    avoid = [c.value for c in request.avoid_constitutions]
     label = CONSTITUTION_LABELS.get(constitution.value, constitution.value)
     disclaimer = Disclaimer()
 
@@ -229,7 +249,7 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
     # ---------- 体质就绪闸门（刻意放在安全分支之后、凭据校验之前）----------
     # 放在安全分支之后：安全提示不该被"数据没备齐"这种配置问题挡掉。
     # 放在凭据校验之前：体质不可用不是填个 Key 能解决的，先报更根本的那一条。
-    _ensure_constitution_ready(constitution)
+    _ensure_constitution_ready(constitution, avoid)
 
     # ---------- 凭据校验（刻意放在安全分支之后）----------
     # 本项目不使用服务端内置 Key，所以没带 Key 就无法调用模型。
@@ -286,7 +306,11 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
 
     try:
         recs, user_message, agent2_ms = agent2_recommend(
-            parsed, constitution, request.exclude_herbs, api_key=user_key or None
+            parsed,
+            constitution,
+            request.exclude_herbs,
+            api_key=user_key or None,
+            avoid=avoid,
         )
         if not recs:
             raise RuntimeError("Agent2 返回空推荐")
@@ -295,12 +319,12 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
         degraded = True
         degraded_reason = str(exc)[:200]
         recs, user_message, rule_hits = matcher.fallback_recommend(
-            parsed, constitution, request.exclude_herbs
+            parsed, constitution, request.exclude_herbs, avoid=avoid
         )
 
     # ---------- 3. 护栏 ----------
     cleaned, applied = _sanitize_recommendations(
-        recs, constitution, request.exclude_herbs
+        recs, constitution, request.exclude_herbs, avoid
     )
 
     # 护栏把推荐清空了 → 再用规则兜底一次
@@ -308,10 +332,10 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
         degraded = True
         degraded_reason = "guardrail_removed_all"
         cleaned, user_message, rule_hits = matcher.fallback_recommend(
-            parsed, constitution, request.exclude_herbs
+            parsed, constitution, request.exclude_herbs, avoid=avoid
         )
         cleaned, applied2 = _sanitize_recommendations(
-            cleaned, constitution, request.exclude_herbs
+            cleaned, constitution, request.exclude_herbs, avoid
         )
         applied.extend(applied2)
 

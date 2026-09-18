@@ -191,6 +191,14 @@ class AnalyzeRequest(BaseModel):
     constitution_override: Constitution | None = None
     exclude_herbs: list[str] = Field(default_factory=list)
     session_id: str | None = None
+    avoid_constitutions: list[Constitution] = Field(
+        default_factory=list,
+        description=(
+            "兼体质屏蔽集（B2 接入）：这些体质标为「不宜」的饮片一并排除，"
+            "但**不改变收敛方向** —— 方向仍由 constitution_override 唯一决定。"
+            "默认空 ⇒ 与既有调用方行为完全一致。"
+        ),
+    )
 
     @field_validator("text")
     @classmethod
