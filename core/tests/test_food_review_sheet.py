@@ -569,3 +569,75 @@ def test_first_batch_conflicts_have_note(mod, entries, sources) -> None:
     )
 
 
+# ============================================================
+# 8. B1 落定后的守卫：「制品·原料继承」必须指向真实存在的同名饮片
+# ============================================================
+# ⚠️ 这组helper**刻意放在测试里，不放脚本**：它只在「判定继承链是否成立」这一处用，
+# 放进 `build_food_review_sheet.py` 会变成没人调用的死代码 —— 本项目刚因「死代码被误
+# 当成入口」踩过坑（见 `matcher.build_basis` 的先例）。这与 `A2_REMOVED_MUSHROOM_WORDS`
+# 的处置一致：一次性/单处的判定逻辑留在守卫它的测试里。
+INHERITANCE_HOW = "制品·原料继承"
+
+
+def _herb_natures() -> dict[str, str]:
+    """`herbs.json` 的 {饮片名: 四气}。"""
+    data = json.loads(HERBS_PATH.read_text(encoding="utf-8"))
+    return {h["name"]: h.get("nature") for h in data["herbs"]}
+
+
+def inheritance_rows(sources: dict) -> list[tuple[str, str, str]]:
+    """(条目 id, matched_name, 该条目登记的 project.nature)，只取 how=制品·原料继承 的依据。"""
+    return [
+        (s.get("id"), ev.get("matched_name"), (s.get("project") or {}).get("nature"))
+        for s in (sources.get("entries") or [])
+        for ev in (s.get("evidence") or [])
+        if ev.get("how") == INHERITANCE_HOW
+    ]
+
+
+def inheritance_gaps(rows, herb_natures: dict[str, str]) -> tuple[list[str], list[str]]:
+    """返回（指向不存在饮片的、四气与原料不符的）；两空 = 继承链成立。"""
+    unknown = sorted({f"`{i}` → {m}" for i, m, _ in rows if m not in herb_natures})
+    mismatched = sorted(
+        f"`{i}` → {m}（饮片 {herb_natures[m]} vs 登记 {n}）"
+        for i, m, n in rows if m in herb_natures and herb_natures[m] != n
+    )
+    return unknown, mismatched
+
+
+def test_product_inheritance_points_at_a_real_herb(sources) -> None:
+    """标了「制品·原料继承」的依据，必须指向 `herbs.json` 里**存在且四气相同**的饮片。
+
+    这是继承链唯一能用机器守住的地方。50 号文件 §5.2 明令「凡『茶』『糖』『汁』『粉』类
+    后缀，**不可默认继承原料的四气**」，B1 是按项目所有者裁定**推翻**了它（推翻理由逐条
+    写在 `mapping_review.reason`，不是「没看到那条规则」）。既然开了这个口子，「继承」
+    两个字就必须承重：否则将来有人把「水果茶」「奶盖茶」也标成继承，指向一个不存在的
+    原料、或四气根本对不上，一样能通过其余所有检查 —— 那才是把推翻变成漏洞。
+    """
+    herb_natures = _herb_natures()
+    assert herb_natures, f"没从 {HERBS_PATH.name} 读出饮片"
+    rows = inheritance_rows(sources)
+    assert rows, f"sources.json 里没有任何 how={INHERITANCE_HOW} 的依据（B1 的茶饮 10 条？）"
+    unknown, mismatched = inheritance_gaps(rows, herb_natures)
+    assert not unknown, f"标了「{INHERITANCE_HOW}」却指向不存在的饮片：{unknown}"
+    assert not mismatched, f"继承值与原料四气不符：{mismatched}"
+
+
+def test_product_inheritance_guard_negative_control() -> None:
+    """负控制：**不存在**的原料与**四气对不上**的原料都必须被上一条抓出来。
+
+    只测「真实数据上没报错」是不够的 —— 那和「这段逻辑根本没跑」长得一模一样。
+    三种样本缺一不可：正常继承（必须放过）、不存在的原料、四气不符的原料。
+    """
+    herb_natures = {"菊花": "cool"}
+    rows = [
+        ("ok_inherit", "菊花", "cool"),
+        ("ghost_herb", "no_such_herb", "cool"),
+        ("wrong_nature", "菊花", "warm"),
+    ]
+    unknown, mismatched = inheritance_gaps(rows, herb_natures)
+    assert any("ghost_herb" in x for x in unknown), "指向不存在饮片的没被抓出来"
+    assert any("wrong_nature" in x for x in mismatched), "继承值与原料四气不符的没被抓出来"
+    assert not any("ok_inherit" in x for x in unknown + mismatched), "正常的继承不该被报出来"
+
+
