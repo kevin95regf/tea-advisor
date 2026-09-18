@@ -308,6 +308,8 @@ python scripts/test_food_accuracy.py   # 属性准确率，只测 Agent1
 | 29 | **区分「冻结的一次性批次脚本」与「可重跑的只读工具」** | `scripts/` 下 `add_food_entries.py` / `add_review_fields.py` / `patch_food_table.py` 是**冻结的历史批次脚本**，改数据前必须 `--dry-run`；`check_herb_catalog.py` / `build_*.py` 是**可反复运行的只读工具** |
 | 30 | **生成的文档不手工编辑** | `catalog-compliance.md`、`constitution-9-types.md`、`herb-nature-crosscheck.md` 三份都由脚本从 JSON 渲染，JSON 是事实源 |
 | 31 | **仓库强制 LF**（`* text=auto eol=lf`，`*.cmd`/`*.bat` 例外） | 避免 Windows 上的假 diff；Python 写文件要显式 `newline="\n"` |
+| 32 | **问卷接入：换算层放 `core/app/domain/`，core 不 import 问卷子包** | 子包是**可选**依赖（D5）。core 只吃 `score_questionnaire()["scores"]` 这个 dict，测试零外部依赖；网页版是纯静态 JS 跑不了子包，**本次不做网页版**（D5′ ①），等 `/api/analyze-offline` 那轮一起定端点 |
+| 33 | **兼体质只能有一个收敛方向，其余进屏蔽集只做排除**；**屏蔽集在两条路径上都硬剔除** | 推荐只能按一个方向做；且 LLM 路径与离线路径不共用代码，只改一处会造成「有 Key / 没 Key 拿到不同安全边界」的静默失效 —— 已由 `core/tests/test_constitution_integration.py` 钉死（该守卫第一版是恒真的，靠变异检验才发现并重写） |
 
 ---
 
@@ -337,6 +339,8 @@ python scripts/test_food_accuracy.py   # 属性准确率，只测 Agent1
 | `docs/catalog-compliance.md` | 饮片白名单 × 食药物质目录核对 + 处置决定 | 涉合规时 |
 | `docs/constitution-9-types.md` | 国标九型特征与饮食方向（A/B/C 三层，带出处） | 做 5→9 时 |
 | `docs/b2-constitution-id-alignment.md` | **体质标识对齐（B2）**：问卷侧 `phlegm_dampness`→`phlegm_damp` 的方案、取证与改动清单（已执行） | 接问卷 / 动体质 id 时 |
+| `docs/b2-questionnaire-integration-plan.md` | **问卷接入的 7 个决策点**：兼体质收敛、「倾向是」不是判定、平和质三档、四处接入点 | 动问卷 → 推荐链路时 |
+| `docs/b2-integration-execution-plan.md` | 上一份的**落地步骤**（6 个提交、守卫测试设计、终端接线） | 实施接入时 |
 | `docs/herb-nature-crosscheck.md` | 34 味药典对照表 + 差异影响分析 | 涉药典数据时 |
 
 **三份生成型文档不要手工编辑**（重新生成命令写在各自开头的引用块里）：

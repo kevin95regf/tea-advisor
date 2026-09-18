@@ -3,8 +3,8 @@
 > **这份清单是挂起事项的唯一真源。** 其他地方（`handover.md`、`maintenance.md`）只提摘要，
 > 一律以本文为准。任何一项解决了，就在这里更新状态并记录解决方式。
 >
-> 快照时间：**2026-09-18**　共 **15** 项记录在案（A/B/C/D/E 五类），
-> 其中 **A2、B2、D2、E1、E3 已解决**、**B3 的阻塞已解除**（九型已上线；244 格的布局中已落地 15 格，余 239 格是完备度而非功能阻塞），其余 9 项待处理。
+> 快照时间：**2026-09-18**　共 **16** 项记录在案（A/B/C/D/E 五类），
+> 其中 **A2、B2、D2、E1、E3 已解决**、**B3 的阻塞已解除**（九型已上线；244 格的布局中已落地 15 格，余 239 格是完备度而非功能阻塞），其余 10 项待处理。
 
 ---
 
@@ -27,6 +27,7 @@
 | **E1** | 3 条食性表缺 `review_status` | 开发 | 无（行为已正确） | ✅ **已解决**（2026-09-17） |
 | **E2** | `herbs.json` 34 味缺逐条审核字段 | 开发 | A1 的验收标准落不到 herbs | 待清理 |
 | **E3** | 饮片侧缺「逐味公开依据」链（分叉批次评估的缺口 3） | 开发 | 用户与审核人看不到每味饮片的出处 | ✅ **已实施**（2026-09-18） |
+| **E4** | LLM 路径与离线路径对**主导体质**的 `unsuitable_for` 处置不一致（硬排除 vs 软提示） | 项目所有者定口径 | 同一体质有没有 Key 拿到的安全边界不同 | 待确认 |
 
 **⛔ 标记的是真正的硬阻碍**：只要 A1 没解决，「对外提供服务」就不能说完成。
 （B3 原先也标 ⛔，2026-09-17 九型上线后已解除——244 格里余下的 239 格影响的是推荐完备度，不再是功能阻塞。）
@@ -114,7 +115,7 @@
 | **解决方式** | **方案① 问卷侧改名（2026-09-18 已执行）**：把仓库内 `tcm-constitution-questionnaire/` 的 `phlegm_dampness` 全部改为 `phlegm_damp`，共 **3 文件 8 处**（`tcm-constitution-questionnaire/tcm_constitution/questions.py` 4、`tcm-constitution-questionnaire/questionnaire.csv` 3、`tcm-constitution-questionnaire/tests/test_scoring.py` 1）；`core/` **一个字未动**。方案②（API 边界加 `CONSTITUTION_ID_ALIASES` 适配映射）**不采纳** —— 它会让两种标识串长期并存，漏用一处即静默失效。完整决策过程、取证与改动清单见 **`docs/b2-constitution-id-alignment.md`** |
 | **验收标准** | ✅ **已达成**：两边对同一体质给出同一个标识串 `phlegm_damp`；`core/` 无需任何适配层即可直接用问卷输出的体质 id。防回潮由 `core/tests/test_questionnaire_id_alignment.py`（4 守卫 × 正负控 = 8 条）守住 |
 | **相关文件** | `docs/b2-constitution-id-alignment.md`（方案与执行记录）、`tcm-constitution-questionnaire/tcm_constitution/questions.py`、`tcm-constitution-questionnaire/questionnaire.csv`、`core/tests/test_questionnaire_id_alignment.py`（守卫）、`core/app/domain/enums.py`（事实源，未改） |
-| **仍未解决** | ⚠️ **本项只解决标识对齐，不解决问卷的接入。** 分叉里的问卷 API 文件 `questionnaire.py` 未并入（题库是 T/CACM 1460—2023 附录 A 的 60 题版，主线是 GB/T 46939-2025 的 27 题版，换标准不是小事；该文件现存档于项目外的 `tea-advisor-fork-keep`）。真正接入前还有一道坎：问卷输出的是**倾向性体质**，进推荐前必须过 `ready_constitutions()` 就绪闸门 |
+| **仍未解决** | ⚠️ **标识对齐已解决，接入分阶段**：**阶段 1（链路能力）与阶段 2（终端接线）已于 2026-09-18 落地** —— 换算层 `core/app/domain/constitution_resolver.py`、四处接入点同步、跨路径一致性守卫，终端 `--questionnaire` / `:qz`。**阶段 3（网页版）本次不做（D5′ ①）**：`ui/web/index.html` 是纯静态 JS，跑不了 Python 子包，拿不到问卷的 `scores`；等 `/api/analyze-offline` 那一轮一起定端点。方案与执行记录见 `docs/b2-questionnaire-integration-plan.md`（7 个决策点）与 `docs/b2-integration-execution-plan.md`（落地步骤） |
 
 ## B3　244 个配伍判定（已落地 15 格，余 239 格）
 
@@ -266,6 +267,21 @@
 同批留出两条待办：**C3**（药典 2020 版已废止，需换 2025 版）、**D3** 与本次无关但同属「饮片处理方式」族。
 另如实记一条**本次不改数据**的发现：临沂页把**白扁豆**列入特禀质「应少食」，项目 `herbs.json` 里没有对应标注 —— 已写进登记表的 `_meta.known_limitations`，等所有者判断。
 
+## E4　两条路径对**主导体质**的 `unsuitable_for` 处置不一致
+
+> 2026-09-18 做 B2 接入（问卷结果接进推荐链路）时扫出来的**既有**不一致 ——
+> **不是本次引入的**。按「不假装没看见」的原则单列登记；本次**不改**。
+
+| | |
+|---|---|
+| **现状** | 同一味饮片若对**主导体质**标了 `unsuitable_for`，两条路径的处置不同：<br>**LLM 路径**（`core/app/domain/safety.py` 的 `filter_by_constitution`）：`continue` —— **硬排除**，饮片根本不进候选集；<br>**离线路径**（`core/app/services/matcher.py` 的 `fallback_recommend`）：只**追加一句 caution**，饮片仍在搭配里（软提示） |
+| **后果** | 同一个用户，**有 Key 与没 Key 拿到的安全边界不同**，而界面只显示最终搭配，看不出差异来源 |
+| **为什么本次没改** | ① 它是**产品口径**问题，不是实现疏漏：离线路径的契约是「永远给出合法且安全的搭配」，一律硬排除会出现「剔除后无搭配可用」的新分支要定；② 改它会牵动既有测试期望（`test_matcher` / `test_safety` 里对 cautions 的断言）。本次的边界是：**只**对**兼体质屏蔽集 `avoid`** 做硬剔除（决策 D6-A′），主导体质一律维持现状 |
+| **为什么反过来不行（只改主导体质）** | 兼体质若两端不一致，就是「已知却不告知的不一致」——用户拿到的东西取决于有没有 Key，而没人告诉他 |
+| **需要什么** | 定一条口径：离线路径是否也要对主导体质**硬排除**。<br>**(α) 是** → 复用本次已有的通用兜底分支（剔空退平和质通用搭配并留痕），但要评估默认搭配表 `CONSTITUTION_DEFAULT` 里有多少组会被剔空（剔空过多等于离线路径失去体质针对性）；<br>**(β) 否** → 在 `user_message` 里明写「离线结果的禁忌提示仅供参考」，否则是已知却不告知 |
+| **验收标准** | ① 口径选定并落到代码；② 两条路径对**同一个 (体质, 饮片)** 给出同一种处置；③ `core/tests/test_constitution_integration.py` 的跨路径守卫扩展覆盖主导体质（目前它只守屏蔽集 `avoid`，正是因为这项目前不一致，守了就会红） |
+| **相关文件** | `core/app/domain/safety.py`、`core/app/services/matcher.py`、`core/tests/test_constitution_integration.py`、`docs/b2-integration-execution-plan.md`（§0.2 发现记录与处置决定） |
+
 ---
 
 # 本次巡检的其他发现
@@ -282,7 +298,7 @@
 | 之前一处文档写错了影响面 | 参考数据曾写「四气差异会影响三层判定里的寒热加减」，经代码取证**是错的**，已更正（见 B1 的差异影响） |
 | 维护文档的规模数字整体过时 | 已按 Python 口径重测更新（§1.4 与 §3 两张表）；顺带记录「别用 PowerShell 数行数」的陷阱 |
 | 两个 venv 的 Python 都是 3.13.13 | 与 `pyproject.toml` 的 `requires-python = ">=3.10"` 兼容 |
-| 分叉批次评估的 3 处缺口（2026-09-18） | 评估同学的分叉批次（`tea-advisor-main`）时确认本项目缺了 3 处：① `agent2_system.md` 只写 5 型；② 无「煎煮 vs 冲泡」区分；③ 饮片侧无逐味公开依据链。**①② 已于同日落地**（见 `docs/agent2-9types-brew-plan.md` §6），③ 登记为 **E3** |
+| 屏蔽集可能把 LLM 候选集**整个清空** | 温阳方向的饮片常同时对阴虚质不宜，所以「阳虚质 + 屏蔽阴虚质」这类组合会让 `filter_by_constitution` 抛 `MissingConstitutionDataError`。**这是设计行为不是 bug**：编排层捕获后降级到离线路径，离线路径有通用兜底（已由 `core/tests/test_constitution_integration.py` 覆盖为「跳过该类组合」） |
 | `NOTES.local.md` 已部分过期 | 仍写「尚无远程」「`miniprogram/` 空目录待删」「全部提交都是占位符身份」「pytest 230 项」，均与现状不符。它不入版本控制、不会随文档同步；已在 `docs/handover.md` §9.2 加了「以 `docs/` 为准」的提醒 |
 
 ---
