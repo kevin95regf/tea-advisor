@@ -113,12 +113,33 @@
   details.guide li { margin: 4px 0; font-size: 13.5px; line-height: 1.6; }
   details.guide code { background: #efeae0; padding: 1px 5px; border-radius: 4px; font-size: 12.5px; }
   details.guide .no { color: var(--warn); }
+  header.bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  button.ghost {
+    background: transparent; color: var(--accent);
+    border: 1px solid var(--line); padding: 7px 14px; font-weight: 500;
+  }
+  dialog#cfg {
+    border: 1px solid var(--line); border-radius: 12px; padding: 18px;
+    max-width: 520px; width: calc(100% - 32px); color: var(--ink);
+  }
+  dialog#cfg::backdrop { background: rgba(46, 42, 36, .35); }
+  dialog#cfg h2 { margin-top: 0; }
+  .cfgstate { font-size: 12.5px; color: var(--muted); }
+  .cfgstate .dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    margin-right: 6px; vertical-align: 1px;
+  }
+  .cfgstate.off .dot { background: var(--warn); }
+  .cfgstate.on .dot { background: #3f7a48; }
 </style>
 </head>
 <body>
-<header>
-  <h1>今日茶饮建议</h1>
-  <p>说说你今天吃了什么，结合你的体质给一杯药食同源的冲泡建议 · 本地运行</p>
+<header class="bar">
+  <div>
+    <h1>今日茶饮建议</h1>
+    <p>说说你今天吃了什么，结合你的体质给一杯药食同源的冲泡建议 · 本地运行</p>
+  </div>
+  <button id="cfgOpen" class="ghost opencfg" type="button">API 设置</button>
 </header>
 
 <main>
@@ -169,9 +190,23 @@
 
     <hr style="border:0;border-top:1px solid var(--line);margin:14px 0 12px" />
     <div class="row" style="margin-top:0">
+      <span class="cfgstate off" id="keyState"><span class="dot"></span>未填写 API Key</span>
+      <button class="ghost opencfg" type="button">打开设置</button>
+    </div>
+  </div>
+
+  <div id="out"></div>
+</main>
+
+<dialog id="cfg">
+  <form method="dialog">
+    <h2>API 设置</h2>
+    <div class="row" style="margin-top:0">
       <label for="key">API Key</label>
       <input id="key" type="password" autocomplete="off" spellcheck="false"
              placeholder="sk-…（必填；本服务不内置 Key）" />
+    </div>
+    <div class="row">
       <label class="chk" title="勾选后写入浏览器 localStorage；不勾选只存在本次标签页，关掉即失效">
         <input id="remember" type="checkbox" /> 记住 Key
       </label>
@@ -181,10 +216,9 @@
       <b>不写入服务器日志、不落盘、不入库</b>。
       默认不勾选「记住 Key」，只保存在本标签页内。
     </div>
-  </div>
-
-  <div id="out"></div>
-</main>
+    <div class="row"><button type="submit" value="close">完成</button></div>
+  </form>
+</dialog>
 
 <script>
 // 中文标签与显示阈值全部来自后端 /api/meta，本页面不再硬编码任何映射表。
@@ -199,6 +233,8 @@ const sel = document.getElementById('const');
 const keyEl = document.getElementById('key');
 const rememberEl = document.getElementById('remember');
 const keyHintEl = document.getElementById('keyHint');
+const cfgEl = document.getElementById('cfg');
+const keyStateEl = document.getElementById('keyState');
 let disclaimerCache = null;
 
 // 两个存储位：勾了「记住 Key」写 localStorage（跨会话），否则写 sessionStorage（仅本标签页）。
@@ -260,6 +296,23 @@ async function refreshKeyHint() {
   }
 }
 
+/** 打开设置弹窗；顺手刷一次 /healthz —— 后端可能是在页面打开之后才启动的 */
+function openCfg() {
+  if (!cfgEl) return;
+  if (typeof cfgEl.showModal === 'function') cfgEl.showModal();
+  else cfgEl.setAttribute('open', '');   // 极老浏览器兜底
+  refreshKeyHint();
+}
+
+/** 主界面只显示「已填写 / 未填写」两级；绝不回显 Key 的任何部分 */
+function updateKeyState() {
+  if (!keyStateEl) return;
+  const filled = !!currentKey();
+  keyStateEl.className = 'cfgstate ' + (filled ? 'on' : 'off');
+  keyStateEl.innerHTML = '<span class="dot"></span>'
+    + (filled ? '已填写 API Key（本页不显示）' : '未填写 API Key');
+}
+
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
@@ -274,6 +327,7 @@ function label(group, key) {
 
 async function loadInit() {
   loadStoredKey();
+  updateKeyState();
   refreshKeyHint();
   try {
     const [m, cs, dis] = await Promise.all([
@@ -390,12 +444,13 @@ async function run() {
       const isKeyIssue = d.code === 'NO_API_KEY' || d.code === 'USER_KEY_UNSUPPORTED'
         || d.code === 'API_KEY_REJECTED';
       const extra = isKeyIssue
-        ? '<div class="hint">见上方 API Key 一栏。</div>'
+        ? '<div class="hint">已为你打开右上角「API 设置」。</div>'
         : '<div class="hint">排查：打开 <code>http://127.0.0.1:8000/healthz</code> '
           + '看后端与饮片是否就绪。</div>';
       out.innerHTML = `<div class="card error"><b>${isKeyIssue ? '凭据问题' : '出错了'}</b><br>`
         + `${esc(d.message || JSON.stringify(data))}${extra}</div>`;
-      if (isKeyIssue && keyEl) keyEl.focus();
+      // Key 输入框在 <dialog> 里：不先打开弹窗，focus() 是无效的
+      if (isKeyIssue) { openCfg(); if (keyEl) keyEl.focus(); }
       return;
     }
     let html = '';
@@ -470,6 +525,11 @@ document.getElementById('examples').addEventListener('click', e => {
 // 勾选/取消「记住 Key」立刻生效（取消时要把已存的清掉，不能等下次提交）
 rememberEl.addEventListener('change', saveKey);
 keyEl.addEventListener('change', saveKey);
+// 状态指示要实时，但存储时机保持不变（saveKey 只在提交/勾选时落定，不每敲一键写一次）
+keyEl.addEventListener('input', updateKeyState);
+keyEl.addEventListener('change', updateKeyState);
+rememberEl.addEventListener('change', updateKeyState);
+document.querySelectorAll('.opencfg').forEach(b => b.addEventListener('click', openCfg));
 btn.addEventListener('click', run);
 loadInit();
 </script>
