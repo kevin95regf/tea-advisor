@@ -501,6 +501,76 @@ def check_sources_consistency(entries: list[dict], sources: dict) -> list[dict]:
     return issues
 
 
+# ---------------------------------------------------------------------------
+# 映射裁定与受控词表（纯函数：渲染与测试**共用同一份逻辑**）
+#
+# 下面三条都是纯函数 —— 测试才能用**合成数据**做负控制。只测「真实数据上没问题」是
+# 不够的：那和「这段逻辑根本没跑」长得一模一样（见 tests/test_food_review_sheet.py）。
+# ---------------------------------------------------------------------------
+def mapping_layer_gaps(entries: list[dict]) -> list[str]:
+    """检查「映射裁定」与 `layer` 是否自洽，返回问题清单（空 = 干净）。
+
+    两条派生规则，不依赖任何具体条目：
+
+    1. `accepted is False`（映射被否）→ 该条**必须已降级为 ③**：非正名映射是承重的，
+       映射没了来源也就没了，不能还挂在「一致」里；
+    2. `accepted is None`（待确认）→ `layer` **必须是 ②**：既没采纳也没否掉，
+       不能混进「一致」那一层（`jiangyou` 2026-09-18 之前就是这个形态）。
+
+    没登记 `mapping_review` 的条目**不参与判定**，函数自己跳过。当年在测试里写成
+    `(s.get("mapping_review") or {}).get("accepted") is None` 的坑正在这里：
+    `{}` 的 `.get` 同样返回 None，会把几十条压根没登记的条目一起算进来。
+    """
+    gaps: list[str] = []
+    for s in entries:
+        review = s.get("mapping_review")
+        if not review:
+            continue
+        sid, layer, accepted = s.get("id"), s.get("layer"), review.get("accepted")
+        if accepted is False and layer != "③":
+            gaps.append(f"`{sid}` 映射被否却没降级到 ③（仍记 {layer}）")
+        if accepted is None and layer != "②":
+            gaps.append(f"`{sid}` 映射待确认，layer 应为 ②（实际 {layer}）")
+    return gaps
+
+
+def evidence_how(reference: dict, evidence: list[dict]) -> str:
+    """取 `reference` 所对齐那条 evidence 的 `how`（取不到返回「—」）。
+
+    ⚠️ 两件都不能省，它们是这个函数存在的全部理由：
+
+    - **不能读 `reference["how"]`** —— `reference` 里根本没有 `how` 字段
+      （47 条实测 0 条有）。`reference` 只是「本次比对用了哪条依据」的摘要，
+      不含这条依据「是怎么对上的」。
+    - **不能取 `evidence[0]`** —— 同一条目常有多条依据（`mogu` 两条，
+      `jiang`/`longyan`/`shanzha_guo` 各三条），第一条未必是 `reference` 用的那条。
+      按 `(source_id, matched_name)` 对齐才对得上。
+    """
+    if not reference:
+        return "—"
+    sid, name = reference.get("source_id"), reference.get("matched_name")
+    for ev in evidence or []:
+        if ev.get("matched_name") != name:
+            continue
+        if sid and ev.get("source_id") != sid:
+            continue
+        return ev.get("how") or "—"
+    # 退化：`reference` 没给 source_id 时只按基准名找
+    for ev in evidence or []:
+        if ev.get("matched_name") == name:
+            return ev.get("how") or "—"
+    return "—"
+
+
+def out_of_vocab(values, allowed) -> list[str]:
+    """返回不在**受控词表**里的取值（去重、排序）；空 = 全部合规。
+
+    词表是「新增取值必须先登记」这个约定的执行点：取值散落在几十条 `evidence` 里，
+    没有这层检查时，写错一个词（比如残留一个旧混用值「别名/等价名」）不会有任何反馈。
+    """
+    return sorted({str(v) for v in values if v not in allowed})
+
+
 def run_checks(entries: list[dict], herb_nature: dict[str, str], sources: dict | None = None) -> list[dict]:
     issues: list[dict] = []
     issues += check_duplicate_keys(entries)
@@ -575,6 +645,15 @@ def render(entries: list[dict], meta: dict, issues: list[dict], source_path: Pat
         if accepted is False:
             return "❌ **未采纳**"
         return "⏳ 待确认"
+
+    def closed_cell(s: dict) -> str:
+        """`open_question` 为空的处置栏：这条已裁定，结论不在这里重复。
+
+        `open_question` 的用法（2026-09-18 起）：**已裁定者置 `null`**，结论见
+        `mapping_review` 与数据里的 `note`；**未获权威裁定者保留原问题**
+        （`baicai`/`huanggua`/`lianou` 的口径分歧即属此类）。
+        """
+        return "✅ 已裁定（结论见数据 `note` 与 §4.4）"
 
     add("# 食性表人工审核核验单（`food_properties.json`）")
     add("")
@@ -745,6 +824,12 @@ def render(entries: list[dict], meta: dict, issues: list[dict], source_path: Pat
                 f"{ref.get('tier') or '—'} | {ref.get('matched_name') or s.get('name')} | "
                 f"{s.get('layer')} | {s.get('status')} | {mapping_cell(s)} |")
         add("")
+        add(f"> ⚠️ 上表只含 `batch={BATCH_PRIMARY}` 的条目（**{len(primary)}** 条）。"
+            "`batch=后续` **表示「有来源可引、但未纳入第一批」，不是「无源」** ——"
+            "例如 `xianggu`（香菇）由 `mogu` 拆条新增时随拆条一并登记。")
+        add("> 当时特意**没有**回头把第一批从 33 改成 34：第一批的条数是审核进度的分母，"
+            "不能因为一次数据修复而漂移。")
+        add("")
 
         conflicts = sorted(
             (s for s in src_entries if s.get("batch") == BATCH_PRIMARY and s.get("layer") == "②"),
@@ -765,12 +850,14 @@ def render(entries: list[dict], meta: dict, issues: list[dict], source_path: Pat
                         break
                 add(f"| `{s['id']}` | {s.get('name')} | {project.get('nature_cn')} | "
                     f"{ref.get('qi_word')} | {ref.get('matched_name')} | {verbatim or '—'} | "
-                    f"{s.get('open_question') or '—'} |")
+                    f"{s.get('open_question') or closed_cell(s)} |")
         else:
             add("（第一批内无冲突项。）")
         add("")
         add("> **这些是「口径分歧」而非「数据错」**：基准是教材/经典层，强度不足以推翻现值，")
         add("> 所以一律**保留项目值**并在数据里加 `note` 留痕；`nature` 未改。")
+        add("> 「处置」栏为空即「已裁定」（原问题置 `null`）—— 这一条有守卫测试：")
+        add("> **第一批 ② 层条目必须在数据里有 `note`**（防「文档说了、数据没做」）。")
         add("")
 
         no_source = sorted(
@@ -796,13 +883,19 @@ def render(entries: list[dict], meta: dict, issues: list[dict], source_path: Pat
         )
         add("### 4.4 非正名映射的裁定结果（条目名 ≠ 语料条目名）")
         add("")
-        add("| id | 条目 → 基准 | 组 | 裁定 | 理由 |")
-        add("|---|---|---|---|---|")
+        add("| id | 条目 → 基准 | 组 | 裁定 | 限定（how） | 理由 |")
+        add("|---|---|---|---|---|---|")
         for s in mapped:
             review = s.get("mapping_review") or {}
             ref = ref_of(s)
             add(f"| `{s.get('id')}` | {s.get('name')} → **{ref.get('matched_name') or '—'}** | "
-                f"{review.get('group')} | {mapping_cell(s)} | {review.get('reason')} |")
+                f"{review.get('group')} | {mapping_cell(s)} | "
+                f"{evidence_how(ref, s.get('evidence') or [])} | {review.get('reason')} |")
+        add("")
+        add("> 「限定（how）」列说明**这条映射是怎么对上的**（受控词表见 `docs/"
+            f"{DEFAULT_SOURCES.name}` 的 `_meta.controlled_vocab`）。")
+        add("> 取值按 `reference` 的「来源 + 基准名」回到该条 `evidence[]` 里取 —— `reference`")
+        add("> 本身**不含** `how`，且同一条目可能有多条依据，取第一条会取错。")
         add("")
         add("> ⚠️ 每条非正名映射都是**承重**的：这类条目通常只有 1 条证据，映射一否即落 ③ 无源。")
         add("> 最典型的是 `lianou`（莲藕→藕）——它被判为「口径分歧」的前提正是这条映射成立。")

@@ -11,7 +11,10 @@
 第三条用**负控制**测：喂一份人造数据给检查函数，断言它报出预期的问题。
 只测「真实数据上没报错」是不够的 —— 那和「检查根本没跑」长得一模一样。
 
-另外守一条**事实源漂移**：`docs/food-properties-sources.json` 是 ①②③ 层的事实源，
+第四条同样靠负控制：**受控词表**（`evidence[].how` / `tier`）是散落在几十条依据里的取值，
+写错一个词不会有任何反馈；而核验单 §4.4 的「限定（how）」列还可能因为**取错 evidence**
+（`reference` 里根本没有 `how`，同一条目又常有多条依据）而**静默显示错值**。
+另加一条**事实源漂移**：`docs/food-properties-sources.json` 是 ①②③ 层的事实源，
 它和 `food_properties.json` 一旦不同步，审核人就会照旧值判断（比没依据更危险）。
 """
 
@@ -323,14 +326,14 @@ def test_sheet_renders_layers_from_sources(mod, sources) -> None:
 
 
 def test_mapping_review_is_recorded_and_consistent(mod, sources) -> None:
-    """非正名映射的裁定结果必须逐条记在事实源里，且与 layer 自洽。
+    """非正名映射的裁定必须逐条登记，且与 layer 自洽。
 
-    `qingcai` 是第一批里唯一被否掉的映射：它必须同时满足「未采纳」且「已降级为 ③」，
-    不能只改一处 —— 只改 mapping_review 不改 layer，就会留下一条假的"一致"。
+    这里刻意**不再写「被否／待确认两类都要有真实例子」**：那要求真实数据里永远存在一个
+    待确认的条目，`jiangyou` 一裁定就红，而且红的信息分不清「数据坏了」还是「活儿干完了」
+    —— 正是本项目反对的**数据快照式断言**。
 
-    注意筛「待确认」时**必须先限定在有 `mapping_review` 的条目里**：写成
-    `(s.get("mapping_review") or {}).get("accepted") is None` 会把「压根没登记裁定」
-    的条目也算进来（`{}` 的 `.get` 同样返回 None），于是几十条无关条目一起报错。
+    职责这样分工：**派生不变式**（`mapping_layer_gaps`，规则写在被调函数里）管真实数据，
+    「两类不自洽都必须被抓出来」由**合成数据**的负控制管（见下一条）。
     """
     entries = mod.source_entries(sources)
     reviewed = [s for s in entries if s.get("mapping_review")]
@@ -340,10 +343,150 @@ def test_mapping_review_is_recorded_and_consistent(mod, sources) -> None:
         assert "accepted" in review, f"{s['id']} 的裁定没有 accepted 字段"
         assert review["accepted"] in (True, False, None)
         assert review.get("reason"), f"{s['id']} 的裁定没有理由"
-    rejected = [s for s in reviewed if s["mapping_review"]["accepted"] is False]
-    for s in rejected:
-        assert s.get("layer") == "③", f"{s['id']} 映射被否却没降级到 ③（仍记 {s.get('layer')}）"
-    pending = [s for s in reviewed if s["mapping_review"]["accepted"] is None]
-    for s in pending:
-        assert s.get("layer") == "②", f"{s['id']} 映射待确认，layer 应为 ②（实际 {s.get('layer')}）"
-    assert rejected and pending, "被否／待确认两类都应有例子，否则上面两个循环是空转"
+    gaps = mod.mapping_layer_gaps(entries)
+    assert not gaps, f"映射裁定与 layer 不自洽：{gaps}"
+
+
+def test_mapping_layer_gaps_negative_control(mod) -> None:
+    """负控制：两类不自洽都必须被 `mapping_layer_gaps` 报出来。
+
+    只测「真实数据上返回空」是不够的 —— 那和「这个函数根本没跑」长得一模一样。
+    顺带钉住一件事：**没登记 `mapping_review` 的条目不参与判定**，外部不必先行过滤
+    （这正是当年 `(s.get("mapping_review") or {}).get("accepted") is None` 那个写法的坑：
+    `{}` 的 `.get` 同样返回 None，会把几十条压根没登记的条目一起算进来）。
+    """
+    synthetic = [
+        {"id": "rej_no_demote", "layer": "①", "mapping_review": {"accepted": False}},
+        {"id": "pending_as_consistent", "layer": "①", "mapping_review": {"accepted": None}},
+        {"id": "no_review_at_all", "layer": "①"},
+    ]
+    gaps = mod.mapping_layer_gaps(synthetic)
+    assert any("rej_no_demote" in g for g in gaps), "映射被否却没降级到 ③，没被抓出来"
+    assert any("pending_as_consistent" in g for g in gaps), "待确认却记成 ①，没被抓出来"
+    assert not any("no_review_at_all" in g for g in gaps), "没登记裁定的条目不该参与判定"
+
+
+# ============================================================
+# 6. 受控词表（`how` / `tier`）与核验单 §4.4
+# ============================================================
+def _vocab(sources: dict, key: str) -> dict:
+    vocab = (sources.get("_meta") or {}).get("controlled_vocab") or {}
+    assert key in vocab, f"`_meta.controlled_vocab` 缺少 `{key}`"
+    return vocab[key]
+
+
+def _evidence_rows(sources: dict) -> list[tuple[str, dict]]:
+    """(条目 id, 该条目的每条 evidence)，供词表类断言遍历。"""
+    return [
+        (s.get("id"), ev)
+        for s in (sources.get("entries") or [])
+        for ev in (s.get("evidence") or [])
+    ]
+
+
+def test_how_values_are_in_controlled_vocab(mod, sources) -> None:
+    allowed = set(_vocab(sources, "how")["取值"])
+    bad = mod.out_of_vocab([ev.get("how") for _, ev in _evidence_rows(sources)], allowed)
+    assert not bad, (
+        "evidence[].how 出现词表外取值 —— 新增取值必须先登记进 "
+        f"`_meta.controlled_vocab.how`：{bad}"
+    )
+
+
+def test_how_vocab_negative_control(mod, sources) -> None:
+    """负控制：旧混用值「别名/等价名」必须仍被判为词表外。
+
+    2026-09-18 归一前，8 处 `how` 就是这个混用值 —— 它把「别名」与「等价名」两种
+    不同的对当关系糅在一格里，「限定」形同虚设。若哪天有人把它加回词表，这条会红。
+    """
+    allowed = set(_vocab(sources, "how")["取值"])
+    assert mod.out_of_vocab(["别名/等价名", "别名"], allowed) == ["别名/等价名"]
+
+
+def test_tier_values_are_in_controlled_vocab(mod, sources) -> None:
+    allowed = set(_vocab(sources, "tier")["取值"])
+    bad = mod.out_of_vocab([ev.get("tier") for _, ev in _evidence_rows(sources)], allowed)
+    assert not bad, f"evidence[].tier 出现词表外取值（先登记进 controlled_vocab.tier）：{bad}"
+
+
+def test_tier_vocab_negative_control(mod, sources) -> None:
+    """负控制：注册表的档名（`官方`）不是**条目**的档名，必须被判为词表外。
+
+    这两个层级容易被混：`_meta.source_registry` 给**强度档**（官方／通行·教材／通行·经典），
+    `evidence[].tier` 给「档＋限定」（官方·药典／官方·目录(仅身份)／通行·教材(有冲突)／…）。
+    """
+    allowed = set(_vocab(sources, "tier")["取值"])
+    assert mod.out_of_vocab(["官方", "通行·教材"], allowed) == ["官方"]
+    assert "通行·教材" in allowed
+
+
+def test_tier_maps_to_registry(sources) -> None:
+    """每个用到的 `tier` 都必须能映射到 `_meta.source_registry` 里的档位之一。
+
+    守的是「tier 被随手新造、注册表里根本没这个强度档」—— 那样来源强度就无从核对，
+    而核验单上只显示一个看起来很像真的档名。
+    """
+    mapping = _vocab(sources, "tier").get("对应") or {}
+    registry = set(((sources.get("_meta") or {}).get("source_registry") or {}).keys())
+    assert registry, "source_registry 为空"
+    used = {ev.get("tier") for _, ev in _evidence_rows(sources)}
+    missing = sorted(t for t in used if t not in mapping)
+    assert not missing, f"tier 没有登记对应档位：{missing}"
+    bad = sorted(f"{t} → {mapping.get(t)}" for t in used if mapping.get(t) not in registry)
+    assert not bad, f"tier 对应的档位不在 source_registry 里：{bad}"
+
+
+def test_evidence_how_aligns_to_reference_not_first(mod) -> None:
+    """`evidence_how` 必须按 `reference` 对齐取 `how`，**不能取 `evidence[0]`**。
+
+    造一条「第一条是别的来源」的合成数据：只有按 (source_id, matched_name) 对齐才会
+    拿到「别名」，取 `[0]` 会错拿成「正名（药典收载名）」。真实数据里 `mogu`（2 条）、
+    `jiang`/`longyan`/`shanzha_guo`（各 3 条）都是多条 evidence —— 取错**不会报错**，
+    只会把错误的限定静默渲染给审核人看。
+    """
+    evidence = [
+        {"source_id": "chp2020", "matched_name": "生姜", "how": "正名（药典收载名）"},
+        {"source_id": "s1_dietetics", "matched_name": "生姜", "how": "别名"},
+    ]
+    assert mod.evidence_how({"source_id": "s1_dietetics", "matched_name": "生姜"}, evidence) == "别名"
+    assert mod.evidence_how({"source_id": "chp2020", "matched_name": "生姜"}, evidence) == "正名（药典收载名）"
+    assert mod.evidence_how({"matched_name": "查无此名"}, evidence) == "—"
+    assert mod.evidence_how(None, evidence) == "—"
+
+
+def test_sheet_44_row_count_matches_sources(mod, sources) -> None:
+    """核验单 §4.4 的行数与 id 集合必须**精确等于**事实源里登记过裁定的条目。
+
+    防「渲染漏条目」：少一行时审核人不会发现 —— 表格看起来永远是完整的。
+    （原先只测「§4.4 这个标题存在」，那连「一条都没渲染」都拦不住。）
+    """
+    text = SHEET_PATH.read_text(encoding="utf-8")
+    assert "### 4.4" in text, "核验单缺少 §4.4"
+    section = text.split("### 4.4", 1)[1].split("\n## ", 1)[0]
+    rows = [ln for ln in section.splitlines() if ln.startswith("| `")]
+    expected = {s["id"] for s in mod.source_entries(sources) if s.get("mapping_review")}
+    got = {ln.split("`")[1] for ln in rows}
+    assert got == expected, (
+        f"§4.4 渲染了 {len(got)} 条、事实源里有 {len(expected)} 条；"
+        f"缺={sorted(expected - got)} 多={sorted(got - expected)}"
+    )
+
+
+def test_outcome_counts_match_actual(sources) -> None:
+    """`_meta.mapping_review.outcome` 的三态计数必须等于**实算**。
+
+    这条有来由：`scope` 当年把 `xianggu`（拆条新增的第 18 条）漏在编号体系外，
+    于是 `outcome` 只数了 17 条 —— 文件内部自相矛盾，但读的人不会去核对。
+    现在计数与实算绑在一起：加一条裁定就必须同步，改不了「悄悄少一条」。
+    """
+    reviewed = [s for s in (sources.get("entries") or []) if s.get("mapping_review")]
+    outcome = ((sources.get("_meta") or {}).get("mapping_review") or {}).get("outcome") or {}
+    actual = {
+        "accepted": sum(1 for s in reviewed if s["mapping_review"].get("accepted") is True),
+        "rejected": sum(1 for s in reviewed if s["mapping_review"].get("accepted") is False),
+        "pending": sum(1 for s in reviewed if s["mapping_review"].get("accepted") is None),
+    }
+    assert sum(actual.values()) == len(reviewed), "有 accepted 取值既不是 True/False/None"
+    for key, n in actual.items():
+        assert outcome.get(key) == n, f"outcome.{key} 记 {outcome.get(key)}，实算 {n}"
+
