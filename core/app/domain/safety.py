@@ -101,6 +101,25 @@ def herb_by_name() -> dict[str, dict]:
     return {item["name"]: item for item in load_herb_catalog().values()}
 
 
+@lru_cache(maxsize=1)
+def load_herb_evidence_sources() -> dict:
+    """加载饮片侧来源登记表（core/data/herb_evidence_sources.json）。
+
+    与 `load_herb_catalog` 同构：**文件不存在时返回空字典、不抛异常** ——
+    依据链是增强项，缺了它推荐链路必须照常工作，不能因此 500。
+    """
+    path: Path = get_settings().data_dir / "herb_evidence_sources.json"
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def reload_herb_evidence_sources() -> dict:
+    """清缓存后重新加载（改了登记表之后调用）。"""
+    load_herb_evidence_sources.cache_clear()
+    return load_herb_evidence_sources()
+
+
 # ============================================================
 # 检查函数
 # ============================================================
@@ -392,3 +411,81 @@ def ready_constitutions() -> set[str]:
         for cid in entry.get("suitable_constitutions") or []:
             ready.add(str(cid))
     return ready
+
+
+# ============================================================
+# 公开依据（域 I 属性依据 + 域 II 体质依据）
+# ============================================================
+def herb_evidence(
+    herb_names: set[str] | list[str],
+    constitution: str | None = None,
+    *,
+    data: dict | None = None,
+) -> list[dict]:
+    """本次实际用到的饮片 → 公开依据，按 `source_id` 聚合。
+
+    两条硬约束，都写在登记表的 `_meta.hard_rules` 里：
+
+    1. **只返回命中本次原料的来源。** 体质级的概述性来源不算作单味饮片的依据 ——
+       分叉批次最容易犯的错就是「把某体质整体的一段话当成某一味的出处」。
+       矩阵里提过 14 味、本次只用了 2 味，返回的就只有这 2 味。
+    2. **域 II 只在给了 `constitution` 时参与。** 依据必须与用户当前体质对应，
+       不能把「这味适合别人」当成「适合你」。域 I 不受此限：四气五味归经对谁都一样。
+
+    `data` 是给测试用的注入点（与 `_cautions_soft_gap(catalog, cells)` 同一种做法）：
+    不传就读磁盘。负控制必须能喂人造数据，否则「检查根本没跑」与「真实数据上没报错」
+    长得一模一样。
+    """
+    payload = load_herb_evidence_sources() if data is None else data
+    if not payload:
+        return []
+
+    wanted = {str(n).strip() for n in herb_names if str(n).strip()}
+    if not wanted:
+        return []
+
+    registry = (payload.get("_meta") or {}).get("source_registry") or {}
+    supports: dict[str, list[str]] = {}
+    order: list[str] = []
+
+    def _hit(source_id: object, name: str) -> None:
+        if not isinstance(source_id, str) or source_id not in registry:
+            # 悬空来源不展示：宁可少给一条依据，也不给用户一个没登记过的出处。
+            # 数据侧有派生不变式挡这个（tests/test_herb_evidence.py）。
+            return
+        if source_id not in supports:
+            supports[source_id] = []
+            order.append(source_id)
+        if name not in supports[source_id]:
+            supports[source_id].append(name)
+
+    for entry in payload.get("property_entries") or []:
+        if entry.get("name") not in wanted:
+            continue
+        for ev in entry.get("evidence") or []:
+            _hit(ev.get("source_id"), str(entry.get("name")))
+
+    if constitution:
+        for entry in payload.get("constitution_entries") or []:
+            if entry.get("constitution") != constitution:
+                continue
+            if entry.get("herb_name") not in wanted:
+                continue
+            _hit(entry.get("source_id"), str(entry.get("herb_name")))
+
+    out: list[dict] = []
+    for source_id in order:
+        info = registry[source_id]
+        out.append(
+            {
+                "id": source_id,
+                "title": info.get("title") or "",
+                "publisher": info.get("publisher") or "",
+                "url": info.get("url") or "",
+                "supports": supports[source_id],
+                # caveat 在事实源里带 markdown 粗体（给人读的登记表用），
+                # 这里要去掉 —— 它会原样进终端与响应体，不该出现 `**`。
+                "note": (info.get("caveat") or "").replace("**", ""),
+            }
+        )
+    return out

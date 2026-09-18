@@ -402,6 +402,7 @@ async function run() {
     if (data.user_message) html += `<div class="card"><h2>说明</h2><div>${esc(data.user_message)}</div></div>`;
     html += renderParsed(data.parsed);
     html += renderRecs(data.recommendations || []);
+    html += renderReferences(data.basis && data.basis.references);
     html += `<div class="card">${renderDisclaimer()}
       <div class="meta">耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s ｜ Agent1 ${esc(data.meta.agent1_ms)}ms ｜ Agent2 ${esc(data.meta.agent2_ms)}ms
       ${data.meta.degraded ? '｜ 已降级为规则匹配' : ''}
@@ -431,6 +432,33 @@ function renderKeySource(meta) {
   }
   return `<div class="hint"><span class="badge">本次未调用模型</span>`
     + `（规则分支，无费用）${backend}。</div>`;
+}
+
+/**
+ * 本次推荐原料的公开依据。
+ *
+ * 只展示**命中本次原料**的来源 —— 后端已按 source_id 聚合、只返回命中的那些，
+ * 前端不再做筛选（把体质级的概述当成单味依据是这条链最容易犯的错）。
+ *
+ * 底部的脚注不能省：来源支持的是「原料与调养方向」，
+ * **不是**本程序生成的具体搭配与克数。
+ * 未审核状态（review_status）刻意不在这里显示：那是审核流程的状态，
+ * 不是来源可信度的状态 —— 药典那条是官方标准，标「未审核」会误导。
+ */
+function renderReferences(refs) {
+  if (!refs || !refs.length) return '';
+  const items = refs.map(r => {
+    const supports = (r.supports || []).map(x => esc(x)).join('、');
+    const note = r.note ? `<div class="hint">注：${esc(r.note)}</div>` : '';
+    return `<div class="tea">
+      <h3>${esc(r.publisher)}《${esc(r.title)}》</h3>
+      <div class="hint">支持：${supports}</div>
+      <div class="hint"><a href="${esc(r.url)}" rel="noopener noreferrer" target="_blank">${esc(r.url)}</a></div>
+      ${note}
+    </div>`;
+  }).join('');
+  return `<div class="card"><h2>这次推荐的公开依据</h2>${items}`
+    + `<div class="hint">来源支持原料与调养方向，<b>不代表支持具体搭配、克数</b>。</div></div>`;
 }
 
 document.getElementById('examples').addEventListener('click', e => {

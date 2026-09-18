@@ -34,6 +34,7 @@ from app.domain.safety import (
     check_brew_adequacy,
     check_constitution_fit,
     detect_high_risk,
+    herb_evidence,
     ready_constitutions,
     scan_free_text,
 )
@@ -80,6 +81,36 @@ def _ensure_constitution_ready(constitution: Constitution) -> None:
         "CONSTITUTION_NOT_READY",
         f"「{label}」暂未启用：尚无可用的饮片配伍数据。"
         "请先补齐该体质的标注，在此之前该体质不会出现在选项中。",
+    )
+
+
+def _build_basis(
+    constitution: Constitution,
+    label: str,
+    *,
+    recs: list[Recommendation] | None = None,
+    rule_hits: list[str] | None = None,
+    guardrail_applied: list[str] | None = None,
+) -> Basis:
+    """`Basis` 的**唯一**构造点 —— 三处返回路径全走这里。
+
+    统一入口让「新增一处 `Basis(...)` 却忘了带 `references`」在结构上不可能发生。
+    这个风险是本项目真实踩过的形状：`matcher.build_basis` 曾是一份**没有任何调用点**
+    的同名实现，改它等于没改，而输出表面完全看不出来。
+
+    注意两点：
+    - `references` 由**本次真正留下的推荐**（`recs`）决定，不看 Agent 原始输出 ——
+      被护栏拦掉的饮片不该出现在公开依据里。
+    - 高风险分支与「没识别出食物」分支**天然为空**（没有推荐），不要在这里补空列表，
+      传空与不传等价，写了反而制造「这里也要管」的错觉。
+    """
+    names = {h.name for rec in (recs or []) for h in rec.herbs}
+    return Basis(
+        constitution=constitution,
+        constitution_label=label,
+        rule_hits=rule_hits or [],
+        guardrail_applied=guardrail_applied or [],
+        references=herb_evidence(names, constitution.value) if names else [],
     )
 
 
@@ -173,9 +204,9 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
             request_id=request_id,
             parsed=parsed,
             recommendations=[],
-            basis=Basis(
-                constitution=constitution,
-                constitution_label=label,
+            basis=_build_basis(
+                constitution,
+                label,
                 guardrail_applied=[f"命中高风险关键词：{'、'.join(high_risk)}"],
             ),
             disclaimer=disclaimer,
@@ -234,7 +265,7 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
             request_id=request_id,
             parsed=parsed,
             recommendations=[],
-            basis=Basis(constitution=constitution, constitution_label=label),
+            basis=_build_basis(constitution, label),
             disclaimer=disclaimer,
             meta=Meta(
                 agent1_ms=agent1_ms,
@@ -294,9 +325,10 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
         request_id=request_id,
         parsed=parsed,
         recommendations=cleaned,
-        basis=Basis(
-            constitution=constitution,
-            constitution_label=label,
+        basis=_build_basis(
+            constitution,
+            label,
+            recs=cleaned,
             rule_hits=rule_hits,
             guardrail_applied=applied,
         ),

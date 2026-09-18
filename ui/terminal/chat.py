@@ -159,6 +159,16 @@ def render_footer(resp, elapsed_s: float) -> None:
         print(f"  命中规则：{'、'.join(resp.basis.rule_hits)}")
     if resp.basis.guardrail_applied:
         print(f"  护栏介入：{len(resp.basis.guardrail_applied)} 项")
+    # 公开依据：只展示命中本次原料的来源。脚注不能省 —— 来源支持的是
+    # 「原料与调养方向」，不是本程序生成的具体搭配与克数。
+    refs = getattr(resp.basis, "references", None) or []
+    if refs:
+        print("  公开依据（仅支持原料与调养方向，不代表支持具体搭配、克数）：")
+        for ref in refs:
+            supports = "、".join(getattr(ref, "supports", None) or [])
+            print(f"    · {ref.publisher}《{ref.title}》｜支持：{supports}｜{ref.url}")
+            if ref.note:
+                print(f"      注：{ref.note}")
     print(f"\n  {resp.disclaimer.text}")
     print("-" * 62)
 

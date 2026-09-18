@@ -458,7 +458,7 @@ usage["completion_tokens_details"]["reasoning_tokens"]   # 其中思考
 
 ## 9. 数据维护
 
-### 9.1 五个数据文件
+### 9.1 六个数据文件
 
 | 文件 | 内容 | 规模 |
 |---|---|---|
@@ -467,6 +467,7 @@ usage["completion_tokens_details"]["reasoning_tokens"]   # 其中思考
 | `constitution.json` | 9 型体质 + `one_line` / `principles` / `avoid` | 9 型 |
 | `food_medicine_catalog.json` | 国家卫健委食药物质目录（4 批公告）汇编，**只用于合规自检，不参与判定** | 106 种 |
 | `herb_nature_reference.json` | 《中国药典》2020 年版一部的性味归经记载 + 与项目的比对结果，**只用于核对，不参与判定** | 34 味 |
+| `herb_evidence_sources.json` | 饮片侧来源登记表：属性依据（域 I）+ 体质适配依据（域 II）+ 来源注册表，**运行时读**，只用来生成 `basis.references` | 34 味 + 24 条 |
 
 字段含义写在各自的 `_meta.field_notes` 里，**改结构时同步改它**。
 
@@ -613,6 +614,50 @@ GET  https://ydz.chp.org.cn/front-api/entry/{id}   # 返回 htmlContent，含【
 这两个文档有 26 项结构测试（`tests/test_handover_docs.py`）守着：章节齐备、
 挂起项 ID 唯一且都有责任人与状态、**引用的仓库路径真实存在**、文档里没有 Key 材料。
 所以重构后如果文档引用了已改名的文件，`pytest` 会直接报错。
+
+### 9.8 饮片侧来源登记表（`build_herb_sources.py`）
+
+**与 §9.5 / §9.6 同类：长期可重复运行的只读工具，不是一次性批次脚本。**
+
+它维护 `core/data/herb_evidence_sources.json`（挂起项 E3 的落地物）。事实源与产物：
+
+| 角色 | 路径 | 谁生成 |
+|---|---|---|
+| 事实源 | `core/data/herb_evidence_sources.json` | 域 I 由脚本派生；域 II 与 `_meta` 人工录入 |
+| 人读登记表 | `docs/herb-evidence-sources.md` | 脚本渲染，**请勿手工编辑** |
+
+```bash
+cd core
+python scripts/build_herb_sources.py            # 只打印摘要，不写文件
+python scripts/build_herb_sources.py --write    # 落盘 JSON + 渲染 Markdown
+python scripts/build_herb_sources.py --check    # 只校验不写盘（可进 CI）
+```
+
+**分工必须记住**：域 I（34 味）**从 `herb_nature_reference.json` 派生**，
+一个字都不手写，所以两份表格不可能漂移；域 II（24 条）与 `_meta` 是**人工录入**的，
+本脚本只重算 `_meta.counts`、原样保留其余内容。`tests/test_herb_evidence.py` 里有
+一条等价于 `--check` 的测试，**手工改 JSON 或改那份 Markdown 都会让 `pytest` 变红**。
+
+它把结果交给 `safety.herb_evidence(herb_names, constitution)`，再由
+`orchestrator._build_basis()` 装进 `Basis.references`，最后两个壳各自渲染。
+
+维护时要知道的五件事：
+
+1. **`_build_basis()` 是 `Basis` 的唯一构造点**，三处返回路径全走它。测试用 AST
+   （不是 grep）数 `Basis(...)` 的调用点数，并用同一条守卫确认 `core/app/` 全文
+   不再有 `def build_basis` —— 那个函数曾是一份**没有任何调用点**的同名实现，
+   改它等于没改，而输出表面完全看不出来。
+2. **域 II 条目不得带 `field` / `verdict` 这类键。** 带了它就成了 `herbs.json` 的
+   `rulings`（软约束豁免登记）的第二本账。域 II 回答的是「**为什么推荐**」，
+   `rulings` 回答的是「忌/慎用该怎么落地」，两件事。有测试守着。
+3. **`nhc-food-medicine-2021` 永不作体质依据**（只证明合规身份）。它在注册表里
+   登记在册是为了说明「为什么不能用」，`constitution_entries` 引用次数必须为 0。
+4. **`herb_evidence()` 只返回命中本次原料的来源**，且域 II 只在传了 `constitution`
+   时参与。把体质级的概述当成某一味的依据，是这条链最容易犯的错。
+5. **覆盖是不完整的，且必须如实呈现**：属性依据 33/34 味（茉莉花药典未收载），
+   体质依据只有 14/34 味。界面脚注与 `EvidenceReference` 的文档字符串都写着同一句边界：
+   来源支持的是**原料与调养方向**，不是本程序生成的**具体搭配与克数**。
+   `review_status: pending` 一律**不进界面** —— 那是审核流程的状态，不是来源可信度的状态。
 
 ---
 

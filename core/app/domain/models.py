@@ -125,6 +125,24 @@ class Recommendation(BaseModel):
     score: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
+class EvidenceReference(BaseModel):
+    """本次推荐用到的原料对应的**公开依据**。
+
+    ``supports`` 只表示该来源明确提到了这些原料与当前方向，
+    **不代表来源支持本程序生成的具体搭配、克数或个体化使用**。
+
+    ``note`` 携带来源自身的注意事项（如药典引用的是 2020 版、已被 2025 版废止），
+    属于「必须跟着依据走」的诚实边界，前端不得省略。
+    """
+
+    id: str = Field(description="来源 id，对应 herb_evidence_sources.json 的 source_registry 键")
+    title: str = Field(description="来源标题")
+    publisher: str = Field(description="发布方")
+    url: str = Field(description="原文链接")
+    supports: list[str] = Field(default_factory=list, description="该来源点名的原料（项目正名）")
+    note: str = Field(default="", description="来源自身的注意事项")
+
+
 class Basis(BaseModel):
     """推荐依据，用于前端展示与事后归因。"""
 
@@ -132,6 +150,10 @@ class Basis(BaseModel):
     constitution_label: str
     rule_hits: list[str] = Field(default_factory=list)
     guardrail_applied: list[str] = Field(default_factory=list)
+    references: list[EvidenceReference] = Field(
+        default_factory=list,
+        description="本次实际推荐原料对应的公开依据（只含命中本次原料的来源）",
+    )
 
 
 class Meta(BaseModel):

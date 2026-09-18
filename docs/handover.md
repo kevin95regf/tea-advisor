@@ -21,8 +21,8 @@
 | | |
 |---|---|
 | 代码 | 45 个源文件 / 10,027 行，其中 `domain` + `services`（真正的资产）2,075 行 |
-| 测试 | **335 项，全离线，约 0.9 秒** |
-| 数据 | 食性表 147 条、饮片 34 味、体质 9 型（全部就绪）、食药物质目录 106 种、药典核对 34 味 |
+| 测试 | **428 项，全离线，约 4 秒** |
+| 数据 | 食性表 147 条、饮片 34 味、体质 9 型（全部就绪）、食药物质目录 106 种、药典核对 34 味、饮片来源登记 34+24 条 |
 
 **它明确不是什么**：不是医疗器械、不做体质辨识诊断、不承诺任何疗效。所有输出都带免责声明，且禁用「治疗/根治」这类表述（有护栏强制）。
 
@@ -127,7 +127,7 @@ tea-advisor/
 │  │  └─ main.py                FastAPI 入口
 │  ├─ data/                     数据层（详见 §4）
 │  ├─ scripts/                  运维 / 自检 / 文档生成脚本
-│  ├─ tests/                    335 项离线测试
+│  ├─ tests/                    428 项离线测试
 │  └─ pyproject.toml
 ├─ ui/
 │  ├─ terminal/chat.py          终端壳（仅标准库）
@@ -155,6 +155,7 @@ tea-advisor/
 | `core/data/constitution.json` | 体质定义 + 调养原则 | 9 型（全部就绪） | ✅ 是 |
 | `core/data/food_medicine_catalog.json` | 国家卫健委食药物质目录（4 批公告汇编） | 106 种 | ❌ 只用于合规自检 |
 | `core/data/herb_nature_reference.json` | 药典 2020 一部记载 + 与项目的比对结果 | 34 味 | ❌ 只用于核对 |
+| `core/data/herb_evidence_sources.json` | 饮片侧来源登记表：属性依据 + 体质适配依据 + 来源注册表 | 34 味 + 24 条 | ✅ 是（只生成 `basis.references`，不参与判定） |
 
 **审核三态**（`review_status`）：`approved` = 真·硬规则库，界面不标注；`pending` = 0.9 但界面必须标「待验证」；`rejected` = 降为 0.6，不作硬规则。
 
@@ -191,10 +192,11 @@ tea-advisor/
 
 ### 5.2 已验证的功能
 
-- ✅ 三层判定 + 置信度体系（335 项离线测试覆盖）
+- ✅ 三层判定 + 置信度体系（428 项离线测试覆盖）
 - ✅ 双 Agent 链路（Agent1 解析 → Agent2 推荐）
 - ✅ 确定性护栏（白名单/剂量/禁忌/禁用表述/高风险人群）
 - ✅ 规则兜底（模型不可用时仍给出合法搭配）
+- ✅ 逐味公开依据链（属性依据 33/34 味 + 体质依据 24 条，随推荐返回 `basis.references`，两个壳都呈现）
 - ✅ 两个后端：`direct`（直连官方 API，默认）与 `dsh`（DeepSeekHarness 子进程）
 - ✅ 用户自带 Key，逐请求传递，无服务端兜底
 - ✅ 终端壳 + 本地 Web 壳
@@ -335,10 +337,12 @@ cd core
 python scripts/check_herb_catalog.py --format md --out ../docs/catalog-compliance.md
 python scripts/build_constitution_doc.py
 python scripts/build_herb_crosscheck.py
+python scripts/build_herb_sources.py --write
 ```
 
 它们的内容都渲染自数据文件（`core/data/food_medicine_catalog.json`、
-`docs/constitution-9-types.json`、`core/data/herb_nature_reference.json`），
+`docs/constitution-9-types.json`、`core/data/herb_nature_reference.json`、
+`core/data/herb_evidence_sources.json`），
 **那些 JSON 才是事实源**；`--check` 模式可只校验不写文件，适合进 CI。
 
 ---

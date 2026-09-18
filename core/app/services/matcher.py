@@ -10,7 +10,6 @@ import logging
 
 from app.domain.enums import CONSTITUTION_LABELS, Constitution, Nature
 from app.domain.models import (
-    Basis,
     BrewGuide,
     HerbInBlend,
     ParsedMeal,
@@ -321,17 +320,3 @@ def fallback_recommend(
         score=0.6,
     )
     return [rec], "这次用的是简化匹配，搭配安全但说明比较简略。", hits
-
-
-def build_basis(
-    constitution: Constitution,
-    constitution_label: str,
-    rule_hits: list[str] | None = None,
-    guardrail_applied: list[str] | None = None,
-) -> Basis:
-    return Basis(
-        constitution=constitution,
-        constitution_label=constitution_label,
-        rule_hits=rule_hits or [],
-        guardrail_applied=guardrail_applied or [],
-    )
