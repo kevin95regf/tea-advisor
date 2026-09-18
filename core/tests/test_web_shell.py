@@ -115,6 +115,28 @@ def _guard5_key_state_no_echo(html: str) -> list[str]:
     return bad
 
 
+# ---------------------------------------------------------------- 守卫 6
+
+def _guard6_busy_covers_both_buttons(html: str) -> list[str]:
+    """busy 开关必须同时管「给我建议」与「重新分析」—— 否则后者可连点、重复计费。"""
+    bad = []
+    fn = re.search(r'function\s+setBusy\s*\([^)]*\)\s*\{(.*?)\n\}', html, re.S)
+    if not fn:
+        bad.append('缺少 setBusy()：两个按钮的 disabled 各管各的')
+    else:
+        body = fn.group(1)
+        if 'btn.disabled' not in body:
+            bad.append('setBusy 没有管 #go（btn.disabled）')
+        if not re.search(r'getElementById\(\s*[\'"]again[\'"]', body):
+            bad.append('setBusy 没有管「重新分析」（#again）')
+
+    # 全文只允许两处 btn.disabled：setBusy 内 1 处 + loadInit 里「初始化失败」1 处
+    n = html.count('btn.disabled')
+    if n > 2:
+        bad.append(f"btn.disabled 出现 {n} 次（应为 setBusy 内 1 次 + loadInit 内 1 次）")
+    return bad
+
+
 # ---------------------------------------------------------------- 负控制样本
 
 BAD1_REMEMBER_CHECKED = '<input id="remember" type="checkbox" checked /> 记住 Key'
@@ -144,6 +166,16 @@ BAD5_STATE_ECHOES_KEY = """
 keyStateEl.innerHTML = '<span class="dot"></span>' + (filled ? '已填：' + keyEl.value.slice(0, 4) : '未填写');
 """
 
+BAD6_BUSY_ONLY_GO = """
+async function run() {
+  btn.disabled = true;
+  try { await fetch('/api/analyze'); } finally { btn.disabled = false; }
+}
+document.getElementById('out').addEventListener('click', e => {
+  if (e.target && e.target.id === 'again') run();
+});
+"""
+
 # ================================================================ 正控（真实文件）
 
 def test_guard1_positive() -> None:
@@ -164,6 +196,10 @@ def test_guard4_positive() -> None:
 
 def test_guard5_positive() -> None:
     assert _guard5_key_state_no_echo(_html()) == []
+
+
+def test_guard6_positive() -> None:
+    assert _guard6_busy_covers_both_buttons(_html()) == []
 
 
 # ================================================================ 负控（合成样本）
@@ -187,3 +223,7 @@ def test_guard4_negative() -> None:
 
 def test_guard5_negative() -> None:
     assert _guard5_key_state_no_echo(BAD5_STATE_ECHOES_KEY) != []
+
+
+def test_guard6_negative() -> None:
+    assert _guard6_busy_covers_both_buttons(BAD6_BUSY_ONLY_GO) != []

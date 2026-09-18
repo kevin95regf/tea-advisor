@@ -411,6 +411,16 @@ function renderRecs(recs) {
   return `<div class="card"><h2>给你的建议</h2>${items}</div>`;
 }
 
+/**
+ * 同一个 busy 开关管两个按钮：「给我建议」与结果区的「重新分析」。
+ * 分开管会让「重新分析」可连点 —— 每点一次都是一次真实调用、一次真实费用。
+ */
+function setBusy(b) {
+  btn.disabled = b;
+  const again = document.getElementById('again');
+  if (again) again.disabled = b;
+}
+
 async function run() {
   if (!META) {
     out.innerHTML = '<div class="card error">页面未初始化完成（/api/meta 未取到），请刷新重试。</div>';
@@ -423,7 +433,7 @@ async function run() {
   saveKey();
   const userKey = currentKey();
 
-  btn.disabled = true;
+  setBusy(true);
   out.innerHTML = '<div class="card loading">正在解析你的饮食…（双 Agent 串行，通常 10–30 秒）</div>';
   const t0 = Date.now();
   try {
@@ -464,12 +474,18 @@ async function run() {
       ｜ 体质：${esc(data.basis.constitution_label)} ｜ request_id ${esc(data.request_id)}</div>
       ${renderKeySource(data.meta)}
     </div>`;
+    // 「按当前输入」不是「重跑上一次」：改了输入框再点，分析的是新内容。
+    // 会再调一次模型、再花一次钱 —— 这两句不能省，省了就是诱导重复付费。
+    html += `<div class="card"><div class="row" style="margin-top:0">
+      <button id="again" type="button">按当前输入重新分析</button>
+      <span class="hint">会再次调用模型（约 1 分钱），以输入框里的当前内容为准。</span>
+    </div></div>`;
     out.innerHTML = html;
   } catch (e) {
     out.innerHTML = `<div class="card error"><b>请求失败</b><br>${esc(e.message)}
       <div class="hint">确认服务在运行，且 URL 是 http://127.0.0.1:8000</div></div>`;
   } finally {
-    btn.disabled = false;
+    setBusy(false);
   }
 }
 
@@ -531,6 +547,10 @@ keyEl.addEventListener('change', updateKeyState);
 rememberEl.addEventListener('change', updateKeyState);
 document.querySelectorAll('.opencfg').forEach(b => b.addEventListener('click', openCfg));
 btn.addEventListener('click', run);
+// 结果区是整体重绘的，「重新分析」每次都是新元素 ⇒ 用委托，不要 render 后 addEventListener
+document.getElementById('out').addEventListener('click', e => {
+  if (e.target && e.target.id === 'again') run();
+});
 loadInit();
 </script>
 </body>
