@@ -12,6 +12,7 @@ from app.services.food_lookup import (
     names_match,
     render_nature_change_rules,
     render_reference,
+    resolve_temperature_fields,
     table_stats,
 )
 
@@ -237,3 +238,32 @@ def test_reference_text_is_compact() -> None:
     many = render_reference("喝了茉莉花茶 菊花茶 绿茶 红茶 普洱 姜茶 红枣茶 陈皮茶 荷叶茶 罗汉果茶 决明子茶 乌梅茶")
     assert len(one) < 400, f"单条参考表过长：{len(one)}"
     assert len(many) < 3000, f"多条参考表过长：{len(many)}"
+
+
+# ============================================================
+# 5. `note` 是运行时字段：写文案不能踩到温度前缀
+# ============================================================
+def test_jiangyou_note_has_no_temperature_side_effect() -> None:
+    """给 `note` 写文案时必须避开温度前缀 —— 它不是注释，是**运行时字段**。
+
+    `resolve_temperature_fields(name, note)` 会**同时扫 name 与 note**，命中
+    `CHILL_PREFIXES`（冰 / 加冰 / 冷藏 / 冷冻 / 冻…）或 `HEAT_PREFIXES`
+    （热 / 烫 / 加热 / 温热…）就给四气 **±1**。全表实测有 4 条命中，其中
+    `suannai_wan`（酸奶碗）正是**从 note 命中**的（note 写了「冷藏」）。
+
+    A2 ① 给 `jiangyou` 补的 note 写「…《本草纲目》9948 记辛、温。…」—— 「辛、温」不含
+    「温热」「热」，所以**不该产生任何温度信号**。这条防的是哪天有人把文案改成
+    「古籍记其性温热」之类，把「平」悄悄推到「温」（数据会显示成有依据的改动）。
+
+    注意：它守的是「**没有副作用**」，不是「note 写了某句特定的话」—— 后者是快照断言，
+    改一次文案就红一次。
+    """
+    table = load_food_table()
+    entries = list(table.get("foods", [])) + list(table.get("tea_drinks", {}).get("items", []))
+    entry = next((e for e in entries if e.get("id") == "jiangyou"), None)
+    assert entry is not None, "表里找不到酱油条目（jiangyou）"
+    note = (entry.get("note") or "").strip()
+    assert note, "A2 ① 要求酱油有 note 留痕（否则核验单 §4.2 的「一律加 note」是假陈述）"
+    assert resolve_temperature_fields(entry.get("name") or "", note) is None, (
+        f"酱油的 note 踩到温度前缀，会悄悄改它的四气：{note!r}"
+    )

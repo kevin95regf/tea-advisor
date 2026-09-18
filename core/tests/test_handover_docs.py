@@ -298,3 +298,52 @@ def test_pending_e1_matches_actual_data_state():
     e1_rows = [ln for ln in text.splitlines() if ln.startswith("|") and "**E1**" in ln]
     assert e1_rows, "概览里找不到 E1 行"
     assert "已" in e1_rows[0], f"E1 已无遗留，概览状态列应改为「已…」：{e1_rows[0]}"
+
+
+def test_pending_a2_matches_actual_data_state():
+    """A2 已关闭：4 项决定必须真的落到**数据**上，且概览状态已从「待」改成「已」。
+
+    写法照抄上面那条 E1 测试：断言的对象是「数据 vs 清单」的**一致性**，不是
+    「某条数据等于某值」—— 后者是快照断言，改一次红一次，且分不清「数据坏了」还是
+    「活儿干完了」。
+
+    逐条对应 A2 的 4 项（名单不写死，都是从数据里现算）：
+    1. ① 酱油：必须有 `note` 留痕（口径分歧、值不改）；
+    2. ② 金针菇 / 杏鲍菇 / 平菇：必须已从**所有**条目的 `aliases` + `keywords` 移出
+       （两处都清 —— `_find_entry` 把两处合并扫描，「只删 keywords」无效）；
+    3. ③ `mogu` 的 `name` 仍是「蘑菇」：**不改名**是为了维持 `exact_name_hit` 直取，
+       改名会让用户说「蘑菇」落到别名匹配并可能启用烹饪修正层；`xianggu` 必须仍在；
+    4. ④ 的限定写法属 `sources.json`，由 `tests/test_food_review_sheet.py` 的
+       受控词表守卫负责，这里不重复。
+    另加：概览里 A2 行的状态必须已改成「已…」（数据改了但清单没关，等于没关）。
+    """
+    import json
+
+    d = json.loads((CORE_DIR / "data" / "food_properties.json").read_text(encoding="utf-8"))
+    recs = d["foods"] + d["tea_drinks"]["items"]
+    by_id = {r["id"]: r for r in recs}
+
+    jiangyou = by_id.get("jiangyou")
+    assert jiangyou is not None, "表里找不到酱油条目"
+    assert (jiangyou.get("note") or "").strip(), "A2 ① 酱油的 `note` 留痕没了（口径分歧必须留痕）"
+
+    words = ("金针菇", "杏鲍菇", "平菇")
+    stray = [
+        f"{w} ← {r['id']}"
+        for r in recs
+        for w in words
+        if any(
+            w == (f or "").strip()
+            for f in [r.get("name")] + list(r.get("aliases") or []) + list(r.get("keywords") or [])
+        )
+    ]
+    assert not stray, f"A2 ② 这 3 个词又挂回条目上了（会以 0.9 置信度呈现无来源的四气）：{stray}"
+
+    assert by_id["mogu"].get("name") == "蘑菇", "A2 ③ `mogu` 不该改名（会打断 exact_name_hit 直取）"
+    assert "xianggu" in by_id, "A2 ③ 从 `mogu` 拆出的 `xianggu` 条目不见了"
+
+    text = PENDING.read_text(encoding="utf-8")
+    a2_rows = [ln for ln in text.splitlines() if ln.startswith("|") and "**A2**" in ln]
+    assert a2_rows, "概览里找不到 A2 行"
+    assert "已" in a2_rows[0], f"A2 已落定，概览状态列应改为「已…」：{a2_rows[0]}"
+

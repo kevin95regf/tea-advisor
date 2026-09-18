@@ -4,7 +4,7 @@
 > 一律以本文为准。任何一项解决了，就在这里更新状态并记录解决方式。
 >
 > 快照时间：**2026-09-18**　共 **15** 项记录在案（A/B/C/D/E 五类），
-> 其中 **D2、E1、E3 已解决**、**B3 的阻塞已解除**（九型已上线；244 格的布局中已落地 15 格，余 239 格是完备度而非功能阻塞），其余 11 项待处理。
+> 其中 **A2、D2、E1、E3 已解决**、**B3 的阻塞已解除**（九型已上线；244 格的布局中已落地 15 格，余 239 格是完备度而非功能阻塞），其余 10 项待处理。
 
 ---
 
@@ -13,7 +13,7 @@
 | ID | 事项 | 谁来解 | 阻塞什么 | 状态 |
 |---|---|---|---|---|
 | **A1** | 食性表 147 条全部未人工审核 | 具备资质的中医师/中药师 | ⛔ **对外提供服务** | 待人工 |
-| **A2** | A1 核对遗留 4 项待确认（酱油 + 3 味菇等） | 项目所有者 | 不影响功能，影响 3 条数据的最终取值 | 待确认 |
+| **A2** | A1 核对遗留 4 项待确认（酱油 + 3 味菇等） | 项目所有者 | 不影响功能，影响 3 条数据的最终取值 | ✅ **已解决**（2026-09-18） |
 | **A3** | `口蘑` 无来源行却挂在 `mogu` 别名上（凭项目判断保留） | 具备资质的中医师/中药师 | A1 的审核质量（「无证据却挂别名」的状态） | 待确认 |
 | **B1** | 7 处药典不一致待复核 | nanple | 数据准确性（不阻塞功能） | 待 nanple |
 | **B2** | 问卷项目 `phlegm_dampness` 拼写不一致 | nanple | 问卷接入 | 待 nanple |
@@ -50,16 +50,27 @@
 
 ## A2　A1 核对遗留的 4 项待确认（酱油 + 3 味菇）
 
-> 属于 A1 的一部分，但**不能用「来源核对」解决**——都是「数据该不该改」的决定。单列出来，
-> 免得混在 33 条清单里被当成已结案。**未确认前不改数据**。
+> **✅ 已解决（2026-09-18）。** 属于 A1 的一部分，但**不能用「来源核对」解决**——都是
+> 「数据该不该改」的决定，所以当初单列出来，免得混在 33 条清单里被当成已结案。
+> 方案与逐条论证见 `docs/food-properties-a2-plan.md`（§8 是最终执行稿）。
+>
+> 落地分两次提交：**提交 A**（`docs/food-properties-sources.json` 措辞归一 + `_meta.controlled_vocab`
+> + 核验单 §4.4 加「限定(how)」列 + 把数据快照断言改成派生不变式）→ **提交 B**
+> （`core/scripts/patch_food_table.py` 的 `ENTRY_FIXES` 改 `jiangyou` / `mogu` → 数据 →
+> 守卫测试）。数据改动全程走补丁脚本，**没有手改** `food_properties.json`。
 
 | | |
 |---|---|
-| **① 酱油（`jiangyou`）** | 项目记「平」；依据《本草纲目》「酱」记「温」。映射本身可用，但 50 号文件 §5.4 自定「仅经典有载、教材无（**不得当教材用**）」——纲目强度低于教材，**据此改判不成立**，故 nature 不改、单列待确认。核验单 §4.2 已按 ② 层登记 |
-| **② 金针菇 / 杏鲍菇 / 平菇** | 三者**暂留在 `mogu` 条目上**，因而随条目被判为**寒**（原 `mogu` 为平）。但它们是另外 3 个物种，50 号文件**无条目**，属 ③ 无源。两条路：随条目暂留（现状）／各自独立成条后标无源待核。**倾向前者**，待确认 |
-| **③ 蘑菇拆条的收尾** | `mogu` 已收窄为「蘑菰」（寒，纲目 23487）；新增 `xianggu`「香菇」（平，香蕈）。新条目 `review_status: pending`、无 `reviewed_by`，与全表一致。**待确认的是**：`xianggu` 该不该继承原 `mogu` 的任何审核痕迹（当前**不继承**，按新条目从零开始） |
-| **④ C 组 4 条来源值的限定写法** | `shengcai`（生菜→莴苣）、`lianou`（莲藕→藕）、`suan`（蒜→大蒜）三条已采纳并各带限定；`qingcai`（青菜→油菜）**未采纳**、已降级 ③。限定措辞若要调整，改 `docs/food-properties-sources.json` 的 `mapping_review.reason` 即可 |
-| **相关文件** | `docs/food-properties-sources.json`（`_meta.mapping_review` 与各条 `mapping_review`）、`docs/food-properties-review-sheet.md` §4.2/§4.3/§4.4、`core/data/food_properties.json` |
+| **① 酱油（`jiangyou`）** | ✅ **映射采纳、值不改**。依据《本草纲目》「酱」记「辛、温」，但 50 号文件 §5.4 自定「仅经典有载、教材无（**不得当教材用**）」——纲目强度低于教材，**据此改判不成立**，故 `nature` 保持「平」。数据侧补 `note` 留痕（此前 4 条口径分歧里**只有它没留痕**，而核验单 §4.2 写着一律加 note）；`sources.json` 里 `accepted` 由 `null` 改 `true`、`open_question` 置 `null`。守卫：`core/tests/test_food_lookup.py` 的 `test_jiangyou_note_has_no_temperature_side_effect` |
+| **② 金针菇 / 杏鲍菇 / 平菇** | ✅ **走 (C)：从 `aliases` + `keywords` 两处移出，不立新条目**。这 3 个物种 50 号文件**无条目**，原先挂在 `mogu` 上随它被判为**寒** —— 即**以 0.9 置信度呈现一个无来源的四气**；移出后走「表未覆盖」的模型推测分支（0.3，界面标「食性未经验证」）。**必须两处都清**：`_find_entry` 的第 2 级把 `keywords` 与 `aliases` **合并扫描**（`core/app/services/food_lookup.py`），只删一处无效 |
+| **③ 蘑菇拆条的收尾** | ✅ **`mogu` 不改名**（`name` 仍为「蘑菇」）：改名会让用户说「蘑菇」落到别名匹配、并可能启用烹饪修正层（`exact_name_hit` 的分支决定判层），属「改名打断匹配」同族风险。`xianggu` 保持 `batch=后续`（**不把第一批从 33 改成 34**），`review_status: pending`、**不继承**原 `mogu` 的任何审核痕迹（拆出的新条目从零开始） |
+| **④ C 组 4 条来源值的限定写法** | ✅ **定受控词表**：`_meta.controlled_vocab` 固定 `how` 6 值 / `tier` 5 值 + `tier→source_registry` 对应；13 处措辞归一（8 处混用值「别名/等价名」拆开、目录档 4 处「正名」纠为「别名」、1 处归一）。核验单 **§4.4 新增「限定(how)」列** —— 此前 `how` 根本不渲染，限定形同虚设；且 `reference` 里**不含** `how`，取值须按 `(source_id, matched_name)` 回 `evidence[]` 找（同一条目常有多条依据，取 `[0]` 会错）。限定**只留在 `sources.json`**，不给生菜/蒜补运行时 `note`（`note` 会改四气，实测全表 4 条命中，`suannai_wan` 就是从 note 改的档） |
+| **相关文件** | `docs/food-properties-sources.json`、`docs/food-properties-review-sheet.md` §4.2/§4.4、`core/data/food_properties.json`、`core/scripts/patch_food_table.py`、`docs/food-properties-a2-plan.md`（方案 + 执行结果） |
+
+> ⚠️ A2 收口**顺带生出**一条新挂起项：`口蘑` 无来源行却挂在 `mogu` 别名上 → 见 **A3**。
+> 另有两条顺手修掉的「文档说了、事实不符」：核验单 §4.2 的「一律加 note」现在由守卫测试
+> 把关（`core/tests/test_food_review_sheet.py` 的 `test_first_batch_conflicts_have_note`）；
+> `sources.json` 的 `outcome`/`scope` 曾把第 18 条 `xianggu` 漏在计数外（17 vs 18）。
 
 ## A3　`口蘑` 无来源行，却挂在 `mogu` 别名上
 

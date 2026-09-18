@@ -1125,10 +1125,7 @@
       "name": "蘑菇",
       "aliases": [
         "蘑菰",
-        "口蘑",
-        "金针菇",
-        "杏鲍菇",
-        "平菇"
+        "口蘑"
       ],
       "category": "蔬菜",
       "nature": "cold",
@@ -1138,15 +1135,12 @@
       "keywords": [
         "蘑菇",
         "蘑菰",
-        "口蘑",
-        "金针菇",
-        "杏鲍菇",
-        "平菇"
+        "口蘑"
       ],
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
-      "review_note": "拆条后收窄为「蘑菰」（寒，纲目 23487）：香菇已移至 xianggu；四气由 neutral 改 cold。金针菇/杏鲍菇/平菇是另外 3 个物种、无来源，暂留本条目，另开挂起项",
+      "review_note": "拆条后收窄为「蘑菰」（寒，纲目 23487）：香菇已移至 xianggu；四气由 neutral 改 cold。**条目代表的物种＝蘑菰；显示名保留「蘑菇」不改名**，以维持 exact_name_hit 直取（改名会让用户说「蘑菇」落到别名匹配，并可能启用烹饪修正层）。金针菇/杏鲍菇/平菇 是另外 3 个物种、50 号文件无条目，已从 aliases + keywords 两处移出（走「表未覆盖」分支，界面标「食性未经验证」）；「口蘑」保留在别名上，但**依据是项目专业判断、非来源行**（见挂起项 A3）。",
       "review_status": "pending"
     },
     {
@@ -2410,10 +2404,11 @@
         "生抽",
         "老抽"
       ],
+      "note": "口径分歧：项目值平；《本草纲目》9948 记辛、温。未获权威裁定前保留项目值。",
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
-      "review_note": null,
+      "review_note": "加 note 留痕（口径分歧）；映射（酱油→酱）已采纳、值不改",
       "review_status": "pending"
     },
     {

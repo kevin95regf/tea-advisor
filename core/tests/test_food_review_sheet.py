@@ -490,3 +490,82 @@ def test_outcome_counts_match_actual(sources) -> None:
     for key, n in actual.items():
         assert outcome.get(key) == n, f"outcome.{key} 记 {outcome.get(key)}，实算 {n}"
 
+
+# ============================================================
+# 7. A2 落定后的数据侧守卫
+# ============================================================
+# ⚠️ 这个词表**刻意放在测试里，不放运行时模块**：它是一次性清理的**历史集合**
+# （A2 ② 的落定结果），放进 `food_lookup` 只会变成没人调用的死代码 ——
+# 本项目刚因「死代码被误当成入口」踩过坑（见 `matcher.build_basis` 的先例）。
+A2_REMOVED_MUSHROOM_WORDS = ("金针菇", "杏鲍菇", "平菇")
+
+# 匹配面有三个字段。之所以三个都要扫，是因为 `_find_entry` 的第 2 级把
+# `keywords` 与 `aliases` **合并**成一处扫描（core/app/services/food_lookup.py:286）——
+# 「只删 keywords」是无效的，词只要还挂在任一处就仍会命中。
+def bound_words(entries: list[dict], words) -> list[str]:
+    """返回仍被任何条目 `name`/`aliases`/`keywords` 挂着的词（空 = 已清干净）。"""
+    out = []
+    for word in words:
+        for e in entries:
+            fields = [e.get("name")] + list(e.get("aliases") or []) + list(e.get("keywords") or [])
+            if any((f or "").strip() == word for f in fields):
+                out.append(f"{word} ← `{e.get('id')}`")
+                break
+    return sorted(out)
+
+
+def test_removed_mushroom_words_are_bound_to_no_entry(entries) -> None:
+    """A2 ② 走 (C)：金针菇 / 杏鲍菇 / 平菇 必须已从**所有**条目移出（两处都清）。
+
+    移出后这 3 个词走「表未覆盖」的模型推测分支（界面标「食性未经验证」，置信度
+    由表内命中的 0.9 降为 0.3）。选择移出而不是暂留的理由正是这条：**以 0.9 的置信度
+    呈现一个无来源的四气，比以 0.3 诚实标注「未经验证」更危险。**
+    """
+    stray = bound_words(entries, A2_REMOVED_MUSHROOM_WORDS)
+    assert not stray, f"这 3 个词又挂回条目上了（会以 0.9 置信度呈现无来源的四气）：{stray}"
+
+
+def test_removed_words_scanner_covers_both_fields() -> None:
+    """负控制：扫描器必须**同时**覆盖 `aliases` 与 `keywords`。
+
+    这正是踩过的坑：确认稿 (B) 选项写「移除 `keywords` 后落到 unknown」，而
+    `_find_entry` 把两处合并扫描 —— 只删一处，词照旧命中，问题看起来「已修」。
+    只喂一种字段的负控制测不出这个坑，所以这里造两条：**只挂 `aliases`** 与
+    **只挂 `keywords`**。
+    """
+    synthetic = [
+        {"id": "only_aliases", "name": "甲", "aliases": ["金针菇"], "keywords": []},
+        {"id": "only_keywords", "name": "乙", "aliases": [], "keywords": ["平菇"]},
+        {"id": "clean", "name": "丙", "aliases": ["蘑菰"], "keywords": ["蘑菇"]},
+    ]
+    stray = bound_words(synthetic, A2_REMOVED_MUSHROOM_WORDS)
+    assert any("only_aliases" in s for s in stray), "只挂在 aliases 上的没被抓出来"
+    assert any("only_keywords" in s for s in stray), "只挂在 keywords 上的没被抓出来"
+    assert not any("clean" in s for s in stray), "没挂这些词的条目不该被报出来"
+
+
+def test_first_batch_conflicts_have_note(mod, entries, sources) -> None:
+    """第一批 ② 层（口径分歧）条目必须在**数据**里有 `note` 留痕。
+
+    核验单 §4.2 表下注写着「一律保留项目值并在数据里加 `note` 留痕」—— 这句在
+    `jiangyou` 补 `note` 之前是**假陈述**（4 条里只有 3 条有）。核验单是审核人的依据来源，
+    「说了不做」比「不说」更坏。这条把那句话变成**机器可验**的。
+
+    名单从 `sources.json` 的 `layer` 派生，**不写死条目**；只查「有没有 note」，
+    不查 note 的内容（内容归审核人判断）。
+    """
+    by_id = {e["id"]: e for e in entries}
+    expected = [
+        s for s in mod.source_entries(sources)
+        if s.get("batch") == mod.BATCH_PRIMARY and s.get("layer") == "②"
+    ]
+    assert expected, "第一批 ② 层一条都没有？`sources.json` 的 layer 字段可能坏了"
+    missing = [
+        s["id"] for s in expected
+        if not ((by_id.get(s["id"]) or {}).get("note") or "").strip()
+    ]
+    assert not missing, (
+        f"第一批 ② 层条目缺 `note` 留痕（核验单 §4.2 声称「一律加 note」）：{missing}"
+    )
+
+
