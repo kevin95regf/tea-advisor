@@ -89,6 +89,14 @@
 
 验收方式很硬核：**删掉 `ui/` 目录，`core/` 必须仍然通过 `pytest` 与 `smoke_offline.py`。**
 
+> ⚠️ **唯一的例外**：`core/tests/test_web_shell.py` 是 `ui/web/index.html` 的静态守卫，
+> 它必须读到那个文件。**删掉 `ui/` 时请用 `pytest -k "not web_shell"` 排除它** ——
+> 分层约束（删掉 `ui/` 后 `core/` 仍能独立工作）依然成立，
+> 只是这条守卫本身依赖它被守卫的对象。
+> 该页面此前零测试覆盖，2026-09-18 补的这 6 条守卫只守「搬进弹窗时最容易丢的东西」：
+> 「记住 Key」默认不勾、无 sessionStorage→localStorage 搬迁、`/healthz` 提示与默认文案仍在、
+> 凭据错误会打开弹窗、Key 状态指示不回显 Key、两个按钮共用 busy 开关。
+
 ### 2.7 不内置任何人的 API Key
 
 项目**没有服务端兜底 Key**（这不是配置开关，是代码层面的移除）。Key 只有两个来源：
