@@ -509,10 +509,17 @@ def _functions_named(name: str, root: Path | None = None) -> list[str]:
 
 
 def test_basis_is_constructed_in_exactly_one_place() -> None:
-    """`orchestrator.py` 里 `Basis(...)` 只能有 1 处，且必须在 `_build_basis` 内。
+    """整个应用里 `Basis(...)` 只能有 1 处，且必须在 `_build_basis` 内。
 
     「真实构造点」与「唯一构造点」合一，新增第四处返回路径就不可能漏掉 `references`。
     """
+    outside = {
+        path.relative_to(APP_DIR).as_posix(): found
+        for path in sorted(APP_DIR.rglob("*.py"))
+        if path != ORCHESTRATOR_PATH and (found := _basis_call_lines(path))
+    }
+    assert not outside, f"orchestrator._build_basis 之外出现了 Basis(...)：{outside}"
+
     lines = _basis_call_lines(ORCHESTRATOR_PATH)
     assert len(lines) == 1, (
         f"orchestrator.py 里 Basis(...) 有 {len(lines)} 处（第 {lines} 行）—— "

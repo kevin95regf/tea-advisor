@@ -27,6 +27,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from app.api import analyze as analyze_api
+from app.api import analyze_offline as analyze_offline_api
+from app.api import chat as chat_api
+from app.api import medication as medication_api
+from app.api import questionnaire as questionnaire_api
 from app.config import get_settings
 from app.domain.enums import (
     FLAVOR_LABELS,
@@ -70,8 +74,16 @@ async def lifespan(app: FastAPI):
         from app.agents.runtime import close_runtime
 
         close_runtime()
-    except Exception:  # pragma: no cover
-        pass
+    # 只吞掉预期的资源释放错误；编程错误应暴露，避免关闭阶段静默掩盖缺陷。
+    except (OSError, RuntimeError):  # pragma: no cover
+        logger.warning("关闭主 Agent 运行时时出错", exc_info=True)
+    try:
+        from app.agents.multi_provider import close_multi_provider_runtime
+
+        close_multi_provider_runtime()
+    # 与主运行时保持同一策略，不恢复成会隐藏所有缺陷的 ``except Exception``。
+    except (OSError, RuntimeError):  # pragma: no cover
+        logger.warning("关闭多模型运行时时出错", exc_info=True)
 
 
 app = FastAPI(
@@ -96,6 +108,10 @@ app.add_middleware(
 )
 
 app.include_router(analyze_api.router, prefix="/api", tags=["analyze"])
+app.include_router(analyze_offline_api.router, prefix="/api", tags=["analyze"])
+app.include_router(questionnaire_api.router, prefix="/api", tags=["questionnaire"])
+app.include_router(chat_api.router, prefix="/api", tags=["chat"])
+app.include_router(medication_api.router, prefix="/api", tags=["reference"])
 
 
 # ============================================================
