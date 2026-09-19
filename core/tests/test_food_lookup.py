@@ -218,7 +218,12 @@ def test_fried_chicken_resolves_to_its_own_entry() -> None:
     out = render_reference("吃了炸鸡")
     assert "炸鸡" in out
     assert "热" in out, f"炸鸡应取自身条目（热，咸/辛），实际：{out}"
-    assert "油炸" not in out, f"炸鸡不应再渲染「鸡肉」的变体提示（别名污染回归）：{out}"
+    # 断言的是「**变体提示行**没有泄漏」，故用变体行的精确形态 `油炸→X`
+    # （渲染格式见 `render_reference`：`{处理方式}→{属性}`），**不是**裸词 `油炸`。
+    # 为什么改：B4 给 `zhaji` 写了它**自己**的派生 note（「…基底 鸡（温）＋油炸（档 深，+2）＝热」），
+    # 裸词断言会把这条自述误当成"jirou 的变体又漏出来了"。原意图（别名污染不回归）一字未改。
+    assert "油炸→" not in out, f"炸鸡不应再渲染「鸡肉」的变体提示（别名污染回归）：{out}"
+    assert "（油炸" not in out, f"不应出现变体提示行（别名污染回归）：{out}"
 
 
 def test_render_reference_empty_when_no_match() -> None:

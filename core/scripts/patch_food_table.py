@@ -10,6 +10,9 @@
   4. 新增条目（`NEW_ENTRIES`）——用于**条目粒度错误**的拆分，例如
      「蘑菇」一条代表蘑菰/香蕈两个四气不同的物种，只能拆成两条。
      拆分不是"补缺口"而是"修矛盾"：两个物种必须各自成条，删别名解决不了。
+  5. B4 · L2 派生 `note`（`LAYER2_NOTES`）——逐条写入派生式说明，**只动 `note`**。
+  6. B4 · `_meta` 规则登记（`META_PATCH`）——`nature_derivation_rules`（机器可读档位表，
+     不渲染进提示词）与 `derivation_conflicts`（R6 冲突登记，值不动）。
 
 **它是数据修正的唯一正规通道**：幂等（重复跑结果不变）、每条修正都留 `review_note`、
 强制 LF（避免 Windows CRLF 在 git 里造成假 diff）。不要手工改 `food_properties.json`。
@@ -178,6 +181,166 @@ NEW_ENTRIES: dict[str, dict] = {
 }
 
 
+# ============================================================
+# B4 · L2 派生规则（R1–R6）的机器可读登记
+# ============================================================
+# 规则成文、逐条推导、逐条 `note` 文案：`docs/food-properties-b4-derivation.md`。
+#
+# 为什么**不写进 `_meta.nature_change_rules`**（这是对原方案 §9 第 2 步的一处偏离）：
+#   那个键是**散文**，且经 `render_nature_change_rules()` **渲染进 Agent1 提示词**
+#   （agent1_diet.py）。B4 的档位值与当前代码 `COOKING_DELTA` 并不一致
+#   （油炸 深+2 / 生食 -1 / 炒 +1 三处，见 `alignment_pending`）。把 B4 口径写进提示词，
+#   等于把「文档口径」当「运行时行为」讲给模型 —— 那正是拍板 A（本批不动机制）要避免的。
+#   故新开本键：机器可读、**不渲染进提示词**，供守卫 ④ 与 B4b 收口使用。
+#
+# `runtime_delta` / `script_delta` 是**声明式绑定**：守卫 ④ 断言它们分别与
+# `nature_math.COOKING_DELTA` / `build_food_review_sheet.LAYER2_DELTA` **硬等值**，
+# 任一侧漂移即变红 —— 这样「三份副本」的差异是**被声明的**，不是静默的。
+META_PATCH: dict = {
+    "nature_derivation_rules": {
+        "_doc": (
+            "B4 第 2 步（文档 + 数据批次）。canonical_delta = B4 口径（真源）；"
+            "runtime_delta / script_delta = 代码与核验单脚本的**现值**（守卫 ④ 硬等值绑定）；"
+            "alignment_pending = canonical 与 runtime 的差集，B4b 收口。"
+        ),
+        "tiers": [
+            {"tier": "轻", "delta": 0, "methods": ["boiled", "steamed", "bake_form"],
+             "desc": "煮（蒸、卤、焯）；定型烘焙（吐司、蛋糕，含水高）"},
+            {"tier": "中", "delta": 1,
+             "methods": ["stir_fried", "grilled", "high_temp_bake", "heavy_braise", "hot_soup", "spicy"],
+             "desc": "炒；明火烧烤；高温/脱水烘烤；油糖酱焖烧、久煮焖烧、卤汁浓酱；热汤（烫煮）"},
+            {"tier": "深", "delta": 2, "methods": ["deep_fried"],
+             "desc": "油炸（单次与双重同判：表内 5 条油炸成品 5/5 相对基底跨两档）"},
+            {"tier": "轻·冷向", "delta": -1, "methods": ["cold"], "desc": "冷藏、冰镇"},
+            {"tier": "深·冷向", "delta": -2, "methods": ["deep_freeze"], "desc": "深度冷冻（冰淇淋）"},
+            {"tier": "方向性", "delta": None, "methods": ["raw", "pickled"],
+             "desc": "生食 -1（与冰镇同现时只计一次，取生食）；腌制方向不定 ⇒ 记 0 并在 note 标「方向不定」"},
+            {"tier": "发酵", "delta": None, "methods": ["ferment_alcohol", "ferment_dairy", "semi_ferment"],
+             "desc": "酒/曲类 +1；乳发酵 0；半发酵 0"},
+        ],
+        "canonical_delta": {
+            "raw": -1, "cold": -1, "deep_freeze": -2,
+            "boiled": 0, "steamed": 0, "bake_form": 0, "pickled": 0,
+            "grilled": 1, "stir_fried": 1, "spicy": 1, "hot_soup": 1,
+            "high_temp_bake": 1, "heavy_braise": 1,
+            "deep_fried": 2,
+            "ferment_alcohol": 1, "ferment_dairy": 0, "semi_ferment": 0,
+            "unknown": 0,
+        },
+        "runtime_delta": {
+            "cold": -1, "deep_fried": 1, "grilled": 1, "stir_fried": 0,
+            "steamed": 0, "boiled": 0, "raw": 0, "pickled": 0, "unknown": 0,
+        },
+        "script_delta": {
+            "cold": -1, "deep_fried": 1, "grilled": 1, "stir_fried": 1,
+            "boiled": 0, "steamed": 0, "raw": 0,
+        },
+        "alignment_pending": {
+            "deep_fried": {
+                "canonical": 2, "runtime": 1,
+                "note": "油炸整档记深；代码仍 +1 ⇒ 本批只落文档口径。",
+            },
+            "raw": {
+                "canonical": -1, "runtime": 0,
+                "note": "生食 -1（拍板 D 甲案）；代码仍 0 ⇒ 寿司/生鱼片的生食扣档只在文档口径成立。",
+            },
+            "stir_fried": {
+                "canonical": 1, "runtime": 0,
+                "note": "三份副本不一致的原始形态：代码 0 / 本表 1 / 核验单脚本 1（拍板 E 要求守卫覆盖）。",
+            },
+        },
+    },
+    # R6：判为「属性冲突」的条目必须登记在此（值一律不动，待裁定）。
+    # 守卫 ③ 双向断言：登记里有 ⇒ note 里必须有「属性冲突」「待裁定」；
+    # note 里写了「属性冲突」⇒ 登记里必须有。
+    "derivation_conflicts": {
+        "qubing_naicha": {
+            "name": "去冰奶茶", "current": "cool", "derived": "neutral",
+            "reason": "基底 茶（平）（无加工修正）＝平；项目保留了「去冰仍比热饮偏凉」的既有裁定。",
+            "status": "待裁定",
+        },
+        "liangcha": {
+            "name": "凉茶", "current": "cold", "derived": "cool",
+            "reason": "草本基底（凉茶草药方）在表内无条目，现值按草本药性记寒。",
+            "status": "待裁定",
+        },
+        "pijiu": {
+            "name": "啤酒", "current": "cool", "derived": "neutral",
+            "reason": "酒曲发酵（+1）与冰镇（-1）方向相反 —— 正是 R6 要标记的「不抵消」场景。",
+            "status": "待裁定",
+        },
+        "shengyu": {
+            "name": "生鱼片", "current": "cold", "derived": "cool",
+            "reason": "生食只到 -1（档位不足），现值按「生鱼偏寒」记寒；拍板 D 取甲的代价。",
+            "status": "待裁定",
+        },
+    },
+}
+
+# L2 派生的逐条 `note`（**只写 `note`，`nature` / `variant_nature` / `review_note` 一律不动**）。
+# 内容区自动生成自 `docs/food-properties-b4-derivation.md` §4（评审依据），
+# 由 `core/tests/test_b4_derivation_notes.py` 断言「数据 == 文档 §4」逐字一致。
+# 写作纪律：去空格 ≥18 字（越过 NOTE_MAX_LEN ⇒ note 温度通道恒不生效）。
+LAYER2_NOTES: dict[str, str] = {
+    # --- B4 自动生成区：起 ---
+    "suantou": "派生：基底 米（平）＋煮（蒸、卤）（档 轻，+0）＝平",
+    "youtiao": "派生：基底 面（平）＋油炸（档 深，+2）＝热",
+    "hanbao": "派生：基底 面（平）＋明火烧烤（档 中，+1）＝温；配料 牛肉（不跨档）",
+    "sanmingzhi": "派生：基底 面（平）（无加工修正）＝平；配料 火腿（不跨档）",
+    "yidali_mian": "派生：基底 面（平）＋煮（蒸、卤）（档 轻，+0）＝平",
+    "shousi": "派生：基底 米（平）＋生食（-1）＝凉；配料 醋（调味，不抵消）",
+    "niurou_hanbao": "派生：基底 面（平）＋明火烧烤（档 中，+1）＝温；配料 牛肉（不跨档）",
+    "tusi": "派生：基底 面（平）＋定型烘焙（档 轻，+0）＝平",
+    "sanmingzhi_huotui": "派生：基底 面（平）（无加工修正）＝平；配料 火腿（不跨档）",
+    "mahuoguo": "派生：基底 复合（平起算）＋辛辣（+1）＋久煮焖烧（档 中，+1）＝热",
+    "malatang": "派生：基底 复合（平起算）＋辛辣（+1）＋热汤（烫煮）（+1）＝热",
+    "malahuoguo": "派生：基底 复合（平起算）＋辛辣（+1）＋久煮焖烧（档 中，+1）＝热",
+    "shaokao": "派生：基底 牛（温）＋明火烧烤（档 中，+1）＋辛辣（+1）＝热",
+    "hongshao": "派生：基底 猪（平）＋油糖酱焖烧（档 中，+1）＝温",
+    "lajiao_chao": "派生：基底 复合（平起算）＋炒（档 中，+1）＋辛辣（+1）＝热",
+    "zhajiang": "派生：基底 面（平）＋炒（档 中，+1）＝温",
+    "guanzhudong": "派生：基底 复合（平起算）＋热汤（烫煮）（+1）＝温",
+    "shala": "派生：基底 复合（平起算）＋生食（-1）＝凉",
+    "pisa": "派生：基底 面（平）＋高温烘烤（档 中，+1）＝温；配料 奶酪（不跨档）",
+    "zhaji": "派生：基底 鸡（温）＋油炸（档 深，+2）＝热",
+    "shuijiao_rou": "派生：基底 米（平）＋辛辣（+1）＋热汤（烫煮）（+1）＝热",
+    "huntun": "派生：基底 面（平）＋煮（蒸、卤）（档 轻，+0）＝平",
+    "hanshi_zhaji": "派生：基底 鸡（温）＋油炸（档 深，+2）＋辛辣（+1）＝热",
+    "zhayu_shutiao": "派生：基底 鱼（平）＋油炸（档 深，+2）＝热",
+    "niuyouguo_shala": "派生：基底 复合（平起算）＋生食（-1）＝凉；配料 牛油果（平）",
+    "hanshi_banfan": "派生：基底 米（平）＋辛辣（+1）＝温",
+    "rishi_lamian": "派生：基底 面（平）＋热汤（烫煮）（+1）＝温",
+    "gali": "派生：基底 复合（平起算）＋辛辣（+1）＋久煮焖烧（档 中，+1）＝热",
+    "kele": "派生：基底 糖（平）＋冷藏（冰镇）（档 轻，-1）＝凉",
+    "naicha": "派生：基底 茶（平）＋乳发酵（+0）＝平；配料 奶（不跨档）",
+    "suanmeitang": "派生：基底 糖（平）（无加工修正）＝平；配料 乌梅（表值平）",
+    "guozhi": "派生：基底 复合（平起算）＋生食（-1）＝凉",
+    "bing_naicha": "派生：基底 茶（平）＋冷藏（冰镇）（档 轻，-1）＝凉",
+    "re_naicha": "派生：基底 茶（平）＋热汤（烫煮）（+1）＝温",
+    "dangao": "派生：基底 面（平）＋定型烘焙（档 轻，+0）＝平；配料 蛋、糖（不跨档）",
+    "lvdougao": "派生：基底 绿豆（凉）＋煮（蒸、卤）（档 轻，+0）＝凉",
+    "binggan": "派生：基底 面（平）＋高温烘烤（档 中，+1）＝温",
+    "suannai_wan": "派生：基底 酸奶（平）＋冷藏（冰镇）（档 轻，-1）＝凉；配料 水果（不跨档）",
+    "xila_suannai": "派生：基底 酸奶（平）＋冷藏（冰镇）（档 轻，-1）＝凉",
+    "bingqilin": "派生：基底 牛奶（平）＋深度冷冻（档 深，-2）＝寒；配料 糖（不跨档）",
+    "shujiaotiao": "派生：基底 土豆（平）＋油炸（档 深，+2）＝热",
+    "chadan": "派生：基底 蛋（平）＋煮（蒸、卤）（档 轻，+0）＋配料茶叶（红茶温）（+1）＝温",
+    "lourou": "派生：基底 猪（平）＋卤汁浓酱（档 中，+1）＝温",
+    "huotui": "派生：基底 猪（平）＋腌制（档 方向不定，+0）＋明火烧烤（档 中，+1）＝温",
+    "xiangchang": "派生：基底 猪（平）＋腌制（档 方向不定，+0）＋明火烧烤（档 中，+1）＝温",
+    "puerg": "派生：基底 茶（平）＋酒曲发酵（+1）＝温",
+    "wulong": "派生：基底 茶（平）＋半发酵（+0）＝平",
+    "putaoyou_cha": "派生：基底 茶（平）＋冷藏（冰镇）（档 轻，-1）＝凉；配料 水果（不跨档）",
+    "naixicha": "派生：基底 茶（平）＋乳发酵（+0）＝平；配料 奶盖（不跨档）",
+    # ---- R6 冲突式（值不动，登记于 _meta.derivation_conflicts）----
+    "qubing_naicha": "属性冲突：基底 茶（平）（无加工修正）＝平，项目值记凉。去冰后按规则应回平，但项目保留了「去冰仍比热饮偏凉」的既有裁定 ⇒ 按 R6 标记为属性冲突、保留项目值，待裁定。",
+    "liangcha": "属性冲突：基底 复合（平起算）＋冷藏（冰镇）（档 轻，-1）＝凉，项目值记寒。草本基底（凉茶草药方）在表内无条目，现值按草本药性记寒 ⇒ 按 R6 标记为属性冲突、保留项目值，待裁定。",
+    "pijiu": "属性冲突：基底 大麦（平）＋酒曲发酵（+1）＋冷藏（冰镇）（档 轻，-1）＝平，项目值记凉。酒曲发酵（+1）与冰镇（-1）方向相反 —— 正是 R6 要标记的「不抵消」场景 ⇒ 按 R6 标记为属性冲突、保留项目值，待裁定。",
+    "shengyu": "属性冲突：基底 鱼（平）＋生食（-1）＝凉，项目值记寒。生食只到 -1（档位不足），现值按「生鱼偏寒」记寒；此为拍板 D 取甲的代价 ⇒ 按 R6 标记为属性冲突、保留项目值，待裁定。",
+    # --- B4 自动生成区：止 ---
+}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
@@ -218,7 +381,32 @@ def main() -> int:
             entry[key] = value
             fixes_applied.append(f"{entry.get('name')}.{key}")
 
-    # ---------- 2b. 新增条目（拆条） ----------
+    # ---------- 2a. B4 · L2 派生 note ----------
+    # 只写 `note`。若 `ENTRY_FIXES` 与本表命中同一 id，`ENTRY_FIXES` 先写、这里后写 ⇒
+    # 二者必须**互不重叠**（当前无重叠：B4 的 53 条里，shengyu/shousi/shujiaotiao/kafei
+    # 虽在 ENTRY_FIXES 中，但被改的是 keywords / review_note，不是 note）。
+    # 引用了不存在的 id 直接报错 —— 不给静默通过的机会（拼错 id 会变成"这条没写"）。
+    missing = [i for i in LAYER2_NOTES if i not in by_id]
+    if missing:
+        raise SystemExit(f"LAYER2_NOTES 引用了不在数据表的 id：{missing}")
+    notes_applied: list[str] = []
+    for entry_id, note in LAYER2_NOTES.items():
+        entry = by_id[entry_id]
+        if entry.get("note") == note:
+            continue
+        entry["note"] = note
+        notes_applied.append(entry.get("name") or entry_id)
+
+    # ---------- 2b. B4 · `_meta` 规则登记 ----------
+    meta = raw.setdefault("_meta", {})
+    meta_applied: list[str] = []
+    for meta_key, meta_value in META_PATCH.items():
+        if meta.get(meta_key) == meta_value:
+            continue
+        meta[meta_key] = meta_value
+        meta_applied.append(meta_key)
+
+    # ---------- 2c. 新增条目（拆条） ----------
     # 注意：foods 与 groups 里的是**同一个列表对象**，insert 之后后面的统计与校验
     # 会自动带上新条目，不需要再手动同步。
     foods = raw.get("foods", [])
@@ -256,6 +444,11 @@ def main() -> int:
     print(f"  条目修正：{len(fixes_applied)} 处")
     for f in fixes_applied:
         print(f"    - {f}")
+    print(f"  B4 派生 note：写入 {len(notes_applied)} 条（共 {len(LAYER2_NOTES)} 条登记）")
+    for name in notes_applied:
+        print(f"    ~ {name}")
+    print(f"  B4 `_meta` 登记：{len(meta_applied)} 块"
+          + (f"（{', '.join(meta_applied)}）" if meta_applied else "（已是最新）"))
     print(f"  新增条目：{len(added)} 条")
     for a in added:
         print(f"    + {a}")
