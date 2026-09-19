@@ -641,3 +641,82 @@ def test_product_inheritance_guard_negative_control() -> None:
     assert not any("ok_inherit" in x for x in unknown + mismatched), "正常的继承不该被报出来"
 
 
+# ============================================================
+# 9. B2 落定后的守卫：「制品·原料继承（语料原料）」必须落在白名单且四气一致
+# ============================================================
+# ⚠️ 与 §8 一样，这组 helper **刻意放在测试里、不放脚本**：它只在「语料继承链是否成立」这一处用，
+# 放进 `build_food_review_sheet.py` 会变成没人调用的死代码（见 §7 与 `matcher.build_basis` 的先例）。
+CORPUS_INHERITANCE_HOW = "制品·原料继承（语料原料）"
+
+
+def corpus_ancestors(sources: dict) -> dict[str, str]:
+    """`_meta.corpus_ancestors.ancestors` 的 {语料条目名: 四气}。"""
+    node = (sources.get("_meta") or {}).get("corpus_ancestors") or {}
+    return {k: (v or {}).get("nature") for k, v in (node.get("ancestors") or {}).items()}
+
+
+def corpus_inheritance_rows(sources: dict) -> list[tuple[str, str, str]]:
+    """(条目 id, matched_name, evidence 的 qi_mapped)，只取 how=制品·原料继承（语料原料）的依据。"""
+    return [
+        (s.get("id"), ev.get("matched_name"), ev.get("qi_mapped"))
+        for s in (sources.get("entries") or [])
+        for ev in (s.get("evidence") or [])
+        if ev.get("how") == CORPUS_INHERITANCE_HOW
+    ]
+
+
+def corpus_inheritance_gaps(rows, whitelist: dict[str, str]) -> tuple[list[str], list[str], list[str]]:
+    """返回（白名单外的原料、与白名单四气不符的、白名单里没被任何依据引用的）。三空 = 成立。"""
+    unknown = sorted({f"`{i}` → {m}" for i, m, _ in rows if m not in whitelist})
+    mismatched = sorted(
+        f"`{i}` → {m}（白名单 {whitelist[m]} vs 登记 {q}）"
+        for i, m, q in rows if m in whitelist and whitelist[m] != q
+    )
+    used = {m for _, m, _ in rows}
+    unused = sorted(set(whitelist) - used)
+    return unknown, mismatched, unused
+
+
+def test_corpus_inheritance_matches_the_whitelist(sources) -> None:
+    """标了「制品·原料继承（语料原料）」的依据，必须指向白名单内的语料条目、且四气等于登记值。
+
+    B1 给「制品·原料继承」立了守卫：原料必须是 `herbs.json` 里**真实存在且四气相同**的饮片
+    （§8）。B2 的面制品/米饭/白粥套不上那条 ——「面」「粳米」「米粥」都不在那 34 味里。既然又开了
+    一个「原料是**语料条目**」的口子，本守卫就补上同样的承重：同一个原料（如「面」被 6 条面制品
+    引用）必须记同一个四气，写错一个不会有别的反馈。白名单同时**不许有死条目** ——
+    登记了却没被任何依据引用，它就会变成一份没人核对的名单。
+
+    样本从**数据反推**（不写死条目），并断言「至少测到 N 组」：否则这批依据一旦被清空，
+    守卫会在空集上恒真 —— 那正是本项目反复踩过的「守卫恒真」坑。
+    """
+    whitelist = corpus_ancestors(sources)
+    assert whitelist, "sources.json 缺少 _meta.corpus_ancestors.ancestors"
+    rows = corpus_inheritance_rows(sources)
+    assert len(rows) >= 6, f"how={CORPUS_INHERITANCE_HOW} 的依据只有 {len(rows)} 条，样本太少"
+    assert len({m for _, m, _ in rows}) >= 2, "只覆盖 1 个语料原料，测不到『跨条目漂移』"
+    unknown, mismatched, unused = corpus_inheritance_gaps(rows, whitelist)
+    assert not unknown, f"标了「{CORPUS_INHERITANCE_HOW}」却指向白名单外的语料条目：{unknown}"
+    assert not mismatched, f"继承值与白名单登记的四气不符：{mismatched}"
+    assert not unused, f"白名单里有登记了但没被任何依据引用的死条目：{unused}"
+
+
+def test_corpus_inheritance_guard_negative_control() -> None:
+    """负控制：白名单外的原料、四气不符、白名单死条目，三种都必须被抓出来。
+
+    只测「真实数据上没报错」是不够的 —— 那和「这段逻辑根本没跑」长得一模一样。
+    四种样本缺一不可：正常继承（必须放过）、白名单外原料、四气不符、白名单没用到的条目。
+    """
+    whitelist = {"面": "warm", "粳米": "neutral", "死条目": "cool"}
+    rows = [
+        ("ok", "面", "warm"),
+        ("ok2", "粳米", "neutral"),
+        ("ghost", "米粥", "neutral"),
+        ("wrong", "面", "cool"),
+    ]
+    unknown, mismatched, unused = corpus_inheritance_gaps(rows, whitelist)
+    assert any("ghost" in x for x in unknown), "白名单外的原料没被抓出来"
+    assert any("wrong" in x for x in mismatched), "四气与白名单不符的没被抓出来"
+    assert unused == ["死条目"], "白名单里没被引用的条目没被抓出来"
+    assert not any(("ok" in x) or ("ok2" in x) for x in unknown + mismatched), "正常的继承不该被报出来"
+
+
