@@ -366,10 +366,14 @@ python scripts/build_herb_sources.py --write
 
 ### 9.1 Git
 
+> ⚠️ **本表是 2026-09-17 的「历史记录」，不代表当前同步状态。** 此后还有一次推送
+> （2026-09-18 `65956e6..8308c38`，B1 那批）。**当前状态以 `docs/new-workspace-onboarding.md` §2 为准**，
+> 或现场跑下表的命令重测。
+
 | 项 | 值 |
 |---|---|
-| 分支 | `main`，**与 `origin/main` 已同步**（2026-09-17 推送达 `010db2f..7ed495a`，6 个提交） |
-| 准确状态 | 跑 `git log --oneline origin/main..HEAD`（输出为空即已同步） |
+| 分支 | `main`，**与 `origin/main` 已同步**（历史记录：2026-09-17 推送达 `010db2f..7ed495a`，6 个提交） |
+| 准确状态 | ⚠️ **本机 `git log --oneline origin/main..HEAD` 不能用** —— 远程跟踪引用从不落盘（`git for-each-ref refs/remotes/` 恒为空），该命令报 `ambiguous argument`。**改用 `git ls-remote origin refs/heads/main` 与 `git rev-parse HEAD` 比对**，分叉检查看 `FETCH_HEAD` |
 | 提交总数 | 31（截至 2026-09-17 推送时；取当前值跑 `git rev-list --count HEAD`） |
 | 远程 | `https://github.com/kevin95regf/tea-advisor.git`（公开） |
 | 标签 | `demo-1-backend`、`v1-llm-only` |
