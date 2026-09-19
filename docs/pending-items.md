@@ -53,7 +53,7 @@
 | **范围** | ⚠️ **本项只覆盖 `food_properties.json`。** `herbs.json` 不是「逐条 pending」——它**根本没有逐条审核字段**，审核状态只在文件级 `_meta.review_status`。已单列为 **E2** |
 | **影响** | 所有条目虽按 0.9 置信度参与判定，但界面**必须**标「待验证」。这是刻意的保守设计，不是 bug |
 | **为何只有人能解** | `approved` 意味着「真·硬规则库、界面不再标注」，必须由具备资质的中医师/中药师逐条确认，并同时填写 `reviewed_by` / `reviewed_at` |
-| **需要什么** | 审核人 + 一份逐条审核流程（`docs/maintenance.md` §9.2/§9.3 有正确姿势）。**核验单已就绪**：`docs/food-properties-review-sheet.md`（脚本生成、只读可重跑）。④ 层内部矛盾已清零（4 类于 2026-09-17 修完）。①②③ 层按「官方优先 + 多源兜底 + 无源标空」推进，**第一批已定为「蔬菜/调味/水果中有来源可引的 33 条」**（**① 28 一致 + ② 4 冲突 + ③ 1 无源**），清单见 `docs/food-properties-batch2-confirm.md`。**第二批（B2，2026-09-19）已登记主食/制品 12 条**（一致 5 + ② 口径分歧 7，均标 `batch=后续`），见 `docs/food-properties-b2-staple.md`；其中 7 条口径分歧同样**等审核人裁定**，值与 `note` 一律未动。**第三批（B3，2026-09-19）已登记网络权威来源 5 条**（① 一致 2 + ② 口径分歧 3），见 `docs/food-properties-b3-network-sources.md`。**第四批（B4，派生 32 条）方案已出、未执行**：见 `docs/food-properties-b4-derivation-plan.md`（六条派生规则 + 逐条演算；实测「可派生候选」远多于 32 条，清单范围待拍板）。<br>⚠️ **原定第一批「★ 主食/水产/乳饮」已作废**——那 29 条多为加工食品（米饭、饺子、奶茶），50 号文件 §5.2「真无据清单」本就覆盖它们，是**结构性**无来源，不是核对不到位。核验单的「第一批」判据已改为**来源登记表里 `batch=第一批`**（`build_food_review_sheet.py` 里写死类别的 `FIRST_BATCH_CATEGORIES` 已删除），不再按类别判定 |
+| **需要什么** | 审核人 + 一份逐条审核流程（`docs/maintenance.md` §9.2/§9.3 有正确姿势）。**核验单已就绪**：`docs/food-properties-review-sheet.md`（脚本生成、只读可重跑）。④ 层内部矛盾已清零（4 类于 2026-09-17 修完）。①②③ 层按「官方优先 + 多源兜底 + 无源标空」推进，**第一批已定为「蔬菜/调味/水果中有来源可引的 33 条」**（**① 28 一致 + ② 4 冲突 + ③ 1 无源**），清单见 `docs/food-properties-batch2-confirm.md`。**第二批（B2，2026-09-19）已登记主食/制品 12 条**（一致 5 + ② 口径分歧 7，均标 `batch=后续`），见 `docs/food-properties-b2-staple.md`；其中 7 条口径分歧同样**等审核人裁定**，值与 `note` 一律未动。**第三批（B3，2026-09-19）已登记网络权威来源 5 条**（① 一致 2 + ② 口径分歧 3），见 `docs/food-properties-b3-network-sources.md`。**第四批（B4）规则已定稿、数据未动**：六条规则成文 + 逐条推导 + 拟写 `note` 确认稿见 `docs/food-properties-b4-derivation.md`（L2 实测 **53** 条 = 一致 49 + 冲突登记 4；`kafei`/`qiaokeli` 退出 L2、`damaicha` 归 L1）；修订方案与拍板过程见 `docs/food-properties-b4-derivation-plan.md`。**数据改动（`_meta` 扩写 → 批量补 `note` → 重生成核验单 → 4 条守卫）待所有者确认确认稿后执行**。<br>⚠️ **原定第一批「★ 主食/水产/乳饮」已作废**——那 29 条多为加工食品（米饭、饺子、奶茶），50 号文件 §5.2「真无据清单」本就覆盖它们，是**结构性**无来源，不是核对不到位。核验单的「第一批」判据已改为**来源登记表里 `batch=第一批`**（`build_food_review_sheet.py` 里写死类别的 `FIRST_BATCH_CATEGORIES` 已删除），不再按类别判定 |
 | **验收标准** | `food_properties.json` 的 `review_status` 分布中 `approved` 条数 > 0，且每条 approved 都有 `reviewed_by` + `reviewed_at` |
 | **注意** | ⚠️ **不要为了界面好看而批量置 approved**。标记密度就是审核进度的可见反馈，批量置等于把这个反馈抹掉 |
 | **相关文件** | `core/data/food_properties.json`、`docs/food-properties-review-sheet.md`（核验单，脚本生成）、`core/scripts/build_food_review_sheet.py`（生成工具，**只读**，`--check` 可进 CI）、`docs/food-properties-sources.json`（75 条来源登记，①②③ 层的事实源）、`docs/food-properties-batch2-confirm.md`（第一批 33 条清单，待确认）、`docs/food-properties-batch2-plan.md`（核对方案） |
@@ -333,7 +333,7 @@
 | **当前处置** | B4 **不拆**，只留痕 |
 | **需要什么** | 三选一：**(α) 维持单条** —— `note` 写明「按键餐时的常见吃法取值」；**(β) 拆条** —— 寿司拆生食款/熟食款、咖喱按辣度拆（两者都可参照 D6「葱拆部位」的三选一模式）；**(γ) 只收窄匹配词** —— 把子类型词从 `aliases`/`keywords` 里清掉，让它们走表外的推测分支 |
 | **验收标准** | 三选一被明确选定；若选 (β)，须同步处理 `shousi` 的既有 `review_note` 裁定，不能两条并存 |
-| **相关文件** | `core/data/food_properties.json`、`docs/food-properties-b4-derivation-plan.md` |
+| **相关文件** | `core/data/food_properties.json`、`docs/food-properties-b4-derivation.md`、`docs/food-properties-b4-derivation-plan.md` |
 
 ---
 
