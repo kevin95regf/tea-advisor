@@ -250,10 +250,10 @@
 |---|---|
 | **现状** | `core/data/food_properties.json` 的 `tang`（糖，`nature: neutral`）`aliases` = `["白糖","砂糖","红糖"]`、`keywords` = `["糖","白糖","红糖"]`。全表**没有** `hongtang` 条目 |
 | **为什么算问题** | 权威口径把两者**分开**：中国中医药报网《食糖补虚 亦应有度》（2026-05-27）逐条写「白糖味甘、**性平**」「红糖味甘**性温**，归肝、脾、胃经」「饴糖味甘**性温**」；国家中医药管理局名词术语项目审核认证词条「白沙糖」记「味甘，性平」。⇒ 用户说「红糖」时，系统给的是糖条的 `neutral`，与权威口径的「温」**差一档**，且界面按「表内命中」以 **0.9** 呈现 |
-| **当前处置** | B3 只登记「糖 → 白沙糖」的来源（判 ① 一致），**不动数据**。本条即留痕处；发现记录见 `docs/food-properties-b3-network-sources-plan.md` |
+| **当前处置** | B3 只登记「糖 → 白沙糖」的来源（判 ① 一致），**不动数据**。本条即留痕处；发现记录见 `docs/food-properties-b3-network-sources.md` |
 | **需要什么** | 两步，**都要改 `core/data/`**：<br>**(α)** 新建 `hongtang` 条目（`name: 红糖`、`nature: warm`、`flavors: ["sweet"]`，并为其登记来源）；<br>**(β)** 把「红糖」从 `tang` 的 `aliases` **与** `keywords` **两处**移出（`_find_entry` 第 2 级把两处合并扫描，只删一处无效）。<br>顺序不能颠倒：先移出会让「红糖」落到 0.3 的推测分支（比现在还差），先建条则一次到位 |
 | **验收标准** | ① 表里有 `hongtang` 条目且 `nature = warm`；② 「红糖」不再挂在任何其他条目的 `aliases`/`keywords` 上；③ 走 `patch_food_table.py` 的正规通道，不手改 `food_properties.json` |
-| **相关文件** | `core/data/food_properties.json`（`tang` / 待新增的 `hongtang`）、`core/app/services/food_lookup.py`（`_find_entry` 第 2 级把 `keywords` 与 `aliases` 合并扫描）、`core/scripts/patch_food_table.py`（数据改动唯一通道）、`docs/food-properties-b3-network-sources-plan.md` |
+| **相关文件** | `core/data/food_properties.json`（`tang` / 待新增的 `hongtang`）、`core/app/services/food_lookup.py`（`_find_entry` 第 2 级把 `keywords` 与 `aliases` 合并扫描）、`core/scripts/patch_food_table.py`（数据改动唯一通道）、`docs/food-properties-b3-network-sources.md` |
 
 ## D6　「葱」是否拆成葱白 / 葱叶
 
@@ -267,7 +267,7 @@
 | **当前处置** | B3 按**葱白**登记，`cong` **维持 `warm`**，以 `open_question`「按葱白走」留痕，**不拆条** |
 | **需要什么** | 三选一：<br>**(α) 维持单条目** —— 承认「葱」泛指可食部位，以葱白为代表取值 `warm`，「葱叶」「葱花」仍命中同一条目；<br>**(β) 拆成 `congbai`（温）+ `congye`** —— 叶取温还是平取决于采哪一源，需先定源；<br>**(γ) 只把「葱叶」类词从 `aliases`/`keywords` 移出** —— 与 A2 ② 同法，但会牺牲「葱叶」的可用性 |
 | **验收标准** | 三选一被明确选定并落到数据与来源登记；「部位方向不同」这一事实不再只靠一条 `open_question` 承载 |
-| **相关文件** | `core/data/food_properties.json`（`cong`）、`docs/food-properties-sources.json`（`cong` 条目的登记依据）、`docs/food-properties-b3-network-sources-plan.md` |
+| **相关文件** | `core/data/food_properties.json`（`cong`）、`docs/food-properties-sources.json`（`cong` 条目的登记依据）、`docs/food-properties-b3-network-sources.md` |
 
 ---
 
