@@ -720,3 +720,237 @@ def test_corpus_inheritance_guard_negative_control() -> None:
     assert not any(("ok" in x) or ("ok2" in x) for x in unknown + mismatched), "正常的继承不该被报出来"
 
 
+# ============================================================
+# 10. B3 落定后的守卫
+# ============================================================
+# ⚠️ 与 §7/§8/§9 同理：只被守卫用到的判定逻辑刻意留在测试里，不放 `build_food_review_sheet.py`
+# —— 放进脚本会变成没人调用的死代码（见 `matcher.build_basis` 的先例）。
+
+# --- 组 1：网页来源必须「可核」（B3 拍板点 E）--------------------------------
+# ⚠️ 这四个档名**刻意写在测试里**（与 `A2_REMOVED_MUSHROOM_WORDS` 同一处置）：
+# 它们是 B3 一次性引入的历史集合，放进脚本只会变成没人调用的死代码。
+WEB_TIERS = ("官方·审核词条", "官方·卫健科普", "通行·官媒科普", "通行·医院科普")
+
+# 「强度高于网页来源」的档：按 B3 采纳的强度序，药典与教材都排在科普类之前。
+# ⚠️ 这两个档名必须仍在 `tier.取值` 里 —— 否则档名一改，越级检查就在空集上**恒真**
+# （这正是本项目反复踩过的「守卫恒真」坑）。
+STRONG_TIERS = ("官方·药典", "通行·教材", "通行·教材(有冲突)")
+
+
+def web_source_gaps(sources: dict, web_tiers=WEB_TIERS, strong_tiers=STRONG_TIERS):
+    """返回 4 类问题（a 档位不可核／b 依据缺地址或原文／c 死档／d 越级），四空 = 成立。
+
+    这四条都盯着同一件事：**B3 是本项目第一次引入「不在本地语料里」的来源**。
+    B1／B2 的依据随时能在 50 号文件或纲目里重查（行号可复现），这一批不行 ——
+    链接会失效、且不随仓库归档。所以「地址 + 原文句」必须随条目走，不能只有一句
+    「人民网说过」。
+    """
+    meta = sources.get("_meta") or {}
+    vocab = (meta.get("controlled_vocab") or {}).get("tier") or {}
+    allowed = set(vocab.get("取值") or [])
+    mapping = vocab.get("对应") or {}
+    registry = meta.get("source_registry") or {}
+    rows = [
+        (s.get("id"), ev)
+        for s in (sources.get("entries") or [])
+        for ev in (s.get("evidence") or [])
+    ]
+
+    # a) 网页档必须已登记进词表、能映射到 registry，且该 registry 条目有 http 开头的 url。
+    #    没有这层，「档名」就只是一个看起来很像真的字符串。
+    a: list[str] = []
+    for t in web_tiers:
+        if t not in allowed:
+            a.append(f"档 `{t}` 未登记进 controlled_vocab.tier.取值")
+            continue
+        key = mapping.get(t)
+        if key not in registry:
+            a.append(f"档 `{t}` 未映射到 source_registry 里的键（→ {key!r}）")
+            continue
+        url = str((registry.get(key) or {}).get("url") or "")
+        if not url.lower().startswith("http"):
+            a.append(f"档 `{t}` 的 registry 条目 `{key}` 缺 http 开头的 url")
+
+    # b) 凡用了网页档的 evidence，`locator` 里必须有 URL、`verbatim` 必须非空。
+    b: list[str] = []
+    for sid, ev in rows:
+        if ev.get("tier") not in web_tiers:
+            continue
+        if "http" not in str(ev.get("locator") or ""):
+            b.append(f"`{sid}` 的网页依据 locator 里没有 URL")
+        if not str(ev.get("verbatim") or "").strip():
+            b.append(f"`{sid}` 的网页依据缺 verbatim（原文句）")
+
+    # c) 网页档不许有死档 —— 与 `corpus_ancestors`「白名单不许有死条目」同型：
+    #    登记了却没人用，就变成一份没人核对的名单。
+    used = {ev.get("tier") for _, ev in rows}
+    c = [f"档 `{t}` 登记了却没被任何依据引用" for t in web_tiers if t not in used]
+
+    # d) **越级**：`reference` 取网页档时，`evidence[]` 里不得同时存在药典/教材依据。
+    #    这条把「科普类来源只在药典与教材均无该条目时才可作基准」从一句
+    #    `hard_rules` 变成机器可验的。
+    d: list[str] = []
+    for s in sources.get("entries") or []:
+        ref = s.get("reference") or {}
+        if ref.get("tier") not in web_tiers:
+            continue
+        stronger = sorted({
+            ev.get("tier") for ev in (s.get("evidence") or [])
+            if ev.get("tier") in strong_tiers
+        })
+        if stronger:
+            d.append(
+                f"`{s.get('id')}` 的 reference 取网页档 `{ref.get('tier')}`，"
+                f"但 evidence 里有强度更高的依据 {stronger}"
+            )
+    return a, b, c, d
+
+
+def test_web_sources_are_citable(sources) -> None:
+    """B3 首次引入的网页来源必须「可核」：地址与原文句都在，且不许越级兜底。
+
+    样本从**数据反推**（不写死条目），并断言「至少 4 个档被用到、至少 5 条依据」：
+    这批依据一旦被清空，守卫会在空集上恒真 —— 本项目反复踩过的坑。
+    """
+    vocab = set(
+        (((sources.get("_meta") or {}).get("controlled_vocab") or {}).get("tier") or {}).get("取值") or []
+    )
+    misnamed = [t for t in STRONG_TIERS if t not in vocab]
+    assert not misnamed, (
+        f"「强度高于网页来源」的档名不在 tier 词表里，越级检查会恒真：{misnamed}"
+    )
+    web_rows = [(sid, ev) for sid, ev in _evidence_rows(sources) if ev.get("tier") in WEB_TIERS]
+    used_web = {ev.get("tier") for _, ev in web_rows}
+    assert len(used_web) >= 4, f"实际用到的网页档只有 {len(used_web)} 个（{sorted(used_web)}），样本太少"
+    assert len(web_rows) >= 5, f"网页依据只有 {len(web_rows)} 条，样本太少"
+
+    a, b, c, d = web_source_gaps(sources)
+    assert not a, f"网页档不可核（档名/映射/URL）：{a}"
+    assert not b, f"网页依据缺地址或原文句：{b}"
+    assert not c, f"网页档里有死档：{c}"
+    assert not d, f"网页来源越级（有药典/教材依据却拿科普当基准）：{d}"
+
+
+def test_web_source_guard_negative_control() -> None:
+    """负控制：a／b／c／d 四类问题都必须被抓出来。
+
+    只测「真实数据上返回空」是不够的 —— 那和「这段逻辑根本没跑」长得一模一样。
+    """
+    def _meta() -> dict:
+        return {
+            "controlled_vocab": {
+                "tier": {
+                    "取值": list(WEB_TIERS) + list(STRONG_TIERS),
+                    "对应": {
+                        "官方·审核词条": "satcm_terms",
+                        "官方·卫健科普": "shwsjkw",
+                        "通行·官媒科普": "people_health",
+                        "通行·医院科普": "qzzyyy",
+                        "官方·药典": "chp2020",
+                        "通行·教材": "s1_dietetics",
+                        "通行·教材(有冲突)": "s1_dietetics",
+                    },
+                }
+            },
+            "source_registry": {
+                "satcm_terms": {"url": "https://a.example"},
+                "shwsjkw": {"url": "https://b.example"},
+                "people_health": {"url": "https://c.example"},
+                "qzzyyy": {"url": "https://d.example"},
+                "chp2020": {"url": "https://e.example"},
+                "s1_dietetics": {"url": None},
+            },
+        }
+
+    def _ev(tier: str, locator: str = "某页｜https://x.example", verbatim: str = "某句") -> dict:
+        return {"tier": tier, "locator": locator, "verbatim": verbatim}
+
+    def _src(entries: list, meta: dict | None = None) -> dict:
+        return {"_meta": _meta() if meta is None else meta, "entries": entries}
+
+    # 干净样本：四类问题一个都不该报（否则下面的负控制说明不了什么）
+    clean = _src([
+        {"id": "c1", "reference": {"tier": "通行·官媒科普"}, "evidence": [_ev("通行·官媒科普")]},
+        {"id": "c2", "reference": {"tier": "官方·审核词条"}, "evidence": [_ev("官方·审核词条")]},
+        {"id": "c3", "reference": {"tier": "官方·卫健科普"}, "evidence": [_ev("官方·卫健科普")]},
+        {"id": "c4", "reference": {"tier": "通行·医院科普"}, "evidence": [_ev("通行·医院科普")]},
+    ])
+    a, b, c, d = web_source_gaps(clean)
+    assert not (a or b or c or d), f"干净样本被误报：a={a} b={b} c={c} d={d}"
+
+    # a) registry 条目缺 url
+    meta = _meta()
+    meta["source_registry"]["qzzyyy"] = {"url": None}
+    a, _, _, _ = web_source_gaps(_src(
+        [{"id": "x", "reference": {"tier": "通行·医院科普"}, "evidence": [_ev("通行·医院科普")]}],
+        meta,
+    ))
+    assert any("qzzyyy" in x for x in a), f"registry 条目缺 url 没被抓出来：{a}"
+
+    # a) 档名压根没登记进词表
+    meta = _meta()
+    meta["controlled_vocab"]["tier"]["取值"] = [
+        t for t in meta["controlled_vocab"]["tier"]["取值"] if t != "通行·医院科普"
+    ]
+    a, _, _, _ = web_source_gaps(_src([], meta))
+    assert any("未登记" in x for x in a), f"词表外档名没被抓出来：{a}"
+
+    # b) locator 缺 URL / verbatim 为空
+    _, b, _, _ = web_source_gaps(_src([
+        {"id": "nourl", "reference": {"tier": "通行·官媒科普"},
+         "evidence": [_ev("通行·官媒科普", locator="人民网说过")]},
+        {"id": "noverb", "reference": {"tier": "官方·审核词条"},
+         "evidence": [_ev("官方·审核词条", verbatim="   ")]},
+    ]))
+    assert any("nourl" in x for x in b), f"locator 缺 URL 没被抓出来：{b}"
+    assert any("noverb" in x for x in b), f"verbatim 为空没被抓出来：{b}"
+
+    # c) 网页档登记了却没人引用
+    _, _, c, _ = web_source_gaps(_src([
+        {"id": "only", "reference": {"tier": "通行·官媒科普"}, "evidence": [_ev("通行·官媒科普")]},
+    ]))
+    assert any("官方·审核词条" in x for x in c), f"死档没被抓出来：{c}"
+
+    # d) 越级：reference 取网页档，evidence 里却有药典依据
+    _, _, _, d = web_source_gaps(_src([
+        {"id": "over", "reference": {"tier": "通行·官媒科普"},
+         "evidence": [_ev("通行·官媒科普"), _ev("官方·药典")]},
+    ]))
+    assert any("over" in x for x in d), f"越级（有药典依据却拿科普当基准）没被抓出来：{d}"
+
+
+# --- 组 2：§4 图例必须覆盖在用档位（B3 拍板点 F）-----------------------------
+def test_priority_legend_covers_used_tiers(mod, sources) -> None:
+    """§4 的图例必须覆盖**所有在用**的 `tier`（B3 首次新增 `tier` 才暴露这个坑）。
+
+    图例原先写死在脚本里、且没有任何守卫：新增一个档而忘了补图例时，审核人在 §4.1 看到
+    「官方·审核词条」、翻到图例却查不到 —— `_meta` 与产物**静默不一致**。
+
+    断言图例行数 ≥7 是防「图例被清空 ⇒ gaps 恒为空」：本项目的老坑就是守卫在空集上恒真。
+    """
+    assert len(mod.PRIORITY_LEGEND) >= 7, (
+        f"§4 图例只有 {len(mod.PRIORITY_LEGEND)} 行，疑似被清空（那会让 gaps 恒为空）"
+    )
+    gaps = mod.priority_legend_gaps(sources)
+    assert not gaps, f"这些**在用**的档位在 §4 图例里查不到：{gaps}"
+
+
+def test_priority_legend_gaps_negative_control(mod, sources) -> None:
+    """负控制：拿掉覆盖某个**在用**档的那一行，gap 必须报出来。
+
+    同时钉住「完整图例下必须为空」—— 否则上一条的「空」可能只是图例整体失效。
+    """
+    full = list(mod.PRIORITY_LEGEND)
+    assert mod.priority_legend_gaps(sources, full) == [], "完整图例下不该有 gap"
+
+    used = sorted({ev.get("tier") for _, ev in _evidence_rows(sources) if ev.get("tier")})
+    assert used, "sources.json 里没有带 tier 的依据（样本被治理偷走了？）"
+    target = used[0]
+    trimmed = [row for row in full if target not in (row.get("tiers") or ())]
+    assert len(trimmed) < len(full), f"没有图例行声明覆盖在用档 `{target}`（测试自身失效）"
+
+    gaps = mod.priority_legend_gaps(sources, trimmed)
+    assert target in gaps, f"拿掉覆盖 `{target}` 的图例行后没被报出来：{gaps}"
+
+
+
