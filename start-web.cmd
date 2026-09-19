@@ -1,15 +1,14 @@
 @echo off
-chcp 65001 >nul
 setlocal
-title ä¸­åŒ»é£Ÿæ€§åŠ©æ‰‹ - Web
+title ÖĞÒ½Ê³ĞÔÖúÊÖ - Web
 cd /d "%~dp0core"
 
 if not exist ".venv\Scripts\python.exe" (
   echo.
-  echo [é”™è¯¯] æ‰¾ä¸åˆ°è™šæ‹Ÿç¯å¢ƒ core\.venv\Scripts\python.exe
+  echo [´íÎó] ÕÒ²»µ½ĞéÄâ»·¾³ core\.venv\Scripts\python.exe
   echo.
-  echo è¯·å…ˆå®‰è£…ä¾èµ–ï¼ˆåœ¨ core ç›®å½•ä¸‹æ‰§è¡Œï¼Œç”¨ python -m æ˜¯å› ä¸º venv çš„ pip.exe
-  echo åœ¨ç›®å½•æ”¹ååä¼šå¤±æ•ˆï¼‰ï¼š
+  echo ÇëÏÈ°²×°ÒÀÀµ£¨ÔÚ core Ä¿Â¼ÏÂÖ´ĞĞ£¬ÓÃ python -m ÊÇÒòÎª venv µÄ pip.exe
+  echo ÔÚÄ¿Â¼¸ÄÃûºó»áÊ§Ğ§£©£º
   echo     python -m venv .venv
   echo     .venv\Scripts\python.exe -m pip install -e ".[dev,web]"
   echo.
@@ -19,24 +18,24 @@ if not exist ".venv\Scripts\python.exe" (
 
 echo.
 echo ============================================================
-echo   ä¸­åŒ»é£Ÿæ€§åŠ©æ‰‹ - æœ¬åœ° Web ç•Œé¢
+echo   ÖĞÒ½Ê³ĞÔÖúÊÖ - ±¾µØ Web ½çÃæ
 echo ============================================================
-echo   æµè§ˆå™¨æ‰“å¼€ï¼š http://127.0.0.1:8000
-echo   åœæ­¢æœåŠ¡ï¼š   åœ¨æœ¬çª—å£æŒ‰ Ctrl+C
+echo   ä¯ÀÀÆ÷´ò¿ª£º http://127.0.0.1:8000
+echo   Í£Ö¹·şÎñ£º   ÔÚ±¾´°¿Ú°´ Ctrl+C
 echo.
-echo   æœ¬æœåŠ¡åªç»‘å®š 127.0.0.1ï¼ŒåŒå±€åŸŸç½‘çš„å…¶ä»–è®¾å¤‡è®¿é—®ä¸åˆ°ã€‚
-echo   ç•Œé¢é¡¶éƒ¨æœ‰ã€Œæµ‹è¯•æŒ‡å¼•ã€ï¼Œç¬¬ä¸€æ¬¡ç”¨è¯·å…ˆçœ‹å®ƒã€‚
+echo   ±¾·şÎñÖ»°ó¶¨ 127.0.0.1£¬Í¬¾ÖÓòÍøµÄÆäËûÉè±¸·ÃÎÊ²»µ½¡£
+echo   ½çÃæ¶¥²¿ÓĞ¡¸²âÊÔÖ¸Òı¡¹£¬µÚÒ»´ÎÓÃÇëÏÈ¿´Ëü¡£
 echo ============================================================
 echo.
 
-rem å»¶è¿Ÿ 4 ç§’å†å¼€æµè§ˆå™¨ï¼Œç­‰ uvicorn èµ·æ¥ï¼Œå¦åˆ™ä¼šçœ‹åˆ°è¿æ¥å¤±è´¥ã€‚
-rem è®¾ TA_NO_BROWSER=1 å¯è·³è¿‡å¼€æµè§ˆå™¨ï¼ˆè‡ªåŠ¨åŒ–æµ‹è¯•ç”¨ï¼‰ã€‚
+rem ÑÓ³Ù 4 ÃëÔÙ¿ªä¯ÀÀÆ÷£¬µÈ uvicorn ÆğÀ´£¬·ñÔò»á¿´µ½Á¬½ÓÊ§°Ü¡£
+rem Éè TA_NO_BROWSER=1 ¿ÉÌø¹ı¿ªä¯ÀÀÆ÷£¨×Ô¶¯»¯²âÊÔÓÃ£©¡£
 if not "%TA_NO_BROWSER%"=="1" (
   start "" /min cmd /c "timeout /t 4 /nobreak >nul & start http://127.0.0.1:8000"
 )
 
-".venv\Scripts\python.exe" -m uvicorn app.main:app --port 8000
+".venv\Scripts\python.exe" -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 echo.
-echo æœåŠ¡å·²åœæ­¢ã€‚
+echo ·şÎñÒÑÍ£Ö¹¡£
 pause
