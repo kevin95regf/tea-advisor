@@ -1,15 +1,14 @@
 @echo off
-chcp 65001 >nul
 setlocal
-title ä¸­åŒ»é£Ÿæ€§åŠ©æ‰‹ - ç»ˆç«¯
+title ÖÐÒ½Ê³ÐÔÖúÊÖ - ÖÕ¶Ë
 cd /d "%~dp0"
 
 if not exist "core\.venv\Scripts\python.exe" (
   echo.
-  echo [é”™è¯¯] æ‰¾ä¸åˆ°è™šæ‹ŸçŽ¯å¢ƒ core\.venv\Scripts\python.exe
+  echo [´íÎó] ÕÒ²»µ½ÐéÄâ»·¾³ core\.venv\Scripts\python.exe
   echo.
-  echo è¯·å…ˆå®‰è£…ä¾èµ–ï¼ˆåœ¨ core ç›®å½•ä¸‹æ‰§è¡Œï¼Œç”¨ python -m æ˜¯å› ä¸º venv çš„ pip.exe
-  echo åœ¨ç›®å½•æ”¹ååŽä¼šå¤±æ•ˆï¼‰ï¼š
+  echo ÇëÏÈ°²×°ÒÀÀµ£¨ÔÚ core Ä¿Â¼ÏÂÖ´ÐÐ£¬ÓÃ python -m ÊÇÒòÎª venv µÄ pip.exe
+  echo ÔÚÄ¿Â¼¸ÄÃûºó»áÊ§Ð§£©£º
   echo     python -m venv .venv
   echo     .venv\Scripts\python.exe -m pip install -e ".[dev,web]"
   echo.
@@ -19,15 +18,15 @@ if not exist "core\.venv\Scripts\python.exe" (
 
 echo.
 echo ============================================================
-echo   ä¸­åŒ»é£Ÿæ€§åŠ©æ‰‹ - ç»ˆç«¯ç‰ˆ
+echo   ÖÐÒ½Ê³ÐÔÖúÊÖ - ÖÕ¶Ë°æ
 echo ============================================================
-echo   ç›´æŽ¥è¾“å…¥ä½ åƒäº†ä»€ä¹ˆï¼Œä¾‹å¦‚ï¼š
-echo       ä¸­åˆåƒäº†ç¢—éº»è¾£çƒ«ï¼Œè¿˜å–äº†æ¯å†°å¯ä¹
+echo   Ö±½ÓÊäÈëÄã³ÔÁËÊ²Ã´£¬ÀýÈç£º
+echo       ÖÐÎç³ÔÁËÍëÂéÀ±ÌÌ£¬»¹ºÈÁË±­±ù¿ÉÀÖ
 echo.
-echo   å‘½ä»¤ï¼š :e çœ‹ç¤ºä¾‹   :c yang_deficiency æ¢ä½“è´¨   :q é€€å‡º
+echo   ÃüÁî£º :e ¿´Ê¾Àý   :c yang_deficiency »»ÌåÖÊ   :q ÍË³ö
 echo.
-echo   æ¯æ¬¡æé—®çº¦ 13-18 ç§’ï¼Œä¼šçœŸå®žè°ƒç”¨æ¨¡åž‹ï¼ˆçº¦ 1 åˆ†é’±/æ¬¡ï¼‰ã€‚
-echo   æƒ³é›¶æˆæœ¬è¯•ï¼šå¦å¼€çª—å£è¿è¡Œ
+echo   Ã¿´ÎÌáÎÊÔ¼ 13-18 Ãë£¬»áÕæÊµµ÷ÓÃÄ£ÐÍ£¨Ô¼ 1 ·ÖÇ®/´Î£©¡£
+echo   ÏëÁã³É±¾ÊÔ£ºÁí¿ª´°¿ÚÔËÐÐ
 echo       core\.venv\Scripts\python.exe ui\terminal\chat.py --offline
 echo ============================================================
 echo.
@@ -35,5 +34,5 @@ echo.
 "core\.venv\Scripts\python.exe" ui\terminal\chat.py
 
 echo.
-echo å·²é€€å‡ºã€‚
+echo ÒÑÍË³ö¡£
 pause
