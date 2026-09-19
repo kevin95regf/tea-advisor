@@ -28,16 +28,20 @@
           "等价名（叶用变种）",
           "等价名（省略作物名前缀）",
           "等价名（通称差异）",
-          "制品·原料继承"
+          "制品·原料继承",
+          "制品·原料继承（语料原料）",
+          "同条目·品种方向描述"
         ],
         "语义": {
           "正名": "项目条目名与依据条目的**主名完全相同**，无需映射",
           "正名（药典收载名）": "项目条目名 ≠ 药典收载名，但**以药典正名为准**登记（历史命名，保留；含义是「药典的正名」，不是「与项目条目同名」）",
           "别名": "项目名是依据条目主名的**别称／通俗名**（依据 §5.3 索引或目录对应）",
           "等价名（…）": "同一物的不同称法；括号内是**限定**（叶用变种／省略作物名前缀／通称差异）。新增等价名前必须先想清限定词写什么",
-          "制品·原料继承": "项目条目是**制品**（冲泡/加工品），依据条目是它的**原料**；四气沿用原料。⚠️ 这是**继承关系，不是同名**——50 号文件 §5.2 明令「不可默认继承」，故每条都必须显式留痕（推翻理由见该条 `mapping_review.reason`）。"
+          "制品·原料继承": "项目条目是**制品**（冲泡/加工品），依据条目是它的**原料**；四气沿用原料。⚠️ 这是**继承关系，不是同名**——50 号文件 §5.2 明令「不可默认继承」，故每条都必须显式留痕（推翻理由见该条 `mapping_review.reason`）。",
+          "制品·原料继承（语料原料）": "项目条目是**制品**，依据条目是它的**原料**，且该原料是本库语料（50 号文件 / 纲目 / 教材）的条目（**不是** herbs.json 的饮片）。四气沿用原料。⚠️ 与「制品·原料继承」的区别只在原料来源：那一个指向同名饮片（有守卫 `test_product_inheritance_points_at_a_real_herb`），这一个指向语料条目（有守卫 `test_corpus_inheritance_*`，白名单 `_meta.corpus_ancestors`）。两条守卫合起来保证「继承」二字承重。",
+          "同条目·品种方向描述": "项目条目与依据条目**同属一条语料条目**，但该条目内部按**品种／加工方向**给出不同四气描述（如茶叶条内「绿茶…涤热」为凉、「红茶…温脾胃」为温）。此值表达「同条目内按方向取值」，**不同于继承**（继承要求方向与原料一致）。"
         },
-        "history": "2026-09-18 归一：原混用值「别名/等价名」已取消（8 处拆为「别名」与「等价名（省略作物名前缀）」），目录档里 matched_name ≠ 项目名的 4 处由「正名」改为「别名」，「等价名（叶用变种，参照莴苣）」改为不带说明的「等价名（叶用变种）」（「参照莴苣」本来就在 mapping_review.reason 里）。　2026-09-18 新增「制品·原料继承」，用于 B1 茶饮 11 条（E 组）。"
+        "history": "2026-09-18 归一：原混用值「别名/等价名」已取消（8 处拆为「别名」与「等价名（省略作物名前缀）」），目录档里 matched_name ≠ 项目名的 4 处由「正名」改为「别名」，「等价名（叶用变种，参照莴苣）」改为不带说明的「等价名（叶用变种）」（「参照莴苣」本来就在 mapping_review.reason 里）。　2026-09-18 新增「制品·原料继承」，用于 B1 茶饮 11 条（E 组）。　2026 年 9 月 19 日 B2：新增「制品·原料继承（语料原料）」「同条目·品种方向描述」，用于 B2 主食/制品 12 条（F 组）。「制品·原料继承（语料原料）」的原料是**语料条目**（非 herbs.json 饮片），配 `_meta.corpus_ancestors` 白名单守卫；「同条目·品种方向描述」用于绿茶/红茶（同一条目内一凉一温）。"
       },
       "tier": {
         "取值": [
@@ -109,34 +113,55 @@
       "note": "口径分歧（**性质＝来源口径之争，非数据错**）：白菜/黄瓜/莲藕「保留项目值并在数据里标注分歧」（已加 note）；酱油「映射采纳、值不改，已加 note」（2026-09-18 落定）；蘑菇「拆两条」（蘑菰 寒 / 香蕈 平，**已在 D5 执行**）。另：18 条非正名映射已逐条裁定（见 entries[].mapping_review）。金针菇/杏鲍菇/平菇 已于 2026-09-18 **从 `aliases` + `keywords` 两处移出**（不随 `mogu` 判寒），口蘑保留别名但依据为项目专业判断（挂起项 A3）。**本文件 entries[].open_question 的用法（2026-09-18 起）**：**已裁定者置 `null`**（结论见 `mapping_review`，不在此处重复）；**未获权威裁定者保留原问题**——`baicai`/`huanggua`/`lianou` 三条的口径分歧即属此类（值保留、分歧未裁定）。"
     },
     "counts": {
-      "后续|一致": 18,
+      "后续|一致": 23,
+      "后续|冲突": 12,
       "后续|仅身份，无四气可比": 1,
-      "后续|冲突": 5,
-      "后续|无源可引（基准三处无据）": 1,
       "第一批|一致": 28,
       "第一批|冲突": 4,
       "第一批|无源可引（映射未获采纳）": 1,
-      "total": 58
+      "后续|无源可引（基准三处无据）": 1,
+      "total": 70
     },
     "known_limitations": [
-      "本表由脚本从 50 号文件机械匹配生成；其中 18 条非正名映射已**逐条人工裁定**，结论见 entries[].mapping_review。",
+      "本表由脚本从 50 号文件机械匹配生成；其中非正名映射已**逐条人工裁定**，结论见 entries[].mapping_review。",
       "50 号文件的「四气」列是提取值，非原文；引用时应引 verbatim 列。",
-      "食性表 147 条中，本表已登记 **58** 条；其余 **89** 条未登记（**未登记 ≠ 无源**：剩余 100 条已按 L1/L2/L3 分层，见 `docs/food-properties-remaining-plan.md`，B1 从中共取走 11 条茶饮）。",
-      "第一批 33 条里有 1 条（`qingcai`）因映射未获采纳而降级为 ③；三类（蔬菜/调味/水果）中另有 13 条在 50 号文件与目录里均无条目（清单见 docs/food-properties-batch2-plan.md 附录），未登记进本表。"
+      "食性表 147 条中，本表已登记 **70** 条；其余 **77** 条未登记（**未登记 ≠ 无源**：剩余条目已按 L1/L2/L3 分层，见 `docs/food-properties-remaining-plan.md`；B1 取走 11 条茶饮、B2 取走 12 条主食/制品）。",
+      "第一批 33 条里有 1 条（`qingcai`）因映射未获采纳而降级为 ③；三类（蔬菜/调味/水果）中另有 13 条在 50 号文件与目录里均无条目（清单见 docs/food-properties-batch2-plan.md 附录），未登记进本表。",
+      "B2 登记的 12 条均为 `batch=后续` ⇒ **不出现在核验单 §4.1／§4.2**（那两节只渲染第一批），只在 §1 计数与 §4.4 里可见。这不是漏渲染。"
     ],
     "mapping_review": {
       "date": "2026-09-17",
       "method": "逐条给出「id／项目现值／语料值／依据行号／对当关系／判断理由／若否定的后果」，由项目所有者逐条裁定。汇报稿见 docs/food-properties-batch2-confirm.md「C 组详解」。",
-      "scope": "第一批 33 条中的 12 条非正名映射（A 药典收载名 3 / B §5.3 别名词 1 / C 等价名 4 / D §5.3 纲目别名 4）。另有 5 条（土豆/玉米/牛奶/螃蟹/海带）同属非正名但由 §5.3 直接给定、不属待裁定范围，也一并登记。**第 18 条 `xianggu`（香菇→香蕈）为 2026-09-17 ④ 层拆条时新增，随拆条一并登记（2026-09-18 补记，此前 `outcome` 只数了 17 条）。**　**B1 茶饮 11 条（2026-09-18 登记，E 组·制品·原料继承）。**",
+      "scope": "第一批 33 条中的 12 条非正名映射（A 药典收载名 3 / B §5.3 别名词 1 / C 等价名 4 / D §5.3 纲目别名 4）。另有 5 条（土豆/玉米/牛奶/螃蟹/海带）同属非正名但由 §5.3 直接给定、不属待裁定范围，也一并登记。**第 18 条 `xianggu`（香菇→香蕈）为 2026-09-17 ④ 层拆条时新增，随拆条一并登记（2026-09-18 补记，此前 `outcome` 只数了 17 条）。**　**B1 茶饮 11 条（2026-09-18 登记，E 组·制品·原料继承）。**　**B2 主食/制品 12 条（2026 年 9 月 19 日登记，F 组·制品·语料原料）。**",
       "outcome": {
-        "accepted": 27,
+        "accepted": 39,
         "rejected": 2,
         "pending": 0,
-        "accepted_note": "A 组 3 条 how 改为「正名（药典收载名）」；C 组 3 条按接受处理并各带限定；B 组 1 条、D 组 4 条（含新增的香菇）沿用文件口径。**2026-09-18：`jiangyou` 由「待确认」改为「采纳」**（映射可用、值不改，见 pending_detail）。　**2026-09-18 B1：茶饮 11 条按「制品·原料继承」登记，accepted +10 / rejected +1。**",
+        "accepted_note": "A 组 3 条 how 改为「正名（药典收载名）」；C 组 3 条按接受处理并各带限定；B 组 1 条、D 组 4 条（含新增的香菇）沿用文件口径。**2026-09-18：`jiangyou` 由「待确认」改为「采纳」**（映射可用、值不改，见 pending_detail）。　**2026-09-18 B1：茶饮 11 条按「制品·原料继承」登记，accepted +10 / rejected +1。**　**2026 年 9 月 19 日 B2：主食/制品 12 条（F 组）登记，accepted +12**（绿茶/红茶用「同条目·品种方向描述」，白酒/红酒用「等价名（通称差异）」，其余 8 条用「制品·原料继承（语料原料）」）。",
         "rejected_detail": "`qingcai` 青菜→油菜 **未获采纳** → 降级为 ③ 无源可引，退出可 approved 批次。按**本表**口径：该条从「一致」落入 ③，故**第一批 ① 由 29 降为 28** —— 以 `_meta.counts[\"第一批|一致\"]` 为准。（确认稿 `docs/food-properties-batch2-confirm.md` 里写作「28 → 27」是它自己的编号体系——那份稿子的 ①28 含 `qingcai`，本表不沿用。）　**2026-09-18 B1 追加 `molihua_cha`（茉莉花茶）：映射成立但基准三处无据 ⇒ 落 ③。**",
         "pending_detail": "（已清零）`jiangyou` 酱油→酱 曾列待确认：映射本身可用，但基准（《本草纲目》）强度不足以改项目值。**2026-09-18 落定：采纳映射、`nature` 保持「平」，并在数据里补 `note` 留痕。**"
       },
       "burden_note": "⚠️ 每条非正名映射都是**承重**的：这些条目通常只有 1 条证据，映射一否即落 ③ 无源。`lianou` 最典型——它被判为「口径分歧」的前提正是「莲藕＝藕」成立；映射否掉，它就不是分歧而是无源。"
+    },
+    "corpus_ancestors": {
+      "注": "how=「制品·原料继承（语料原料）」时，依据的 matched_name 必须在此白名单内、且 evidence 的 qi_mapped 等于登记四气（守卫 `test_corpus_inheritance_*`）。白名单只登记**已引用的那一行**（含行号），不复制语料文件。⚠️「茶叶」刻意不在此表：它被「同条目·品种方向描述」引用，同一条目内一凉（绿茶）一温（红茶），单一取值的白名单对它要么写错、要么无牙。",
+      "ancestors": {
+        "粳米": {
+          "nature": "neutral",
+          "nature_cn": "平",
+          "locator": "《中医饮食营养学》行1970／《本草纲目》行19122（50 号文件 §4.1）"
+        },
+        "米粥": {
+          "nature": "neutral",
+          "nature_cn": "平（纲目 20188 原文并列「温、平」，取平支）",
+          "locator": "《本草纲目》行20188（50 号文件 §4.1）"
+        },
+        "面": {
+          "nature": "warm",
+          "nature_cn": "温",
+          "locator": "《本草纲目》行18855（50 号文件 §4.2）"
+        }
+      }
     }
   },
   "entries": [
@@ -3019,6 +3044,622 @@
         "reason": "映射「茉莉花茶 → 茉莉花」**本身成立**（确为茉莉花所制），问题在**基准三处无据**：① 药典 2020 **未收载**（已登记为 `herb_nature_reference.json` 的 `open_items.jasmine_not_in_pharmacopoeia`）；②《中医饮食营养学》**零命中**；③《本草纲目》行 10187「茉莉」只有【释名】【主治】、**无【气味】**（行 10194「热，有毒」是**根**不是花）。⇒ 映射不能承重，落 ③。**值 `warm` 保留**：③ 层不是数据错，只是**不宣称有来源**。",
         "by": "项目所有者",
         "at": "2026-09-18"
+      }
+    },
+    {
+      "id": "mifan",
+      "name": "米饭",
+      "category": "主食",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材",
+          "matched_name": "粳米",
+          "how": "制品·原料继承（语料原料）",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行1970（50 号文件 §4.1）",
+          "verbatim": "甘，平。入脾、胃经。",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平"
+        },
+        {
+          "source_id": "s3_bencao",
+          "tier": "通行·经典",
+          "matched_name": "粳米",
+          "how": "制品·原料继承（语料原料）",
+          "alias_from": null,
+          "locator": "《本草纲目》行19122（50 号文件 §4.1）",
+          "verbatim": "粳米 【气味】甘、苦，平，无毒。",
+          "qi_word": "平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材",
+        "matched_name": "粳米",
+        "locator": "《中医饮食营养学》行1970（50 号文件 §4.1）",
+        "qi_word": "平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "F 组·制品·语料原料",
+        "reason": "映射「米饭 → 粳米」成立（米饭为粳米煮熟所得，属制品·原料继承）。依据在语料为**独立条目**（《中医饮食营养学》行 1970「甘，平」；《本草纲目》行 19122「甘、苦，平」），并非 50 号文件 §5.2 所指「本库无条目的缀类制品」，故不受那条限制。项目值 neutral 与两处来源一致 ⇒ layer ①。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "zhou",
+      "name": "白粥",
+      "category": "主食",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s3_bencao",
+          "tier": "通行·经典",
+          "matched_name": "米粥",
+          "how": "制品·原料继承（语料原料）",
+          "alias_from": null,
+          "locator": "《本草纲目》行20188（50 号文件 §4.1）",
+          "verbatim": "粳米、〔米〕、粟米、粱米粥【气味】甘，温、平，无毒。",
+          "qi_word": "温、平",
+          "qi_mapped": "neutral",
+          "qi_mapped_cn": "平"
+        }
+      ],
+      "reference": {
+        "source_id": "s3_bencao",
+        "tier": "通行·经典",
+        "matched_name": "米粥",
+        "locator": "《本草纲目》行20188（50 号文件 §4.1）",
+        "qi_word": "温、平",
+        "qi_mapped": "neutral",
+        "qi_mapped_cn": "平"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "F 组·制品·语料原料",
+        "reason": "映射「白粥 → 米粥」成立（米粥为米煮成，50 号文件 §4.1 以「米粥」立条，纲目 20188）。⚠️ 纲目原文并列「温、平」两读，本表取「平」一支（与项目值 neutral 一致）⇒ layer ①；「温」这一支以 verbatim 原样保留，供审核人复核。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "lvcha",
+      "name": "绿茶",
+      "category": "茶饮",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "bitter",
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材(有冲突)",
+          "matched_name": "茶叶",
+          "how": "同条目·品种方向描述",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行566（50 号文件 §4.5）",
+          "verbatim": "由于加工不同可分绿茶、红茶等。绿茶能清心神，涤热，肃肺胃。",
+          "qi_word": "凉",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材(有冲突)",
+        "matched_name": "茶叶",
+        "locator": "《中医饮食营养学》行566（50 号文件 §4.5）",
+        "qi_word": "凉",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "F 组·制品·语料原料",
+        "reason": "映射「绿茶 → 茶叶」成立，属**同一语料条目内的品种方向描述**（非继承）。茶叶总条《中医饮食营养学》行 555 记「苦、甘，凉」，条内按语行 566「绿茶能清心神，涤热，肃肺胃」为凉向，与总条同向；项目值 cool 一致 ⇒ layer ①。⚠️ 刻意**不**标「制品·原料继承」：红茶与同一原料（茶叶）方向相反（见 hongcha），故本 how 表达「同一条目内、按品种方向取值」。tier 记「通行·教材(有冲突)」（教材条内一凉一温口径差异）。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "hongcha",
+      "name": "红茶",
+      "category": "茶饮",
+      "batch": "后续",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s1_dietetics",
+          "tier": "通行·教材(有冲突)",
+          "matched_name": "茶叶",
+          "how": "同条目·品种方向描述",
+          "alias_from": null,
+          "locator": "《中医饮食营养学》行566（50 号文件 §4.5）",
+          "verbatim": "红茶能温脾胃，畅中焦。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s1_dietetics",
+        "tier": "通行·教材(有冲突)",
+        "matched_name": "茶叶",
+        "locator": "《中医饮食营养学》行566（50 号文件 §4.5）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "F 组·制品·语料原料",
+        "reason": "映射「红茶 → 茶叶」成立，属同一语料条目内的品种方向描述。茶叶总条行 555 记「凉」，而条内按语行 566「红茶能温脾胃，畅中焦」为温向，**与总条方向相反** ⇒ 故用「同条目·品种方向描述」而非「继承」。项目值 warm 与按语同向、值一致 ⇒ layer ①。tier 记「通行·教材(有冲突)」（教材条内口径差异）。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "baijiu",
+      "name": "白酒",
+      "category": "酒类",
+      "batch": "后续",
+      "project": {
+        "nature": "hot",
+        "nature_cn": "热",
+        "flavors": [
+          "pungent",
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s3_bencao",
+          "tier": "通行·经典",
+          "matched_name": "烧酒",
+          "how": "等价名（通称差异）",
+          "alias_from": null,
+          "locator": "《本草纲目》行20645 条／行20649【气味】行（50 号文件 §4.8）",
+          "verbatim": "【气味】辛、甘，大热，有大毒。",
+          "qi_word": "大热",
+          "qi_mapped": "hot",
+          "qi_mapped_cn": "热"
+        }
+      ],
+      "reference": {
+        "source_id": "s3_bencao",
+        "tier": "通行·经典",
+        "matched_name": "烧酒",
+        "locator": "《本草纲目》行20645 条／行20649【气味】行（50 号文件 §4.8）",
+        "qi_word": "大热",
+        "qi_mapped": "hot",
+        "qi_mapped_cn": "热"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "F 组·制品·语料原料",
+        "reason": "映射「白酒 → 烧酒」成立（通称差异：《本草纲目》条目名作「烧酒」，50 号文件 §4.8 亦以「烧酒（白酒）」并列）。项目值 hot 与纲目 20649「大热」一致 ⇒ layer ①。⚠️ 纲目 20672 与 20649 逐字重复（同一句出现两次），本表只用 20645／20649，免得被当成两处独立证据。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "mantou",
+      "name": "馒头",
+      "category": "主食",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s3_bencao",
+          "tier": "通行·经典",
+          "matched_name": "面",
+          "how": "制品·原料继承（语料原料）",
+          "alias_from": null,
+          "locator": "《本草纲目》行18855（50 号文件 §4.2）",
+          "verbatim": "面 【气味】甘，温，有微毒。不能消热止烦（《别录》）。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s3_bencao",
+        "tier": "通行·经典",
+        "matched_name": "面",
+        "locator": "《本草纲目》行18855（50 号文件 §4.2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": false,
+      "delta": "项目「平」 vs 来源「温」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「平」还是来源值「温」为准？《本草纲目》行 18855「面【气味】甘，温，有微毒」——方向相同但差一档。同条内另有注家分歧：行 18825 藏器作「面热」、行 18826 时珍作「新麦性热，陈麦平和」——纲目一条内含温/热两说，引用时须写明正条或注家；本项只引正条 18855 的「温」。依据档位为通行·经典（《本草纲目》）：50 号文件 §5.4 自定「仅经典有载、教材无者不得当教材用」。⇒ 按第一批口径值不动（neutral 保留）、layer 记 ②。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "F 组·制品·语料原料",
+        "reason": "映射成立（面制品以面粉为原料）。⚠️ 本条显式**推翻** 50 号文件 §5.2（行 478）「凡『茶』『糖』『汁』『粉』类后缀，先确认它是新制品还是同一物，不可默认继承原料四气」——按项目所有者 2026 年 9 月 19 日裁定：面制品与语料「面」同属小麦粉制品，四气从「面」（《本草纲目》行 18855「甘，温」）。⚠️ 「面」不在 herbs.json（34 味饮片）里，故 B1 的「制品·原料继承」守卫（要求原料是同名饮片）用不上；本批新增「制品·原料继承（语料原料）」并配 _meta.corpus_ancestors 白名单守卫（面 = 温）。项目值「平」与来源「温」差一档 ⇒ layer ②、值不动。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "mianshi",
+      "name": "面条",
+      "category": "主食",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s3_bencao",
+          "tier": "通行·经典",
+          "matched_name": "面",
+          "how": "制品·原料继承（语料原料）",
+          "alias_from": null,
+          "locator": "《本草纲目》行18855（50 号文件 §4.2）",
+          "verbatim": "面 【气味】甘，温，有微毒。不能消热止烦（《别录》）。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s3_bencao",
+        "tier": "通行·经典",
+        "matched_name": "面",
+        "locator": "《本草纲目》行18855（50 号文件 §4.2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": false,
+      "delta": "项目「平」 vs 来源「温」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「平」还是来源值「温」为准？《本草纲目》行 18855「面【气味】甘，温，有微毒」——方向相同但差一档。同条内另有注家分歧：行 18825 藏器作「面热」、行 18826 时珍作「新麦性热，陈麦平和」——纲目一条内含温/热两说，引用时须写明正条或注家；本项只引正条 18855 的「温」。依据档位为通行·经典（《本草纲目》）：50 号文件 §5.4 自定「仅经典有载、教材无者不得当教材用」。⇒ 按第一批口径值不动（neutral 保留）、layer 记 ②。⚠️ 50 号文件对「面条」有两处互斥记载：§4.2（行 356）「面（面粉）温」与§5.2（行 474）把「面条」列入真无据。本表按 §4.2 处理（与其余 4 条面制品一致），此择一动作以本条留痕。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "F 组·制品·语料原料",
+        "reason": "映射成立（面制品以面粉为原料）。⚠️ 本条显式**推翻** 50 号文件 §5.2（行 478）「凡『茶』『糖』『汁』『粉』类后缀，先确认它是新制品还是同一物，不可默认继承原料四气」——按项目所有者 2026 年 9 月 19 日裁定：面制品与语料「面」同属小麦粉制品，四气从「面」（《本草纲目》行 18855「甘，温」）。⚠️ 「面」不在 herbs.json（34 味饮片）里，故 B1 的「制品·原料继承」守卫（要求原料是同名饮片）用不上；本批新增「制品·原料继承（语料原料）」并配 _meta.corpus_ancestors 白名单守卫（面 = 温）。项目值「平」与来源「温」差一档 ⇒ layer ②、值不动。 ⚠️「面条」在 50 号文件 §4.2（行 356）与 §5.2（行 474）两处互斥：前者给「面（面粉）温」，后者把它列入真无据。本表按 §4.2 处理（与其余 4 条面制品口径一致），该择一动作以本条留痕。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "jiazi",
+      "name": "饺子",
+      "category": "主食",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s3_bencao",
+          "tier": "通行·经典",
+          "matched_name": "面",
+          "how": "制品·原料继承（语料原料）",
+          "alias_from": null,
+          "locator": "《本草纲目》行18855（50 号文件 §4.2）",
+          "verbatim": "面 【气味】甘，温，有微毒。不能消热止烦（《别录》）。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s3_bencao",
+        "tier": "通行·经典",
+        "matched_name": "面",
+        "locator": "《本草纲目》行18855（50 号文件 §4.2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": false,
+      "delta": "项目「平」 vs 来源「温」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「平」还是来源值「温」为准？《本草纲目》行 18855「面【气味】甘，温，有微毒」——方向相同但差一档。同条内另有注家分歧：行 18825 藏器作「面热」、行 18826 时珍作「新麦性热，陈麦平和」——纲目一条内含温/热两说，引用时须写明正条或注家；本项只引正条 18855 的「温」。依据档位为通行·经典（《本草纲目》）：50 号文件 §5.4 自定「仅经典有载、教材无者不得当教材用」。⇒ 按第一批口径值不动（neutral 保留）、layer 记 ②。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "F 组·制品·语料原料",
+        "reason": "映射成立（面制品以面粉为原料）。⚠️ 本条显式**推翻** 50 号文件 §5.2（行 478）「凡『茶』『糖』『汁』『粉』类后缀，先确认它是新制品还是同一物，不可默认继承原料四气」——按项目所有者 2026 年 9 月 19 日裁定：面制品与语料「面」同属小麦粉制品，四气从「面」（《本草纲目》行 18855「甘，温」）。⚠️ 「面」不在 herbs.json（34 味饮片）里，故 B1 的「制品·原料继承」守卫（要求原料是同名饮片）用不上；本批新增「制品·原料继承（语料原料）」并配 _meta.corpus_ancestors 白名单守卫（面 = 温）。项目值「平」与来源「温」差一档 ⇒ layer ②、值不动。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "baozi",
+      "name": "包子",
+      "category": "主食",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s3_bencao",
+          "tier": "通行·经典",
+          "matched_name": "面",
+          "how": "制品·原料继承（语料原料）",
+          "alias_from": null,
+          "locator": "《本草纲目》行18855（50 号文件 §4.2）",
+          "verbatim": "面 【气味】甘，温，有微毒。不能消热止烦（《别录》）。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s3_bencao",
+        "tier": "通行·经典",
+        "matched_name": "面",
+        "locator": "《本草纲目》行18855（50 号文件 §4.2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": false,
+      "delta": "项目「平」 vs 来源「温」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「平」还是来源值「温」为准？《本草纲目》行 18855「面【气味】甘，温，有微毒」——方向相同但差一档。同条内另有注家分歧：行 18825 藏器作「面热」、行 18826 时珍作「新麦性热，陈麦平和」——纲目一条内含温/热两说，引用时须写明正条或注家；本项只引正条 18855 的「温」。依据档位为通行·经典（《本草纲目》）：50 号文件 §5.4 自定「仅经典有载、教材无者不得当教材用」。⇒ 按第一批口径值不动（neutral 保留）、layer 记 ②。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "F 组·制品·语料原料",
+        "reason": "映射成立（面制品以面粉为原料）。⚠️ 本条显式**推翻** 50 号文件 §5.2（行 478）「凡『茶』『糖』『汁』『粉』类后缀，先确认它是新制品还是同一物，不可默认继承原料四气」——按项目所有者 2026 年 9 月 19 日裁定：面制品与语料「面」同属小麦粉制品，四气从「面」（《本草纲目》行 18855「甘，温」）。⚠️ 「面」不在 herbs.json（34 味饮片）里，故 B1 的「制品·原料继承」守卫（要求原料是同名饮片）用不上；本批新增「制品·原料继承（语料原料）」并配 _meta.corpus_ancestors 白名单守卫（面 = 温）。项目值「平」与来源「温」差一档 ⇒ layer ②、值不动。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "xiaolongbao",
+      "name": "小笼包",
+      "category": "主食",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s3_bencao",
+          "tier": "通行·经典",
+          "matched_name": "面",
+          "how": "制品·原料继承（语料原料）",
+          "alias_from": null,
+          "locator": "《本草纲目》行18855（50 号文件 §4.2）",
+          "verbatim": "面 【气味】甘，温，有微毒。不能消热止烦（《别录》）。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s3_bencao",
+        "tier": "通行·经典",
+        "matched_name": "面",
+        "locator": "《本草纲目》行18855（50 号文件 §4.2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": false,
+      "delta": "项目「平」 vs 来源「温」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「平」还是来源值「温」为准？《本草纲目》行 18855「面【气味】甘，温，有微毒」——方向相同但差一档。同条内另有注家分歧：行 18825 藏器作「面热」、行 18826 时珍作「新麦性热，陈麦平和」——纲目一条内含温/热两说，引用时须写明正条或注家；本项只引正条 18855 的「温」。依据档位为通行·经典（《本草纲目》）：50 号文件 §5.4 自定「仅经典有载、教材无者不得当教材用」。⇒ 按第一批口径值不动（neutral 保留）、layer 记 ②。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "F 组·制品·语料原料",
+        "reason": "映射成立（面制品以面粉为原料）。⚠️ 本条显式**推翻** 50 号文件 §5.2（行 478）「凡『茶』『糖』『汁』『粉』类后缀，先确认它是新制品还是同一物，不可默认继承原料四气」——按项目所有者 2026 年 9 月 19 日裁定：面制品与语料「面」同属小麦粉制品，四气从「面」（《本草纲目》行 18855「甘，温」）。⚠️ 「面」不在 herbs.json（34 味饮片）里，故 B1 的「制品·原料继承」守卫（要求原料是同名饮片）用不上；本批新增「制品·原料继承（语料原料）」并配 _meta.corpus_ancestors 白名单守卫（面 = 温）。项目值「平」与来源「温」差一档 ⇒ layer ②、值不动。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "miantiao_liang",
+      "name": "凉面",
+      "category": "主食",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s3_bencao",
+          "tier": "通行·经典",
+          "matched_name": "面",
+          "how": "制品·原料继承（语料原料）",
+          "alias_from": null,
+          "locator": "《本草纲目》行18855（50 号文件 §4.2）",
+          "verbatim": "面 【气味】甘，温，有微毒。不能消热止烦（《别录》）。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s3_bencao",
+        "tier": "通行·经典",
+        "matched_name": "面",
+        "locator": "《本草纲目》行18855（50 号文件 §4.2）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": false,
+      "delta": "项目「凉」 vs 来源「温」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「凉」还是来源值「温」为准？《本草纲目》行 18855「面【气味】甘，温」——方向相反、差 2 档。语料无「凉面／冷面／凉皮」条目（《本草纲目》与《中医饮食营养学》均为 0 命中）。⚠️「凉」不是运行时的降温前缀：nature_math.CHILL_PREFIXES 只含 冰／冰镇／去冰／冷冻／冷藏／冻，故本项目没有「凉面 = 面 − 1」这条自动规则；cool 是数据里直接写的值。方向相符的只有麦粉（行 18893）、面筋（行 18897）两条另一制品的「凉」，不可当继承。⇒ 值不动、分歧原因如实写「无对应条目，非继承可得」，layer 记 ②。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "F 组·制品·语料原料",
+        "reason": "映射「凉面 → 面（面粉）」成立（凉面为面粉制品）。项目值「凉」与来源「温」**方向相反、差 2 档** ⇒ layer ②、值不动。⚠️「凉」无代码依据：nature_math.CHILL_PREFIXES 不含「凉」，cool 是数据里直接写的值；语料无「凉面／冷面／凉皮」条目，方向相符的只有麦粉（行 18893）、面筋（行 18897）两条**另一制品**的「凉」，不可当继承。按项目所有者裁定判 ②（口径分歧），非 ③ 无源。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "hongjiu",
+      "name": "红酒",
+      "category": "酒类",
+      "batch": "后续",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet",
+          "sour"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s3_bencao",
+          "tier": "通行·经典",
+          "matched_name": "葡萄酒",
+          "how": "等价名（通称差异）",
+          "alias_from": null,
+          "locator": "《本草纲目》行20665「葡萄酒」条【气味】行20669（50 号文件 §4.8）",
+          "verbatim": "酿酒 【气味】甘、辛，热，微毒。",
+          "qi_word": "热",
+          "qi_mapped": "hot",
+          "qi_mapped_cn": "热"
+        }
+      ],
+      "reference": {
+        "source_id": "s3_bencao",
+        "tier": "通行·经典",
+        "matched_name": "葡萄酒",
+        "locator": "《本草纲目》行20665「葡萄酒」条【气味】行20669（50 号文件 §4.8）",
+        "qi_word": "热",
+        "qi_mapped": "hot",
+        "qi_mapped_cn": "热"
+      },
+      "nature_match": false,
+      "delta": "项目「温」 vs 来源「热」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「温」还是来源值「热」为准？《本草纲目》行 20665「葡萄酒」条【气味】行 20669「甘、辛，热，微毒」——差一档。⚠️ 该【气味】行的标目作「酿酒」（非「葡萄酒」），引用时须带上下文；行 20668 时珍把葡萄酒分「酿成者」与「如烧酒法者」两样，本条引的是酿成者那一支。依据档位为通行·经典；50 号文件 §5.4 把「葡萄酒」列入「仅经典有载、教材无」，引用必须写明《本草纲目》，不得写成教材记载。⇒ 值不动、layer 记 ②。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "F 组·制品·语料原料",
+        "reason": "映射「红酒 → 葡萄酒」成立（红酒为葡萄酒的通称，属通称差异而非继承）。项目值「温」与来源「热」差一档 ⇒ layer ②、值不动。依据仅《本草纲目》（50 号文件 §5.4 把「葡萄酒」列入「仅经典有载、教材无」），引用须写明《本草纲目》。⚠️【气味】行标目作「酿酒」（非「葡萄酒」），行 20668 时珍分「酿成者」与「如烧酒法者」两样，本条引酿成者那一支。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
       }
     }
   ]
