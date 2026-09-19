@@ -74,12 +74,14 @@ async def lifespan(app: FastAPI):
         from app.agents.runtime import close_runtime
 
         close_runtime()
+    # 只吞掉预期的资源释放错误；编程错误应暴露，避免关闭阶段静默掩盖缺陷。
     except (OSError, RuntimeError):  # pragma: no cover
         logger.warning("关闭主 Agent 运行时时出错", exc_info=True)
     try:
         from app.agents.multi_provider import close_multi_provider_runtime
 
         close_multi_provider_runtime()
+    # 与主运行时保持同一策略，不恢复成会隐藏所有缺陷的 ``except Exception``。
     except (OSError, RuntimeError):  # pragma: no cover
         logger.warning("关闭多模型运行时时出错", exc_info=True)
 

@@ -15,6 +15,8 @@ from pydantic import BaseModel, Field
 
 from app.agents.multi_provider import MODEL_MAPPING, get_multi_provider_runtime
 from app.agents.runtime import CredentialError
+from app.api.auth import extract_api_key
+from app.config import get_settings
 from app.domain.enums import CONSTITUTION_LABELS, Constitution
 from app.domain.models import EvidenceReference
 from app.domain.safety import (
@@ -102,13 +104,11 @@ async def chat_endpoint(
             safety_intercepted=True,
         )
 
-    api_key = ""
-    if authorization and authorization.startswith("Bearer "):
-        api_key = authorization[7:].strip()
+    api_key = extract_api_key(authorization)
     if not api_key:
         raise HTTPException(
             status_code=400,
-            detail={"code": "NO_API_KEY", "message": "缺少 API Key，请先打开 API 设置填写。"},
+            detail={"code": "NO_API_KEY", "message": get_settings().missing_credentials_hint()},
         )
 
     try:

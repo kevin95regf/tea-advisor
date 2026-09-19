@@ -10,23 +10,15 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app.domain.enums import CONSTITUTION_LABELS, Constitution, MealTime, Nature
-from app.domain.models import (
-    AnalyzeResponse,
-    Basis,
-    EvidenceReference,
-    Meta,
-    ParsedFood,
-    ParsedMeal,
-    Verification,
-)
+from app.domain.models import AnalyzeResponse, Meta, ParsedFood, ParsedMeal, Verification
 from app.domain.safety import (
     detect_high_risk,
-    herb_evidence,
     ready_constitutions,
     scan_free_text,
 )
 from app.services import matcher
 from app.services.food_lookup import match_foods, resolve_food
+from app.services.orchestrator import _build_basis
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -79,25 +71,6 @@ def _guess_meal_time(text: str) -> MealTime:
     return MealTime.LATE_NIGHT
 
 
-def _basis(
-    constitution: Constitution,
-    recs: list,
-    rule_hits: list[str],
-    guardrail: list[str],
-) -> Basis:
-    names = {herb.name for rec in recs for herb in rec.herbs}
-    return Basis(
-        constitution=constitution,
-        constitution_label=CONSTITUTION_LABELS[constitution.value],
-        rule_hits=rule_hits,
-        guardrail_applied=guardrail,
-        references=[
-            EvidenceReference(**item)
-            for item in herb_evidence(names, constitution.value)
-        ],
-    )
-
-
 @router.post(
     "/analyze-offline",
     response_model=AnalyzeResponse,
@@ -126,7 +99,7 @@ async def analyze_offline_endpoint(request: OfflineAnalyzeRequest) -> AnalyzeRes
             request_id=uuid.uuid4().hex[:16],
             parsed=parsed,
             recommendations=[],
-            basis=_basis(constitution, [], [], []),
+            basis=_build_basis(constitution, CONSTITUTION_LABELS[constitution.value]),
             meta=Meta(
                 total_ms=0,
                 model="offline-rules",
@@ -177,11 +150,10 @@ async def analyze_offline_endpoint(request: OfflineAnalyzeRequest) -> AnalyzeRes
             request_id=uuid.uuid4().hex[:16],
             parsed=parsed,
             recommendations=[],
-            basis=_basis(
+            basis=_build_basis(
                 constitution,
-                [],
-                [],
-                [f"命中高风险关键词：{'、'.join(risks)}"],
+                CONSTITUTION_LABELS[constitution.value],
+                guardrail_applied=[f"命中高风险关键词：{'、'.join(risks)}"],
             ),
             meta=Meta(
                 agent1_ms=elapsed,
@@ -220,7 +192,13 @@ async def analyze_offline_endpoint(request: OfflineAnalyzeRequest) -> AnalyzeRes
         request_id=uuid.uuid4().hex[:16],
         parsed=parsed,
         recommendations=recs,
-        basis=_basis(constitution, recs, rule_hits, guardrail),
+        basis=_build_basis(
+            constitution,
+            CONSTITUTION_LABELS[constitution.value],
+            recs=recs,
+            rule_hits=rule_hits,
+            guardrail_applied=guardrail,
+        ),
         meta=Meta(
             agent1_ms=elapsed,
             agent2_ms=0,

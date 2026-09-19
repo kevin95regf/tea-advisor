@@ -1,6 +1,6 @@
 """体质药物调理资料的只读接口。
 
-资料与茶饮推荐链路严格隔离，只展示来源、原文级别和就医提示；
+资料与茶饮推荐链路严格隔离，只展示来源、结构化摘要和就医提示；
 不提供剂量，也不会把方剂送入模型或推荐白名单。
 """
 
@@ -42,7 +42,7 @@ async def medication_profile(constitution: Constitution) -> dict:
         "disclaimer": medication.medication_disclaimer(),
         "sources": medication.medication_sources(),
         "usage_policy": (
-            "本资料仅用于查看指南原文摘要，不构成用药建议，"
+            "本资料仅用于查看来源登记与独立措辞的结构化摘要，不构成用药建议，"
             "不进入茶饮推荐链路；具体用药必须由执业医师辨证决定。"
         ),
     }

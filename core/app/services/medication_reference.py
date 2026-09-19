@@ -21,7 +21,7 @@ Agent2 只能从 ``herbs.json`` 的 34 味药食同源饮片里挑，候选集�
   ``app/domain/safety.py``、``app/services/food_lookup.py``、``app/services/matcher.py``、
   ``app/services/orchestrator.py``、``app/agents/prompts/*.md`` **一律不得** import 或读取它。
   （``tests/test_medication_reference.py`` 里有一条守卫测试把这件事钉死。）
-* 只做查询与原文呈现：**不计算剂量、不做体质匹配推荐、不生成搭配**。
+* 只做来源登记与结构化摘要查询：**不收录标准正文、不计算剂量、不做体质匹配推荐、不生成搭配**。
 * ``constitution_medication.json`` **不是** ``herbs.json`` 的来源，
   两者也不可互相同步。体质食养候选的唯一真源仍是
   ``constitution_recommendations.json``。
@@ -155,7 +155,7 @@ def medication_sources() -> list[dict[str, Any]]:
 
 
 def list_profiles() -> list[dict[str, Any]]:
-    """按指南条文顺序返回 9 种体质的药物调理条目。"""
+    """按来源章节顺序返回 9 种体质的结构化摘要。"""
     return list(load_medication_reference().get("constitutions") or [])
 
 
@@ -201,7 +201,7 @@ def describe_profile(constitution: str) -> str:
     if profile.get("additional_drugs"):
         lines.append("加减药物：" + "、".join(profile["additional_drugs"]))
     if profile.get("drug_notes"):
-        lines.append("原文表述：" + profile["drug_notes"])
+        lines.append("资料说明：" + profile["drug_notes"])
 
     for formula in profile["recommended_formulas"]:
         grade = "、".join(
@@ -209,9 +209,9 @@ def describe_profile(constitution: str) -> str:
             for part in (formula.get("recommendation_class"), formula.get("evidence_level"))
             if part
         )
-        lines.append(f"推荐方剂：{formula['name']}" + (f"（{grade}）" if grade else "（原文未标注等级）"))
+        lines.append(f"方剂索引：{formula['name']}" + (f"（{grade}）" if grade else "（资料未登记等级）"))
     if not profile["recommended_formulas"]:
-        lines.append("推荐方剂：无")
+        lines.append("方剂索引：无")
 
     if profile["adjustment_points"]:
         lines.append("调体要点：" + "；".join(profile["adjustment_points"]))

@@ -2,33 +2,17 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
+from tcm_constitution import score_questionnaire
+from tcm_constitution.questions import ANSWER_LABELS, questions_for_sex
 
 from app.domain.constitution_resolver import (
     UndeterminedConstitutionError,
     resolve_from_scores,
 )
 
-_questionnaire_root = (
-    Path(__file__).resolve().parent.parent.parent.parent
-    / "tcm-constitution-questionnaire"
-)
-if str(_questionnaire_root) not in sys.path:
-    sys.path.insert(0, str(_questionnaire_root))
-
-from tcm_constitution import score_questionnaire
-from tcm_constitution.questions import ANSWER_LABELS, questions_for_sex
-
 router = APIRouter()
-CONSTITUTION_ID_ALIASES = {"phlegm_dampness": "phlegm_damp"}
-
-
-def public_constitution_id(scale_key: str) -> str:
-    return CONSTITUTION_ID_ALIASES.get(scale_key, scale_key)
 
 
 class QuestionnaireRequest(BaseModel):
@@ -66,7 +50,7 @@ async def questionnaire_endpoint(request: QuestionnaireRequest) -> Questionnaire
 
     scores = [
         ConstitutionResult(
-            id=public_constitution_id(scale_key),
+            id=scale_key,
             name=info["name"],
             score=info["transformed_score"],
             status=info.get("status", "否"),
@@ -74,9 +58,7 @@ async def questionnaire_endpoint(request: QuestionnaireRequest) -> Questionnaire
         for scale_key, info in result["scores"].items()
     ]
 
-    normalized_scores = {
-        public_constitution_id(key): value for key, value in result["scores"].items()
-    }
+    normalized_scores = dict(result["scores"])
     try:
         resolution = resolve_from_scores(normalized_scores)
     except UndeterminedConstitutionError as exc:

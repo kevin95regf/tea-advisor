@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.agents.runtime import AgentRun
@@ -93,6 +94,39 @@ def test_chat_preserves_role_history_and_uses_selected_model(monkeypatch):
         "assistant",
         "user",
     ]
+
+
+@pytest.mark.parametrize(
+    "authorization",
+    ["bearer test-key", "BEARER test-key", "BeArEr test-key", "  Bearer test-key"],
+)
+def test_chat_uses_shared_case_insensitive_key_parser(monkeypatch, authorization):
+    class FakeRuntime:
+        def run(self, **kwargs):
+            assert kwargs["api_key"] == "test-key"
+            return AgentRun(text="可以试试温水。", elapsed_ms=1, session_id="test")
+
+    monkeypatch.setattr(chat_api, "get_multi_provider_runtime", lambda: FakeRuntime())
+    response = client.post(
+        "/api/chat",
+        headers={"Authorization": authorization},
+        json={"messages": [{"role": "user", "content": "你好"}]},
+    )
+    assert response.status_code == 200
+
+
+def test_chat_rejects_overlong_key_before_provider_call(monkeypatch):
+    def fail_if_called():
+        raise AssertionError("超长 Key 不应送到模型提供商")
+
+    monkeypatch.setattr(chat_api, "get_multi_provider_runtime", fail_if_called)
+    response = client.post(
+        "/api/chat",
+        headers={"Authorization": "Bearer " + "x" * 300},
+        json={"messages": [{"role": "user", "content": "你好"}]},
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"]["code"] == "NO_API_KEY"
 
 
 def test_chat_rejects_unknown_model_without_calling_provider():

@@ -1,21 +1,21 @@
 {
   "_meta": {
-    "title": "九型体质药物调理参考（依据 T/CACM 1460—2023）",
-    "version": "1.0.0",
+    "title": "九型体质药物调理资料索引",
+    "version": "1.1.0",
     "compiled_on": "2026-09-19",
     "review_status": "pending",
-    "purpose": "把《成年人中医体质治未病干预指南》中每种体质的「药物调理」条文整理为可检索的只读资料，供查阅与溯源。",
+    "content_policy": "仅登记来源并提供独立措辞的结构化摘要，不收录或替代标准正文；来源授权状态未确认。",
+    "purpose": "为只读资料页提供体质、调理方向、常见药物名和方剂名索引，便于用户回到正式标准或咨询执业医师。",
     "usage_policy": [
-      "本文件**不参与任何推荐链路**：app/services/food_lookup.py、app/services/matcher.py、app/services/orchestrator.py、app/domain/safety.py 以及两个 Agent 的提示词均不得读取或注入本文件内容。",
-      "本文件**不得**作为 herbs.json 药食同源白名单的来源：其中列举的药物与方剂绝大多数不属于「既是食品又是中药材的物质」，混入白名单会破坏「让模型无方可开」的结构性约束。",
-      "只有 core/app/services/medication_reference.py 一个只读入口可以读取本文件，且只做查询与展示，不做任何剂量计算、不做体质匹配推荐。"
+      "本文件不参与饮食或茶饮推荐链路，也不得进入模型提示词、候选集或 herbs.json。",
+      "药物名和方剂名只用于资料索引，不构成处方、剂量或个体化用药建议。",
+      "需要完整条文时应查阅正式出版物；本摘要不得作为标准正文的替代品。"
     ],
     "disclaimer": [
-      "本模块内容摘自《成年人中医体质治未病干预指南》（T/CACM 1460—2023）第 4.1.x.3 条与 4.2 节，仅为原文资料的整理与检索，不构成用药建议、处方或诊断意见。",
-      "文中「常用药物」与「推荐中药方剂」均为处方性质，须由具备资质的中医师辨证后开具与调整；本系统不提供剂量、不判断是否适用，也不能替代医师面诊。",
-      "本模块与饮食茶饮推荐严格分离。茶饮建议仅限国家药食同源目录内的物质，不应据此模块自行配药。",
-      "孕期、哺乳期、经期、儿童、慢性病患者及正在服药者，请勿自行使用上述药物，应先咨询执业医师或药师。",
-      "出现持续不适或症状加重时请及时就医，不要以体质调理替代诊治。"
+      "以下内容是对 T/CACM 1460—2023 相关主题的结构化摘要，不是标准原文，也不构成诊断、处方或用药建议。",
+      "中药和方剂须由具备资质的中医师辨证后决定，本系统不提供剂量、疗程或适用性判断。",
+      "本资料与药食同源茶饮推荐严格分离；孕期、哺乳期、儿童、慢性病患者及正在服药者请先咨询执业医师或药师。",
+      "出现持续不适、急性症状或症状加重时请及时就医。"
     ],
     "sources": [
       {
@@ -23,314 +23,144 @@
         "title": "成年人中医体质治未病干预指南",
         "standard_no": "T/CACM 1460—2023",
         "publisher": "中华中医药学会",
-        "proposed_by": "北京中医药大学国家中医体质与治未病研究院",
         "published_on": "2023-03-23",
         "implemented_on": "2023-03-23",
-        "applies_to": "中国 18 周岁～60 周岁人群",
-        "intended_users": "综合医院中医科、中西医结合科、治未病科、体检中心、基层医院等相关科室临床医师",
-        "main_drafters": ["王琦", "倪诚", "李英帅", "郑燕飞", "王济"],
         "url": "https://www.spc.org.cn/online/80d6b5dfc7a4f0ea270d220ecb49c872.html",
-        "url_note": "中国标准在线服务网的标准记录页（含标准号、发布/实施日期、归口单位与起草人）。全文本项目以标准正式出版物为准。"
+        "url_note": "标准记录页；完整内容以依法取得的正式出版物为准。"
       }
     ],
-    "evidence_grading_note": "推荐类别与证据级别均为指南原文标注。分级依据见指南 5.3 f)：采用陈薇、方赛男、刘建平《基于证据体的中医药临床证据分级标准建议》（中国中西医结合杂志, 2019, 39(03):358-364）提出的 RCT 方法学质量评价标准对文献进行评分、分级与推荐。原文对部分方剂未标注等级，本文件如实记为 null，不做推测补齐。",
-    "scope_note": "指南 5.3 说明：本文件适用于经医生辨识为单一体质者；兼夹体质建议先按转化分最高的体质调理主要体质，再调理次要体质。指南同时指出，高血压、糖尿病、肾病等慢性疾病人群或疾病发作期，应在专科医生指导下使用。",
-    "field_notes": {
-      "principle": "该体质的调体原则（原文 x.1 调体原则）",
-      "common_drugs": "原文「常用药物」列举",
-      "additional_drugs": "原文「可酌加 / 再参以」列举的加减药物；无则为空数组",
-      "drug_notes": "原文关于药物加减的完整表述",
-      "recommended_formulas": "原文「推荐中药方剂」；recommendation_class 与 evidence_level 为原文标注，原文未标注则为 null",
-      "adjustment_points": "原文「调体要点」",
-      "referral_note": "本项目的强制提示，非原文内容",
-      "concurrent_constitutions": "原文 4.2 常见兼夹体质调理原则，8 组",
-      "concurrent_principles": "原文 4.2.1 总则"
-    }
+    "scope_note": "本索引面向资料查阅，不执行体质诊断或用药决策。"
   },
   "constitutions": [
     {
       "id": "balanced",
       "label": "平和质",
       "clause": "4.1.1",
-      "principle": "平调阴阳。",
+      "principle": "以维持整体平衡为主，通常不以药物调理为重点。",
       "common_drugs": [],
-      "additional_drugs": [],
-      "drug_notes": "平和体质一般不用药物调理。",
       "recommended_formulas": [],
-      "adjustment_points": [],
-      "referral_note": "原文明确指出平和体质一般不用药物调理，本条目不提供任何用药方向。"
+      "adjustment_points": ["优先保持规律饮食、作息与运动"],
+      "referral_note": "本条目不提供用药方向。"
     },
     {
       "id": "qi_deficiency",
       "label": "气虚质",
       "clause": "4.1.2",
-      "principle": "培补元气，补气健脾。",
+      "principle": "调理方向以补气和健脾为主。",
       "common_drugs": ["党参", "黄芪", "山药", "白术", "茯苓", "甘草", "大枣"],
-      "additional_drugs": ["菟丝子", "五味子", "枸杞子", "紫河车", "阿胶", "鹿茸"],
-      "drug_notes": "可酌加菟丝子、五味子、枸杞子等益肾填精。再参以紫河车、阿胶、鹿茸等血肉有情之品，充养身中形质，气味同补。",
       "recommended_formulas": [
-        {
-          "name": "补中益气汤",
-          "recommendation_class": "Ⅱ类推荐",
-          "evidence_level": "C级证据"
-        },
-        {
-          "name": "玉屏风散",
-          "recommendation_class": "Ⅱ类推荐",
-          "evidence_level": "C级证据"
-        }
+        {"name": "补中益气汤", "recommendation_class": "Ⅱ类推荐", "evidence_level": "C级证据"},
+        {"name": "玉屏风散", "recommendation_class": "Ⅱ类推荐", "evidence_level": "C级证据"}
       ],
-      "adjustment_points": [
-        "把握剂量，不可峻补",
-        "补气佐以理气",
-        "补气须防虚中夹实"
-      ],
-      "referral_note": "党参、黄芪、白术、阿胶、鹿茸等均非药食同源物质，不得进入本系统茶饮候选集；上述方剂须由中医师辨证开具。"
+      "adjustment_points": ["补益强度和是否兼有气滞、夹实需由医师判断"],
+      "referral_note": "所列药物并不等同于药食同源茶饮原料，不得进入本系统茶饮候选集。"
     },
     {
       "id": "yang_deficiency",
       "label": "阳虚质",
       "clause": "4.1.3",
-      "principle": "补肾温阳，益火之源。",
+      "principle": "调理方向以温阳和支持肾阳为主。",
       "common_drugs": ["桂枝", "肉桂", "附子", "菟丝子", "巴戟天", "杜仲", "干姜"],
-      "additional_drugs": [],
-      "drug_notes": "",
       "recommended_formulas": [
-        {
-          "name": "桂附地黄丸",
-          "recommendation_class": "Ⅰ类推荐",
-          "evidence_level": "A级证据"
-        }
+        {"name": "桂附地黄丸", "recommendation_class": "Ⅰ类推荐", "evidence_level": "A级证据"}
       ],
-      "adjustment_points": [
-        "温阳佐以养阴",
-        "温阳兼顾脾胃",
-        "慎用辛热有毒之品"
-      ],
-      "referral_note": "附子为有毒药材，原文调体要点即强调「慎用辛热有毒之品」；本系统不提供任何含附子的搭配。"
+      "adjustment_points": ["温阳需兼顾阴液与脾胃状态", "有毒或辛热药物必须由医师使用"],
+      "referral_note": "附子等药材存在显著用药风险，本系统不提供相关搭配或剂量。"
     },
     {
       "id": "yin_deficiency",
       "label": "阴虚质",
       "clause": "4.1.4",
-      "principle": "滋补肾阴，壮水制火。",
-      "common_drugs": ["熟地黄", "山茱萸", "百合", "桑椹子", "女贞子"],
-      "additional_drugs": [],
-      "drug_notes": "「桑椹子」即桑椹；原文使用的药物名与药材正名一致。",
+      "principle": "调理方向以滋养阴液为主，并结合是否存在虚热。",
+      "common_drugs": ["熟地黄", "山茱萸", "百合", "桑椹", "女贞子"],
       "recommended_formulas": [
-        {
-          "name": "六味地黄丸",
-          "recommendation_class": null,
-          "evidence_level": null
-        },
-        {
-          "name": "左归丸",
-          "recommendation_class": null,
-          "evidence_level": null
-        }
+        {"name": "六味地黄丸", "recommendation_class": null, "evidence_level": null},
+        {"name": "左归丸", "recommendation_class": null, "evidence_level": null}
       ],
-      "adjustment_points": [
-        "滋阴与清热并用",
-        "补血、养血即可生津，注意结合填精、养血的方药",
-        "养阴兼顾理气健脾"
-      ],
-      "referral_note": "原文对该两条方剂未标注推荐类别与证据级别，本文件如实记为 null，不代为补级。"
+      "adjustment_points": ["滋养、清热、养血及脾胃耐受需综合判断"],
+      "referral_note": "方剂只作名称索引，是否适用须由中医师辨证。"
     },
     {
       "id": "phlegm_damp",
       "label": "痰湿质",
       "clause": "4.1.5",
-      "principle": "健脾祛湿，化痰泄浊。",
-      "common_drugs": ["陈皮", "生黄芪", "肉桂", "制苍术", "冬瓜皮", "干荷叶", "茯苓", "生山楂", "昆布", "海藻", "姜黄", "生蒲黄"],
-      "additional_drugs": ["炒白术", "炒莱菔子", "鸡内金", "砂仁", "大黄", "炒白芥子", "苏子"],
-      "drug_notes": "兼气虚质者，重用生黄芪，加炒白术；腹胀者，加炒莱菔子、鸡内金、砂仁；便秘者，酌加大黄、炒莱菔子、炒白芥子、苏子。",
+      "principle": "调理方向以健脾、祛湿和化痰为主。",
+      "common_drugs": ["陈皮", "黄芪", "肉桂", "苍术", "冬瓜皮", "荷叶", "茯苓", "山楂", "昆布", "海藻"],
       "recommended_formulas": [
-        {
-          "name": "参苓白术散",
-          "recommendation_class": "Ⅱ级推荐",
-          "evidence_level": "C级证据",
-          "grade_note": "原文此处写作「Ⅱ级推荐」，其余条目写作「Ⅱ类推荐」，本文件保留原文字样。"
-        }
+        {"name": "参苓白术散", "recommendation_class": "Ⅱ级推荐", "evidence_level": "C级证据"}
       ],
-      "adjustment_points": [
-        "配用温化通阳",
-        "细察痰瘀互夹",
-        "少用甘润之品"
-      ],
-      "referral_note": "制苍术、冬瓜皮、海藻、姜黄、生蒲黄、大黄等非药食同源物质，不得进入茶饮候选集。"
+      "adjustment_points": ["是否兼有气虚、血瘀或便秘等情况需要分别辨识"],
+      "referral_note": "本条目中的药物列表不得直接转成茶饮方案。"
     },
     {
       "id": "damp_heat",
       "label": "湿热质",
       "clause": "4.1.6",
-      "principle": "分消湿浊，清泻伏火。",
-      "common_drugs": ["黄芩", "黄连", "黄柏", "薏苡仁", "白蔻仁", "栀子", "苦参", "茵陈蒿"],
-      "additional_drugs": [],
-      "drug_notes": "",
+      "principle": "调理方向以清热和化湿为主。",
+      "common_drugs": ["黄芩", "黄连", "黄柏", "薏苡仁", "白豆蔻", "栀子", "苦参", "茵陈"],
       "recommended_formulas": [
-        {
-          "name": "藿香正气散",
-          "recommendation_class": null,
-          "evidence_level": null
-        },
-        {
-          "name": "龙胆泻肝汤",
-          "recommendation_class": null,
-          "evidence_level": null
-        }
+        {"name": "藿香正气散", "recommendation_class": null, "evidence_level": null},
+        {"name": "龙胆泻肝汤", "recommendation_class": null, "evidence_level": null}
       ],
-      "adjustment_points": [
-        "宣透化湿以散热",
-        "通利化湿以泄热",
-        "慎用辛温助火之品"
-      ],
-      "referral_note": "原文对该两条方剂未标注推荐类别与证据级别，本文件如实记为 null，不代为补级。"
+      "adjustment_points": ["湿与热的轻重、部位及是否夹虚需要辨证"],
+      "referral_note": "苦寒或辛温药物均不宜根据体质标签自行使用。"
     },
     {
       "id": "blood_stasis",
       "label": "血瘀质",
       "clause": "4.1.7",
-      "principle": "活血祛瘀，疏通经络。",
-      "common_drugs": ["桃仁", "红花", "丹参", "赤芍", "当归", "川芎", "生山楂", "玫瑰花", "茜草", "蒲黄"],
-      "additional_drugs": [],
-      "drug_notes": "",
+      "principle": "调理方向以改善血行和疏通经络为主。",
+      "common_drugs": ["桃仁", "红花", "丹参", "赤芍", "当归", "川芎", "山楂", "玫瑰花"],
       "recommended_formulas": [
-        {
-          "name": "血府逐瘀汤",
-          "recommendation_class": null,
-          "evidence_level": null
-        }
+        {"name": "血府逐瘀汤", "recommendation_class": null, "evidence_level": null}
       ],
-      "adjustment_points": [
-        "养阴以活血",
-        "调气以化瘀",
-        "女性防动血，月经期、月经过多及孕妇均当慎用或忌用",
-        "温阳化瘀"
-      ],
-      "referral_note": "孕妇、月经期、月经过多、有出血倾向或正在服用抗凝/抗血小板药物者，不应自行使用本类活血药物。"
+      "adjustment_points": ["活血方向需结合气、阴、阳等状态", "出血风险人群必须谨慎"],
+      "referral_note": "孕期、月经过多、有出血倾向或使用抗凝药者不得自行尝试。"
     },
     {
       "id": "qi_stagnation",
       "label": "气郁质",
       "clause": "4.1.8",
-      "principle": "疏肝行气，开郁散结。",
+      "principle": "调理方向以疏理气机和情志调适为主。",
       "common_drugs": ["柴胡", "陈皮", "川芎", "香附", "枳壳", "白芍", "甘草", "当归", "薄荷"],
-      "additional_drugs": ["丹参", "桃仁", "苍术", "半夏", "竹茹", "栀子", "连翘", "厚朴", "神曲", "山楂"],
-      "drug_notes": "气郁质者多兼血郁、痰郁、火郁、湿郁、食郁，但以「气郁」为先导，临证总以香附、柴胡、枳壳等行气药为主；血郁加川芎、丹参、桃仁；痰郁加苍术、半夏、竹茹；火郁加栀子、连翘；湿郁加苍术、厚朴；食郁加神曲、山楂等。",
       "recommended_formulas": [
-        {
-          "name": "逍遥散",
-          "recommendation_class": "Ⅰ类推荐",
-          "evidence_level": "A级证据"
-        },
-        {
-          "name": "越鞠丸",
-          "recommendation_class": "Ⅰ类推荐",
-          "evidence_level": "A级证据"
-        }
+        {"name": "逍遥散", "recommendation_class": "Ⅰ类推荐", "evidence_level": "A级证据"},
+        {"name": "越鞠丸", "recommendation_class": "Ⅰ类推荐", "evidence_level": "A级证据"}
       ],
-      "adjustment_points": [
-        "掌握用药法度：理气不宜过燥，以防伤阴；养阴不宜过腻，以防黏滞；用药不宜峻猛，以防伤正",
-        "提倡情志相胜"
-      ],
-      "referral_note": "兼夹加减所列为临证思路，不可自行照方加减；持续情绪低落、焦虑或睡眠明显受损时应寻求专业帮助。"
+      "adjustment_points": ["需辨别是否兼有血、痰、火、湿或食积", "重视情绪与睡眠支持"],
+      "referral_note": "持续情绪低落、焦虑或睡眠明显受损时应寻求专业帮助。"
     },
     {
       "id": "special_diathesis",
-      "label": "特禀质（此处指过敏体质）",
+      "label": "特禀质",
       "clause": "4.1.9",
-      "principle": "益气固表，凉血消风，以纠正过敏体质为要。",
+      "principle": "调理方向侧重支持正气并减少过敏诱因暴露。",
       "common_drugs": ["乌梅", "蝉蜕", "黄芪", "百合", "黄芩"],
-      "additional_drugs": ["辛夷", "苍耳子", "细辛", "鹅不食草", "茜草", "紫草", "生甘草", "地骨皮", "冬瓜皮", "白鲜皮"],
-      "drug_notes": "过敏体质者症状表现各不相同，临证主要在于辨病加减。若鼻流清涕、目痒鼻塞者，以清肺消风为主，可酌加辛夷、苍耳子、细辛、鹅不食草等；若皮肤风疹或湿疹者，可酌加茜草、紫草、生甘草、地骨皮、冬瓜皮、白鲜皮；过敏性哮喘者，合用麻杏石甘汤加减等。",
       "recommended_formulas": [
-        {
-          "name": "玉屏风散",
-          "recommendation_class": "Ⅱ类推荐",
-          "evidence_level": "C级证据"
-        }
+        {"name": "玉屏风散", "recommendation_class": "Ⅱ类推荐", "evidence_level": "C级证据"}
       ],
-      "adjustment_points": [
-        "注重养生：顺应四时变化，以适寒温",
-        "加强调护：尽量避免接触致敏物质，如尘螨、花粉、油漆、动物皮毛等；注意饮食，忌食鱼腥发物"
-      ],
-      "referral_note": "特禀质不等于已确诊过敏。出现哮喘、憋闷、喉头紧束等急性表现时应立即就医，不可依赖体质调理。"
+      "adjustment_points": ["不同过敏表现需要分别诊断", "优先识别并避免明确诱因"],
+      "referral_note": "出现喘憋、喉头紧束等急性表现时应立即就医。"
     }
   ],
   "concurrent_principles": {
     "clause": "4.2.1",
-    "title": "常见兼夹体质调理原则 · 总则",
+    "title": "兼夹体质处理摘要",
     "rules": [
-      "兼夹体质可分清主次时，先调理主要体质：根据量表得分高低或人工辨识结果，可判定出主要体质的，按照 4.1 所列调理方法先调理主要体质，再调理次要体质。",
-      "虚实体质兼夹时，因实致虚则调实、因虚致实则调虚：当虚性体质（气虚体质、阳虚体质、阴虚体质）与实性体质（痰湿体质、湿热体质、血瘀体质、气郁体质）兼夹时，判断虚实体质的因果关系，因实致虚（实性体质存在时间长、症状重）则先调理实性体质，因虚致实（虚性体质存在时间长、症状重）则先调理虚性体质。",
-      "以下常见兼夹体质调理原则适于两种体质分值相当的情况，需同时综合调理。"
+      "能分清主次时，通常先关注表现更主要的体质，再处理次要方面。",
+      "虚实兼夹需要判断先后关系，不能只凭两个体质标签自行套用方案。",
+      "分值接近或情况复杂时应由专业人员综合判断。"
     ],
-    "common_closing": "同时，应配合饮食调养、起居调摄等非药物疗法。"
+    "common_closing": "生活方式干预可作为基础支持，药物方案仍需专业辨证。"
   },
   "concurrent_constitutions": [
-    {
-      "id": "qi_deficiency_yang_deficiency",
-      "label": "气虚兼夹阳虚",
-      "clause": "4.2.2",
-      "principle": "以益气温阳为基本原则。气虚及阳，形成气虚兼夹阳虚之体，故培补元气，温壮元阳。",
-      "notes": "注意补气须佐理气，使补不碍滞；温阳佐以滋阴，使阴阳互生。",
-      "common_drugs": ["党参", "黄芪", "甘草", "桂枝", "附子"]
-    },
-    {
-      "id": "qi_deficiency_yin_deficiency",
-      "label": "气虚兼夹阴虚",
-      "clause": "4.2.3",
-      "principle": "以益气养阴为基本原则。素体热盛或感受热邪，耗伤气阴，形成气阴两虚之体，故培补元气、滋阴清热。",
-      "notes": "注意补气须佐理气，使补不碍滞；滋阴兼顾养血，使津液得生。",
-      "common_drugs": ["西洋参", "山药", "黄精", "麦冬", "五味子"]
-    },
-    {
-      "id": "qi_deficiency_phlegm_damp",
-      "label": "气虚兼夹痰湿",
-      "clause": "4.2.4",
-      "principle": "以益气健脾，化痰利湿为基本原则。脾为生痰之源，脾失健运，痰湿内生，形成气虚夹痰湿之体，故补气健脾，兼以燥湿化痰。",
-      "notes": "注意燥湿佐以温阳，温化寒湿；化痰兼顾活血，以防痰瘀互结。",
-      "common_drugs": ["黄芪", "肉桂", "苍术", "茯苓", "泽泻"]
-    },
-    {
-      "id": "qi_deficiency_blood_stasis",
-      "label": "气虚兼夹血瘀",
-      "clause": "4.2.5",
-      "principle": "以益气活血为基本原则。气虚无力推动血行，而致瘀血内停，形成气虚夹瘀之体，故补气助运，兼以活血化瘀。",
-      "notes": "注意配合理气，使补而不滞、气行血行。",
-      "common_drugs": ["党参", "当归", "桃仁", "红花", "川芎"]
-    },
-    {
-      "id": "phlegm_damp_blood_stasis",
-      "label": "痰湿兼夹血瘀",
-      "clause": "4.2.6",
-      "principle": "以化痰祛瘀为基本原则。痰湿黏滞，阻遏气机，常致血瘀，形成痰瘀互夹之体，故以化痰利湿，兼以活血。",
-      "notes": "注意配合调理气机，或补气、或行气，使气血调畅。",
-      "common_drugs": ["半夏", "陈皮", "丹参", "当归", "砂仁"]
-    },
-    {
-      "id": "blood_stasis_qi_stagnation",
-      "label": "血瘀兼夹气郁",
-      "clause": "4.2.7",
-      "principle": "以理气活血为基本原则。气滞则血瘀，气行则血畅，故以活血配伍理气。",
-      "notes": "注意配合养阴，一取津血同源之理，防止津液不足、干血内留，一防理气过于温燥伤阴。",
-      "common_drugs": ["桃仁", "红花", "枳壳", "陈皮", "柴胡"]
-    },
-    {
-      "id": "damp_heat_blood_stasis",
-      "label": "湿热兼夹血瘀",
-      "clause": "4.2.8",
-      "principle": "以清热利湿，活血化瘀为基本原则。湿热内阻易使气机郁滞，影响血液运行，故应清热利湿，行气化瘀。",
-      "notes": "活血的同时兼以行气。",
-      "common_drugs": ["桃仁", "红花", "丹参", "黄芩", "黄连", "黄柏", "苦参"]
-    },
-    {
-      "id": "yang_deficiency_blood_stasis",
-      "label": "阳虚兼夹血瘀",
-      "clause": "4.2.9",
-      "principle": "以温阳益气，活血化瘀为基本原则。阳虚则气血推动无力，容易出现阳虚夹瘀。故应温阳益气，阳气充足则气血运行顺畅。",
-      "notes": "同时温阳太过易伤阴，故应配合养阴；活血祛瘀的同时配伍行气药，增强活血散瘀之功。",
-      "common_drugs": ["附子", "桂枝", "干姜", "肉桂", "桃仁", "红花"]
-    }
+    {"id": "qi_deficiency_yang_deficiency", "label": "气虚兼阳虚", "clause": "4.2.2", "principle": "摘要方向：兼顾补气与温阳。", "notes": "需防补而壅滞或温燥伤阴。", "common_drugs": ["党参", "黄芪", "桂枝", "附子"]},
+    {"id": "qi_deficiency_yin_deficiency", "label": "气虚兼阴虚", "clause": "4.2.3", "principle": "摘要方向：兼顾补气与养阴。", "notes": "需结合津液、血和脾胃状态。", "common_drugs": ["西洋参", "山药", "黄精", "麦冬", "五味子"]},
+    {"id": "qi_deficiency_phlegm_damp", "label": "气虚兼痰湿", "clause": "4.2.4", "principle": "摘要方向：补气健脾并兼顾化湿。", "notes": "需辨别寒湿、痰瘀等兼见情况。", "common_drugs": ["黄芪", "肉桂", "苍术", "茯苓", "泽泻"]},
+    {"id": "qi_deficiency_blood_stasis", "label": "气虚兼血瘀", "clause": "4.2.5", "principle": "摘要方向：支持气的推动并兼顾血行。", "notes": "补益与理气活血的比例需辨证。", "common_drugs": ["党参", "当归", "桃仁", "红花", "川芎"]},
+    {"id": "phlegm_damp_blood_stasis", "label": "痰湿兼血瘀", "clause": "4.2.6", "principle": "摘要方向：化痰祛湿并兼顾血行。", "notes": "同时需要判断气机与正气状态。", "common_drugs": ["半夏", "陈皮", "丹参", "当归", "砂仁"]},
+    {"id": "blood_stasis_qi_stagnation", "label": "血瘀兼气郁", "clause": "4.2.7", "principle": "摘要方向：疏理气机并兼顾血行。", "notes": "避免理气过度而耗伤津液。", "common_drugs": ["桃仁", "红花", "枳壳", "陈皮", "柴胡"]},
+    {"id": "damp_heat_blood_stasis", "label": "湿热兼血瘀", "clause": "4.2.8", "principle": "摘要方向：清化湿热并兼顾血行。", "notes": "具体轻重和先后需辨证。", "common_drugs": ["桃仁", "红花", "丹参", "黄芩", "黄连", "黄柏", "苦参"]},
+    {"id": "yang_deficiency_blood_stasis", "label": "阳虚兼血瘀", "clause": "4.2.9", "principle": "摘要方向：温阳益气并兼顾血行。", "notes": "需避免温燥伤阴，并评估出血风险。", "common_drugs": ["附子", "桂枝", "干姜", "肉桂", "桃仁", "红花"]}
   ]
 }
