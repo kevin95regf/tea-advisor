@@ -89,6 +89,31 @@ SOURCE_LAYERS = ("①", "②", "③", "④")
 
 VALID_REVIEW_STATUS = ("pending", "approved", "rejected")
 
+# §4 的「来源优先级」图例。**数据化，不写死在渲染里** ——
+# B1／B2 都没新增过 `tier`，所以这块一直没露头；B3 首次新增 4 个档时才发现图例原先是
+# 一串硬编码字符串、且没有任何守卫：不补则核验单 §4 的图例与 `_meta` **静默不一致**
+# （审核人在 §4.1 看到「官方·审核词条」，图例里却查不到这个档）。
+# 每行的 `tiers` 声明它覆盖哪些 `evidence[].tier`，由 `priority_legend_gaps()` 核对。
+PRIORITY_LEGEND: tuple[dict, ...] = (
+    {"priority": "①", "source": "《中国药典》2020 年版一部", "strength": "最高",
+     "usage": "可直接采用（**药品**标准用作食品参考，须注明）", "tiers": ("官方·药典",)},
+    {"priority": "①", "source": "食药物质目录（106 种）", "strength": "**仅合规身份**",
+     "usage": "**只证明合规身份，不含四气，永不作四气基准**", "tiers": ("官方·目录(仅身份)",)},
+    {"priority": "②", "source": "官方·审核词条（国家中医药管理局名词术语项目审核认证词条）",
+     "strength": "高（低于药典、高于教材）",
+     "usage": "可直接采用；须引词条页 URL 与原文句（**认证属国家局项目、平台承载页面**）",
+     "tiers": ("官方·审核词条",)},
+    {"priority": "②", "source": "《中医饮食营养学》（50 号文件 §2 A 档 / §3 B 档）", "strength": "次高",
+     "usage": "可直接采用，须引原文列", "tiers": ("通行·教材", "通行·教材(有冲突)")},
+    {"priority": "②", "source": "官方·卫健科普 / 通行·官媒科普 / 通行·医院科普",
+     "strength": "中（**仅当药典与教材均无该条目时**可作基准）",
+     "usage": "政府/官媒/医院**科普**；网页来源不随仓库归档，链接可能失效",
+     "tiers": ("官方·卫健科普", "通行·官媒科普", "通行·医院科普")},
+    {"priority": "②", "source": "§5.3 别名索引（含《本草纲目》《中药学》）", "strength": "核对方/溯源用",
+     "usage": "取用时须写明是谁的书；**经典层不得当教材用**", "tiers": ("通行·经典",)},
+    {"priority": "③", "source": "无", "strength": "—", "usage": "标「无源可引」，凭专业判断", "tiers": ()},
+)
+
 
 # ---------------------------------------------------------------------------
 # 载入
@@ -571,6 +596,27 @@ def out_of_vocab(values, allowed) -> list[str]:
     return sorted({str(v) for v in values if v not in allowed})
 
 
+def priority_legend_gaps(sources: dict, legend=None) -> list[str]:
+    """返回「在用、但 §4 图例未覆盖」的 `tier`（空 = 图例齐全）。
+
+    §4 的图例是**写给人看**的，`evidence[].tier` 是**给机器用**的 —— 两者之间原本没有
+    任何约束，于是「新增一个档、忘了补图例」不会红，只会让审核人在 §4.1 看到一个图例里
+    查不到的档名（`_meta` 与产物静默不一致，正是本项目反复出现的那个形态）。
+    这条纯函数把两者绑在一起：**图例漏了哪个在用档，就报出来**。
+
+    `legend` 可传入用于负控制；缺省用模块级 `PRIORITY_LEGEND`。
+    """
+    rows = list(PRIORITY_LEGEND if legend is None else legend)
+    covered = {t for row in rows for t in (row.get("tiers") or ())}
+    used = {
+        ev.get("tier")
+        for s in source_entries(sources)
+        for ev in (s.get("evidence") or [])
+        if ev.get("tier")
+    }
+    return sorted(str(t) for t in used if t not in covered)
+
+
 def run_checks(entries: list[dict], herb_nature: dict[str, str], sources: dict | None = None) -> list[dict]:
     issues: list[dict] = []
     issues += check_duplicate_keys(entries)
@@ -797,11 +843,8 @@ def render(entries: list[dict], meta: dict, issues: list[dict], source_path: Pat
         add("")
         add("| 优先级 | 来源 | 强度 | 用法 |")
         add("|---|---|---|---|")
-        add("| ① | 《中国药典》2020 年版一部 | 最高 | 可直接采用（**药品**标准用作食品参考，须注明） |")
-        add("| ① | 食药物质目录（106 种） | **仅合规身份** | **只证明合规身份，不含四气，永不作四气基准** |")
-        add("| ② | 《中医饮食营养学》（50 号文件 §2 A 档 / §3 B 档） | 次高 | 可直接采用，须引原文列 |")
-        add("| ② | §5.3 别名索引（含《本草纲目》《中药学》） | 核对方/溯源用 | 取用时须写明是谁的书；**经典层不得当教材用** |")
-        add("| ③ | 无 | — | 标「无源可引」，凭专业判断 |")
+        for _row in PRIORITY_LEGEND:
+            add(f"| {_row['priority']} | {_row['source']} | {_row['strength']} | {_row['usage']} |")
         add("")
         add("> ⚠️ **① 层只表示「来源与现值一致」，不等于来源足够强**。来源档为「通行·经典」")
         add("> （《本草纲目》）者，按 50 号文件 §5.4 的规则**不得当教材用**——是否据此 `approved`")
