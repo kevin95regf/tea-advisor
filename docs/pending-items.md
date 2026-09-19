@@ -56,7 +56,7 @@
 | **需要什么** | 审核人 + 一份逐条审核流程（`docs/maintenance.md` §9.2/§9.3 有正确姿势）。**核验单已就绪**：`docs/food-properties-review-sheet.md`（脚本生成、只读可重跑）。④ 层内部矛盾已清零（4 类于 2026-09-17 修完）。①②③ 层按「官方优先 + 多源兜底 + 无源标空」推进，**第一批已定为「蔬菜/调味/水果中有来源可引的 33 条」**（**① 28 一致 + ② 4 冲突 + ③ 1 无源**），清单见 `docs/food-properties-batch2-confirm.md`。**第二批（B2，2026-09-19）已登记主食/制品 12 条**（一致 5 + ② 口径分歧 7，均标 `batch=后续`），见 `docs/food-properties-b2-staple.md`；其中 7 条口径分歧同样**等审核人裁定**，值与 `note` 一律未动。**第三批（B3，2026-09-19）已登记网络权威来源 5 条**（① 一致 2 + ② 口径分歧 3），见 `docs/food-properties-b3-network-sources.md`。**第四批（B4，派生 32 条）方案已出、未执行**：见 `docs/food-properties-b4-derivation-plan.md`（六条派生规则 + 逐条演算；实测「可派生候选」远多于 32 条，清单范围待拍板）。<br>⚠️ **原定第一批「★ 主食/水产/乳饮」已作废**——那 29 条多为加工食品（米饭、饺子、奶茶），50 号文件 §5.2「真无据清单」本就覆盖它们，是**结构性**无来源，不是核对不到位。核验单的「第一批」判据已改为**来源登记表里 `batch=第一批`**（`build_food_review_sheet.py` 里写死类别的 `FIRST_BATCH_CATEGORIES` 已删除），不再按类别判定 |
 | **验收标准** | `food_properties.json` 的 `review_status` 分布中 `approved` 条数 > 0，且每条 approved 都有 `reviewed_by` + `reviewed_at` |
 | **注意** | ⚠️ **不要为了界面好看而批量置 approved**。标记密度就是审核进度的可见反馈，批量置等于把这个反馈抹掉 |
-| **相关文件** | `core/data/food_properties.json`、`docs/food-properties-review-sheet.md`（核验单，脚本生成）、`core/scripts/build_food_review_sheet.py`（生成工具，**只读**，`--check` 可进 CI）、`docs/food-properties-sources.json`（70 条来源登记，①②③ 层的事实源）、`docs/food-properties-batch2-confirm.md`（第一批 33 条清单，待确认）、`docs/food-properties-batch2-plan.md`（核对方案） |
+| **相关文件** | `core/data/food_properties.json`、`docs/food-properties-review-sheet.md`（核验单，脚本生成）、`core/scripts/build_food_review_sheet.py`（生成工具，**只读**，`--check` 可进 CI）、`docs/food-properties-sources.json`（75 条来源登记，①②③ 层的事实源）、`docs/food-properties-batch2-confirm.md`（第一批 33 条清单，待确认）、`docs/food-properties-batch2-plan.md`（核对方案） |
 
 ## A2　A1 核对遗留的 4 项待确认（酱油 + 3 味菇）
 
