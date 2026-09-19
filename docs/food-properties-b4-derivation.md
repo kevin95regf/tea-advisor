@@ -268,7 +268,7 @@
 
 | | 做法 | 代价 |
 |---|---|---|
-| **甲（本批建议）** | 冲突登记放**数据侧**：`core/data/food_properties.json` 的 `_meta.derivation_conflicts`（与 `_meta.nature_change_rules` 同处 —— 拍板 E 已定「`_meta` 是规则单一真源」） | 核验单不直接渲染该块；但冲突条目的 `note` 里有「属性冲突…待裁定」，审核人**看得到** |
+| **甲（本批建议）** | 冲突登记放**数据侧**：`core/data/food_properties.json` 的 `_meta.derivation_conflicts`（与 `_meta.nature_change_rules` 同处 —— 拍板 E 已定「`_meta` 是规则单一真源」） | 核验单不直接渲染该块；**实测它也**不渲染冲突 `note`（「派生：」「属性冲突」在核验单里各出现 0 次）⇒ 人类可读出口＝**本文档 §4** 与 `_meta.derivation_conflicts`。见 §10「事实更正 2」 |
 | 乙 | 往 `sources.json` 加 4 条（`batch=后续`、`status` 取 ③ 类、`reference=null`、`evidence=[]`、带 `open_question`） | 触发该表 12 条硬约束（词表登记、三态计数实算、`counts` 自洽、layer 映射…）+ 重生成核验单；且**来源登记表里放「无来源」的条目**语义别扭 |
 
 **建议甲**：这 4 条的冲突是**派生口径冲突**，不是来源冲突；`sources.json` 的职责是「这个值从哪来」，而 L2 条目按定义**没有直接来源**（是推出来的）。
@@ -285,16 +285,23 @@
 
 ---
 
-## 7. 必须新增的守卫（4 条）
+## 7. 已实现的守卫（`core/tests/test_b4_derivation_notes.py`，12 条测试）
+
+设计意图与落地形态有**两处偏离**（拍板 A 的必然结果），已在 §10 逐条交代。
 
 | 守卫 | 断言 | 负控制（变异必红） |
 |---|---|---|
-| **① 全表 `note` 无温度副作用** | 遍历 147 条：`resolve_temperature_fields(name, note)` 为 `None`，**或 `signal.from_field == "name"`**（`note` 通道一律不得命中） | 合成一条 `note="冰镇奶茶"` 的条目 ⇒ 必须变红；另断言「全表至少测到 147 条」防样本被偷 |
-| **② 一致项 `note` 自洽** | 对 49 条：从 `note` 里解析出的「＝X」必须等于该条 `nature` | 把任一条 `note` 的末值改错 ⇒ 必红 |
-| **③ 冲突项必须已登记** | 对 4 条：`_meta.derivation_conflicts` 里有其 id，且 `note` **不含**「＝<现值>」式自洽表述、必须含「属性冲突」与「待裁定」 | 删掉登记里的任一条 ⇒ 必红；把冲突 `note` 改成自洽式 ⇒ 必红 |
-| **④ 规则单一真源一致性**（拍板 E） | `_meta.nature_change_rules` 的档位表 ⟷ `nature_math.COOKING_DELTA` ⟷ 核验单脚本的 `LAYER2_DELTA` 三者对每种做法**取值一致** | 把 `_meta` 里 `stir_fried` 改回「略偏温」/ 把代码改回 `0` ⇒ 必红 |
+| **①-a 全表 `note` 无温度副作用** | 遍历 147 条：`resolve_temperature_fields(name, note)` 不得返回 `from_field == "note"` | 把 `kele` 的 note 改成 `冰镇可乐`（≤10 字）⇒ 必红；合成样本 `naicha + note="冰镇"` 必须**被检出**（防断言恒真）；另断言「全表 ≥147 条」防样本被偷 |
+| **①-b 派生类 `note` ≥18 字** | 53 条「派生：／属性冲突：」note 去空格 ≥18 字（越过 `NOTE_MAX_LEN` ⇒ 通道恒不生效） | 把 `suantou` 的 note 改短 ⇒ 必红 |
+| **①-c 短 note 白名单冻结** | 全表 `≤ NOTE_MAX_LEN` 的 note 只允许是登记在案的 13 条旧茶饮；**白名单腐烂（条目变长/改名）也红** | 给 `tusi` 写一条 3 字 note ⇒ 必红 |
+| **② 一致项 `note` 自洽** | 49 条：`note` 里最后一个「＝X」必须等于该条 `nature` | 把 `suantou` 的末值 `＝平` 改成 `＝寒` ⇒ 必红 |
+| **③ 冲突项「登记 ⟷ `note`」双向一致** | 4 条：`_meta.derivation_conflicts` 有登记、`note` 含「属性冲突」「待裁定」、**不含**「＝<现值>」；双向对称（多一条少一条都红） | 删掉 `pijiu` 登记 ⇒ 必红；把 `pijiu` 的冲突 `note` 改写成自洽式 ⇒ 必红 |
+| **④ 规则单一真源（声明式绑定）** | `_meta.runtime_delta` ⟷ `nature_math.COOKING_DELTA` **硬等值**；`_meta.script_delta` ⟷ 核验单脚本 `LAYER2_DELTA` **硬等值**；canonical 与 runtime 的差集必须**逐条登记**在 `_meta.alignment_pending`，且登记值要与实值相符 | 改 `_meta.runtime_delta.stir_fried` ⇒ 必红；**改代码 `COOKING_DELTA`** ⇒ 必红；在 canonical 造一处未登记的差异 ⇒ 必红 |
+| **⑤ 数据 `note` ⟷ 文档 §4 逐字** | 本文档 §4 的 53 条与数据 `note` 逐字一致（审核依据不得与事实脱钩） | 改文档里任一条 ⇒ 必红 |
 
-守卫 ① 是**把现有仅守 `jiangyou` 一条升级为派生不变式**；① 的通过同时意味着 `suannai_wan` 的 `note` 通道副作用已被消除（§2）。
+**变异检验结果：10/10 条如预期变红**，还原后 12 条守卫全绿。
+
+守卫 ① 是**把现有仅守 `jiangyou` 一条升级为派生不变式**；①-a 的通过同时意味着 `suannai_wan` 的 `note` 通道副作用已被消除（§2）。
 
 ---
 
@@ -316,3 +323,50 @@
 5. 4 条守卫 + 变异检验。
 
 **明确不做**：不改任何 `nature`（含 4 条冲突）；不改 `herbs.json`；不改 `.env`；不改运行时判定代码；不给条目写 `approved`（A1 仍是 ⛔）；不复制语料文件进仓库；不动挂起项 A1／E4／D4–D6 与 D11 的实体内容（只在挂起项里标注冲突）。
+
+---
+
+## 10. 执行记录（第 2–5 步已完成）
+
+§9 的 1–5 步全部落地。**数据侧零 `nature` 改动**：`git diff` 的删除行里不含 `nature`／`variant_nature`／`review_note`／`review_status`（逐行核对）。
+
+| 落点 | 内容 |
+|---|---|
+| `core/data/food_properties.json` | 53 条 `note`（20 条为覆盖旧 gloss）＋ `_meta.nature_derivation_rules` ＋ `_meta.derivation_conflicts` |
+| `core/scripts/patch_food_table.py` | `LAYER2_NOTES`（53 条，内容区自动生成自本文档 §4）＋ `META_PATCH`；**唯一写入者**，幂等，强制 LF |
+| `core/tests/test_b4_derivation_notes.py` | 12 条测试（6 组守卫，见 §7） |
+| `docs/food-properties-review-sheet.md` | 重生成后**内容零变化**（它不渲染 `note`），`--check` 通过 |
+
+### 偏离 1：规则真源落**新键**，不动 `nature_change_rules`
+
+`_meta.nature_change_rules` 是**散文**，且经 `render_nature_change_rules()` **渲染进 Agent1 提示词**（`agent1_diet.py`）。而 B4 的档位与当前代码 `COOKING_DELTA` 在**三处**不同（油炸 深+2 / 生食 -1 / 炒 +1）。把 B4 口径写进提示词，等于把「文档口径」当「运行时行为」讲给模型 —— 那正是拍板 A（本批不动机制）要避免的。
+
+⇒ 机器可读的规则表落在**新键** `_meta.nature_derivation_rules`（**不渲染进提示词**），供守卫 ④ 与 B4b 收口使用。
+
+### 偏离 2：守卫 ④ 是「声明式绑定」，不是「三份取值一致」
+
+拍板 A 不动机制 ⇒ B4 口径与代码**必然**有差（`deep_fried`／`raw`／`stir_fried` 三条）。断言一个当下为假的"一致"没有意义。故 ④ 写成：
+
+- `_meta.runtime_delta` ⟷ `nature_math.COOKING_DELTA` **硬等值**；
+- `_meta.script_delta` ⟷ 核验单脚本 `LAYER2_DELTA` **硬等值**；
+- canonical（B4 口径）与 runtime 的差集必须**逐条登记**在 `_meta.alignment_pending`，**未登记的差异一律变红**。
+
+⇒ 差异**被声明、可数、可收口**，而不是静默共存；任一侧漂移（改代码不改数据、或反之）立即报红。
+
+### 偏离 3（事实更正）：「全表 `note` ≥18 字」做不到
+
+全表有 **13 条旧茶饮条目**的 `note` 只有 **4–9 字**（菊花茶、枸杞茶、绿茶、红茶……，**本批之前就存在**）。它们 ⇒ 都 ≤ `NOTE_MAX_LEN`，note 通道对它们是**开着的**；实测它们**恰好**都不含温度前缀，所以现在没有副作用 —— 但形态脆弱。
+
+⇒ 守卫 ① 拆成三条（§7）：全表「无 note 通道命中」＋ 派生类「≥18 字」＋ **短 note 白名单**（13 条点名登记在测试里，**新增短 note 即红、白名单腐烂也红**）。把脆弱面冻结并可见，好过断言一个为假的"全表安全"。
+
+**待所有者定**：要不要顺手把这 13 条茶饮的 `note` 也补长（属 L1/L3 条目、超出 B4 范围，会同时改动它们进提示词的那句「说明：…」）？
+
+### 事实更正 2：冲突 `note` 在核验单里**也不可见**
+
+§5 甲案原写「审核人**看得到**」—— 实测**不成立**：核验单只渲染 `§4.2` 那 4 条既有 note（「口径分歧」出现 4 次），「派生：」「属性冲突」在 508 行核验单里**各出现 0 次**。B4 的 53 条 note 与 4 条冲突 note 的人类可读出口只有**本文档 §4** 与提示词里的「说明：…」。
+
+⇒ **建议单列下一批**：给核验单新增一节渲染 `_meta.derivation_conflicts`（属核验单脚本改动，不塞进本批）。
+
+### 附带修正（既有守卫的过宽断言）
+
+`test_food_lookup.py::test_fried_chicken_resolves_to_its_own_entry` 原先断言渲染结果里**不含裸词**「油炸」。B4 给 `zhaji` 写了它**自己**的派生 note（「…基底 鸡（温）＋油炸（档 深，+2）＝热」），裸词断言会把这条自述误判成「`jirou` 的变体又漏出来了」。已收紧为**变体行形态** `油炸→` 与 `（油炸` —— 原意图（别名污染不回归）一字未改。
