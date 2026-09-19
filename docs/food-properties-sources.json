@@ -160,14 +160,17 @@
       "note": "口径分歧（**性质＝来源口径之争，非数据错**）：白菜/黄瓜/莲藕「保留项目值并在数据里标注分歧」（已加 note）；酱油「映射采纳、值不改，已加 note」（2026-09-18 落定）；蘑菇「拆两条」（蘑菰 寒 / 香蕈 平，**已在 D5 执行**）。另：18 条非正名映射已逐条裁定（见 entries[].mapping_review）。金针菇/杏鲍菇/平菇 已于 2026-09-18 **从 `aliases` + `keywords` 两处移出**（不随 `mogu` 判寒），口蘑保留别名但依据为项目专业判断（挂起项 A3）。**本文件 entries[].open_question 的用法（2026-09-18 起）**：**已裁定者置 `null`**（结论见 `mapping_review`，不在此处重复）；**未获权威裁定者保留原问题**——`baicai`/`huanggua`/`lianou` 三条的口径分歧即属此类（值保留、分歧未裁定）。　**2026 年 9 月 19 日 B3**：网络权威来源 5 条（G 组）—— 糖／毛豆**依据升级**为 ①（国家局项目审核认证词条、人民网健康有直接记载），腐竹／樱桃／葱判 ② 口径分歧、值不动；确立「**科普类来源只在药典与教材均无条目时才可作基准**」，强度序改为「药典 > 官方·审核词条 > 教材 > 科普 > §5.3 别名索引」，并补「多条来源同判同一结论时，`reference` 优先取可本地复现（语料行号）的来源」。"
     },
     "counts": {
-      "后续|一致": 25,
-      "后续|冲突": 15,
+      "后续|一致": 26,
+      "后续|冲突": 17,
       "后续|仅身份，无四气可比": 1,
       "第一批|一致": 28,
       "第一批|冲突": 4,
       "第一批|无源可引（映射未获采纳）": 1,
       "后续|无源可引（基准三处无据）": 1,
-      "total": 75
+      "后续|无源可引（语料无条目）": 14,
+      "后续|无源可引（制品口径未定）": 1,
+      "后续|无源可引（通称无条目）": 1,
+      "total": 94
     },
     "known_limitations": [
       "本表由脚本从 50 号文件机械匹配生成；其中非正名映射已**逐条人工裁定**，结论见 entries[].mapping_review。",
@@ -180,13 +183,13 @@
     "mapping_review": {
       "date": "2026-09-17",
       "method": "逐条给出「id／项目现值／语料值／依据行号／对当关系／判断理由／若否定的后果」，由项目所有者逐条裁定。汇报稿见 docs/food-properties-batch2-confirm.md「C 组详解」。",
-      "scope": "第一批 33 条中的 12 条非正名映射（A 药典收载名 3 / B §5.3 别名词 1 / C 等价名 4 / D §5.3 纲目别名 4）。另有 5 条（土豆/玉米/牛奶/螃蟹/海带）同属非正名但由 §5.3 直接给定、不属待裁定范围，也一并登记。**第 18 条 `xianggu`（香菇→香蕈）为 2026-09-17 ④ 层拆条时新增，随拆条一并登记（2026-09-18 补记，此前 `outcome` 只数了 17 条）。**　**B1 茶饮 11 条（2026-09-18 登记，E 组·制品·原料继承）。**　**B2 主食/制品 12 条（2026 年 9 月 19 日登记，F 组·制品·语料原料）。**　**B3 网络权威来源 5 条（2026 年 9 月 19 日登记，G 组）。**",
+      "scope": "第一批 33 条中的 12 条非正名映射（A 药典收载名 3 / B §5.3 别名词 1 / C 等价名 4 / D §5.3 纲目别名 4）。另有 5 条（土豆/玉米/牛奶/螃蟹/海带）同属非正名但由 §5.3 直接给定、不属待裁定范围，也一并登记。**第 18 条 `xianggu`（香菇→香蕈）为 2026-09-17 ④ 层拆条时新增，随拆条一并登记（2026-09-18 补记，此前 `outcome` 只数了 17 条）。**　**B1 茶饮 11 条（2026-09-18 登记，E 组·制品·原料继承）。**　**B2 主食/制品 12 条（2026 年 9 月 19 日登记，F 组·制品·语料原料）。**　**B3 网络权威来源 5 条（2026 年 9 月 19 日登记，G 组）。**　**B5 收口 19 条（2026 年 9 月 19 日登记，H 组·B5 收口）**：14 条语料无条目 ＋ 1 条制品口径未定（大麦茶）＋ 1 条通称无条目（鱼）→ ③；橘子／猪肉 → ② 口径分歧（值不动）；虾 → ① 一致。",
       "outcome": {
-        "accepted": 44,
-        "rejected": 2,
+        "accepted": 47,
+        "rejected": 18,
         "pending": 0,
-        "accepted_note": "A 组 3 条 how 改为「正名（药典收载名）」；C 组 3 条按接受处理并各带限定；B 组 1 条、D 组 4 条（含新增的香菇）沿用文件口径。**2026-09-18：`jiangyou` 由「待确认」改为「采纳」**（映射可用、值不改，见 pending_detail）。　**2026-09-18 B1：茶饮 11 条按「制品·原料继承」登记，accepted +10 / rejected +1。**　**2026 年 9 月 19 日 B2：主食/制品 12 条（F 组）登记，accepted +12**（绿茶/红茶用「同条目·品种方向描述」，白酒/红酒用「等价名（通称差异）」，其余 8 条用「制品·原料继承（语料原料）」）。　**2026 年 9 月 19 日 B3：网络权威来源 5 条（G 组）登记，accepted +5**（糖/毛豆判①一致并在依据上「升级」；腐竹/樱桃/葱判②口径分歧，值不动）。",
-        "rejected_detail": "`qingcai` 青菜→油菜 **未获采纳** → 降级为 ③ 无源可引，退出可 approved 批次。按**本表**口径：该条从「一致」落入 ③，故**第一批 ① 由 29 降为 28** —— 以 `_meta.counts[\"第一批|一致\"]` 为准。（确认稿 `docs/food-properties-batch2-confirm.md` 里写作「28 → 27」是它自己的编号体系——那份稿子的 ①28 含 `qingcai`，本表不沿用。）　**2026-09-18 B1 追加 `molihua_cha`（茉莉花茶）：映射成立但基准三处无据 ⇒ 落 ③。**",
+        "accepted_note": "A 组 3 条 how 改为「正名（药典收载名）」；C 组 3 条按接受处理并各带限定；B 组 1 条、D 组 4 条（含新增的香菇）沿用文件口径。**2026-09-18：`jiangyou` 由「待确认」改为「采纳」**（映射可用、值不改，见 pending_detail）。　**2026-09-18 B1：茶饮 11 条按「制品·原料继承」登记，accepted +10 / rejected +1。**　**2026 年 9 月 19 日 B2：主食/制品 12 条（F 组）登记，accepted +12**（绿茶/红茶用「同条目·品种方向描述」，白酒/红酒用「等价名（通称差异）」，其余 8 条用「制品·原料继承（语料原料）」）。　**2026 年 9 月 19 日 B3：网络权威来源 5 条（G 组）登记，accepted +5**（糖/毛豆判①一致并在依据上「升级」；腐竹/樱桃/葱判②口径分歧，值不动）。　**2026 年 9 月 19 日 B5：收口 19 条（H 组）登记，accepted +3**（虾判 ① 一致；橘子／猪肉判 ② 口径分歧，值不动）。",
+        "rejected_detail": "`qingcai` 青菜→油菜 **未获采纳** → 降级为 ③ 无源可引，退出可 approved 批次。按**本表**口径：该条从「一致」落入 ③，故**第一批 ① 由 29 降为 28** —— 以 `_meta.counts[\"第一批|一致\"]` 为准。（确认稿 `docs/food-properties-batch2-confirm.md` 里写作「28 → 27」是它自己的编号体系——那份稿子的 ①28 含 `qingcai`，本表不沿用。）　**2026-09-18 B1 追加 `molihua_cha`（茉莉花茶）：映射成立但基准三处无据 ⇒ 落 ③。**　**2026 年 9 月 19 日 B5 追加 16 条落 ③**：14 条语料无条目（红薯／辣椒／豆芽／豆浆／苹果／草莓／芒果／柠檬／牛油果／火龙果／山竹／酸奶／咖啡／巧克力）＋大麦茶（制品口径未定）＋鱼（通称无条目）。其中红薯是「古今同名异物」风险条目（纲目「甘薯」＝薯蓣类，非现代番薯），已在 `open_question` 写明不得套用。",
         "pending_detail": "（已清零）`jiangyou` 酱油→酱 曾列待确认：映射本身可用，但基准（《本草纲目》）强度不足以改项目值。**2026-09-18 落定：采纳映射、`nature` 保持「平」，并在数据里补 `note` 留痕。**"
       },
       "burden_note": "⚠️ 每条非正名映射都是**承重**的：这些条目通常只有 1 条证据，映射一否即落 ③ 无源。`lianou` 最典型——它被判为「口径分歧」的前提正是「莲藕＝藕」成立；映射否掉，它就不是分歧而是无源。"
@@ -4036,6 +4039,631 @@
         "by": "项目所有者",
         "at": "2026-09-19",
         "reason": "映射「葱 → 葱白」成立，但**部位限定**：依据条目只覆盖鳞茎（葱白），同株其余部位四气不同（《本草纲目》行20838「叶：温／根须：平」，行20839 引弘景「白冷青热」）⇒ 新增 `how`＝「别名（部位限定）」；用「别名」会把这个差别藏起来。`reference` 按 B3 拍板点 D 取**教材行352**（教材与审核词条同判「温」，**同判时优先取可本地复现的来源**）。分歧未消解（古籍作「平」）⇒ layer ②、值不动。"
+      }
+    },
+    {
+      "id": "hongshu",
+      "name": "红薯",
+      "category": "主食",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（语料无条目）",
+      "open_question": "全库无现代红薯（番薯）条目。⚠️《本草纲目》行22690 有「甘薯」条（【气味】行22695「甘，平，无毒」），但其【集解】行22692–22693 引嵇含《草木状》明写「甘薯，薯蓣之类，或云芋类也」——**是薯蓣类而非现代红薯**，属 50 号文件 §6.1「古今同名异物」同类风险（苹果≠柰/林檎），不得套用。若确需给值，须引入本库外来源并显式标注。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 C 档。项目名「红薯」在本库 42 部语料中无性味条目：含「红薯/番薯/甘薯/地瓜/山芋」的行共 38 处，其中仅纲目 22695 一处含【气味】，而该条已按 §6.1 同类风险排除（甘薯＝薯蓣类）。值 neutral 保留——③ 层不是数据错，只是不宣称有来源。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "lajiao",
+      "name": "辣椒",
+      "category": "蔬菜",
+      "batch": "后续",
+      "project": {
+        "nature": "hot",
+        "nature_cn": "热",
+        "flavors": [
+          "pungent"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（语料无条目）",
+      "open_question": "50 号文件 §5.2 明列：辣椒属「调味·蔬菜」真无据（纲目拾遗未见「辣茄／番椒」条目）。全库无性味条目。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 C 档。§5.2 已替本项目判过，本条只做留痕：不宣称有来源，值为项目专业判断。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "douya",
+      "name": "豆芽",
+      "category": "蔬菜",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（语料无条目）",
+      "open_question": "50 号文件 §5.2 明列「绿豆芽」属「主食加工」真无据。⚠️ 项目条目名为「豆芽」、aliases 兼含「黄豆芽」「绿豆芽」——§5.2 只点名绿豆芽；黄豆芽同属加工制品、同样无条目。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 C 档。§5.2 明列。值 cool 保留。⚠️ 加工制品与原料（黄豆/绿豆）四气不可默认继承，见 §5.2 尾注。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "doujiang",
+      "name": "豆浆",
+      "category": "豆制品",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（语料无条目）",
+      "open_question": "50 号文件 §5.2 明列：豆浆属「饮品」真无据。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 C 档。§5.2 明列。值 neutral 保留。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "pingguo",
+      "name": "苹果",
+      "category": "水果",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "sour"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（语料无条目）",
+      "open_question": "50 号文件 §5.2 明列，且 §6.1 专章判 C：现代苹果（西洋苹果）在本库无条目。本草近似物「柰」（纲目 24479「苦，寒，有小毒」／24480「酸、苦，寒」／24481「甘」）与「林檎」（24496「酸、甘，温」／24497「酸、苦，平」）**均非现代苹果**，且三家说法自相矛盾。**不得用柰/林檎的性味顶替**。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 C 档。§6.1 是本库最高风险的古今同名异物案例，已明文规定「苹果一律判 C 档」。值 cool 保留。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "caomei",
+      "name": "草莓",
+      "category": "水果",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "sour"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（语料无条目）",
+      "open_question": "50 号文件 §5.2 明列：草莓属「近代／外来水果」真无据。全库无性味条目。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 C 档。§5.2 明列。值 cool 保留。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "mangguo",
+      "name": "芒果",
+      "category": "水果",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "sour"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（语料无条目）",
+      "open_question": "50 号文件 §5.2 明列：芒果属「近代／外来水果」真无据。全库无性味条目。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 C 档。§5.2 明列。值 cool 保留。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "ningmeng",
+      "name": "柠檬",
+      "category": "水果",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sour",
+          "sweet"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（语料无条目）",
+      "open_question": "50 号文件 §5.2 明列：柠檬属「近代／外来水果」真无据。全库无性味条目。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 C 档。§5.2 明列。值 cool 保留。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "niuyouguo",
+      "name": "牛油果",
+      "category": "水果",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（语料无条目）",
+      "open_question": "全库 42 部语料实测 0 命中（含别名「鳄梨」「酪梨」）。§5.2 的真无据清单未及列入，按 §5.1 口径（须该物本身是条目名且所在条目含【性味】字段）判 C 档。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 C 档。本条是「清单未列但同为无据」的情形——真无据清单是举例而非穷尽，判据以 §5.1 为准。值 neutral 保留。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "huolongguo",
+      "name": "火龙果",
+      "category": "水果",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（语料无条目）",
+      "open_question": "全库 42 部语料实测 0 命中（含别名「量天尺」）。§5.2 未列，按 §5.1 口径判 C 档。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 C 档。同 niuyouguo（清单未列但同为无据）。值 cool 保留。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "shanzhu",
+      "name": "山竹",
+      "category": "水果",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "sour"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（语料无条目）",
+      "open_question": "全库 42 部语料实测 0 命中（含别名「莽吉柿」）。§5.2 未列，按 §5.1 口径判 C 档。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 C 档。同 niuyouguo（清单未列但同为无据）。值 cool 保留。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "suannai",
+      "name": "酸奶",
+      "category": "乳饮",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet",
+          "sour"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（语料无条目）",
+      "open_question": "50 号文件 §5.2 明列：酸奶属「蛋奶」类真无据。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 C 档。§5.2 明列。值 neutral 保留。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "kafei",
+      "name": "咖啡",
+      "category": "饮料",
+      "batch": "后续",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "bitter"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（语料无条目）",
+      "open_question": "50 号文件 §5.2 明列：咖啡属「饮品」真无据（可可、啤酒、豆浆同列）。⚠️ 数据侧 kafei 的 review_note 记「冰镇变体由 cool 改 neutral：温 + 冰镇 -1 = 平」——那是变体层的既有口径，与「有无来源」无关，不构成本条的依据。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 C 档。§5.2 明列。值 warm 保留。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "qiaokeli",
+      "name": "巧克力",
+      "category": "甜点",
+      "batch": "后续",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（语料无条目）",
+      "open_question": "全库 42 部语料中「巧克力」0 命中；「可可」仅《中医饮食营养学》行563 一处散文式提及（讲茶叶化学成分时列「可可豆碱」），**无性味条目**。§5.2 只点名「可可」，巧克力是其制品，同判无据。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 C 档。「被提及 ≠ 有记载」（§1/§5.1）。值 warm 保留。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "damaicha",
+      "name": "大麦茶",
+      "category": null,
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（制品口径未定）",
+      "open_question": "《本草纲目》行18920「大麦」条／行18934【气味】行「咸，温、微寒，无毒。为五谷长，令人多热」——**同条两值（温、微寒）**。⚠️ 但 §5.2 明令「凡『茶』『糖』『汁』『粉』类后缀，先确认它是新制品还是同一物，**不可默认继承原料的四气**」；本茶饮又非 `herbs.json` 饮片，不适用 B1 那 11 条茶饮的继承裁定（那些的原料是药食同源饮片、有药典对照背书）。⇒ 制品继承口径未定 ＋ 原料多值不可择一，故不登记为继承。**待裁定**：若认继承，须把「大麦」加进 `_meta.corpus_ancestors` 白名单并择一取值，届时本条改判 ① 或 ②。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 ③。映射「大麦茶 → 大麦」**本身不是等价关系**（制品 vs 原料，§5.2 禁止默认继承），故不同于 hongjiu（红酒→葡萄酒：映射成立、只是值差一档 ⇒ ②）。值 neutral 保留。⚠️ 本条 `note` 仅 9 字，属挂起项 D12 点名的 13 条短 note 之一。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "yuxia",
+      "name": "鱼",
+      "category": "水产",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ]
+      },
+      "evidence": [],
+      "reference": null,
+      "nature_match": null,
+      "delta": null,
+      "layer": "③",
+      "status": "无源可引（通称无条目）",
+      "open_question": "「鱼」为现代通称，全库无此条目：实测 14 处「鱼」独立成行的命中**全部是 OCR 缺字的其他鱼条目名**（纲目语料讹字见 §6.3）。同 §4.1 对「大米」的处理口径——「大米」为现代通称、全库无此条目，须指定到粳米/籼米/稻米其中之一。⇒ 若确需给值，须先指定品种：鲤鱼（S1:1458 平）、鲫鱼（S1:1475 平）、桂鱼（S1:1955 平）、带鱼（S1:2237 温）等。⚠️ 项目条目 aliases 兼含「鲈鱼」「草鱼」，四气未必同档，属「一个词挂在别的条目上」同族问题（另见 D4 白酒混黄酒、D5 糖混红糖）。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": false,
+        "group": "H 组·B5 收口",
+        "reason": "判 ③。§5.1 口径：只有该物本身是条目名、且所在条目含【性味】字段才算有据，「被提及」不算；通称亦不算。值 neutral 保留。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "juzi",
+      "name": "橘子",
+      "category": "水果",
+      "batch": "后续",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "sour"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s3_bencao",
+          "tier": "通行·经典",
+          "matched_name": "橘实",
+          "how": "别名（部位限定）",
+          "alias_from": null,
+          "locator": "《本草纲目》行24635「橘」条／行24646「橘实」【气味】行（50 号文件 §5.4）",
+          "verbatim": "橘实  【气味】甘、酸，温，无毒。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s3_bencao",
+        "tier": "通行·经典",
+        "matched_name": "橘实",
+        "locator": "《本草纲目》行24635「橘」条／行24646「橘实」【气味】行（50 号文件 §5.4）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": false,
+      "delta": "项目「凉」 vs 来源「温」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「凉」还是来源值「温」为准？**差两档且方向相反**。依据仅《本草纲目》（§5.4 把「橘、柑、橙、柚」列入「仅经典有载、教材无」），引用必须写明《本草纲目》，不得写成教材记载。⚠️ 另：本条 aliases 兼含「橙子」「柑」，而纲目「柑」（行24716／【气味】行24724「甘，大寒，无毒」）与「橙」（行24738／行24745「酸，寒，无毒」）是**另两条条目、四气各不相同**（大寒／寒 vs 橘实之温）⇒ 用户说「橙子」会拿到橘子的值并以 0.9 呈现，属「一个词挂在别的条目上」同族问题（见 D4／D5），须另案裁定。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "H 组·B5 收口",
+        "reason": "映射「橘子 → 橘实」成立（「橘子」是纲目「橘」条果实部分的通俗名；该条目尚含皮、核等部位，故 how 用「别名（部位限定）」而非「别名」）。项目值「凉」与来源「温」差两档、方向相反 ⇒ layer ②、值不动。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "zhurou",
+      "name": "猪肉",
+      "category": "肉类",
+      "batch": "后续",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet",
+          "salty"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s3_bencao",
+          "tier": "通行·经典",
+          "matched_name": "猪肉",
+          "how": "别名（部位限定）",
+          "alias_from": null,
+          "locator": "《本草纲目》行37617「豕」条／行37623「猪肉」【气味】行（50 号文件 §5.4）",
+          "verbatim": "猪肉  【气味】酸，冷，无毒。 凡猪肉∶苦，微寒，有小毒。",
+          "qi_word": "冷／微寒",
+          "qi_mapped": "cool",
+          "qi_mapped_cn": "凉",
+          "note": "同一行内两说：「猪肉」作「冷」、「凡猪肉」作「微寒」。两说均偏凉，但「冷」不在 `_meta.mapping_rules` 的映射表内（表列大寒/寒/微寒/凉/平/微温/温/热/大热），故 qi_mapped 按「微寒→cool」取值，**不新造映射**。"
+        }
+      ],
+      "reference": {
+        "source_id": "s3_bencao",
+        "tier": "通行·经典",
+        "matched_name": "猪肉",
+        "locator": "《本草纲目》行37617「豕」条／行37623「猪肉」【气味】行（50 号文件 §5.4）",
+        "qi_word": "冷／微寒",
+        "qi_mapped": "cool",
+        "qi_mapped_cn": "凉"
+      },
+      "nature_match": false,
+      "delta": "项目「平」 vs 来源「冷／微寒」",
+      "layer": "②",
+      "status": "冲突",
+      "open_question": "以项目值「平」还是来源值（「冷」／「微寒」两说）为准？**差一档**。⚠️ 纲目 37623 是**同一行内两个说法**（「猪肉【气味】酸，冷，无毒」与紧接的「凡猪肉∶苦，微寒，有小毒」），属 §6.2「纲目条目内的引录矛盾」，引用时须写明是哪一句。依据仅《本草纲目》（§5.4 把「猪肉」列入「仅经典有载、教材无」；语料中猪的正条目名作「豕」，行37619【释名】列猪/豚/彘等名）。",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "H 组·B5 收口",
+        "reason": "映射「猪肉 → 豕条之猪肉部分」成立（纲目条目名作「豕」；该条覆盖猪周身多部位、各自气味不同，故 how 用「别名（部位限定）」）。项目值「平」与来源「冷／微寒」差一档 ⇒ layer ②、值不动。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
+      }
+    },
+    {
+      "id": "xia",
+      "name": "虾",
+      "category": "水产",
+      "batch": "后续",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet",
+          "salty"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "s3_bencao",
+          "tier": "通行·经典",
+          "matched_name": "虾",
+          "how": "正名",
+          "alias_from": null,
+          "locator": "《本草纲目》行34832「虾」条／行34836【气味】行（50 号文件 §5.4）",
+          "verbatim": "【气味】甘，温，有小毒。",
+          "qi_word": "温",
+          "qi_mapped": "warm",
+          "qi_mapped_cn": "温"
+        }
+      ],
+      "reference": {
+        "source_id": "s3_bencao",
+        "tier": "通行·经典",
+        "matched_name": "虾",
+        "locator": "《本草纲目》行34832「虾」条／行34836【气味】行（50 号文件 §5.4）",
+        "qi_word": "温",
+        "qi_mapped": "warm",
+        "qi_mapped_cn": "温"
+      },
+      "nature_match": true,
+      "delta": null,
+      "layer": "①",
+      "status": "一致",
+      "open_question": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "mapping_review": {
+        "accepted": true,
+        "group": "H 组·B5 收口",
+        "reason": "映射「虾 → 虾」为**正名**（项目名与《本草纲目》行34832 条目名完全相同）。项目值 warm 与纲目 34836「甘，温，有小毒」一致 ⇒ layer ①。依据档位为通行·经典；§5.4 把「虾」列入「仅经典有载、教材无」，引用须写明《本草纲目》。",
+        "by": "项目所有者",
+        "at": "2026-09-19"
       }
     }
   ]

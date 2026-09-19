@@ -57,6 +57,7 @@ for _stream in (sys.stdout, sys.stderr):
 
 # 温度前缀刻意复用领域层那一套常量，不在这里另写一份 ——
 # 新增前缀只改 nature_math 一处（那里有完整注释说明「热干面」这类误伤为何被排除）。
+from app.domain.enums import NATURE_LABELS  # noqa: E402
 from app.domain.nature_math import CHILL_PREFIXES, HEAT_PREFIXES  # noqa: E402
 
 DEFAULT_FOOD = CORE_DIR / "data" / "food_properties.json"
@@ -86,6 +87,15 @@ LAYER2_DELTA = {
 # 全表能沾到官方来源的只有 4 条，那三个大类恰恰是加工品最密集、最没来源的区段。
 BATCH_PRIMARY = "第一批"
 SOURCE_LAYERS = ("①", "②", "③", "④")
+
+# B4 派生产物的判据 —— 与 `tests/test_b4_derivation_notes.py` **同一口径，不另起一套**：
+# `note` 以「派生：」开头 = 一致项（49 条）；以「属性冲突：」开头 = 待裁定冲突项（4 条）。
+# 加这两节的理由（挂起项 D13）：A1 的人工审核**以核验单为唯一依据**，而 B4 的 53 条
+# `note` 与 4 条 `_meta.derivation_conflicts` 原先在核验单里**一个字都不出现** ——
+# 审核人看不到「这个值是怎么推出来的」。它们此前唯一的人类可读出口是提示词里的「说明：…」。
+DERIVATION_PREFIXES = ("派生：", "属性冲突：")
+DERIVATION_SECTION_TITLE = "### 4.5 L2 派生依据（B4，`note` 逐字）"
+DERIVATION_CONFLICT_SECTION_TITLE = "### 4.6 派生冲突登记（**待裁定**，B4）"
 
 VALID_REVIEW_STATUS = ("pending", "approved", "rejected")
 
@@ -649,6 +659,13 @@ def category_order(entries: list[dict], primary_ids: set[str] | None = None) -> 
     return sorted(counts, key=sort_key)
 
 
+def _nature_cn(value: object) -> str:
+    """四气标识 → 中文标签；`None` 显示 `—`，未知值原样返回。"""
+    if value is None:
+        return "—"
+    return NATURE_LABELS.get(str(value), str(value))
+
+
 def render(entries: list[dict], meta: dict, issues: list[dict], source_path: Path,
            sources: dict | None = None) -> str:
     lines: list[str] = []
@@ -942,6 +959,48 @@ def render(entries: list[dict], meta: dict, issues: list[dict], source_path: Pat
         add("")
         add("> ⚠️ 每条非正名映射都是**承重**的：这类条目通常只有 1 条证据，映射一否即落 ③ 无源。")
         add("> 最典型的是 `lianou`（莲藕→藕）——它被判为「口径分歧」的前提正是这条映射成立。")
+        add("")
+
+        # ---- §4.5 / §4.6：B4 派生产物（此前在核验单里完全不可见，见挂起项 D13） ----
+        derived = sorted(
+            (e for e in entries if (e.get("note") or "").strip().startswith(DERIVATION_PREFIXES)),
+            key=lambda e: (e.get("category") or "", e.get("id") or ""),
+        )
+        add(DERIVATION_SECTION_TITLE)
+        add("")
+        add(f"> 共 **{len(derived)}** 条（判据：数据 `note` 以「派生：」或「属性冲突：」开头，"
+            "与 `tests/test_b4_derivation_notes.py` 同一口径）。")
+        add("> ⚠️ `note` 是**运行时字段**：`resolve_temperature_fields(name, note)` 会扫它，"
+            "命中温度词即改四气 ±1。这 53 条的 `note` 去空格均 ≥18 字，**越过通道长度门槛**，"
+            "故通道对它们恒不生效 —— 安全性来自长度，不是「词面上干净」。")
+        add("")
+        if derived:
+            add("| id | 名称 | 类别 | 项目四气 | 派生依据（数据 `note`，逐字） |")
+            add("|---|---|---|---|---|")
+            for e in derived:
+                note = (e.get("note") or "").strip().replace("|", "\\|")
+                add(f"| `{e.get('id')}` | {e.get('name')} | {e.get('category') or '—'} | "
+                    f"{_nature_cn(e.get('nature'))} | {note} |")
+        else:
+            add("（本批无。）")
+        add("")
+
+        derivation_conflicts = meta.get("derivation_conflicts") or {}
+        add(DERIVATION_CONFLICT_SECTION_TITLE)
+        add("")
+        add(f"> 共 **{len(derivation_conflicts)}** 条，全部 `待裁定`。现值**一律未动**"
+            "（`nature` 未改，见 `docs/food-properties-b4-derivation.md`）。")
+        add("> 登记真源是 `core/data/food_properties.json` 的 `_meta.derivation_conflicts`，"
+            "本项目节只做渲染；两者的一致性有守卫测试。")
+        add("")
+        if derivation_conflicts:
+            add("| id | 名称 | 现值 | 派生值 | 冲突原因 | 状态 |")
+            add("|---|---|---|---|---|---|")
+            for eid, rec in sorted(derivation_conflicts.items()):
+                add(f"| `{eid}` | {rec.get('name')} | {_nature_cn(rec.get('current'))} | "
+                    f"{_nature_cn(rec.get('derived'))} | {rec.get('reason')} | {rec.get('status')} |")
+        else:
+            add("（本批无。）")
         add("")
 
     add("## 5. 口径与纪律")

@@ -4,7 +4,7 @@
 > 一律以本文为准。任何一项解决了，就在这里更新状态并记录解决方式。
 >
 > 快照时间：**2026-09-19**　共 **25** 项记录在案（A/B/C/D/E 五类），
-> 其中 **A2、B2、D2、E1、E3 已解决**、**B3 的阻塞已解除**（九型已上线；244 格的布局中已落地 15 格，余 239 格是完备度而非功能阻塞），其余 19 项待处理。
+> 其中 **A2、B2、D2、D13、E1、E3 已解决**、**B3 的阻塞已解除**（九型已上线；244 格的布局中已落地 15 格，余 239 格是完备度而非功能阻塞），其余 18 项待处理。
 
 ---
 
@@ -33,7 +33,7 @@
 | **D10** | 用户反馈闭环未做（用户说「上次那个不可信」时无处落） | 项目所有者定范围 | 数据治理的输入来源；A1 的审核进展现只靠内部标记 | 待确认 |
 | **D11** | 「寿司 / 咖喱」是否按子类型拆条 | 项目所有者 | 两条的粒度；生食款与熟食款是否该同档 | 待确认 |
 | **D12** | 13 条旧茶饮的 `note` 仅 4–9 字（`note` 温度通道对它们是**开着的**） | 项目所有者定范围 | 这 13 条的四气**只靠运气**不受 `note` 影响；B4 的 ≥18 字纪律没覆盖它们 | 待确认 |
-| **D13** | 核验单不渲染 B4 的 `note` 与冲突登记 | 开发 | A1 审核人以核验单为依据，却看不到派生依据与 4 条待裁定冲突 | 待确认 |
+| **D13** | 核验单不渲染 B4 的 `note` 与冲突登记 | 开发 | A1 审核人以核验单为依据，却看不到派生依据与 4 条待裁定冲突 | ✅ **已解决**（2026-09-19） |
 | **E1** | 3 条食性表缺 `review_status` | 开发 | 无（行为已正确） | ✅ **已解决**（2026-09-17） |
 | **E2** | `herbs.json` 34 味缺逐条审核字段 | 开发 | A1 的验收标准落不到 herbs | 待清理 |
 | **E3** | 饮片侧缺「逐味公开依据」链（分叉批次评估的缺口 3） | 开发 | 用户与审核人看不到每味饮片的出处 | ✅ **已实施**（2026-09-18） |
@@ -55,7 +55,7 @@
 | **范围** | ⚠️ **本项只覆盖 `food_properties.json`。** `herbs.json` 不是「逐条 pending」——它**根本没有逐条审核字段**，审核状态只在文件级 `_meta.review_status`。已单列为 **E2** |
 | **影响** | 所有条目虽按 0.9 置信度参与判定，但界面**必须**标「待验证」。这是刻意的保守设计，不是 bug |
 | **为何只有人能解** | `approved` 意味着「真·硬规则库、界面不再标注」，必须由具备资质的中医师/中药师逐条确认，并同时填写 `reviewed_by` / `reviewed_at` |
-| **需要什么** | 审核人 + 一份逐条审核流程（`docs/maintenance.md` §9.2/§9.3 有正确姿势）。**核验单已就绪**：`docs/food-properties-review-sheet.md`（脚本生成、只读可重跑）。④ 层内部矛盾已清零（4 类于 2026-09-17 修完）。①②③ 层按「官方优先 + 多源兜底 + 无源标空」推进，**第一批已定为「蔬菜/调味/水果中有来源可引的 33 条」**（**① 28 一致 + ② 4 冲突 + ③ 1 无源**），清单见 `docs/food-properties-batch2-confirm.md`。**第二批（B2，2026-09-19）已登记主食/制品 12 条**（一致 5 + ② 口径分歧 7，均标 `batch=后续`），见 `docs/food-properties-b2-staple.md`；其中 7 条口径分歧同样**等审核人裁定**，值与 `note` 一律未动。**第三批（B3，2026-09-19）已登记网络权威来源 5 条**（① 一致 2 + ② 口径分歧 3），见 `docs/food-properties-b3-network-sources.md`。**第四批（B4）已执行（第 2–5 步）**：六条规则成文 + 逐条推导 + 逐条 `note` 见 `docs/food-properties-b4-derivation.md`（L2 实测 **53** 条 = 一致 49 + 冲突登记 4；`kafei`/`qiaokeli` 退出 L2、`damaicha` 归 L1）；修订方案与拍板过程见 `docs/food-properties-b4-derivation-plan.md`。**落点**：规则真源 `_meta.nature_derivation_rules`（新键，**不进提示词**）、冲突登记 `_meta.derivation_conflicts`、53 条 `note`（走 `patch_food_table.py`）、6 组守卫 12 条测试（变异检验 10/10 全红）。⚠️ **`nature` 一行未动**。遗留 D12／D13。<br>⚠️ **原定第一批「★ 主食/水产/乳饮」已作废**——那 29 条多为加工食品（米饭、饺子、奶茶），50 号文件 §5.2「真无据清单」本就覆盖它们，是**结构性**无来源，不是核对不到位。核验单的「第一批」判据已改为**来源登记表里 `batch=第一批`**（`build_food_review_sheet.py` 里写死类别的 `FIRST_BATCH_CATEGORIES` 已删除），不再按类别判定 |
+| **需要什么** | 审核人 + 一份逐条审核流程（`docs/maintenance.md` §9.2/§9.3 有正确姿势）。**核验单已就绪**：`docs/food-properties-review-sheet.md`（脚本生成、只读可重跑）。④ 层内部矛盾已清零（4 类于 2026-09-17 修完）。①②③ 层按「官方优先 + 多源兜底 + 无源标空」推进，**第一批已定为「蔬菜/调味/水果中有来源可引的 33 条」**（**① 28 一致 + ② 4 冲突 + ③ 1 无源**），清单见 `docs/food-properties-batch2-confirm.md`。**第二批（B2，2026-09-19）已登记主食/制品 12 条**（一致 5 + ② 口径分歧 7，均标 `batch=后续`），见 `docs/food-properties-b2-staple.md`；其中 7 条口径分歧同样**等审核人裁定**，值与 `note` 一律未动。**第三批（B3，2026-09-19）已登记网络权威来源 5 条**（① 一致 2 + ② 口径分歧 3），见 `docs/food-properties-b3-network-sources.md`。**第四批（B4）已执行（第 2–5 步）**：六条规则成文 + 逐条推导 + 逐条 `note` 见 `docs/food-properties-b4-derivation.md`（L2 实测 **53** 条 = 一致 49 + 冲突登记 4；`kafei`/`qiaokeli` 退出 L2、`damaicha` 归 L1）；修订方案与拍板过程见 `docs/food-properties-b4-derivation-plan.md`。**落点**：规则真源 `_meta.nature_derivation_rules`（新键，**不进提示词**）、冲突登记 `_meta.derivation_conflicts`、53 条 `note`（走 `patch_food_table.py`）、6 组守卫 12 条测试（变异检验 10/10 全红）。⚠️ **`nature` 一行未动**。遗留 D12／D13。<br>**第五批（B5，2026-09-19）已执行**：无覆盖条目收口 **19 条**（原估 33 条 —— B4 把一批原判 ③-b 的条目收编成了派生条目，故边界须从当前数据反推）；登记表 75 → **94** 条：14 条语料无条目 ＋ 1 条制品口径未定（大麦茶）＋ 1 条通称无条目（鱼）判 ③，橘子／猪肉判 ② 口径分歧（值不动），虾判 ① 一致。逐条证据、边界修正与顺带发现见 `docs/food-properties-b5-l3.md`。<br>⚠️ **原定第一批「★ 主食/水产/乳饮」已作废**——那 29 条多为加工食品（米饭、饺子、奶茶），50 号文件 §5.2「真无据清单」本就覆盖它们，是**结构性**无来源，不是核对不到位。核验单的「第一批」判据已改为**来源登记表里 `batch=第一批`**（`build_food_review_sheet.py` 里写死类别的 `FIRST_BATCH_CATEGORIES` 已删除），不再按类别判定 |
 | **验收标准** | `food_properties.json` 的 `review_status` 分布中 `approved` 条数 > 0，且每条 approved 都有 `reviewed_by` + `reviewed_at` |
 | **注意** | ⚠️ **不要为了界面好看而批量置 approved**。标记密度就是审核进度的可见反馈，批量置等于把这个反馈抹掉 |
 | **相关文件** | `core/data/food_properties.json`、`docs/food-properties-review-sheet.md`（核验单，脚本生成）、`core/scripts/build_food_review_sheet.py`（生成工具，**只读**，`--check` 可进 CI）、`docs/food-properties-sources.json`（75 条来源登记，①②③ 层的事实源）、`docs/food-properties-batch2-confirm.md`（第一批 33 条清单，待确认）、`docs/food-properties-batch2-plan.md`（核对方案） |
@@ -358,6 +358,17 @@
 | **需要什么** | 给核验单**新增一节**渲染 `_meta.derivation_conflicts`（`current`／`derived`／`reason`／`status`），并加一条「该节与 `_meta` 一致」的守卫 |
 | **验收标准** | 核验单出现冲突节；`build_food_review_sheet.py --check` 通过；冲突节与 `_meta.derivation_conflicts` 的一致性有守卫 |
 | **相关文件** | `core/scripts/build_food_review_sheet.py`、`docs/food-properties-b4-derivation.md` |
+
+**解决于** 2026-09-19。
+
+核验单新增两节：**§4.5 L2 派生依据**（B4 的 53 条，逐字渲染数据 `note`）与
+**§4.6 派生冲突登记**（4 条，渲染 `_meta.derivation_conflicts` 的 `name`／`current`／`derived`／`reason`／`status`）；
+补 3 条守卫（§4.5 逐字一致 ＋ §4.6 字段一致 ＋ 负控制），**变异检验 2/2 全红、还原后回绿**。
+核验单 542 → **615** 行；`pytest` 496 → **499 passed**。
+
+改动：`core/scripts/build_food_review_sheet.py`、`core/tests/test_food_review_sheet.py`、`docs/food-properties-review-sheet.md`。
+⚠️ 顺带修正既有守卫 **§4.4 的 section 边界** —— 它原先只认二级标题 `##`，于是新增的三级节
+§4.5／§4.6 会被算进 §4.4 的正文（§4.4 的 id 集合守卫因此假红）。现在边界同时认 `###` 与 `##`。
 
 ---
 

@@ -27,6 +27,8 @@ from pathlib import Path
 
 import pytest
 
+from app.domain.enums import NATURE_LABELS
+
 CORE_DIR = Path(__file__).resolve().parent.parent
 SCRIPT_PATH = CORE_DIR / "scripts" / "build_food_review_sheet.py"
 FOOD_PATH = CORE_DIR / "data" / "food_properties.json"
@@ -462,7 +464,7 @@ def test_sheet_44_row_count_matches_sources(mod, sources) -> None:
     """
     text = SHEET_PATH.read_text(encoding="utf-8")
     assert "### 4.4" in text, "核验单缺少 §4.4"
-    section = text.split("### 4.4", 1)[1].split("\n## ", 1)[0]
+    section = _section_between(text, "### 4.4")
     rows = [ln for ln in section.splitlines() if ln.startswith("| `")]
     expected = {s["id"] for s in mod.source_entries(sources) if s.get("mapping_review")}
     got = {ln.split("`")[1] for ln in rows}
@@ -489,6 +491,126 @@ def test_outcome_counts_match_actual(sources) -> None:
     assert sum(actual.values()) == len(reviewed), "有 accepted 取值既不是 True/False/None"
     for key, n in actual.items():
         assert outcome.get(key) == n, f"outcome.{key} 记 {outcome.get(key)}，实算 {n}"
+
+
+# ============================================================
+# 6b. §4.5 / §4.6 —— B4 派生产物必须真的进核验单（挂起项 D13）
+# ============================================================
+# 为什么单列：A1 的人工审核**以核验单为唯一依据**，而 B4 的 53 条 `note` 与 4 条
+# `_meta.derivation_conflicts` 原先在核验单里**一个字都不出现**（实测「派生：」「属性冲突」
+# 各 0 次）—— 审核人看不到「这个值是怎么推出来的」。表格看起来永远是完整的，
+# 所以「漏渲染」和「渲染对了」从产物表面分不出来，必须用派生不变式钉住。
+def _cn(value: object) -> str:
+    """四气标识 → 中文标签。**独立于脚本实现**：用它验证渲染，而不是拿实现验自己。"""
+    if value is None:
+        return "—"
+    return NATURE_LABELS.get(str(value), str(value))
+
+
+def _section_between(text: str, heading: str) -> str:
+    """取 heading 之后、到**下一个同级或更高级**标题为止的正文。
+
+    边界必须同时认 `###` 与 `##`：§4.5／§4.6 是 D13 新增的**三级**节，若只认 `##`，
+    它们会被算进 §4.4 的正文里（§4.4 的 id 集合守卫会因此假红 —— 表格行被并进下一节）。
+    """
+    body = text.split(heading, 1)[1]
+    for stop in ("\n### ", "\n## "):
+        idx = body.find(stop)
+        if idx != -1:
+            body = body[:idx]
+    return body
+
+
+def _section_of(heading: str) -> str:
+    text = SHEET_PATH.read_text(encoding="utf-8")
+    assert heading in text, f"核验单缺少小节：{heading}"
+    return _section_between(text, heading)
+
+
+def _table_rows(section: str) -> list[list[str]]:
+    """取 `| `…|` 数据行并切列（首尾竖线已剥掉）。"""
+    return [
+        [c.strip() for c in ln.strip().strip("|").split("|")]
+        for ln in section.splitlines()
+        if ln.startswith("| `")
+    ]
+
+
+def test_sheet_45_derivation_notes_are_rendered_verbatim(mod, entries) -> None:
+    """§4.5 必须逐字渲染数据里全部派生类 `note`。
+
+    防两类失效：**漏条目**（审核人看不到这一条的推导过程）与**改文案**（审核人看到的
+    不是系统实际在用的那句 —— 而 `note` 会被渲染进 Agent1 提示词，两处必须同一份）。
+    """
+    expected = {
+        e["id"]: (e.get("note") or "").strip()
+        for e in entries
+        if (e.get("note") or "").strip().startswith(mod.DERIVATION_PREFIXES)
+    }
+    assert len(expected) >= 53, f"数据里的派生类 note 少于 53 条（样本被偷？）：{len(expected)}"
+    has_pipe = sorted(i for i, n in expected.items() if "|" in n)
+    assert not has_pipe, f"派生 note 含表格分隔符 `|`，会破坏核验单表格：{has_pipe}"
+
+    rows = _table_rows(_section_of("### 4.5"))
+    got = {r[0].strip("`") for r in rows}
+    assert got == set(expected), (
+        f"§4.5 渲染 {len(got)} 条、数据里 {len(expected)} 条；"
+        f"缺={sorted(set(expected) - got)} 多={sorted(got - set(expected))}"
+    )
+
+    by_id = {r[0].strip("`"): r for r in rows}
+    drift = sorted(i for i, want in expected.items() if by_id[i][-1] != want)
+    assert not drift, f"§4.5 的 note 与数据不再逐字一致（前 3 条：{drift[:3]}）"
+
+
+def test_sheet_46_conflict_rows_match_registry(mod) -> None:
+    """§4.6 的 id 集合与四个字段必须等于 `_meta.derivation_conflicts`。"""
+    meta, _ = mod.load_foods(FOOD_PATH)
+    registry = meta.get("derivation_conflicts") or {}
+    assert len(registry) >= 4, f"冲突登记少于 4 条（样本被偷？）：{len(registry)}"
+
+    rows = _table_rows(_section_of("### 4.6"))
+    assert len(rows) == len(registry), f"§4.6 行数 {len(rows)} ≠ 登记 {len(registry)} 条（有重复或缺漏）"
+    by_id = {r[0].strip("`"): r for r in rows}
+    assert set(by_id) == set(registry), (
+        f"§4.6 与登记 id 集不一致：缺={sorted(set(registry) - set(by_id))} "
+        f"多={sorted(set(by_id) - set(registry))}"
+    )
+
+    for eid, rec in registry.items():
+        cells = by_id[eid]  # 列序：id | 名称 | 现值 | 派生值 | 冲突原因 | 状态
+        assert cells[1] == rec.get("name"), f"{eid}: 名称不符（{cells[1]!r} vs {rec.get('name')!r}）"
+        assert cells[2] == _cn(rec.get("current")), f"{eid}: 现值不符（{cells[2]!r} vs {_cn(rec.get('current'))!r}）"
+        assert cells[3] == _cn(rec.get("derived")), f"{eid}: 派生值不符（{cells[3]!r} vs {_cn(rec.get('derived'))!r}）"
+        assert cells[4] == rec.get("reason"), f"{eid}: 冲突原因不符"
+        assert cells[5] == rec.get("status"), f"{eid}: 状态不符（{cells[5]!r} vs {rec.get('status')!r}）"
+
+
+def test_sheet_46_negative_control_registry_drift_is_detected(mod) -> None:
+    """负控制：登记被改坏时，§4.6 的比对必须真的会红 —— 否则上一条是空转。
+
+    三种坏法各测一次（删一条 / 登记值撒谎 / 凭空多一条），都用**真实产品行**比对。
+    """
+    meta, _ = mod.load_foods(FOOD_PATH)
+    registry = meta.get("derivation_conflicts") or {}
+    rows = {r[0].strip("`"): r for r in _table_rows(_section_of("### 4.6"))}
+
+    def gaps(reg: dict) -> set[str]:
+        """登记 ⟷ 核验单的对称差：id 集合差异，加上「派生值」栏与登记不符的。"""
+        common = set(reg) & set(rows)
+        value_drift = {eid for eid in common if rows[eid][3] != _cn((reg[eid] or {}).get("derived"))}
+        return (set(reg) ^ set(rows)) | value_drift
+
+    assert gaps(registry) == set(), "真实数据下 §4.6 与登记就已不一致"
+    dropped = {k: v for k, v in registry.items() if k != "pijiu"}
+    assert gaps(dropped) == {"pijiu"}, "删掉一条登记竟未被发现"
+    lied = {k: dict(v) for k, v in registry.items()}
+    lied["liangcha"]["derived"] = "hot"
+    assert gaps(lied) == {"liangcha"}, "登记里的派生值撒谎竟未被发现"
+    extra = dict(registry, fictitious={
+        "name": "虚构项", "current": "cool", "derived": "cool", "reason": "x", "status": "待裁定",
+    })
+    assert gaps(extra) == {"fictitious"}, "凭空多出一条登记竟未被发现"
 
 
 # ============================================================
