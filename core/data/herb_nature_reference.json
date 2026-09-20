@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "title": "40 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）",
+    "title": "42 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）",
     "version": "1.0.0",
     "compiled_at": "2026-09-20",
     "purpose": "把项目 core/data/herbs.json 的性味归经与《中国药典》2020 年版一部逐条对照，标出不一致项，供人工判断以哪个为准。**本文件不修改任何项目数据。**",
@@ -2350,6 +2350,116 @@
         "dosage_verbatim": "9～30g。外用适量，研末调敷。",
         "entry_id": 243,
         "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=243"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "玉竹",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "肺",
+          "胃"
+        ],
+        "effects": [
+          "养阴润燥",
+          "生津止渴"
+        ],
+        "max_daily_g": 12
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "玉竹",
+        "page": 135,
+        "pinyin": "Yuzhu",
+        "latin": "POLYGONATI ODORATI RHIZOMA",
+        "xingwei_verbatim": "甘，微寒。归肺、胃经。",
+        "nature_word": "微寒",
+        "nature_mapped": "cool",
+        "nature_mapped_cn": "凉",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "肺",
+          "胃"
+        ],
+        "effects_verbatim": "养阴润燥，生津止渴。用于肺胃阴伤，燥热咳嗽，咽干口渴，内热消渴。",
+        "dosage_verbatim": "6～12g。",
+        "entry_id": 123,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=123"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "四气：降档后一致，但药典原文用的是更细的档「微寒」"
+      ],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "黄精",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "肺",
+          "肾"
+        ],
+        "effects": [
+          "补气养阴",
+          "健脾润肺益肾"
+        ],
+        "max_daily_g": 15
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "黄精",
+        "page": 368,
+        "pinyin": "Huɑngjing",
+        "latin": "POLYGONATI RHIZOMA",
+        "xingwei_verbatim": "甘，平。归脾、肺、肾经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "肺",
+          "肾"
+        ],
+        "effects_verbatim": "补气养阴，健脾，润肺，益肾。用于脾胃气虚，体倦乏力，胃阴不足，口干食少，肺虚燥咳，劳嗽咳血，精血不足，腰膝酸软，须发早白，内热消渴。",
+        "dosage_verbatim": "9～15g。",
+        "entry_id": 484,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=484"
       },
       "nature_match": true,
       "flavors_match": true,
