@@ -10,6 +10,7 @@ import logging
 from typing import Sequence
 
 from app.domain.enums import CONSTITUTION_LABELS, Constitution, Nature
+from app.domain.diet_signals import derive_meal_plan, load_meal_plan_rules
 from app.domain.models import (
     BrewGuide,
     HerbInBlend,
@@ -51,16 +52,6 @@ RULES: list[dict] = [
         "blend": [("麦冬", 6), ("罗汉果", 3)],
         "title": "麦冬罗汉果润喉饮",
         "reason": "这餐辛辣偏燥，麦冬与罗汉果偏于生津润喉。",
-    },
-    {
-        "id": "sweet_heavy",
-        "label": "甜腻餐后偏化湿",
-        "priority": 2,
-        "match_natures": {Nature.NEUTRAL, Nature.WARM},
-        "keywords": ("蛋糕", "奶茶", "甜", "糖", "巧克力", "冰淇淋", "奶"),
-        "blend": [("茯苓", 6), ("陈皮", 4)],
-        "title": "茯苓陈皮化湿饮",
-        "reason": "这餐偏甜腻，茯苓与陈皮偏于健脾化湿，适合痰湿或湿热体质。",
     },
     {
         "id": "late_night",
@@ -168,25 +159,38 @@ COOK_BREW = BrewGuide(
 # （不是删掉它 —— 删了等于承认「这个产品给不出茯苓」）。目前三处例外：
 #   · 特禀质默认（山药 10 + 红枣 8）：平补固表方向只有「红枣、山药」两味 suitable，
 #     山药是其中唯一的平补味，没有替代。
-#   · RULES.sweet_heavy（茯苓 6 + 陈皮 4）：茯苓在此承担渗湿，与陈皮燥湿是两层；
-#     且它已由 CONSTITUTION_DEFAULT 的痰湿搭配改用陈皮荷叶 —— 两处同时换成同一组
-#     会让「甜腻餐后」与「痰湿体质」给出完全一样的搭配，反而丢掉区分度。
 #   · RULES.late_night（陈皮 4 + 茯苓 6）：「和胃安神」依赖茯苓的宁心，
 #     白名单内没有不必煎煮的等价物。
+#
+# 2026-09-20：`RULES.sweet_heavy`（茯苓 6 + 陈皮 4）已由**湿气轴接管**并移除（D25）。
+# 湿气度 ≥2 时走 `meal_plan_rules.json` 的化湿方向，可用饮片 = 方向子集 ∩ 候选集，
+# 不再是一条写死的搭配——既消除两套化湿逻辑，也让化湿方向过体质
+# （原先的 `sweet_heavy` 与 RULES 其它规则一样完全不过体质）。
 #
 # 「模型自选」这条路不受本条约束（模型是自由选料的），由 `check_brew_adequacy`
 # 在护栏层兜住 —— 这正是方案 C「两条都做」的第二条。
 
 
-def _pick_rule(parsed: ParsedMeal) -> dict | None:
-    """按关键词与寒热打分选一条规则。"""
-    text = " ".join(
+def _meal_text(parsed: ParsedMeal) -> str:
+    """规则关键词的匹配面：条目名 + note。"""
+    return " ".join(
         [f.name for f in parsed.foods] + [f.note or "" for f in parsed.foods]
     )
+
+
+def _pick_rule(parsed: ParsedMeal, *, allowed_ids: set[str] | None = None) -> dict | None:
+    """按关键词与寒热打分选一条规则。
+
+    `allowed_ids`：只在这些 id 里选（阶段 2 的 L1「不对冲」用它排除对冲型规则）。
+    **既有调用方不传** ⇒ 行为逐字节不变。
+    """
+    text = _meal_text(parsed)
 
     # 打分相同时用 priority 决定优先级（消食 > 温中/生津/化湿 > 和胃）
     best: tuple[tuple[int, int], dict] | None = None
     for rule in RULES:
+        if allowed_ids is not None and rule["id"] not in allowed_ids:
+            continue
         score = 0
         for kw in rule["keywords"]:
             if kw in text:
@@ -259,6 +263,209 @@ def _constitution_default(
     return blend, title, reason, f"该体质的专属搭配尚未收录，已改用{label}的通用搭配"
 
 
+# ============================================================
+# 阶段 2：推荐优先级链（L0–L4）
+# ============================================================
+# 为什么要在 `_pick_rule` **之上**再叠一层，而不是改它内部：
+# `_pick_rule` 只认 keywords + overall_nature，**完全不读 `parsed.signals`** ⇒
+# 阶段 1 改了提示词口径（不对冲）之后，没 Key 的用户走的还是被否掉的旧口径
+# ——同一个用户「有 Key / 没 Key」拿到相反的推荐方向，是 E4 的同形。
+#
+# 优先级（口径⑧/⑨）：
+#   L0 signals 缺失        ⇒ 完全走老路（既有测试与既有行为逐字节不变）
+#   L1 寒热错杂            ⇒ 排除「对冲型」规则；没有可保留的 ⇒ 退体质默认
+#   L2/L3 方向接管         ⇒ 用 方向子集 ∩ 候选集 的饮片（护脾胃 → 化湿）
+#   L4 触发了但方向不可用  ⇒ 湿气方向：退体质默认（sweet_heavy 已删，老路只剩 late_night 误命中）
+#                            其余：走老路 + 如实说明（Q3 α：仍给搭配，不静默替换）
+COLD_NATURES = {Nature.COLD, Nature.COOL}
+WARM_NATURES = {Nature.WARM, Nature.HOT}
+
+
+def _blend_natures(rule: dict) -> list[Nature]:
+    """规则搭配里每味的四气。取不到就记 unknown ⇒ 不会被判成对冲。"""
+    catalog = herb_by_name()
+    out: list[Nature] = []
+    for name, _amount in rule["blend"]:
+        entry = catalog.get(name) or {}
+        try:
+            out.append(Nature(entry.get("nature")))
+        except ValueError:
+            out.append(Nature.UNKNOWN)
+    return out
+
+
+def _is_counter_rule(rule: dict, heat_side: list[str], cold_side: list[str]) -> bool:
+    """这一条规则是不是在「对冲」。
+
+    判据：搭配**整体**偏一侧，而这一餐的**对侧**非空 ⇒ 它是拿偏性去找平。
+    例如「麻辣烫+冰可乐」heat=麻辣烫 ⇒ 「麦冬+罗汉果」（皆凉）是对冲；
+    「陈皮+山楂」（皆温）对 cold=可乐 也是对冲。混合寒热的搭配不算。
+    """
+    natures = _blend_natures(rule)
+    if not natures:
+        return False
+    all_cold = all(n in COLD_NATURES for n in natures)
+    all_warm = all(n in WARM_NATURES for n in natures)
+    return (all_cold and bool(heat_side)) or (all_warm and bool(cold_side))
+
+
+def _scene_rule_ids(parsed: ParsedMeal, conflict: object) -> set[str]:
+    """冲突餐可用的场景规则 id：**有关键词命中**且**非对冲**。
+
+    要求关键词命中这一条是实测逼出来的（`probe_stage2c` §E/F）：
+    `late_night` 的 keywords 是空元组，只靠 `match_natures={UNKNOWN}` 拿 1 分就能赢。
+    不设这条门槛，冲突餐会退到「夜宵偏和胃安神」，给用户一句「夜里吃得多」
+    的错误时间叙述——兜底规则不是场景结论。
+    """
+    text = _meal_text(parsed)
+    heat_side = list(getattr(conflict, "heat_side", None) or [])
+    cold_side = list(getattr(conflict, "cold_side", None) or [])
+    return {
+        rule["id"]
+        for rule in RULES
+        if any(kw in text for kw in rule["keywords"])
+        and not _is_counter_rule(rule, heat_side, cold_side)
+    }
+
+
+def _scene_rule(parsed: ParsedMeal, conflict: object | None) -> dict | None:
+    """老路里**有关键词命中**的最佳规则；没有就返回 None（late_night 这类兜底不算）。"""
+    allowed = _scene_rule_ids(parsed, conflict)
+    return _pick_rule(parsed, allowed_ids=allowed) if allowed else None
+
+
+def _overrides_scene(direction_id: str) -> bool:
+    """这个方向能不能压过场景规则。判据在数据文件里（护脾胃＝能，化湿＝不能）。"""
+    direction = (load_meal_plan_rules().get("directions") or {}).get(direction_id) or {}
+    return bool(direction.get("overrides_scene"))
+
+
+def _from_stage(
+    stage: object, plan_note: str
+) -> tuple[list[tuple[str, float]], str, str, list[str], str, str]:
+    blend = [(name, float(stage.amounts.get(name, 0))) for name in stage.herbs]
+    return (
+        blend,
+        stage.title,
+        stage.reason,
+        [f"direction_{stage.direction}", stage.label],
+        "",
+        plan_note,
+    )
+
+
+def _trigger_min(key: str) -> int:
+    """阈值从数据文件读，本文件不写死 2。"""
+    return int((load_meal_plan_rules().get("trigger") or {}).get(key) or 0)
+
+
+def _choose_blend(
+    parsed: ParsedMeal,
+    constitution: Constitution,
+    *,
+    avoid: Sequence[str],
+) -> tuple[list[tuple[str, float]], str, str, list[str], str, str]:
+    """选出本次用哪一组搭配。返回 (blend, title, reason, hits, fallback_note, plan_note)。
+
+    抽出这一层后，`fallback_recommend` 后面的 `_make_herbs` / `blend_needs_cooking` /
+    cautions / 兼体质硬剔除 **完全不动** ⇒ 煎煮、用量、护栏自动复用新分支。
+    """
+    signals = getattr(parsed, "signals", None)
+
+    # ---- 老路（L0）：没有 signals 就逐字节保持原行为 ----
+    def legacy() -> tuple[list[tuple[str, float]], str, str, list[str], str]:
+        rule = _pick_rule(parsed)
+        if rule:
+            return rule["blend"], rule["title"], rule["reason"], [rule["id"], rule["label"]], ""
+        blend, title, reason, note = _constitution_default(constitution)
+        hits = ["constitution_default", constitution.value]
+        if note:
+            hits = ["constitution_default_missing", constitution.value]
+        return blend, title, reason, hits, note
+
+    if signals is None:
+        blend, title, reason, hits, note = legacy()
+        return blend, title, reason, hits, note, ""
+
+    plan = derive_meal_plan(
+        signals, constitution.value, avoid=avoid
+    )
+    if plan is None:
+        # 一项都没触发 ⇒ 没有方向接管，老路照走
+        blend, title, reason, hits, note = legacy()
+        return blend, title, reason, hits, note, ""
+
+    stage = plan.first if (plan.first is not None and plan.first.open) else None
+    conflict = signals.conflict
+
+    # ---- L1：寒热错杂 ⇒ 不对冲（口径⑨，先于一切方向）----
+    # 例外：护脾胃方向 overrides_scene=true 时它本身就是「护脾胃、平和」，先给它。
+    if stage is not None and _overrides_scene(stage.direction):
+        return _from_stage(stage, plan.note)
+
+    if conflict is not None and conflict.conflict:
+        allowed = _scene_rule_ids(parsed, conflict)
+        rule = _pick_rule(parsed, allowed_ids=allowed) if allowed else None
+        if rule is not None:
+            return (
+                rule["blend"],
+                rule["title"],
+                rule["reason"],
+                [rule["id"], rule["label"]],
+                "",
+                plan.note,
+            )
+        # 没有非对冲的场景结论 ⇒ 退体质默认，不再用「夜宵和胃」这类兜底顶上
+        blend, title, reason, note = _constitution_default(constitution)
+        return (
+            blend,
+            title,
+            reason,
+            ["constitution_default", constitution.value, "conflict_no_counter"],
+            note,
+            plan.note,
+        )
+
+    # ---- 老路的场景结论：要求**关键词命中** ----
+    # （late_night 的 keywords 是空元组，只靠 match_natures={UNKNOWN} 拿分，
+    #   它不是场景结论，不能拿来压住方向）
+    scene = _scene_rule(parsed, conflict)
+    if scene is not None:
+        return (
+            scene["blend"],
+            scene["title"],
+            scene["reason"],
+            [scene["id"], scene["label"]],
+            "",
+            plan.note,
+        )
+
+    # ---- L3：湿气方向接管（取代 sweet_heavy 的位置）----
+    if stage is not None:
+        return _from_stage(stage, plan.note)
+
+    # ---- L4：湿气触发但方向不可用 ⇒ 退体质默认，不走 late_night 兜底 ----
+    damp_hit = bool(
+        signals.dampness and signals.dampness.score >= _trigger_min("dampness_min")
+    )
+    if damp_hit:
+        blend, title, reason, note = _constitution_default(constitution)
+        return (
+            blend,
+            title,
+            reason,
+            ["constitution_default", constitution.value, "damp_clear_closed"],
+            note,
+            plan.note,
+        )
+
+    # 其余（冲击度触发而护脾胃暂未开放）：走老路，但如实说明（Q3 α）
+    blend, title, reason, hits, note = legacy()
+    if plan.note:
+        hits = [*hits, "stomach_guard_closed"]
+    return blend, title, reason, hits, note, plan.note
+
+
 def _herbs_unsuitable_for_any(constitutions: set[str]) -> set[str]:
     """把**任一**给定体质标进 `unsuitable_for` 的饮片名集合（B2 兼体质屏蔽集）。
 
@@ -297,18 +504,9 @@ def fallback_recommend(
     """
     exclude = set(exclude_herbs or [])
     blocked_by_avoid = _herbs_unsuitable_for_any({str(a) for a in avoid})
-    rule = _pick_rule(parsed)
-
-    if rule:
-        blend, title, reason = rule["blend"], rule["title"], rule["reason"]
-        hits = [rule["id"], rule["label"]]
-        fallback_note = ""
-    else:
-        blend, title, reason, fallback_note = _constitution_default(constitution)
-        hits = ["constitution_default", constitution.value]
-        if fallback_note:
-            # 让 basis.rule_hits 也看得出用的是"通用兜底"，便于事后归因
-            hits = ["constitution_default_missing", constitution.value]
+    blend, title, reason, hits, fallback_note, plan_note = _choose_blend(
+        parsed, constitution, avoid=avoid
+    )
 
     blend = [(name, amount) for name, amount in blend if name not in exclude]
     if not blend:
@@ -358,10 +556,12 @@ def fallback_recommend(
     else:
         brew = DEFAULT_BREW
 
-    # 通用兜底时把原因写进理由，别让用户以为这是为他体质配的
+    # 通用兜底时把原因写进理由，别让用户以为这是为他体质配的；
+    # plan_note（方向关闭／寒热错杂）同样如实写进来——不打出来就是只留痕在数据里。
     reason_suffix = "（此建议来自规则匹配）"
-    if fallback_note:
-        reason_suffix = f"（此建议来自规则匹配；{fallback_note}）"
+    notes = [n for n in (fallback_note, plan_note) if n]
+    if notes:
+        reason_suffix = f"（此建议来自规则匹配；{'；'.join(notes)}）"
 
     rec = Recommendation(
         title=title,

@@ -14,9 +14,11 @@
   "trigger": { "impact_min": 2, "dampness_min": 2 },
   "order": ["stomach_guard", "damp_clear"],
   "order_note": "order 只定「先试哪个方向」；每个方向的 when 定「它什么条件下才算候选」，unless 定「什么条件下直接退出」。判据写在数据里而不是代码里，避免方向语义散落到两个地方（同 §B4 三副本的教训）。damp_clear 的 unless=conflict 是实测逼出来的：麻辣烫配冰可乐 impact=3／damp=2／conflict=True，若不排除就会给出「茯苓陈皮化湿饮」，而冲突餐的口径是「不对冲、以护脾胃为准」——方向层必须先让位给冲突处理（方案 §2-② 的 L1）。",
+  "overrides_scene_note": "overrides_scene 定「这个方向能不能压过场景规则（RULES）」。stomach_guard=true：口径⑧「先护脾胃」，冲击度达标就压过场景规则。damp_clear=false：它取代的只是 RULES.sweet_heavy 的**位置**，而 sweet_heavy 本身是 RULES 里一条靠关键词竞争的普通规则 ⇒ 湿气方向只在「老路没有真正的场景结论」时接管。实测教训：写成 true 会让 damp≥2 的餐全部改走化湿，连炸鸡可乐、油条豆浆这类油腻餐都拿到「茯苓陈皮化湿饮」，方向明显不对（90 条样本里 69 条变化）；改回 false 后只剩湿气餐与冲突餐变化。",
   "directions": {
     "stomach_guard": {
       "label": "先护脾胃",
+      "overrides_scene": true,
       "when": ["impact", "conflict"],
       "herbs": [],
       "take": 2,
@@ -25,6 +27,7 @@
     },
     "damp_clear": {
       "label": "兼顾化湿",
+      "overrides_scene": false,
       "when": ["dampness"],
       "unless": ["conflict"],
       "herbs": [
