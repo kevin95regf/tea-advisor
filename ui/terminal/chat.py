@@ -66,6 +66,7 @@ from app.services.food_lookup import (  # noqa: E402
     CONF_SHOW_THRESHOLD,
     match_foods,
     resolve_food,
+    resolve_in_context,
 )
 
 # SOURCE_LABELS 已收敛到 app.domain.enums（与 /api/meta 给网页版的是同一份），
@@ -209,20 +210,32 @@ def _offline_analyze(
     constitution: Constitution,
     avoid: list[Constitution] | None = None,
 ):
-    """离线确定性链路：口述 → match_foods → resolve_food → 规则兜底推荐。
+    """离线确定性链路：口述 → match_foods → resolve_in_context → 规则兜底推荐。
 
     全程不调用模型，无 API Key 也能出结果；代价是识别粒度取决于关键词表。
+
+    ⚠️ 这里必须用 `resolve_in_context(text, entry)`，不能用 `resolve_food(name=...)`：
+    后者不带整句语境，温度词（「冰」「热」）不会被算到紧贴它的那一样食物头上，
+    实测「冰可乐」只到 cool(−1) 而非 cold(−2) ⇒ 极端档永远判不出 ⇒ 阶段 1 的
+    寒热冲突判定在终端路径下恒为 False（E15 的漏网，见 core/var/s0-plan.md）。
     """
     hits = match_foods(text)
     foods: list[ParsedFood] = []
     for entry in hits:
-        r = resolve_food(name=entry["name"])
+        # 不能写 resolve_food(name=entry["name"])：不带语境则温度词归属不上，
+        # 「冰可乐」只到 cool(−1)。改用按位置归属的入口（与 API 离线路径一致）。
+        r = resolve_in_context(text, entry)
         try:
             nature = Nature(r.nature)
         except ValueError:
             nature = Nature.UNKNOWN
         foods.append(
-            ParsedFood(name=entry["name"], nature=nature, verification=r.verification)
+            ParsedFood(
+                name=entry["name"],
+                nature=nature,
+                flavors=r.flavors,
+                verification=r.verification,
+            )
         )
 
     if not foods:
