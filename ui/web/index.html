@@ -552,11 +552,24 @@ function renderParsed(p) {
         + `与 寒（${esc((sig.conflict.cold_side || []).join('、'))}）同席</div>`;
     }
   }
+  // 本次推荐的优先级（代码已判定）。中文全部来自后端（label / note / second_note），
+  // 这里只打印、不翻译 —— 翻译就会造出第二份中文。plan 为 null 时一行都不打。
+  const plan = p.plan || null;
+  let planNote = '';
+  if (plan) {
+    if (plan.first && plan.first.open) {
+      const amts = (plan.first.herbs || []).map(n => `${esc(n)} ${+plan.first.amounts[n]}g`).join('、');
+      planNote += `<div class="hint">本餐优先：${esc(plan.first.label)} —— ${esc(plan.first.title)}（${amts}）</div>`;
+    }
+    if (plan.note) planNote += `<div class="hint">${esc(plan.note)}</div>`;
+    if (plan.deferred && plan.second_note) planNote += `<div class="hint">${esc(plan.second_note)}</div>`;
+  }
   return `<div class="card">
     <h2>我理解到的</h2>
     <div>${chips || '<span class="hint">没有识别到具体食物</span>'}</div>
     <div class="hint">时段：${esc(label('meal_time', p.meal_time))} ｜ 整餐偏：${esc(label('nature', p.overall_nature))} ｜ 把握度：${esc(Math.round((p.confidence || 0) * 100))}%</div>
     ${signalsNote}
+    ${planNote}
     ${verifyNote}
     ${p.summary ? `<div class="reason">${esc(p.summary)}</div>` : ''}
     ${uncertain}

@@ -60,7 +60,7 @@ from app.domain.constitution_resolver import (  # noqa: E402
     UndeterminedConstitutionError,
     resolve_from_scores,
 )
-from app.domain.diet_signals import build_meal_signals  # noqa: E402
+from app.domain.diet_signals import build_meal_signals, derive_meal_plan  # noqa: E402
 from app.domain.models import AnalyzeRequest, ParsedFood, ParsedMeal  # noqa: E402
 from app.services import matcher  # noqa: E402
 from app.services.food_lookup import (  # noqa: E402
@@ -124,6 +124,7 @@ def render_parsed(parsed: ParsedMeal) -> None:
         f" ｜ 把握度：{parsed.confidence:.0%}"
     )
     _render_meal_signals(parsed)
+    _render_meal_plan(parsed)
     if parsed.summary:
         print(f"  复述：{parsed.summary}")
     if parsed.uncertain_items:
@@ -166,6 +167,30 @@ def _render_meal_signals(parsed: ParsedMeal) -> None:
             f"  ⚠ 寒热错杂：热（{'、'.join(conflict.heat_side)}）"
             f"与 寒（{'、'.join(conflict.cold_side)}）同席"
         )
+
+
+def _render_meal_plan(parsed: ParsedMeal) -> None:
+    """本次推荐的优先级（这一餐先做什么 / 体质方向下一餐再调）。
+
+    与 `_render_meal_signals` 同一组显示规则：
+    - `parsed.plan` 为 **None 时一行都不打** —— 未接线的调用方输出不变；
+    - 中文全部来自后端（label / note / second_note 都在数据文件里），
+      本文件**不自己翻译**（翻译就会造出第二份中文）；
+    - 方向关闭时不静默：note 里有如实说明就必须打出来
+      —— 不打出来就是只留痕在数据里（E7 的形状）。
+    """
+    plan = parsed.plan
+    if plan is None:
+        return
+
+    first = plan.first
+    if first is not None and first.open:
+        amounts = "、".join(f"{n} {float(first.amounts.get(n, 0)):g}g" for n in first.herbs)
+        print(f"  本餐优先：{first.label} —— {first.title}（{amounts}）")
+    if plan.note:
+        print(f"  {plan.note}")
+    if plan.deferred and plan.second_note:
+        print(f"  {plan.second_note}")
 
 
 def render_recommendations(recs: list) -> None:
@@ -292,6 +317,12 @@ def _offline_analyze(
     # 与 LLM 链路（orchestrator）、API 离线（analyze_offline）同一装配入口。
     # 不接的话终端永远读不到冲突/冲击度——S0 修的正是这条链路的同类漏网。
     parsed.signals = build_meal_signals(text, foods)
+    # 推荐优先级同一入口装配（与 orchestrator / analyze_offline 相同的纯函数）。
+    parsed.plan = derive_meal_plan(
+        parsed.signals,
+        constitution.value,
+        avoid=[c.value for c in (avoid or [])],
+    )
     recs, msg, rule_hits = matcher.fallback_recommend(
         parsed, constitution, avoid=[c.value for c in (avoid or [])]
     )
