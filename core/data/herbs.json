@@ -113,7 +113,7 @@
         ],
         "expansion_batch": {
           "date": "2026-09-20",
-          "scope": "扩展第一批**试点**：金银花 1 味 × 9 型 = 9 格（先打通链路，其余 10 味留待阶段 3）",
+          "scope": "扩展第一批（余甘子暂缓）：金银花 1 味 × 9 型 = 9 格（试点，2026-09-20）；阶段 3 分 4 批落地余甘子以外的 9 味 × 9 型 = 81 格（余甘子按拍板 Q2 暂缓，未计入）。累计 **4 味 36 格**。",
           "decided_by": "项目所有者 2026-09-20（方案 core/var/e2-stage1-2-plan.md 拍板 H 试点 / J 走 TCM.Skill）",
           "judged_by": "TCM.Skill 语料逐条判定（《中药学》七版 + 《中医养生学》第十七章 + 49 判据 R1–R5）",
           "cells": [
@@ -125,18 +125,50 @@
             {"herb": "jinyinhua", "constitution": "qi_stagnation", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R2：判据是「有无行气/疏肝功效」，金银花无此功效 ⇒ 不外推"},
             {"herb": "jinyinhua", "constitution": "special_diathesis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R4：只认经口给药的过敏记载。《中药学》七版:1736【不良反应】明写「所含的绿原酸有致敏原作用，可引起变态反应，但口服一般无此反应」⇒ 不构成口服禁忌"},
             {"herb": "jinyinhua", "constitution": "damp_heat", "verdict": "—", "tier": "no_basis", "field": null, "basis": "粤中医《如何辨识自己的体质？九种体质调理方，一文说清楚》(gd-gov-2023) 2026-09-20 实抓复核：湿热质「可适当多吃清利湿热的食物」与「应少吃的食物」两类清单均未点名金银花 ⇒ 新味无可沿用值、不得自拟"},
-            {"herb": "jinyinhua", "constitution": "balanced", "verdict": "中性", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2278「阴阳气血平调的体质…不必考虑体质问题」"}
+            {"herb": "jinyinhua", "constitution": "balanced", "verdict": "中性", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2278「阴阳气血平调的体质…不必考虑体质问题」"},
+            {"herb": "sangye", "constitution": "yin_deficiency", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2287 阴虚质药物养生清单（女贞子、山茱萸、五味子、旱莲草、麦门冬、天门冬、黄精、玉竹、玄参、枸杞子、桑椹、龟板）未列本味；:2285 忌口为葱、姜、蒜、韭、薤、椒等辛辣燥烈 ⇒ no_basis"},
+            {"herb": "sangye", "constitution": "yang_deficiency", "verdict": "忌", "tier": "I", "field": "unsuitable_for", "basis": "《中药学》七版:997【性能】「甘、苦，寒。归肺、肝经。」；药典 2020 年版一部 p.359 同。寒凉之品与阳虚质定义特征（《中医养生学》:2290「平素怕寒喜暖、手足欠温……大便时稀」）方向相悖。⚠️ 桑叶七版全节（:994–1013）**无【使用注意】项**（:1005【用法用量】之后直接 :1006【古籍摘要】）⇒ 拿不到 E′，本格降为 I（性味外推）；库内 18 味寒/凉饮片一律标阳虚不宜（既有口径），本批循之。"},
+            {"herb": "sangye", "constitution": "qi_deficiency", "verdict": "忌", "tier": "I", "field": "unsuitable_for", "basis": "《中药学》七版:997「甘、苦，寒」＋:998【功效】「疏散风热」。苦寒疏散之品与气虚质定义特征（《中医养生学》:2299「语声低怯，常自汗出……体倦健忘」）同向。⚠️ 同阳虚格：七版桑叶条目**无【使用注意】**⇒ 拿不到 E′，本格为 I（性味外推）。库内决明子(七版:1427)/栀子(:1385)/薄荷(:941)/鱼腥草 等寒凉味均标气虚不宜（口径）。"},
+            {"herb": "sangye", "constitution": "phlegm_damp", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2338 痰湿质宜用清单（白萝卜、荸荠、紫菜、海蜇、洋葱、枇杷、白果、大枣、扁豆、薏苡仁、红小豆、蚕豆、包菜）未列本味；忌用只有肥甘厚味/酒类/过饱 ⇒ no_basis"},
+            {"herb": "sangye", "constitution": "damp_heat", "verdict": "—", "tier": "no_basis", "field": null, "basis": "口径 (a)（2026-09-20 拍板 Q1）：判据须「有文献点名」。广东省中医药局《如何辨识自己的体质？九种体质调理方，一文说清楚》湿热质宜用清单（薏苡仁、莲子、苦瓜、赤小豆、绿豆、鲫鱼、冬瓜、丝瓜、卷心菜、莲藕、空心菜）与忌用清单（辣椒、大蒜、大葱、韭菜、蜂蜜、酒、牛肉、狗肉、鹿肉）均未点名本味（网页 2026-09-20 逐字核对）⇒ no_basis"},
+            {"herb": "sangye", "constitution": "blood_stasis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R1：无「留瘀」记载、非止血收敛类，体质学资料未点名 ⇒ 不得按四气一刀切（49 文件 §1 R1）"},
+            {"herb": "sangye", "constitution": "qi_stagnation", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R2：判据是「有无行气/疏肝功效」。本方无行气疏肝功效，《中医养生学》:2347 气郁质宜用清单（佛手、橙子、柑皮、荞麦、韭菜、茴香菜、大蒜、火腿、高粱、刀豆、香橼）未列 ⇒ no_basis"},
+            {"herb": "sangye", "constitution": "special_diathesis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R4：七版:994–1013 全节无【不良反应】项 ⇒ 无经口过敏记载，不外推（49 文件 §1 R4）"},
+            {"herb": "sangye", "constitution": "balanced", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2278「至于阴阳气血平调的体质……不必考虑体质问题」⇒ 中性（沿用 34 味批次的平和列口径）"},
+            {"herb": "pugongying", "constitution": "yin_deficiency", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2287 阴虚质药物养生清单（女贞子、山茱萸、五味子、旱莲草、麦门冬、天门冬、黄精、玉竹、玄参、枸杞子、桑椹、龟板）未列本味；:2285 忌口为葱、姜、蒜、韭、薤、椒等辛辣燥烈 ⇒ no_basis"},
+            {"herb": "pugongying", "constitution": "yang_deficiency", "verdict": "忌", "tier": "I", "field": "unsuitable_for", "basis": "《中药学》七版:1871【性能】「苦、甘，寒。归肝、胃经。」；药典 2020 年版一部 p.416 同。寒凉与阳虚质（《中医养生学》:2290）方向相悖。⚠️ 七版:1878【使用注意】仅记「用量过大，可致缓泻」，未及阳虚/虚寒 ⇒ 不构成 E′，本格为 I；库内 18 味寒/凉饮片一律标阳虚不宜（既有口径）。"},
+            {"herb": "pugongying", "constitution": "qi_deficiency", "verdict": "忌", "tier": "I", "field": "unsuitable_for", "basis": "《中药学》七版:1878【使用注意】「用量过大，可致缓泻。」按 49 文件 §0.1 的 E′ 边界（该句须**直接**描述本饮片的使用注意**且方向与该体质一致**）：「缓泻」是剂量相关的副作用描述，并未点名气虚/脾虚/虚寒 —— 与槐花×血瘀同属「两个集合的跨越」，故**不升为 E′，降为 I**（保守方向仍写 unsuitable_for）。"},
+            {"herb": "pugongying", "constitution": "phlegm_damp", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2338 痰湿质宜用清单（白萝卜、荸荠、紫菜、海蜇、洋葱、枇杷、白果、大枣、扁豆、薏苡仁、红小豆、蚕豆、包菜）未列本味；忌用只有肥甘厚味/酒类/过饱 ⇒ no_basis"},
+            {"herb": "pugongying", "constitution": "damp_heat", "verdict": "—", "tier": "no_basis", "field": null, "basis": "口径 (a)（2026-09-20 拍板 Q1）：判据须「有文献点名」。广东省中医药局《如何辨识自己的体质？九种体质调理方，一文说清楚》湿热质宜用清单（薏苡仁、莲子、苦瓜、赤小豆、绿豆、鲫鱼、冬瓜、丝瓜、卷心菜、莲藕、空心菜）与忌用清单（辣椒、大蒜、大葱、韭菜、蜂蜜、酒、牛肉、狗肉、鹿肉）均未点名本味（网页 2026-09-20 逐字核对）⇒ no_basis"},
+            {"herb": "pugongying", "constitution": "blood_stasis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R1：无「留瘀」记载、非止血收敛类，体质学资料未点名 ⇒ 不得按四气一刀切（49 文件 §1 R1）"},
+            {"herb": "pugongying", "constitution": "qi_stagnation", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R2：七版:1874【应用】「消肿散结」「兼能疏郁通乳」——**「消肿散结」不是行气**，「疏郁通乳」限于乳痈局部，且《中医养生学》:2347 气郁质宜用清单未列 ⇒ no_basis"},
+            {"herb": "pugongying", "constitution": "special_diathesis", "verdict": "忌", "tier": "E", "field": "unsuitable_for", "basis": "《中药学》七版:1886【不良反应】「口服煎剂偶见恶心、呕吐、腹部不适及轻度泄泻等胃肠道反应，**亦有出现全身瘙痒、荨麻疹等**。」——这是**经口给药**的过敏反应记载，命中 49 文件 §1 R4 的唯一判据。判据先例：酸枣仁（七版:7792「煎服酸枣仁偶可发生过敏反应。可出现大片荨麻疹，全身皮肤瘙痒」）在 34 味批次判为特禀不宜（E）。⚠️ 该先例当时**只落在影子字段、未写入 herbs.json**（见 open_questions）。"},
+            {"herb": "pugongying", "constitution": "balanced", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2278「至于阴阳气血平调的体质……不必考虑体质问题」⇒ 中性（沿用 34 味批次的平和列口径）"},
+            {"herb": "qingguo", "constitution": "yin_deficiency", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2287 阴虚质药物养生清单未列；:2160【功效】「清热解毒，利咽，生津」为生津而非滋阴，未点名 ⇒ no_basis（不因「生津」二字外推为滋阴）"},
+            {"herb": "qingguo", "constitution": "yang_deficiency", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中药学》七版:2159【性能】「甘、酸，平。归肺、胃经。」——性平，两侧皆无依据 ⇒ no_basis。⚠️ :2162 有「本品性平偏寒」一句，但七版全节（:2156–2173）无【使用注意】⇒ 不足以判忌，该措辞改落 cautions 软提示"},
+            {"herb": "qingguo", "constitution": "qi_deficiency", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中药学》七版:2159 性平；全节无【使用注意】⇒ 无气虚方向依据 ⇒ no_basis"},
+            {"herb": "qingguo", "constitution": "phlegm_damp", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2338 痰湿质宜用清单未列；:2163【应用】「解毒醒酒」与痰湿无涉 ⇒ no_basis"},
+            {"herb": "qingguo", "constitution": "damp_heat", "verdict": "—", "tier": "no_basis", "field": null, "basis": "口径 (a)（2026-09-20 拍板 Q1）：判据须「有文献点名」。广东省中医药局《如何辨识自己的体质？九种体质调理方，一文说清楚》湿热质宜用清单（薏苡仁、莲子、苦瓜、赤小豆、绿豆、鲫鱼、冬瓜、丝瓜、卷心菜、莲藕、空心菜）与忌用清单（辣椒、大蒜、大葱、韭菜、蜂蜜、酒、牛肉、狗肉、鹿肉）均未点名本味（网页 2026-09-20 逐字核对）⇒ no_basis"},
+            {"herb": "qingguo", "constitution": "blood_stasis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R1：无「留瘀」记载、非止血收敛类，体质学资料未点名 ⇒ 不得按四气一刀切（49 文件 §1 R1）"},
+            {"herb": "qingguo", "constitution": "qi_stagnation", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R2：七版:2160【功效】清热解毒、利咽、生津，**无行气/疏肝功效**；《中医养生学》:2347 未列 ⇒ no_basis"},
+            {"herb": "qingguo", "constitution": "special_diathesis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R4：七版:2156–2173 全节无【不良反应】项 ⇒ 无经口过敏记载，不外推"},
+            {"herb": "qingguo", "constitution": "balanced", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2278「至于阴阳气血平调的体质……不必考虑体质问题」⇒ 中性（沿用 34 味批次的平和列口径）"}
           ],
           "written": {
-            "suitable_constitutions": [],
-            "unsuitable_for": ["yang_deficiency", "qi_deficiency"],
-            "cautions": ["脾胃虚寒、易腹泻者不宜多饮", "不宜长期连续大量饮用"]
+            "jinyinhua": {"suitable_constitutions": [], "unsuitable_for": ["yang_deficiency", "qi_deficiency"], "cautions": ["脾胃虚寒、易腹泻者不宜多饮", "不宜长期连续大量饮用"]},
+            "sangye": {"suitable_constitutions": [], "unsuitable_for": ["yang_deficiency", "qi_deficiency"], "cautions": ["性偏寒凉，脾胃虚寒者不宜多饮", "不宜长期连续大量饮用"]},
+            "pugongying": {"suitable_constitutions": [], "unsuitable_for": ["yang_deficiency", "qi_deficiency", "special_diathesis"], "cautions": ["性寒，脾胃虚寒者不宜多饮", "用量过大可致缓泻，宜从少量开始"]},
+            "qingguo": {"suitable_constitutions": [], "unsuitable_for": [], "cautions": ["性平偏寒，脾胃虚寒者不宜多饮", "不宜长期连续大量饮用"]}
           },
-          "counts": {"herb_count": 1, "total_cells": 9, "tier": {"E_prime": 2, "no_basis": 7}},
-          "visibility": "本批**无「宜」格** ⇒ suitable_constitutions 留空。留空 = 落 neutral_fallback，且条目追加在数组末尾、排在各体质候选 top12 之外 ⇒ 实测不出现在任何体质的推荐里（拍板 I：新味只有标到阴虚/阳虚/血瘀/气郁/特禀这 5 个弱型才有候选增量）。硬屏蔽阳虚/气虚是安全底线，不是可选项。",
+          "counts": {"pilot_jinyinhua": {"herb_count": 1, "total_cells": 9, "tier": {"E_prime": 2, "no_basis": 7}}, "by_batch": {"batch1": {"label": "阶段 3 批一：泡水 3 味", "herb_count": 3, "total_cells": 27, "tier": {"E": 1, "I": 4, "no_basis": 22}, "verdict": {"—": 22, "忌": 5}}}, "cumulative": {"herb_count": 4, "total_cells": 36, "tier": {"E": 1, "E_prime": 2, "I": 4, "no_basis": 29}, "verdict": {"—": 28, "中性": 1, "忌": 7}}},
+          "visibility": "本批（阶段 3 批一：泡水 3 味）写入 3 味：suitable_constitutions 新增 0 味（无）、unsuitable_for 新增 2 味（桑叶, 蒲公英）。⚠️ 新条目一律追加在 `herbs.json` 数组末尾 ⇒ 在 catalog 顺序里排最后。只有**阴虚** suitable 由 3 味增至 6 味时全部落在 `limit=12` 可见区间内（真实候选增量）；湿热（14 味）、痰湿（14 味）、平和（24 味）的 suitable 已 ≥12 ⇒ 追加**不产生候选增量**，只影响账本完整与硬屏蔽。",
           "open_questions": [
             "做法依据（拍板 E）：定为**泡水**（不标 requires_cooking），依据是形态为花蕾 ＋ 七版:1726「疏散风热、清泄里热以生品为佳」；但语料内**无「泡服/代茶饮」的文献原句**（《中医饮食营养学》:820 的「金银花露」是蒸馏品，不是冲泡）⇒ 待外部确认。",
-            "与既有凉/寒味的口径差异：菊花/决明子/淡竹叶/槐花/鱼腥草 5 味都带 damp_heat（suitable），本批按现行判据（粤中医未点名）把金银花判 no_basis ⇒ 两者并存。维持（承认那 5 味是判据成文前的项目自拟）还是另案补齐依据，待裁定。"
+            "与既有凉/寒味的口径差异：菊花/决明子/淡竹叶/槐花/鱼腥草 5 味都带 damp_heat（suitable），本批按现行判据（粤中医未点名）把金银花判 no_basis ⇒ 两者并存。维持（承认那 5 味是判据成文前的项目自拟）还是另案补齐依据，待裁定。",
+            "做法依据（蒲公英，与 E10 同族）：定为**泡水**（不标 requires_cooking），依据是形态为全草、轻清，七版:1873【应用】亦以「单用本品浓煎内服」以外用为主；但七版:1877【用法用量】只记「煎服，9~15g」，语料内**无「泡服／代茶饮」的文献原句** ⇒ 待外部确认。对照：**桑叶有直接原句**（七版:1013「每日15g，沸水浸泡后代茶饮」，优于金银花）；**青果有直接原句**（《中医饮食营养学》:701「开水泡服或水煎代茶」）。",
+            "`max_daily_g` 是**项目约定、非药典值**（拍板 Q3）：桑叶 10、蒲公英 15、青果 10，三者都取药典【用法与用量】上限（p.359「5～10g」／p.416「10～15g」／p.255「5～10g」）。⚠️ 药典给的是**煎服量**，泡饮量在语料里没有 ⇒ 待中药师确认。",
+            "⚠️ **蒲公英×特禀（E）是本批新增的第一条特禀硬禁忌**：依据为七版:1886【不良反应】「口服煎剂……亦有出现全身瘙痒、荨麻疹等」。同判据的**酸枣仁×特禀**（七版:7792）在 34 味批次判为 E 级不宜，但**只落在影子字段、未写入 herbs.json** ⇒ 两条同判据的落地状态不一致，已另立挂起项。",
+            "阳虚／气虚两列的**口径**：本批 3 味里，桑叶、蒲公英的七版条目**都没有【使用注意】项**（桑叶 :1006 直接接【古籍摘要】、蒲公英仅有「用量过大可致缓泻」），因此这两列拿不到 E′，按「库内 18 味寒/凉饮片一律标阳虚不宜」的既有口径判为 I（性味外推，保守方向）。青果性平，两列皆 no_basis。"
           ]
         },
         "pending": [],
@@ -884,6 +916,69 @@
         "form": "干花蕾，未开放者质佳",
         "note": "水温 90℃ 左右，加盖焖 3 分钟即可；久煮香气易散失",
         "prep": "第一泡快速倒掉可去浮尘"
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
+    },
+  {
+      "id": "sangye",
+      "name": "桑叶",
+      "nature": "cold",
+      "flavors": ["sweet", "bitter"],
+      "meridians": ["肺", "肝"],
+      "effects": ["疏散风热", "清肺润燥", "清肝明目"],
+      "max_daily_g": 10,
+      "cautions": ["性偏寒凉，脾胃虚寒者不宜多饮", "不宜长期连续大量饮用"],
+      "suitable_constitutions": [],
+      "unsuitable_for": ["yang_deficiency", "qi_deficiency"],
+      "brewing": {
+        "form": "干桑叶，以叶片完整、色青绿者为佳",
+        "note": "沸水冲泡 3～5 分钟即可，不宜久煮；《中药学》七版:1013 载「每日15g，沸水浸泡后代茶饮」",
+        "prep": "温水快速冲洗一次去浮尘"
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
+    },
+  {
+      "id": "pugongying",
+      "name": "蒲公英",
+      "nature": "cold",
+      "flavors": ["bitter", "sweet"],
+      "meridians": ["肝", "胃"],
+      "effects": ["清热解毒", "消肿散结", "利湿通淋"],
+      "max_daily_g": 15,
+      "cautions": ["性寒，脾胃虚寒者不宜多饮", "用量过大可致缓泻，宜从少量开始"],
+      "suitable_constitutions": [],
+      "unsuitable_for": ["yang_deficiency", "qi_deficiency", "special_diathesis"],
+      "brewing": {
+        "form": "干全草，以叶多、色绿者为佳",
+        "note": "沸水冲泡 5 分钟；性寒，宜短期饮用",
+        "prep": "温水快速冲洗一次去浮尘"
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
+    },
+  {
+      "id": "qingguo",
+      "name": "青果",
+      "nature": "neutral",
+      "flavors": ["sweet", "sour"],
+      "meridians": ["肺", "胃"],
+      "effects": ["清热解毒", "利咽", "生津"],
+      "max_daily_g": 10,
+      "cautions": ["性平偏寒，脾胃虚寒者不宜多饮", "不宜长期连续大量饮用"],
+      "suitable_constitutions": [],
+      "unsuitable_for": [],
+      "brewing": {
+        "form": "干青果（成熟果实），用时打碎",
+        "note": "打碎后开水泡服；《中医饮食营养学》:701 载「开水泡服或水煎代茶」",
+        "prep": "温水快速冲洗一次，敲裂果壳更易出味"
       },
       "review_status": "pending",
       "reviewed_by": null,

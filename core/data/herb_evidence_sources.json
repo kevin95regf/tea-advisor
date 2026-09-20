@@ -5,7 +5,7 @@
     "compiled_at": "2026-09-18",
     "purpose": "登记 core/data/herbs.json 每味饮片的（一）四气五味归经依据、（二）体质适配依据，供 safety.herb_evidence() 生成 Basis.references。**本文件不修改 herbs.json。**",
     "why_this_file": "食物侧的对应物是 docs/food-properties-sources.json；那张之所以放 docs/，是因为它**不被运行时读**（只被审核脚本读）。本表要被 core/app/domain/safety.py 运行时读，故落 core/data/ —— 对齐 food 的**结构**，不对齐它的**位置**。",
-    "scope": "域 I（属性依据）覆盖 herbs.json 全部 35 味；域 II（体质依据）只登记「政府来源明确点名」的 (体质 × 饮片) 组合，**不做药典功效外推**。",
+    "scope": "域 I（属性依据）覆盖 herbs.json 全部 38 味；域 II（体质依据）只登记「政府来源明确点名」的 (体质 × 饮片) 组合，**不做药典功效外推**。",
     "mapping_rules": {
       "注": "与 core/data/herb_nature_reference.json 的 _meta.mapping_rules.nature 完全一致，不新造映射。",
       "大寒": "cold",
@@ -83,14 +83,14 @@
       "域 II 条目**不得带 field 键** —— 带了就成了判定登记，会与 herbs.json 的 rulings（软约束豁免登记）语义混用。"
     ],
     "counts": {
-      "property_total": 35,
-      "property_with_source": 34,
+      "property_total": 38,
+      "property_with_source": 37,
       "constitution_total": 24,
       "distinct_herbs": 14
     },
     "known_limitations": [
-      "**体质依据只覆盖 14/35 味** —— `distinct_herbs` 就是它。其余 21 味只有属性依据，界面不得给出「每味都有体质依据」的错觉。",
-      "**属性依据 34/35 味** —— 茉莉花药典一部未收载（status=无源可引），是全表唯一没有属性来源的饮片。",
+      "**体质依据只覆盖 14/38 味** —— `distinct_herbs` 就是它。其余 24 味只有属性依据，界面不得给出「每味都有体质依据」的错觉。",
+      "**属性依据 37/38 味** —— 茉莉花药典一部未收载（status=无源可引），是全表唯一没有属性来源的饮片。",
       "**引用的是药典 2020 版，现行是 2025 版**（2025-10-01 施行）。必须随文档标注版本；并已登记挂起项 C3，等取得 2025 版在线全文再换。跨版性味归经变动概率不高，但**这是未经核实的假设**。",
       "**7 处药典与项目不一致仍保留项目值**（桑椹/百合/淡竹叶 凉↔寒、白扁豆 平↔微温、佛手缺「酸」「胃」、红枣缺「心」、荷叶多「淡」）—— 本表如实记 delta，**不借登记表改数据**；等 nanple 复核（挂起项 B1）。",
       "展示的是「来源支持原料与调养方向」，**不是**「来源支持本程序的搭配与克数」。这句同时写在 EvidenceReference 的文档字符串与两个壳的脚注里。",
@@ -1262,6 +1262,108 @@
           "locator": "《中国药典》2020 年版一部 p.279「金银花」",
           "verbatim": "甘，寒。归肺、心、胃经。",
           "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=342"
+        }
+      ],
+      "status": "一致",
+      "delta": null,
+      "open_question": null
+    },
+    {
+      "id": "sangye",
+      "name": "桑叶",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "甘",
+          "苦"
+        ],
+        "meridians": [
+          "肺",
+          "肝"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "桑叶",
+          "how": "正名（药典收载名）",
+          "locator": "《中国药典》2020 年版一部 p.359「桑叶」",
+          "verbatim": "甘、苦，寒。归肺、肝经。",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=471"
+        }
+      ],
+      "status": "一致",
+      "delta": null,
+      "open_question": null
+    },
+    {
+      "id": "pugongying",
+      "name": "蒲公英",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "bitter",
+          "sweet"
+        ],
+        "flavors_cn": [
+          "苦",
+          "甘"
+        ],
+        "meridians": [
+          "肝",
+          "胃"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "蒲公英",
+          "how": "正名（药典收载名）",
+          "locator": "《中国药典》2020 年版一部 p.416「蒲公英」",
+          "verbatim": "苦、甘，寒。归肝、胃经。",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=560"
+        }
+      ],
+      "status": "一致",
+      "delta": null,
+      "open_question": null
+    },
+    {
+      "id": "qingguo",
+      "name": "青果",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet",
+          "sour"
+        ],
+        "flavors_cn": [
+          "甘",
+          "酸"
+        ],
+        "meridians": [
+          "肺",
+          "胃"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "青果",
+          "how": "正名（药典收载名）",
+          "locator": "《中国药典》2020 年版一部 p.255「青果」",
+          "verbatim": "甘、酸，平。归肺、胃经。",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=303"
         }
       ],
       "status": "一致",

@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "title": "35 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）",
+    "title": "38 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）",
     "version": "1.0.0",
     "compiled_at": "2026-09-17",
     "purpose": "把项目 core/data/herbs.json 的性味归经与《中国药典》2020 年版一部逐条对照，标出不一致项，供人工判断以哪个为准。**本文件不修改任何项目数据。**",
@@ -2061,6 +2061,180 @@
         "dosage_verbatim": "6～15g。",
         "entry_id": 342,
         "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=342"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "桑叶",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "甘",
+          "苦"
+        ],
+        "meridians": [
+          "肺",
+          "肝"
+        ],
+        "effects": [
+          "疏散风热",
+          "清肺润燥",
+          "清肝明目"
+        ],
+        "max_daily_g": 10
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "桑叶",
+        "page": 359,
+        "pinyin": "Sɑngye",
+        "latin": "MORI FOLIUM",
+        "xingwei_verbatim": "甘、苦，寒。归肺、肝经。",
+        "nature_word": "寒",
+        "nature_mapped": "cold",
+        "nature_mapped_cn": "寒",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "甘",
+          "苦"
+        ],
+        "meridians": [
+          "肺",
+          "肝"
+        ],
+        "effects_verbatim": "疏散风热，清肺润燥，清肝明目。用于风热感冒，肺热燥咳，头晕头痛，目赤昏花。",
+        "dosage_verbatim": "5～10g。",
+        "entry_id": 471,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=471"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "蒲公英",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "bitter",
+          "sweet"
+        ],
+        "flavors_cn": [
+          "苦",
+          "甘"
+        ],
+        "meridians": [
+          "肝",
+          "胃"
+        ],
+        "effects": [
+          "清热解毒",
+          "消肿散结",
+          "利湿通淋"
+        ],
+        "max_daily_g": 15
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "蒲公英",
+        "page": 416,
+        "pinyin": "Pugongying",
+        "latin": "TARAXACI HERBA",
+        "xingwei_verbatim": "苦、甘，寒。归肝、胃经。",
+        "nature_word": "寒",
+        "nature_mapped": "cold",
+        "nature_mapped_cn": "寒",
+        "flavors": [
+          "bitter",
+          "sweet"
+        ],
+        "flavors_cn": [
+          "苦",
+          "甘"
+        ],
+        "meridians": [
+          "肝",
+          "胃"
+        ],
+        "effects_verbatim": "清热解毒，消肿散结，利尿通淋。用于疔疮肿毒，乳痈，瘰疬，目赤，咽痛，肺痈，肠痈，湿热黄疸，热淋涩痛。",
+        "dosage_verbatim": "10～15g。",
+        "entry_id": 560,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=560"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "青果",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet",
+          "sour"
+        ],
+        "flavors_cn": [
+          "甘",
+          "酸"
+        ],
+        "meridians": [
+          "肺",
+          "胃"
+        ],
+        "effects": [
+          "清热解毒",
+          "利咽",
+          "生津"
+        ],
+        "max_daily_g": 10
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "青果",
+        "page": 255,
+        "pinyin": "Qingguo",
+        "latin": "CANARII FRUCTUS",
+        "xingwei_verbatim": "甘、酸，平。归肺、胃经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "sweet",
+          "sour"
+        ],
+        "flavors_cn": [
+          "甘",
+          "酸"
+        ],
+        "meridians": [
+          "肺",
+          "胃"
+        ],
+        "effects_verbatim": "清热解毒，利咽，生津。用于咽喉肿痛，咳嗽痰黏，烦热口渴，鱼蟹中毒。",
+        "dosage_verbatim": "5～10g。",
+        "entry_id": 303,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=303"
       },
       "nature_match": true,
       "flavors_match": true,
