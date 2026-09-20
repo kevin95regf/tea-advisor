@@ -8,7 +8,7 @@
 
 分工（重要）：
 
-- **域 I `property_entries`（34 味）由本脚本从 `herb_nature_reference.json` 派生**，
+- **域 I `property_entries`（逐味）由本脚本从 `herb_nature_reference.json` 派生**，
   一个字都不手写 —— 两份表格因此不可能漂移。`project` 块取自 `herbs.json` 的**现值**，
   不是参照表里的历史快照，所以不存在「改了 herbs.json 而登记表没跟上」。
 - **域 II `constitution_entries`（24 条）与 `_meta` 是人工录入的，本脚本原样保留**。
@@ -68,7 +68,7 @@ def _strip_md_bold(text: str) -> str:
 
 
 def build_property_entries(ref: dict, herbs: list[dict]) -> list[dict]:
-    """从药典参照表 + herbs.json 现值派生域 I 的 34 条。"""
+    """从药典参照表 + herbs.json 现值派生域 I 的逐味条目。"""
     rc_by_name = {h["herb"]: h for h in ref["herbs"]}
     entries: list[dict] = []
 

@@ -134,7 +134,7 @@ def test_review_items_report_a_candidate(mod, herbs, catalog):
 
 
 def test_every_herb_gets_a_definite_status(mod, herbs, catalog):
-    """34 味每一味都必须落到 in/not_in/review 之一，不允许「未知」。"""
+    """每一味都必须落到 in/not_in/review 之一，不允许「未知」。"""
     results = mod.check(herbs, catalog["items"])
     assert len(results) == len(herbs)
     for r in results:

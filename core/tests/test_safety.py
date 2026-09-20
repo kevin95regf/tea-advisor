@@ -415,7 +415,7 @@ def test_yinxu_cautions_batch_is_blocked_at_runtime() -> None:
     用大 `limit` 取全池，避免被 `filter_by_constitution` 默认的 `limit=12` 截断掩盖：
     被截断的条目本来就不在 top12 里，「没出现」说明不了它被屏蔽了。
     本批的实际效果正是**换个位置**——茯苓/陈皮/龙眼肉被挤出 top12，
-    而池子本身从 34 缩到 23（34 味减去 11 味硬屏蔽：本批 10 味 + 香薷），其余 7 味（生姜/藿香/紫苏/佛手/橘红/薏苡仁/茉莉花）
+    而池子本身被硬屏蔽砍掉 11 味（本批 10 味 + 香薷），其余多味（生姜/藿香/紫苏/佛手/橘红/薏苡仁/茉莉花等）
     本来排在截断线之外，只靠 top12 是**完全看不出来**的。
     """
     pool = {item["id"] for item in filter_by_constitution("yin_deficiency", limit=999)}

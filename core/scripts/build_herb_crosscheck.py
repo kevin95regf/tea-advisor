@@ -1,4 +1,4 @@
-"""核对 34 味饮片的性味归经：国家药典委员会官方数据 vs 项目 herbs.json。
+"""核对饮片的性味归经：国家药典委员会官方数据 vs 项目 herbs.json。
 
 用法（在 core 目录下）：
 
@@ -483,7 +483,7 @@ def render(ref: dict) -> str:
     miss = [r for r in recs if r["status"] == "未收载"]
 
     L: list[str] = []
-    L.append("# 34 味饮片性味归经核对：《中国药典》2020 年版一部 vs 项目")
+    L.append(f"# {len(recs)} 味饮片性味归经核对：《中国药典》2020 年版一部 vs 项目")
     L.append("")
     L.append("> **本文件由 `core/scripts/build_herb_crosscheck.py` 从 "
              "`core/data/herb_nature_reference.json` 渲染生成，请勿手工编辑。** 重新生成：")

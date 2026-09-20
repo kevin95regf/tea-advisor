@@ -51,8 +51,8 @@
 **运行时数据（`core/data/`，改之前先出方案）**
 
 - `food_properties.json` —— 食物 129 条 + `tea_drinks` 18 条，四气五味、适宜/不宜体质。
-- `herbs.json` —— 饮片 34 味。**内联数组格式**，`json.load`+`dumps` 回写会炸出巨大假 diff，只能文本级精确替换。
-- `herb_nature_reference.json` —— 34 味 vs 药典 2020 的对照（已废止，见 C3），是核对报告**不是**来源表。
+- `herbs.json` —— 饮片 35 味。**内联数组格式**，`json.load`+`dumps` 回写会炸出巨大假 diff，只能文本级精确替换。
+- `herb_nature_reference.json` —— 35 味 vs 药典 2020 的对照（已废止，见 C3），是核对报告**不是**来源表。
 - `herb_evidence_sources.json` —— 饮片侧依据链（E3），`core/scripts/build_herb_sources.py --write/--check` 维护。
 
 **来源与核验（事实源在 docs/，`docs/*.json` 不被运行时读）**

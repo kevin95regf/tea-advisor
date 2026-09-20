@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "title": "34 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）",
+    "title": "35 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）",
     "version": "1.0.0",
     "compiled_at": "2026-09-17",
     "purpose": "把项目 core/data/herbs.json 的性味归经与《中国药典》2020 年版一部逐条对照，标出不一致项，供人工判断以哪个为准。**本文件不修改任何项目数据。**",
@@ -2011,6 +2011,61 @@
       "differences": [
         "四气：降档后一致，但药典原文用的是更细的档「微寒」"
       ],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "金银花",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "肺",
+          "心",
+          "胃"
+        ],
+        "effects": [
+          "清热解毒",
+          "疏散风热"
+        ],
+        "max_daily_g": 10
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "金银花",
+        "page": 279,
+        "pinyin": "Jinyinhuɑ",
+        "latin": "LONICERAE JAPONICAE FLOS",
+        "xingwei_verbatim": "甘，寒。归肺、心、胃经。",
+        "nature_word": "寒",
+        "nature_mapped": "cold",
+        "nature_mapped_cn": "寒",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "肺",
+          "心",
+          "胃"
+        ],
+        "effects_verbatim": "清热解毒，疏散风热。用于痈肿疔疮，喉痹，丹毒，热毒血痢，风热感冒，温病发热。",
+        "dosage_verbatim": "6～15g。",
+        "entry_id": 342,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=342"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
       "status": "一致",
       "impact": []
     }

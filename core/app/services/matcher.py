@@ -145,7 +145,7 @@ DEFAULT_BREW = BrewGuide(
 # 含「须煎煮」饮片的搭配不能走保温杯焖泡：这类饮片质地坚实，焖泡出不了味
 # （茯苓的数据原文就是「需先煎或久煮 10 分钟以上才易出味，直接冲泡效果差」）。
 # 与 DEFAULT_BREW **并存**，由 `blend_needs_cooking` 决定用哪一份，不是全局替换——
-# 不标须煎煮的 28 味行为完全不变。
+# 不标须煎煮的饮片行为完全不变。
 COOK_BREW = BrewGuide(
     vessel="养生壶或小锅",
     water_ml=600,

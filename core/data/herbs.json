@@ -1,7 +1,7 @@
 {
   "_meta": {
     "title": "药食同源饮片库（demo 版）",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "review_status": "pending",
     "notice": "本文件仅收录『既是食品又是中药材的物质』方向的高频品种，属性依据中医饮食养生通行表述整理，剂量上限为保守的日常茶饮建议值。上线前必须由具备资质的中医师/中药师复核，并以国家卫健委发布的最新目录为准。",
     "field_notes": {
@@ -62,14 +62,18 @@
       },
       "evidence_batch": {
         "date": "2026-09-20",
-        "scope": "34 味 × 9 型 = 221 格（契约内四型 136 + 扩展层 85）",
+        "scope": "34 味 × 9 型 = 221 格（契约内四型 136 + 扩展层 85）。⚠️ 本批是 2026-09-20 那一次 34 味批次的**历史记录**：扩味后本批数字**不 retro 修改**，新增饮片另起批次（见同级 expansion_batch）。",
         "source_of_truth": "docs/herbs-9types-evidence-map.md（逐格依据与裁定台账）+ docs/herbs-9types-evidence-shadow.json（影子字段，未并入本文件）",
         "tier_rule": "E 资料直接点名该饮片 / E′ 点名该饮片的同向证候且该证候 ⊂ 该体质定义特征 / I 性味功效外推 / X 沿用粤中医（本轮未独立复核）/ — 无依据",
         "counts": {
+          "herb_count": 34,
           "contract_four_cells": 136,
-          "ext_cells": 85,
+          "ext_cells": {"damp_heat": 34, "balanced": 34, "qi_yang_tan": 17, "total": 85},
+          "total_cells": 221,
           "basis": {"evidence": 23, "inference": 22, "no_basis": 91},
-          "tier": {"E": 16, "E_prime": 7, "I": 22, "no_basis": 91}
+          "tier": {"E": 16, "E_prime": 7, "I": 22, "no_basis": 91},
+          "formula": "契约内 = herb_count × 4（阴虚/血瘀/气郁/特禀）；扩展层 = 湿热(herb_count) + 平和(herb_count) + 气/阳/痰已判格数",
+          "note": "⚠️ 两处数字不要混：① herb_count 是本批的味数，扩味后不改本批数字（否则历次批次的加减全部失效）；② `qi_yang_tan: 17` **不随味数增长** —— 它是「当时被判定需要标注的气/阳/痰格子数」，不是 herb_count × 3，写成派生会被算错，故单列显式值。"
         },
         "damp_heat": {
           "cells": 34,
@@ -107,6 +111,34 @@
             "decided_by": "项目所有者 2026-09-20 扩展第一批裁定（方案 core/var/e2-stage1-2-plan.md 拍板 D）"
           }
         ],
+        "expansion_batch": {
+          "date": "2026-09-20",
+          "scope": "扩展第一批**试点**：金银花 1 味 × 9 型 = 9 格（先打通链路，其余 10 味留待阶段 3）",
+          "decided_by": "项目所有者 2026-09-20（方案 core/var/e2-stage1-2-plan.md 拍板 H 试点 / J 走 TCM.Skill）",
+          "judged_by": "TCM.Skill 语料逐条判定（《中药学》七版 + 《中医养生学》第十七章 + 49 判据 R1–R5）",
+          "cells": [
+            {"herb": "jinyinhua", "constitution": "yin_deficiency", "verdict": "—", "tier": "no_basis", "field": null, "basis": "金银花非滋阴药、不在《中医养生学》:2287 药物养生清单；:2285 阴虚忌口为「辛辣燥烈」，金银花不属；《中药学》七版:1727【使用注意】未及阴虚"},
+            {"herb": "jinyinhua", "constitution": "yang_deficiency", "verdict": "忌", "tier": "E_prime", "field": "unsuitable_for", "basis": "《中药学》七版:1727【使用注意】「脾胃虚寒…者忌用」——脾胃虚寒与阳虚质定义特征（怕寒喜暖、大便时稀）同向，且是该饮片自己的使用注意句"},
+            {"herb": "jinyinhua", "constitution": "qi_deficiency", "verdict": "忌", "tier": "E_prime", "field": "unsuitable_for", "basis": "《中药学》七版:1727【使用注意】「…及气虚疮疡脓清者忌用」直接点名气虚；《本经逢原》句在 :1731「但气虚脓清，食少便泻者勿用」（古籍层佐证，不作基准）"},
+            {"herb": "jinyinhua", "constitution": "phlegm_damp", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2338 痰湿忌口为肥甘厚味/酒类/过饱，宜用清单未列金银花"},
+            {"herb": "jinyinhua", "constitution": "blood_stasis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R1：金银花无「留瘀」记载、非止血收敛类，体质学资料未点名 ⇒ 不得按四气一刀切"},
+            {"herb": "jinyinhua", "constitution": "qi_stagnation", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R2：判据是「有无行气/疏肝功效」，金银花无此功效 ⇒ 不外推"},
+            {"herb": "jinyinhua", "constitution": "special_diathesis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R4：只认经口给药的过敏记载。《中药学》七版:1736【不良反应】明写「所含的绿原酸有致敏原作用，可引起变态反应，但口服一般无此反应」⇒ 不构成口服禁忌"},
+            {"herb": "jinyinhua", "constitution": "damp_heat", "verdict": "—", "tier": "no_basis", "field": null, "basis": "粤中医《如何辨识自己的体质？九种体质调理方，一文说清楚》(gd-gov-2023) 2026-09-20 实抓复核：湿热质「可适当多吃清利湿热的食物」与「应少吃的食物」两类清单均未点名金银花 ⇒ 新味无可沿用值、不得自拟"},
+            {"herb": "jinyinhua", "constitution": "balanced", "verdict": "中性", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2278「阴阳气血平调的体质…不必考虑体质问题」"}
+          ],
+          "written": {
+            "suitable_constitutions": [],
+            "unsuitable_for": ["yang_deficiency", "qi_deficiency"],
+            "cautions": ["脾胃虚寒、易腹泻者不宜多饮", "不宜长期连续大量饮用"]
+          },
+          "counts": {"herb_count": 1, "total_cells": 9, "tier": {"E_prime": 2, "no_basis": 7}},
+          "visibility": "本批**无「宜」格** ⇒ suitable_constitutions 留空。留空 = 落 neutral_fallback，且条目追加在数组末尾、排在各体质候选 top12 之外 ⇒ 实测不出现在任何体质的推荐里（拍板 I：新味只有标到阴虚/阳虚/血瘀/气郁/特禀这 5 个弱型才有候选增量）。硬屏蔽阳虚/气虚是安全底线，不是可选项。",
+          "open_questions": [
+            "做法依据（拍板 E）：定为**泡水**（不标 requires_cooking），依据是形态为花蕾 ＋ 七版:1726「疏散风热、清泄里热以生品为佳」；但语料内**无「泡服/代茶饮」的文献原句**（《中医饮食营养学》:820 的「金银花露」是蒸馏品，不是冲泡）⇒ 待外部确认。",
+            "与既有凉/寒味的口径差异：菊花/决明子/淡竹叶/槐花/鱼腥草 5 味都带 damp_heat（suitable），本批按现行判据（粤中医未点名）把金银花判 no_basis ⇒ 两者并存。维持（承认那 5 味是判据成文前的项目自拟）还是另案补齐依据，待裁定。"
+          ]
+        },
         "pending": [],
         "review_status": "pending"
       }
@@ -831,6 +863,27 @@
         "form": "干鱼腥草",
         "note": "偏于清热，适合湿热明显时短期使用",
         "prep": "沸水焖 5 分钟"
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
+    },
+    {
+      "id": "jinyinhua",
+      "name": "金银花",
+      "nature": "cold",
+      "flavors": ["sweet"],
+      "meridians": ["肺", "心", "胃"],
+      "effects": ["清热解毒", "疏散风热"],
+      "max_daily_g": 10,
+      "cautions": ["脾胃虚寒、易腹泻者不宜多饮", "不宜长期连续大量饮用"],
+      "suitable_constitutions": [],
+      "unsuitable_for": ["yang_deficiency", "qi_deficiency"],
+      "brewing": {
+        "form": "干花蕾，未开放者质佳",
+        "note": "水温 90℃ 左右，加盖焖 3 分钟即可；久煮香气易散失",
+        "prep": "第一泡快速倒掉可去浮尘"
       },
       "review_status": "pending",
       "reviewed_by": null,

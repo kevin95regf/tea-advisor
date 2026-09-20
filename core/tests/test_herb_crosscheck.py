@@ -59,7 +59,7 @@ def doc_text():
 
 
 def test_reference_covers_every_herb(ref, herbs):
-    assert len(ref["herbs"]) == len(herbs) == 34
+    assert len(ref["herbs"]) == len(herbs)
     assert {r["herb"] for r in ref["herbs"]} == {h["name"] for h in herbs}
 
 
@@ -220,10 +220,10 @@ def test_doc_says_it_does_not_change_data(doc_text):
 # ------------------------------ 渲染产物 ----------------------------------
 
 
-def test_doc_has_all_34_rows(doc_text):
+def test_doc_has_all_rows(doc_text, herbs):
     table = doc_text.split("## 4. 全部对照表")[1].split("### 4.1")[0]
     rows = [l for l in table.splitlines() if l.startswith("|") and "---" not in l]
-    assert len(rows) == 1 + 34, f"表头 1 行 + 34 味，实际 {len(rows)}"
+    assert len(rows) == 1 + len(herbs), f"表头 1 行 + {len(herbs)} 味，实际 {len(rows)}"
 
 
 def test_doc_lists_every_inconsistency(doc_text):

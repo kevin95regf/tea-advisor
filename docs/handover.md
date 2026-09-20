@@ -22,7 +22,7 @@
 |---|---|
 | 代码 | 45 个源文件 / 10,027 行，其中 `domain` + `services`（真正的资产）2,075 行 |
 | 测试 | **428 项，全离线，约 4 秒** |
-| 数据 | 食性表 147 条、饮片 34 味、体质 9 型（全部就绪）、食药物质目录 106 种、药典核对 34 味、饮片来源登记 34+24 条 |
+| 数据 | 食性表 147 条、饮片 35 味、体质 9 型（全部就绪）、食药物质目录 106 种、药典核对 35 味、饮片来源登记 35+24 条 |
 
 **它明确不是什么**：不是医疗器械、不做体质辨识诊断、不承诺任何疗效。所有输出都带免责声明，且禁用「治疗/根治」这类表述（有护栏强制）。
 
@@ -159,11 +159,11 @@ tea-advisor/
 | 文件 | 内容 | 规模 | 参与运行时判定？ |
 |---|---|---|---|
 | `core/data/food_properties.json` | 食材 + 茶饮食性表，逐条审核状态 | 147 条（129 食材 + 18 茶饮） | ✅ 是 |
-| `core/data/herbs.json` | 饮片白名单（剂量上限、禁忌、归经、宜忌体质） | 34 味 | ✅ 是 |
+| `core/data/herbs.json` | 饮片白名单（剂量上限、禁忌、归经、宜忌体质） | 35 味 | ✅ 是 |
 | `core/data/constitution.json` | 体质定义 + 调养原则 | 9 型（全部就绪） | ✅ 是 |
 | `core/data/food_medicine_catalog.json` | 国家卫健委食药物质目录（4 批公告汇编） | 106 种 | ❌ 只用于合规自检 |
-| `core/data/herb_nature_reference.json` | 药典 2020 一部记载 + 与项目的比对结果 | 34 味 | ❌ 只用于核对 |
-| `core/data/herb_evidence_sources.json` | 饮片侧来源登记表：属性依据 + 体质适配依据 + 来源注册表 | 34 味 + 24 条 | ✅ 是（只生成 `basis.references`，不参与判定） |
+| `core/data/herb_nature_reference.json` | 药典 2020 一部记载 + 与项目的比对结果 | 35 味 | ❌ 只用于核对 |
+| `core/data/herb_evidence_sources.json` | 饮片侧来源登记表：属性依据 + 体质适配依据 + 来源注册表 | 35 味 + 24 条 | ✅ 是（只生成 `basis.references`，不参与判定） |
 
 **审核三态**（`review_status`）：`approved` = 真·硬规则库，界面不标注；`pending` = 0.9 但界面必须标「待验证」；`rejected` = 降为 0.6，不作硬规则。
 
@@ -204,7 +204,7 @@ tea-advisor/
 - ✅ 双 Agent 链路（Agent1 解析 → Agent2 推荐）
 - ✅ 确定性护栏（白名单/剂量/禁忌/禁用表述/高风险人群）
 - ✅ 规则兜底（模型不可用时仍给出合法搭配）
-- ✅ 逐味公开依据链（属性依据 33/34 味 + 体质依据 24 条，随推荐返回 `basis.references`，两个壳都呈现）
+- ✅ 逐味公开依据链（属性依据 34/35 味 + 体质依据 24 条，随推荐返回 `basis.references`，两个壳都呈现）
 - ✅ 两个后端：`direct`（直连官方 API，默认）与 `dsh`（DeepSeekHarness 子进程）
 - ✅ 用户自带 Key，逐请求传递，无服务端兜底
 - ✅ 终端壳 + 本地 Web 壳
@@ -341,7 +341,7 @@ python scripts/test_food_accuracy.py   # 属性准确率，只测 Agent1
 | `docs/b2-constitution-id-alignment.md` | **体质标识对齐（B2）**：问卷侧 `phlegm_dampness`→`phlegm_damp` 的方案、取证与改动清单（已执行） | 接问卷 / 动体质 id 时 |
 | `docs/b2-questionnaire-integration-plan.md` | **问卷接入的 7 个决策点**：兼体质收敛、「倾向是」不是判定、平和质三档、四处接入点 | 动问卷 → 推荐链路时 |
 | `docs/b2-integration-execution-plan.md` | 上一份的**落地步骤**（6 个提交、守卫测试设计、终端接线） | 实施接入时 |
-| `docs/herb-nature-crosscheck.md` | 34 味药典对照表 + 差异影响分析 | 涉药典数据时 |
+| `docs/herb-nature-crosscheck.md` | 35 味药典对照表 + 差异影响分析 | 涉药典数据时 |
 
 **三份生成型文档不要手工编辑**（重新生成命令写在各自开头的引用块里）：
 

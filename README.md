@@ -327,7 +327,7 @@ python -m pytest tests\test_food_lookup.py -q   # 表本身与匹配逻辑的单
 * Agent2 管「配什么泡」，只能在白名单候选集内选，不开方剂、不超剂量。
 
 **为什么要有白名单和规则兜底**：提示词里写十遍「不要开方」，不如**让模型无方可开**。
-Agent2 只能从 `herbs.json` 的 34 味里挑，候选集由 `safety.py` 按体质预先收敛。
+Agent2 只能从 `herbs.json` 的 35 味里挑，候选集由 `safety.py` 按体质预先收敛。
 即使模型完全不可用，`matcher.py` 的规则兜底仍会给出合法、安全、不超剂量的搭配
 （响应里 `meta.degraded = true`）。
 
@@ -338,7 +338,7 @@ Agent2 只能从 `herbs.json` 的 34 味里挑，候选集由 `safety.py` 按体
 | 文件 | 内容 | 规模 |
 |---|---|---|
 | `core/data/food_properties.json` | 食材 + 茶饮食性表，逐条审核状态 | **146 条**（128 食材 + 18 茶饮） |
-| `core/data/herbs.json` | 药食同源饮片白名单（含剂量上限与禁忌） | **34 味** |
+| `core/data/herbs.json` | 药食同源饮片白名单（含剂量上限与禁忌） | **35 味** |
 | `core/data/constitution.json` | 体质速查 | **5 型** |
 
 **审核状态是三态**，不是布尔值——`reviewed: false` 无法区分「还没审」和「审了但不认可」：

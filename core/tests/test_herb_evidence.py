@@ -2,7 +2,7 @@
 
 守的是三类**静默**缺陷：
 
-1. **登记表与事实源漂移。** 域 I 的 34 条由 `build_herb_sources.py` 从
+1. **登记表与事实源漂移。** 域 I 的逐味条目由 `build_herb_sources.py` 从
    `herb_nature_reference.json` 与 `herbs.json` 派生，所以「project 块与 herbs.json 现值一致」
    「verbatim 能逐字回到参照表」这两条本该自动成立 —— 但前提是**没人手工改过 JSON**。
    这两条就是钉住「有人手工改了」。

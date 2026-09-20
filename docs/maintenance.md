@@ -46,7 +46,7 @@
 | 数据表**人工审核** | ❌ **147 条全部 `pending`**（刻意的，见 §9.3） |
 | 第二层 `combine()` 接入主流程 | ❌ 已实现并测试，但未接线 |
 | 食性表规模 | 147 条（129 食材 + 18 茶饮） |
-| 饮片白名单 | 34 味 |
+| 饮片白名单 | 35 味 |
 | 体质 | 9 型 |
 
 ### 1.4 规模（随代码变动，更新时请重测）
@@ -463,11 +463,11 @@ usage["completion_tokens_details"]["reasoning_tokens"]   # 其中思考
 | 文件 | 内容 | 规模 |
 |---|---|---|
 | `food_properties.json` | `foods[]` + `tea_drinks.items[]` + `_meta` | 147 条 |
-| `herbs.json` | `_meta` + `herbs[]`（含剂量上限、禁忌、归经） | 34 味 |
+| `herbs.json` | `_meta` + `herbs[]`（含剂量上限、禁忌、归经） | 35 味 |
 | `constitution.json` | 9 型体质 + `one_line` / `principles` / `avoid` | 9 型 |
 | `food_medicine_catalog.json` | 国家卫健委食药物质目录（4 批公告）汇编，**只用于合规自检，不参与判定** | 106 种 |
-| `herb_nature_reference.json` | 《中国药典》2020 年版一部的性味归经记载 + 与项目的比对结果，**只用于核对，不参与判定** | 34 味 |
-| `herb_evidence_sources.json` | 饮片侧来源登记表：属性依据（域 I）+ 体质适配依据（域 II）+ 来源注册表，**运行时读**，只用来生成 `basis.references` | 34 味 + 24 条 |
+| `herb_nature_reference.json` | 《中国药典》2020 年版一部的性味归经记载 + 与项目的比对结果，**只用于核对，不参与判定** | 35 味 |
+| `herb_evidence_sources.json` | 饮片侧来源登记表：属性依据（域 I）+ 体质适配依据（域 II）+ 来源注册表，**运行时读**，只用来生成 `basis.references` | 35 味 + 24 条 |
 
 字段含义写在各自的 `_meta.field_notes` 里，**改结构时同步改它**。
 
@@ -513,7 +513,7 @@ add_review_fields.py   →   patch_food_table.py
 
 **与 §9.4 那三个脚本不同，`scripts/check_herb_catalog.py` 是长期可重复运行的只读工具，不是一次性批次脚本。**
 
-它把 `herbs.json` 的 34 味饮片白名单逐条对照 `food_medicine_catalog.json`
+它把 `herbs.json` 的饮片白名单逐条对照 `food_medicine_catalog.json`
 （国家卫健委"按照传统既是食品又是中药材的物质目录"，4 批公告共 106 种），输出三类清单：
 
 | 状态 | 含义 | 该做什么 |
@@ -554,7 +554,7 @@ python scripts/check_herb_catalog.py --strict               # 有遗留项则 ex
 
 ### 9.6 性味归经核对（`build_herb_crosscheck.py`）
 
-把 34 味饮片的四气/五味/归经与**《中国药典》2020 年版一部**逐条对照。
+把饮片的四气/五味/归经与**《中国药典》2020 年版一部**逐条对照。
 主源是国家药典委员会「中国药典在线版」的公开只读接口，不是第三方镜像：
 
 ```bash
@@ -569,7 +569,7 @@ POST https://ydz.chp.org.cn/front-api/search   {"keyword": "...", "bookId": 1}
 GET  https://ydz.chp.org.cn/front-api/entry/{id}   # 返回 htmlContent，含【性味与归经】
 ```
 
-当前结果：**34 味中一致 26、不一致 7、药典未收载 1**。不一致项见
+当前结果：**35 味中一致 27、不一致 7、药典未收载 1**。不一致项见
 `docs/herb-nature-crosscheck.md` 第 3 节，**脚本只报告，不改数据**，以哪个为准由人定。
 
 **2026-09-17 已决定：7 处不一致先保留项目值，等 nanple 复核后再定。** 决定与每处的
@@ -633,7 +633,7 @@ python scripts/build_herb_sources.py --write    # 落盘 JSON + 渲染 Markdown
 python scripts/build_herb_sources.py --check    # 只校验不写盘（可进 CI）
 ```
 
-**分工必须记住**：域 I（34 味）**从 `herb_nature_reference.json` 派生**，
+**分工必须记住**：域 I（逐味）**从 `herb_nature_reference.json` 派生**，
 一个字都不手写，所以两份表格不可能漂移；域 II（24 条）与 `_meta` 是**人工录入**的，
 本脚本只重算 `_meta.counts`、原样保留其余内容。`tests/test_herb_evidence.py` 里有
 一条等价于 `--check` 的测试，**手工改 JSON 或改那份 Markdown 都会让 `pytest` 变红**。
@@ -654,8 +654,8 @@ python scripts/build_herb_sources.py --check    # 只校验不写盘（可进 CI
    登记在册是为了说明「为什么不能用」，`constitution_entries` 引用次数必须为 0。
 4. **`herb_evidence()` 只返回命中本次原料的来源**，且域 II 只在传了 `constitution`
    时参与。把体质级的概述当成某一味的依据，是这条链最容易犯的错。
-5. **覆盖是不完整的，且必须如实呈现**：属性依据 33/34 味（茉莉花药典未收载），
-   体质依据只有 14/34 味。界面脚注与 `EvidenceReference` 的文档字符串都写着同一句边界：
+5. **覆盖是不完整的，且必须如实呈现**：属性依据 34/35 味（茉莉花药典未收载），
+   体质依据只有 14/35 味。界面脚注与 `EvidenceReference` 的文档字符串都写着同一句边界：
    来源支持的是**原料与调养方向**，不是本程序生成的**具体搭配与克数**。
    `review_status: pending` 一律**不进界面** —— 那是审核流程的状态，不是来源可信度的状态。
 
