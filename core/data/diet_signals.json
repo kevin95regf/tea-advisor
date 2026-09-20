@@ -1,0 +1,186 @@
+{
+  "_meta": {
+    "version": "0.1.0",
+    "created_at": "2026-09-20",
+    "basis": "external_opinion_unreviewed",
+    "basis_note": "2026-09-20 由项目所有者转述的执业中医从业者口头框架，无书面出处。两轮口径差异如实记录：第一轮冲击度含「高糖 +1／黏腻 +1／酒精 +1」，第二轮的四条触发为「温度冲击／消化负荷／气机扰动／寒热急变」。裁定（2026-09-20，所有者）：酒精计入冲击度；高糖与黏腻划归湿气度（黏腻不落，表内零糯米制品）。",
+    "notice": "尚未经过人工审核，不构成医学依据。",
+    "review_status": "unreviewed",
+    "structure_note": "signals 是原子信号，只定义一次；dimensions 每维各带 weights 与 aggregation。iced／fried 等信号会同时喂两个维度，此时只在权重层重复、不在定义层重复——两维各建一套识别器必然漂移。",
+    "judge_note": "judge 标明判据来源：prefix＝温度前缀层（确定性）／entry＝条目名单／category＝类目字段／hybrid＝两条并用／derived＝由其它信号派生。名单一律写条目规范名，不写别名（解析层已把别名并入条目）。",
+    "unexecutable_thresholds": [
+      {
+        "dimension": "dampness",
+        "signal": "high_sugar",
+        "stated": "每份总糖 >= 15g",
+        "why": "food_properties.json 无糖量／碳水／热量字段，该数值阈值不可执行。实际判据是类目加条目名单，产出时按 evidence 标注。"
+      },
+      {
+        "dimension": "dampness",
+        "signal": "greasy",
+        "stated": "每 100g 脂肪 >= 20g",
+        "why": "同上，表内无脂肪字段，只能靠条目名单，evidence 记为 none。"
+      }
+    ]
+  },
+  "signals": [
+    {
+      "id": "iced",
+      "label": "冰镇／加冰",
+      "judge": "prefix",
+      "arity": "item",
+      "evidence": "full",
+      "rule": {
+        "prefixes_ref": "nature_math.CHILL_PREFIXES",
+        "tail_helper_ref": "nature_math.trailing_temperature_prefix"
+      },
+      "note": "两条通道：①位置语义——原文里紧贴本条目命中词之前的温度词（复用 E15 的 trailing_temperature_prefix）；②名字自带前缀，且剥掉前缀后剩下的词必须是表内条目（准入）。「冰淇淋→淇淋」不是条目，故被拒。CHILL_PREFIXES 含「去冰」，故「去冰 X」会被算作冰镇，与直觉相反——这是既有口径分歧，非本文件引入，已登记挂起项。"
+    },
+    {
+      "id": "frozen",
+      "label": "冷冻／雪糕",
+      "judge": "entry",
+      "arity": "item",
+      "evidence": "partial",
+      "rule": { "entries": ["冰淇淋"] },
+      "note": "别名「雪糕」「冰棍」在解析层并入「冰淇淋」，名单不再单列。"
+    },
+    {
+      "id": "cold_raw",
+      "label": "生食",
+      "judge": "entry",
+      "arity": "item",
+      "evidence": "partial",
+      "rule": { "entries": ["生鱼片", "沙拉", "牛油果沙拉", "寿司"] },
+      "note": "别名「刺身」并入「生鱼片」。"
+    },
+    {
+      "id": "fried",
+      "label": "油炸",
+      "judge": "entry",
+      "arity": "item",
+      "evidence": "partial",
+      "rule": { "entries": ["油条", "炸鸡", "韩式炸鸡", "炸鱼薯条", "薯条"] },
+      "note": "别名「薯片」并入「薯条」。表内无加工工艺字段，故为 partial 而非 full。"
+    },
+    {
+      "id": "greasy",
+      "label": "明显油腻",
+      "judge": "entry",
+      "arity": "item",
+      "evidence": "none",
+      "rule": { "entries": ["红烧肉", "卤肉", "猪肉"] },
+      "note": "表内无脂肪字段，纯名单，「五花肉」是「猪肉」的别名故写条目名；「猪蹄」「肥肉」全库无条目，不覆盖。名单待人工确认。"
+    },
+    {
+      "id": "spicy",
+      "label": "辛辣（作为主味）",
+      "judge": "hybrid",
+      "arity": "item",
+      "evidence": "partial",
+      "rule": {
+        "flavors": ["pungent"],
+        "natures": ["hot"],
+        "exclude_categories": ["酒类"],
+        "keywords_ref": "nature_math.SPICY_KEYWORDS"
+      },
+      "note": "绝不用裸 nature=hot：实测 15 条 hot 里有 4 条不辣（油条／羊肉／薯条／炸鱼薯条）。判据＝①flavors 含 pungent 且 nature=hot（11 条）②条目名含辣词。排除 category=酒类，因「白酒」的辛是酒精的辛烈，已由 alcohol 计分，避免同一属性双计。"
+    },
+    {
+      "id": "carbonated",
+      "label": "碳酸",
+      "judge": "entry",
+      "arity": "item",
+      "evidence": "none",
+      "rule": { "entries": ["可乐", "啤酒"] },
+      "note": "表内无加工工艺字段（实测全表只有「茉莉花茶」的 note 含「气」，且是「理气」）。名单：①「可乐」——别名「汽水」「雪碧」由解析层并入，不单列；②「啤酒」——含气属工艺常识，表内同样无字段，仍记 none。纳入「啤酒」是为满足所有者裁定「冰啤酒 = 冰镇1 + 酒精1 + 碳酸1 = 3」；若不纳入则冰啤酒只有 2。**不覆盖**「苏打」「气泡水」：全库无条目、无别名，判不出就是判不出，不硬凑。"
+    },
+    {
+      "id": "alcohol",
+      "label": "酒精",
+      "judge": "category",
+      "arity": "item",
+      "evidence": "full",
+      "rule": { "categories": ["酒类"] },
+      "note": "cat: 啤酒／白酒／红酒，共 3 条。2026-09-20 所有者裁定计入冲击度（耗气＋生湿＋刺激胃黏膜）。"
+    },
+    {
+      "id": "high_sugar",
+      "label": "高糖（入口明显甜／含糖饮料）",
+      "judge": "hybrid",
+      "arity": "item",
+      "evidence": "partial",
+      "rule": {
+        "categories": ["甜点", "冷饮", "甜汤"],
+        "entries": ["可乐", "奶茶", "冰奶茶", "去冰奶茶", "热奶茶", "果汁", "糖"]
+      },
+      "note": "类目锚点 7 条（冰淇淋／蛋糕／绿豆糕／巧克力／饼干／银耳／酸奶碗），但漏可乐／奶茶／果汁（它们在「饮料」类），故并名单。"
+    },
+    {
+      "id": "dairy",
+      "label": "乳制品",
+      "judge": "hybrid",
+      "arity": "item",
+      "evidence": "clinical",
+      "rule": {
+        "categories": ["乳饮"],
+        "entries": ["奶茶", "冰奶茶", "去冰奶茶", "热奶茶", "奶盖茶", "酸奶碗"]
+      },
+      "note": "clinical：乳制品「生湿」为现代临床经验认同、古籍无载，依据体系与项目既有四性层不同。类目锚点只有 3 条（牛奶／酸奶／希腊酸奶），且**漏掉最典型的奶茶**（奶茶类在「饮料」类、奶盖茶在茶饮侧），故必须并名单。"
+    },
+    {
+      "id": "temp_shock",
+      "label": "寒热急变（热食＋冰饮同餐）",
+      "judge": "derived",
+      "arity": "meal",
+      "evidence": "none",
+      "rule": { "requires_any_nature": ["hot"], "requires_signal": "iced" },
+      "note": "per-meal 跨条目信号，不是单条目属性——否则「火锅配冰饮」会被拆成两条各自无信号。"
+    }
+  ],
+  "dimensions": {
+    "impact": {
+      "label": "脾胃冲击度",
+      "weights": {
+        "iced": 1,
+        "frozen": 1,
+        "fried": 1,
+        "greasy": 1,
+        "spicy": 1,
+        "carbonated": 1,
+        "alcohol": 1,
+        "temp_shock": 1
+      },
+      "aggregation": { "mode": "sum_per_item_then_max" },
+      "cap": 3,
+      "levels": [
+        { "min": 0, "max": 1, "action": "none" },
+        { "min": 2, "max": 2, "action": "protect_stomach" },
+        { "min": 3, "max": 9, "action": "protect_stomach_plus" }
+      ],
+      "aggregation_note": "不能跨条目取最大：那样冰啤酒只有 1。顺序＝先单品求和、再跨条目取最大、最后叠 per-meal 信号（temp_shock）。"
+    },
+    "dampness": {
+      "label": "湿气生成度",
+      "weights": {
+        "high_sugar": 1,
+        "greasy": 1,
+        "fried": 1,
+        "cold_raw": 1,
+        "iced": 1,
+        "dairy": 1
+      },
+      "aggregation": { "mode": "sum" },
+      "cap": 3,
+      "levels": [
+        { "min": 0, "max": 1, "action": "none" },
+        { "min": 2, "max": 2, "action": "damp_clear" },
+        { "min": 3, "max": 9, "action": "damp_clear_plus" }
+      ],
+      "aggregation_note": "必须求和：取最大值的话「一小块蛋糕」与「三块奶油蛋糕加冰奶茶」都会是 1，区分不出来——而区分这两者正是湿气轴存在的理由。",
+      "disabled": {
+        "sticky": "食物表内无任何糯米制品，黏腻维度零条目，见挂起项 D27。"
+      }
+    }
+  }
+}

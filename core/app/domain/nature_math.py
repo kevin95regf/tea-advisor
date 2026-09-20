@@ -22,7 +22,7 @@
 
 from __future__ import annotations
 
-from typing import NamedTuple
+from typing import NamedTuple, Sequence
 
 from app.domain.enums import Nature
 
@@ -402,3 +402,61 @@ def combine(values: list[float], dominant_sign: int | None = None) -> tuple[floa
         result = min(0.0, result)
 
     return result, dominant_sign
+
+
+# ============================================================
+# 寒热错杂判定（阶段 0）
+# ============================================================
+# 与 combine() **并列**，不是它的替代：combine 回答「整餐偏性是多少」，
+# 本函数回答「这餐是不是寒热错杂」。两者都不越界。
+#
+# 为什么不顺手返回四性：Nature 的数值编码（_NATURE_TO_NUM）同时被
+# NATURE_LABELS、数据取值域、num_to_nature 的 ±2 夹取复用，给它加值等于
+# 改四性轴本身。所以这里只报状态与两侧名单。
+#
+# 阈值取常量而不落数据：与 ROUND_THRESHOLD 同处，nature_math 不读数据文件
+# （2026-09-20 所有者裁定）。
+CONFLICT_THRESHOLD = 2
+
+
+class NatureConflict(NamedTuple):
+    """寒热错杂的判定结果。
+
+    conflict  : 两侧是否**同时**出现极端偏性
+    heat_side : 值 >= +2 的条目名（热）
+    cold_side : 值 <= -2 的条目名（寒）
+    """
+
+    conflict: bool
+    heat_side: list[str]
+    cold_side: list[str]
+
+
+def detect_nature_conflict(
+    items: Sequence[tuple[str, Nature | str | None]],
+) -> NatureConflict:
+    """两边同时出现极端偏性 ⇒ 寒热错杂。**只报状态，不做加法**。
+
+    判不出四性（unknown）的条目不参与：`nature_to_num` 返回 None 表示
+    「没有值」而不是 0，不能给它「平」的暗示。
+
+    负数侧刻意写 `<= -CONFLICT_THRESHOLD`，而不是 `abs(v) >= THRESHOLD` 再判符号
+    ——后者会把「+2 被算进 cold 侧」这类笔误藏住。
+    """
+    heat_side: list[str] = []
+    cold_side: list[str] = []
+
+    for name, nature in items:
+        value = nature_to_num(nature)
+        if value is None:
+            continue
+        if value >= CONFLICT_THRESHOLD:
+            heat_side.append(name)
+        elif value <= -CONFLICT_THRESHOLD:
+            cold_side.append(name)
+
+    return NatureConflict(
+        conflict=bool(heat_side and cold_side),
+        heat_side=heat_side,
+        cold_side=cold_side,
+    )
