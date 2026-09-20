@@ -529,10 +529,34 @@ function renderParsed(p) {
       + `置信度低于 ${Math.round(META.conf_show_threshold * 100)}% 的属性一律不显示。`
       + `鼠标移到标签上可看判定来源与过程。</div>`
     : '';
+  // 整餐信号（冲击度 / 湿气度 / 寒热错杂）。中文全部来自后端（label / action_label），
+  // 这里只打印、不翻译档位 —— 翻译就会造出第二份中文标签。
+  const sig = p.signals || null;
+  let signalsNote = '';
+  if (sig) {
+    const dims = [sig.impact, sig.dampness].filter(d => d && d.score);
+    if (dims.length) {
+      const segs = dims.map(d => {
+        let s = `${esc(d.label || '')}：${d.score}/${d.cap}`;
+        if (d.action_label) s += ` · ${esc(d.action_label)}`;
+        if (d.signals && d.signals.length) s += `（${d.signals.map(x => esc(x)).join('、')}）`;
+        return s;
+      });
+      signalsNote = `<div class="hint">${segs.join(' ｜ ')}</div>`;
+      if (dims.some(d => d.evidence_floor && d.evidence_floor !== 'full')) {
+        signalsNote += `<div class="hint">其中部分判据为依据较弱的名单近似，未经来源核对。</div>`;
+      }
+    }
+    if (sig.conflict && sig.conflict.conflict) {
+      signalsNote += `<div class="hint">⚠ 寒热错杂：热（${esc((sig.conflict.heat_side || []).join('、'))}）`
+        + `与 寒（${esc((sig.conflict.cold_side || []).join('、'))}）同席</div>`;
+    }
+  }
   return `<div class="card">
     <h2>我理解到的</h2>
     <div>${chips || '<span class="hint">没有识别到具体食物</span>'}</div>
     <div class="hint">时段：${esc(label('meal_time', p.meal_time))} ｜ 整餐偏：${esc(label('nature', p.overall_nature))} ｜ 把握度：${esc(Math.round((p.confidence || 0) * 100))}%</div>
+    ${signalsNote}
     ${verifyNote}
     ${p.summary ? `<div class="reason">${esc(p.summary)}</div>` : ''}
     ${uncertain}

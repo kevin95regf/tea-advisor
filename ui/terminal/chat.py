@@ -60,6 +60,7 @@ from app.domain.constitution_resolver import (  # noqa: E402
     UndeterminedConstitutionError,
     resolve_from_scores,
 )
+from app.domain.diet_signals import build_meal_signals  # noqa: E402
 from app.domain.models import AnalyzeRequest, ParsedFood, ParsedMeal  # noqa: E402
 from app.services import matcher  # noqa: E402
 from app.services.food_lookup import (  # noqa: E402
@@ -122,10 +123,49 @@ def render_parsed(parsed: ParsedMeal) -> None:
         f"  时段：{parsed.meal_time.value} ｜ 整餐偏：{_nature_label(parsed.overall_nature.value)}"
         f" ｜ 把握度：{parsed.confidence:.0%}"
     )
+    _render_meal_signals(parsed)
     if parsed.summary:
         print(f"  复述：{parsed.summary}")
     if parsed.uncertain_items:
         print(f"  没认出来的：{'、'.join(parsed.uncertain_items)}")
+
+
+def _render_meal_signals(parsed: ParsedMeal) -> None:
+    """整餐的确定性信号：冲击度 / 湿气度 / 寒热错杂。
+
+    三条显示规则：
+    - `parsed.signals` 为 **None 时一行都不打** —— 未接线的调用方输出不变；
+    - 某维度 score 为 0 就不打它（不刷「0/3」这种噪音）；
+    - 中文全部来自后端（`label` / `action_label`），本文件**不自己翻译档位**
+      （翻译就会造出第二份中文，与 SOURCE_LABELS 收敛进 enums.py 的初衷相反）。
+    """
+    signals = parsed.signals
+    if signals is None:
+        return
+
+    dims = [d for d in (signals.impact, signals.dampness) if d is not None]
+    parts: list[str] = []
+    for dim in dims:
+        if dim.score == 0:
+            continue
+        seg = f"{dim.label}：{dim.score}/{dim.cap}"
+        if dim.action_label:
+            seg += f" · {dim.action_label}"
+        if dim.signals:
+            seg += f"（{'、'.join(dim.signals)}）"
+        parts.append(seg)
+
+    if parts:
+        print("  " + " ｜ ".join(parts))
+        if any(d.evidence_floor != "full" for d in dims if d.score):
+            print("     （其中部分判据为依据较弱的名单近似，未经来源核对）")
+
+    conflict = signals.conflict
+    if conflict is not None and conflict.conflict:
+        print(
+            f"  ⚠ 寒热错杂：热（{'、'.join(conflict.heat_side)}）"
+            f"与 寒（{'、'.join(conflict.cold_side)}）同席"
+        )
 
 
 def render_recommendations(recs: list) -> None:
@@ -249,6 +289,9 @@ def _offline_analyze(
         confidence=conf,
         summary="（离线模式：由关键词匹配 + 查表装配，未使用模型）",
     )
+    # 与 LLM 链路（orchestrator）、API 离线（analyze_offline）同一装配入口。
+    # 不接的话终端永远读不到冲突/冲击度——S0 修的正是这条链路的同类漏网。
+    parsed.signals = build_meal_signals(text, foods)
     recs, msg, rule_hits = matcher.fallback_recommend(
         parsed, constitution, avoid=[c.value for c in (avoid or [])]
     )
