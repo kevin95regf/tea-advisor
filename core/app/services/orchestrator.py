@@ -20,6 +20,7 @@ from app.agents.agent1_diet import parse_diet
 from app.agents.agent2_recommend import recommend as agent2_recommend
 from app.agents.runtime import CredentialError
 from app.config import get_settings
+from app.domain.diet_signals import build_meal_signals
 from app.domain.enums import CONSTITUTION_LABELS, Constitution, MealTime
 from app.domain.models import (
     AnalyzeRequest,
@@ -296,6 +297,10 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
             ),
             user_message="没太看明白你吃了什么，可以再说具体一点，比如「中午吃了碗牛肉面加一杯冰可乐」。",
         )
+
+    # 确定性信号（冲击度 / 湿气度 / 寒热错杂）：Agent2 之前装配好，
+    # 这样它会随 parsed 一起进提示词与响应体。口径⑦要求三条链路都显式接线。
+    parsed.signals = build_meal_signals(request.text, parsed.foods)
 
     # ---------- 2. Agent2 ----------
     degraded = False

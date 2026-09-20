@@ -9,6 +9,7 @@ import uuid
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from app.domain.diet_signals import build_meal_signals
 from app.domain.enums import CONSTITUTION_LABELS, Constitution, MealTime, Nature
 from app.domain.models import AnalyzeResponse, Meta, ParsedFood, ParsedMeal, Verification
 from app.domain.safety import (
@@ -146,6 +147,8 @@ async def analyze_offline_endpoint(request: OfflineAnalyzeRequest) -> AnalyzeRes
             else "（离线模式：关键词匹配 + 查表）没有认出表内食物，结果仅供粗略参考"
         ),
     )
+    # 与 LLM 链路（orchestrator）同一装配入口，避免「有 Key / 没 Key 两套结论」（口径⑦）。
+    parsed.signals = build_meal_signals(text, foods)
 
     risks = detect_high_risk(text)
     if risks:

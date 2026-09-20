@@ -76,6 +76,49 @@ class ParsedFood(BaseModel):
     verification: Verification = Field(default_factory=Verification)
 
 
+class MealDimension(BaseModel):
+    """一个维度（脾胃冲击度 / 湿气生成度）的确定性打分结果。
+
+    分数与档位全部由 ``core/data/diet_signals.json`` 派生，本文件不写死任何阈值；
+    ``cap`` 与 ``action_label`` 也来自数据文件，所以两个壳不需要自己维护「/3」或中文标签。
+    """
+
+    score: int = Field(default=0, description="加权求和后按 cap 封顶的分数")
+    cap: int = Field(default=3, description="封顶值，来自数据文件；壳里不要写死")
+    action: str = Field(default="none", description="机器可读档位，如 protect_stomach")
+    action_label: str = Field(default="", description="档位中文短语，供两个壳直接渲染")
+    signals: list[str] = Field(
+        default_factory=list, description="本次参与计分的信号中文标签（去重）"
+    )
+    evidence_floor: str = Field(
+        default="full", description="本次计分依赖的最弱依据：full/partial/clinical/none"
+    )
+    basis: str = Field(default="", description="依据说明")
+
+
+class MealConflict(BaseModel):
+    """寒热错杂判定。
+
+    三个字段的值必须**原样**来自 ``nature_math.detect_nature_conflict``：
+    组装层不得另判一套（测试用派生不变式钉住）。
+    """
+
+    conflict: bool = False
+    heat_side: list[str] = Field(default_factory=list, description="偏热一侧的条目名")
+    cold_side: list[str] = Field(default_factory=list, description="偏寒一侧的条目名")
+
+
+class MealSignals(BaseModel):
+    """整餐的确定性信号汇总，挂在 ``ParsedMeal.signals`` 上。
+
+    三个子块都可能为 None（维度定义缺失时不臆造结论）。
+    """
+
+    impact: MealDimension | None = None
+    dampness: MealDimension | None = None
+    conflict: MealConflict | None = None
+
+
 class ParsedMeal(BaseModel):
     """Agent 1 的完整输出，也是 Agent 2 的输入。"""
 
@@ -87,6 +130,13 @@ class ParsedMeal(BaseModel):
         default_factory=list, description="未能识别的食物名，前端可提示用户补充"
     )
     summary: str = Field(default="", description="一句话复述，用于前端回显")
+    signals: MealSignals | None = Field(
+        default=None,
+        description=(
+            "整餐确定性信号（冲击度/湿气度/寒热错杂）。"
+            "None 表示未计算——既有构造方不传即保持旧行为。"
+        ),
+    )
 
 
 # ============================================================

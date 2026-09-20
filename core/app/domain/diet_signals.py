@@ -3,7 +3,8 @@
 定位
 ----
 把「这一餐对脾胃冲击多大 / 会生成多少湿气」从模型自拍改成**可核对的确定性计算**。
-阶段 0 内本模块**没有任何调用点**：先立纯函数与数据、测透，阶段 1/2 才接线。
+阶段 0 只立纯函数与数据（零调用点、测透）；阶段 1 起新增 `build_meal_signals()`
+作为三条链路（LLM／API 离线／终端离线）**共用**的装配入口。
 
 三条纪律（都由实测踩出来的，见 core/var/stage0-plan-v2.md §4.1）
 ------------------------------------------------------------
@@ -28,9 +29,10 @@ from typing import Any, Sequence
 
 from app.config import get_settings
 from app.domain.enums import Nature
-from app.domain.models import ParsedFood
+from app.domain.models import MealConflict, MealDimension, MealSignals, ParsedFood
 from app.domain.nature_math import (
     CHILL_PREFIXES,
+    detect_nature_conflict,
     detect_temperature_prefix,
     has_spicy_marker,
     trailing_temperature_prefix,
@@ -355,3 +357,64 @@ def _floor_note(floor: str) -> str:
         "clinical": "依据体系不同：现代临床经验认同、古籍无载（如乳制品生湿）。",
         "none": "表内无对应字段，判据为条目名单近似，请勿当作确定结论。",
     }.get(floor, "")
+
+
+# ============================================================
+# 阶段 1：整餐信号装配（三条链路共用）
+# ============================================================
+def build_meal_signals(text: str, foods: Sequence[ParsedFood]) -> MealSignals:
+    """把识别与打分的结果装配成 ``ParsedMeal.signals``。
+
+    放在本模块而不是 ``orchestrator``：终端离线链路（``ui/terminal/chat.py``）也要用，
+    而 ``ui/`` 只 import ``app.*``，不该反向依赖 services 层。
+
+    ⚠️ **不另判一遍冲突**：`conflict` 三个字段的值原样来自 `detect_nature_conflict`
+    （测试用「装配结果 == 直接调判定」这条派生不变式钉住，见 §7.1）。
+    """
+    hits = identify_signals(text, foods)
+    conflict = detect_nature_conflict([(food.name, food.nature) for food in foods])
+    return MealSignals(
+        impact=_dimension(DIMENSION_IMPACT, hits),
+        dampness=_dimension(DIMENSION_DAMPNESS, hits),
+        conflict=MealConflict(
+            conflict=conflict.conflict,
+            heat_side=list(conflict.heat_side),
+            cold_side=list(conflict.cold_side),
+        ),
+    )
+
+
+def _dimension(dimension_id: str, hits: Sequence[SignalHit]) -> MealDimension | None:
+    """把 `DimensionResult` 转成 pydantic 模型。
+
+    维度定义缺失时返回 **None**——宁可不显示，也不臆造一个 0 分结论。
+    """
+    dim = (load_diet_signals().get("dimensions") or {}).get(dimension_id)
+    if not dim:
+        return None
+    result = score_dimension(dimension_id, hits)
+    labels = _action_labels(dim.get("levels") or [])
+
+    seen: list[str] = []
+    for hit in result.hits:
+        if hit.label not in seen:
+            seen.append(hit.label)
+
+    return MealDimension(
+        score=result.score,
+        cap=int(dim.get("cap") or 0),
+        action=result.action,
+        action_label=labels.get(result.action, ""),
+        signals=seen,
+        evidence_floor=result.evidence_floor,
+        basis=result.basis,
+    )
+
+
+def _action_labels(levels: Sequence[dict]) -> dict[str, str]:
+    """档位 token → 中文标签。
+
+    **中文只有一份，在定义档位的数据文件里**；两个壳只打印、不自己翻译，
+    避免出现第二份标签表（项目当初把 `SOURCE_LABELS` 收敛进 `enums.py` 就是为此）。
+    """
+    return {str(lv.get("action", "")): str(lv.get("label") or "") for lv in levels}

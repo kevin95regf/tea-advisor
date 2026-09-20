@@ -154,9 +154,9 @@
       "aggregation": { "mode": "sum_per_item_then_max" },
       "cap": 3,
       "levels": [
-        { "min": 0, "max": 1, "action": "none" },
-        { "min": 2, "max": 2, "action": "protect_stomach" },
-        { "min": 3, "max": 9, "action": "protect_stomach_plus" }
+        { "min": 0, "max": 1, "action": "none", "label": "按常规处理" },
+        { "min": 2, "max": 2, "action": "protect_stomach", "label": "先护脾胃" },
+        { "min": 3, "max": 9, "action": "protect_stomach_plus", "label": "重点护脾胃" }
       ],
       "aggregation_note": "不能跨条目取最大：那样冰啤酒只有 1。顺序＝先单品求和、再跨条目取最大、最后叠 per-meal 信号（temp_shock）。"
     },
@@ -173,9 +173,9 @@
       "aggregation": { "mode": "sum" },
       "cap": 3,
       "levels": [
-        { "min": 0, "max": 1, "action": "none" },
-        { "min": 2, "max": 2, "action": "damp_clear" },
-        { "min": 3, "max": 9, "action": "damp_clear_plus" }
+        { "min": 0, "max": 1, "action": "none", "label": "按常规处理" },
+        { "min": 2, "max": 2, "action": "damp_clear", "label": "兼顾化湿" },
+        { "min": 3, "max": 9, "action": "damp_clear_plus", "label": "重点化湿" }
       ],
       "aggregation_note": "必须求和：取最大值的话「一小块蛋糕」与「三块奶油蛋糕加冰奶茶」都会是 1，区分不出来——而区分这两者正是湿气轴存在的理由。",
       "disabled": {
