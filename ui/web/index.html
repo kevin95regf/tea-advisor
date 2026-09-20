@@ -246,11 +246,13 @@
 
   <details id="questionnairePanel" class="feature-panel">
     <summary>中医九种体质问卷</summary>
-    <div class="hint">问卷是健康筛查工具，不构成医学诊断。请按近一年的通常情况回答。</div>
+    <div class="hint">问卷是健康筛查工具，不构成医学诊断。请按近一年的通常情况回答。<br>
+      结果保存在本机浏览器，换设备／换浏览器／清缓存后需重新测。</div>
     <div class="row">
       <label for="questionSex">性别</label>
       <select id="questionSex"><option value="male">男</option><option value="female">女</option></select>
       <button id="loadQuestions" type="button">加载问卷</button>
+      <button id="resetQuestionnaire" type="button">重新测</button>
     </div>
     <div id="questionnaireBody" class="question-list"></div>
     <div class="row"><button id="submitQuestionnaire" type="button" hidden>提交问卷</button></div>
@@ -332,6 +334,50 @@ let chatMessages = [];
 const browserStore = window.localStorage;
 const DIET_HISTORY_KEY = 'ta_diet_history_v1';
 const CONSTITUTION_KEY = 'ta_constitution_v1';
+
+// 体质结果写成 {id, source, at}；老用户存的是裸 id 字符串 ⇒ 解析失败即按旧格式读，不迁移、不换 key。
+function loadConstitution() {
+  let raw = null;
+  try {
+    raw = browserStore.getItem(CONSTITUTION_KEY);
+  } catch (e) { return null; }
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.id === 'string') {
+      return { id: parsed.id, source: parsed.source || 'unknown', at: parsed.at || '' };
+    }
+  } catch (e) {
+    // 看着像新格式却解析不了 ⇒ 宁可当没有，也别把半截 JSON 当体质 id 显示出来
+    if (raw.trim().startsWith('{')) return null;
+    // 否则是老用户存的裸 id 字符串，落到下面按字符串读
+  }
+  return { id: raw, source: 'unknown', at: '' };
+}
+
+function saveConstitution(id, source) {
+  try {
+    browserStore.setItem(
+      CONSTITUTION_KEY,
+      JSON.stringify({ id, source, at: new Date().toISOString() }),
+    );
+  } catch (e) { /* 浏览器禁用存储时不影响使用 */ }
+}
+
+function constitutionLabel(id) {
+  const opt = [...sel.options].find(item => item.value === id);
+  return opt ? opt.textContent : id;
+}
+
+function showStoredConstitution(entry) {
+  const el = document.getElementById('questionnaireResult');
+  if (!el || !entry) return;
+  const src = entry.source === 'questionnaire' ? '问卷'
+    : (entry.source === 'manual' ? '手动选择' : '未知来源');
+  const when = entry.at ? new Date(entry.at).toLocaleDateString('zh-CN') : '时间未知';
+  el.innerHTML = `<div class="hint">上次测得：${esc(constitutionLabel(entry.id))}（${esc(when)}，${esc(src)}）<br>`
+    + '结果保存在本机浏览器，换设备／换浏览器／清缓存后需重新测。</div>';
+}
 
 // 两个存储位：勾了「记住 Key」写 localStorage（跨会话），否则写 sessionStorage（仅本标签页）。
 // 保存前先把两处都清掉，否则取消勾选后旧值会残留。
@@ -434,10 +480,11 @@ async function loadInit() {
     META = m;
     sel.innerHTML = cs.map(c => `<option value="${esc(c.id)}" title="${esc(c.one_line)}">${esc(c.label)}</option>`).join('');
     try {
-      const savedConstitution = browserStore.getItem(CONSTITUTION_KEY);
-      if (savedConstitution && [...sel.options].some(o => o.value === savedConstitution)) {
-        sel.value = savedConstitution;
+      const savedConstitution = loadConstitution();
+      if (savedConstitution && [...sel.options].some(o => o.value === savedConstitution.id)) {
+        sel.value = savedConstitution.id;
       }
+      showStoredConstitution(savedConstitution);
     } catch (e) { /* 浏览器禁用存储时不影响使用 */ }
     disclaimerCache = dis;
     await loadChatModels();
@@ -725,6 +772,12 @@ async function analyzeRecentHistory() {
 
 let questionnaireQuestions = [];
 
+// 端点 501 的 detail 是给运维的安装指令，不原样透给用户（换成这句人话）。
+function questionnaireUnavailableHint() {
+  return '问卷功能未启用（服务端缺少可选的体质问卷子包）。'
+    + '你可以直接在上方手动选择体质，其它功能不受影响。';
+}
+
 async function loadQuestionnaire() {
   const body = document.getElementById('questionnaireBody');
   const result = document.getElementById('questionnaireResult');
@@ -735,8 +788,12 @@ async function loadQuestionnaire() {
   submit.hidden = true;
   try {
     const res = await fetch('/api/questionnaire/questions?sex=' + encodeURIComponent(sex));
+    if (!res.ok) {
+      body.innerHTML = `<div class="hint">${esc(questionnaireUnavailableHint())}</div>`;
+      submit.hidden = true;
+      return;
+    }
     const data = await res.json();
-    if (!res.ok) throw new Error(JSON.stringify(data.detail || data));
     questionnaireQuestions = data.questions || [];
     const labels = data.answer_labels || {};
     body.innerHTML = questionnaireQuestions.map((item, index) => {
@@ -751,6 +808,13 @@ async function loadQuestionnaire() {
   } catch (e) {
     body.innerHTML = `<div class="error">问卷加载失败：${esc(e.message || e)}</div>`;
   }
+}
+
+async function resetQuestionnaire() {
+  questionnaireQuestions = [];
+  document.getElementById('questionnaireBody').innerHTML = '';
+  document.getElementById('questionnaireResult').innerHTML = '';
+  await loadQuestionnaire();
 }
 
 async function submitQuestionnaire() {
@@ -771,22 +835,26 @@ async function submitQuestionnaire() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sex: document.getElementById('questionSex').value, answers }),
     });
+    if (!res.ok) {
+      result.innerHTML = `<div class="hint">${esc(questionnaireUnavailableHint())}</div>`;
+      return;
+    }
     const data = await res.json();
-    if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail || data));
     const scores = (data.scores || []).map(item =>
       `<div class="score-item"><b>${esc(item.name)}</b><br>${esc(item.score)} 分 · ${esc(item.status)}</div>`
     ).join('');
     if (data.dominant_constitution && [...sel.options].some(o => o.value === data.dominant_constitution)) {
       sel.value = data.dominant_constitution;
       currentAvoidConstitutions = data.avoid_constitutions || [];
-      try { browserStore.setItem(CONSTITUTION_KEY, sel.value); } catch (e) { /* ignore */ }
+      saveConstitution(sel.value, 'questionnaire');
     }
     const headline = data.requires_manual_selection
       ? '本次未能自动确定体质，请在上方手动选择。'
       : `主导体质：<b>${esc(data.dominant_constitution_name)}</b>，已自动选入主分析表单。`;
     result.innerHTML = `<div class="reason">${headline}<br>${esc(data.resolution_note || '')}</div>
       <div class="score-grid">${scores}</div>
-      <div class="disclaimer" style="margin-top:10px">问卷结果仅作健康筛查和日常饮食参考，不构成诊断。</div>`;
+      <div class="disclaimer" style="margin-top:10px">问卷结果仅作健康筛查和日常饮食参考，不构成诊断。</div>
+      <div class="hint">结果保存在本机浏览器，换设备／换浏览器／清缓存后需重新测。</div>`;
   } catch (e) {
     result.innerHTML = `<div class="error">问卷提交失败：${esc(e.message || e)}</div>`;
   }
@@ -910,6 +978,7 @@ document.querySelectorAll('.feature-open').forEach(button => button.addEventList
   panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }));
 document.getElementById('loadQuestions').addEventListener('click', loadQuestionnaire);
+document.getElementById('resetQuestionnaire').addEventListener('click', resetQuestionnaire);
 document.getElementById('submitQuestionnaire').addEventListener('click', submitQuestionnaire);
 document.getElementById('analyzeHistory').addEventListener('click', analyzeRecentHistory);
 document.getElementById('clearHistory').addEventListener('click', () => {
@@ -931,7 +1000,13 @@ document.getElementById('clearChat').addEventListener('click', () => {
 document.getElementById('loadMedication').addEventListener('click', loadMedicationReference);
 sel.addEventListener('change', () => {
   currentAvoidConstitutions = [];
-  try { browserStore.setItem(CONSTITUTION_KEY, sel.value); } catch (e) { /* ignore */ }
+  saveConstitution(sel.value, 'manual');
+  // 安全边界变窄了必须让用户看见：问卷判定的兼体质屏蔽（avoid）随手动选择一起失效。
+  const el = document.getElementById('questionnaireResult');
+  if (el) {
+    el.innerHTML = '<div class="hint">已改为手动选择，问卷判定的兼体质屏蔽已清空。<br>'
+      + '结果保存在本机浏览器，换设备／换浏览器／清缓存后需重新测。</div>';
+  }
 });
 btn.addEventListener('click', run);
 // 结果区是整体重绘的，「重新分析」每次都是新元素 ⇒ 用委托，不要 render 后 addEventListener
