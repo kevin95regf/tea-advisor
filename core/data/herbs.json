@@ -1,7 +1,7 @@
 {
   "_meta": {
     "title": "药食同源饮片库（demo 版）",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "review_status": "pending",
     "notice": "本文件仅收录『既是食品又是中药材的物质』方向的高频品种，属性依据中医饮食养生通行表述整理，剂量上限为保守的日常茶饮建议值。上线前必须由具备资质的中医师/中药师复核，并以国家卫健委发布的最新目录为准。",
     "field_notes": {
@@ -38,7 +38,7 @@
         "source": "外部专业意见（项目所有者转达），非项目自有数据",
         "scope": "5 格：香薷×阴虚、荷叶×阴虚、山楂×阴虚、山楂×气郁、槐花×血瘀",
         "cells": [
-          {"herb": "xiangru", "constitution": "yin_deficiency", "verdict": "忌", "level": "evidence", "field": "unsuitable_for", "basis": "明确忌；另补 cautions『阴虚有热者禁用』（直接文献依据）"},
+          {"herb": "xiangru", "constitution": "yin_deficiency", "verdict": "忌", "level": "inference", "field": "unsuitable_for", "basis": "字段不动（仍落 unsuitable_for，硬屏蔽与方向均不变）；2026-09-20 按 34 味×9 型逐格依据把 level 由 evidence 降为 inference——七版:671 只记『表虚有汗及暑热证当忌用』，未及阴虚，原 evidence 的依据是外部专业意见（不可引用文献）。cautions『阴虚有热者禁用』保留"},
           {"herb": "heye", "constitution": "yin_deficiency", "verdict": "慎用", "level": "inference", "field": "cautions", "basis": "不硬屏蔽，登记为 cautions-only"},
           {"herb": "shanzha", "constitution": "yin_deficiency", "verdict": "慎用", "level": "inference", "field": "cautions", "basis": "不硬屏蔽，登记为 cautions-only"},
           {"herb": "shanzha", "constitution": "qi_stagnation", "verdict": "宜（倾向）", "level": "inference", "field": "suitable_constitutions", "basis": "倾向判定，写入后升位至气郁候选首位，见 priority_review"},
@@ -59,6 +59,47 @@
         ],
         "review_status": "pending",
         "note": "写入 ≠ 审核通过，界面照旧标「待验证」。evidence → unsuitable_for（硬屏蔽）；inference → 允许 cautions / suitable_constitutions（软通道）。该规则由 core/tests/test_safety.py 强制，不靠人记"
+      },
+      "evidence_batch": {
+        "date": "2026-09-20",
+        "scope": "34 味 × 9 型 = 221 格（契约内四型 136 + 扩展层 85）",
+        "source_of_truth": "docs/herbs-9types-evidence-map.md（逐格依据与裁定台账）+ docs/herbs-9types-evidence-shadow.json（影子字段，未并入本文件）",
+        "tier_rule": "E 资料直接点名该饮片 / E′ 点名该饮片的同向证候且该证候 ⊂ 该体质定义特征 / I 性味功效外推 / X 沿用粤中医（本轮未独立复核）/ — 无依据",
+        "counts": {
+          "contract_four_cells": 136,
+          "ext_cells": 85,
+          "basis": {"evidence": 23, "inference": 22, "no_basis": 91},
+          "tier": {"E": 16, "E_prime": 7, "I": 22, "no_basis": 91}
+        },
+        "damp_heat": {
+          "cells": 34,
+          "tier": "X",
+          "source": "粤中医《如何辨识自己的体质？九种体质调理方，一文说清楚》",
+          "note": "沿用项目既有取值；本轮未独立复核粤中医原文，故这 34 格不构成本轮 evidence 增量，只是给已有值补出处标记"
+        },
+        "balanced": {
+          "cells": 34,
+          "verdict": "neutral + no_basis",
+          "decision": "选①：本文件里 24 味的 balanced 标注原样保留（零动作），本轮「平和全中性」的判定只体现在影子字段"
+        },
+        "adopted": [
+          "5.2 hongzao × phlegm_damp → caution_only：从 unsuitable_for 移出 phlegm_damp；cautions[0]「湿盛腹胀、痰湿偏重者不宜多食」原样保留",
+          "5.3 xiangru × yin_deficiency → level 由 evidence 降为 inference（字段 unsuitable_for 与 cautions 均不动）",
+          "5.4 suanzaoren × yin_deficiency → suitable_constitutions 追加（E′；七版:7780「能养心阴」、:7782「敛阴生津止渴」）",
+          "5.5 shanyao × yin_deficiency → suitable_constitutions 追加（E；《中医养生学》:2285 阴虚质饮食调养点名「山药粥」）",
+          "5.10 zisu × qi_deficiency → caution_only：不写 unsuitable_for，只把「气虚多汗者不宜食用」追加到 cautions 末尾（《中医饮食营养学》:332【使用注意】）"
+        ],
+        "recorded_only": [
+          {
+            "cell": "maidong × yin_deficiency",
+            "verdict": "宜",
+            "tier": "E",
+            "source": "《中医养生学》:2287 药物养生清单点名「麦门冬」；《中药学》七版:9431",
+            "decision": "选 A′：依据采纳（E 级直接点名），但本轮不写入 suitable_constitutions —— dry-run 实测写入后麦冬（catalog 下标 8）会跃居阴虚候选第 1 位，与 rulings.priority_review 里山楂×气郁同属「写入即升位」问题。本轮无用户可见出口，留待 E2（影子字段并入本文件）再给出"
+          }
+        ],
+        "pending": [],
+        "review_status": "pending"
       }
     }
   },
@@ -176,7 +217,7 @@
       "max_daily_g": 15,
       "cautions": ["湿盛腹胀、痰湿偏重者不宜多食", "含糖量高，血糖偏高者需控制", "建议掰开去核再泡"],
       "suitable_constitutions": ["qi_deficiency", "yang_deficiency", "balanced", "blood_stasis", "qi_stagnation", "special_diathesis"],
-      "unsuitable_for": ["phlegm_damp", "damp_heat"],
+      "unsuitable_for": ["damp_heat"],
       "brewing": {
         "form": "干枣，切片或掰开",
         "note": "整颗冲泡不出味，务必掰开或切片",
@@ -471,7 +512,7 @@
       "effects": ["养心安神", "敛汗"],
       "max_daily_g": 15,
       "cautions": ["外感发热期间不宜", "需炒制后使用，且必须捣碎"],
-      "suitable_constitutions": ["qi_deficiency", "balanced"],
+      "suitable_constitutions": ["qi_deficiency", "balanced", "yin_deficiency"],
       "unsuitable_for": ["damp_heat"],
       "brewing": {
         "form": "炒酸枣仁，捣碎",
@@ -488,7 +529,7 @@
       "effects": ["补脾养胃", "生津益肺"],
       "max_daily_g": 20,
       "cautions": ["湿盛腹胀者不宜多食", "感冒发热期间不宜"],
-      "suitable_constitutions": ["qi_deficiency", "balanced", "special_diathesis"],
+      "suitable_constitutions": ["qi_deficiency", "balanced", "special_diathesis", "yin_deficiency"],
       "unsuitable_for": ["phlegm_damp"],
       "brewing": {
         "form": "干山药片（淮山）",
@@ -591,7 +632,7 @@
       "meridians": ["肺", "脾"],
       "effects": ["解表散寒", "行气和胃"],
       "max_daily_g": 6,
-      "cautions": ["性温，阴虚内热者不宜", "不宜久煮"],
+      "cautions": ["性温，阴虚内热者不宜", "不宜久煮", "气虚多汗者不宜食用"],
       "suitable_constitutions": ["yang_deficiency", "phlegm_damp"],
       "unsuitable_for": ["damp_heat", "yin_deficiency"],
       "brewing": {

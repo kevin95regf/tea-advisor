@@ -341,7 +341,7 @@ def test_cautions_naming_yinxu_must_be_blocked() -> None:
       ① 豁免项必须 ∈ 命中集 —— 登记表不能变成绕过检查的后门；
       ② 命中集里**未登记**的仍必须硬屏蔽 —— 防线不松；
       ③ **走软通道的登记项，依据等级不得为 `evidence`** —— 「明确忌 → 硬屏蔽」由代码强制，
-         不靠人记得（香薷是 evidence，它落在 unsuitable_for 上，想改走软通道会被挡回来）。
+         不靠人记得（香薷 2026-09-20 由 evidence 降为 inference，但仍落 unsuitable_for：规则③只约束**软通道**，降级本身不会让本条报红）。
     """
     gap = _cautions_soft_gap(load_herb_catalog(), load_rulings_cells())
 
@@ -415,7 +415,7 @@ def test_yinxu_cautions_batch_is_blocked_at_runtime() -> None:
     用大 `limit` 取全池，避免被 `filter_by_constitution` 默认的 `limit=12` 截断掩盖：
     被截断的条目本来就不在 top12 里，「没出现」说明不了它被屏蔽了。
     本批的实际效果正是**换个位置**——茯苓/陈皮/龙眼肉被挤出 top12，
-    而池子本身从 34 缩到 24，其余 7 味（生姜/藿香/紫苏/佛手/橘红/薏苡仁/茉莉花）
+    而池子本身从 34 缩到 23（34 味减去 11 味硬屏蔽：本批 10 味 + 香薷），其余 7 味（生姜/藿香/紫苏/佛手/橘红/薏苡仁/茉莉花）
     本来排在截断线之外，只靠 top12 是**完全看不出来**的。
     """
     pool = {item["id"] for item in filter_by_constitution("yin_deficiency", limit=999)}
