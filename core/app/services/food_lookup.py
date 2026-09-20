@@ -23,9 +23,11 @@ from app.domain.enums import FLAVOR_LABELS, NATURE_LABELS, Nature
 from app.domain.models import Verification
 from app.domain.nature_math import (
     COOKING_DELTA,
+    PREFIX_BOUNDARY_CHARS,
     TemperatureSignal,
     apply_cooking_fallback,
     shift_nature,
+    trailing_temperature_prefix,
 )
 from app.domain.nature_math import resolve_temperature as nature_math_resolve
 
@@ -487,6 +489,106 @@ def resolve_food(
 
 def _cn(nature: str | None) -> str:
     return NATURE_LABELS.get(nature or "unknown", "未知")
+
+
+def _entry_key(entry: dict) -> str:
+    """条目的去重键。与 match_foods 保持同一口径（id 优先，其次规范名）。"""
+    return str(entry.get("id") or entry.get("name") or "")
+
+
+def _keyword_spans(text: str, entry: dict) -> list[tuple[int, int]]:
+    """条目在文本里的**全部**命中位置（规范名 + 关键词 + 别名）。"""
+    spans: list[tuple[int, int]] = []
+    words = [entry.get("name") or ""]
+    words += list(entry.get("keywords") or [])
+    words += list(entry.get("aliases") or [])
+    for word in words:
+        w = (word or "").strip()
+        if not w:
+            continue
+        pos = text.find(w)
+        while pos >= 0:
+            spans.append((pos, pos + len(w)))
+            pos = text.find(w, pos + 1)
+    return spans
+
+
+def _other_spans(text: str, entry: dict) -> list[tuple[int, int]]:
+    """同句里**其他**已识别食物的命中位置，用于判断温度词是谁的。"""
+    key = _entry_key(entry)
+    spans: list[tuple[int, int]] = []
+    for other in match_foods(text):
+        if _entry_key(other) == key:
+            continue
+        spans.extend(_keyword_spans(text, other))
+    return spans
+
+
+def _overlaps(span: tuple[int, int], spans: list[tuple[int, int]]) -> bool:
+    """span 是否与 spans 中任一段相交。"""
+    start, end = span
+    return any(start < other_end and other_start < end for other_start, other_end in spans)
+
+
+def _claims_prefix(text: str, start: int, others: list[tuple[int, int]]) -> bool:
+    """温度词有没有资格被认领——它必须**自成边界**。
+
+    三种算自成边界：
+      1. 在串首（「冰可乐」）；
+      2. 前面是分隔符／连接用语（「炸鸡 冰可乐」「火锅+冰可乐」「点了冰可乐」）；
+      3. 紧跟在**另一个已识别食物**的命中词之后（「炸鸡冰可乐」——中间的「冰」
+         归可乐，不归炸鸡）。
+
+    否则它属于前一个词（「麻辣烫」的「烫」、「果冻」的「冻」），不能算在
+    后面的食物头上。第 3 条会放过「炸鸡可乐」这类连写，所以调用方还要
+    配合 `_overlaps` 用一次交叉校验（见 resolve_in_context）。
+    """
+    if start == 0:
+        return True
+    if text[start - 1] in PREFIX_BOUNDARY_CHARS:
+        return True
+    return any(other_end == start for _, other_end in others)
+
+
+def resolve_in_context(text: str, entry: dict) -> ResolvedFood:
+    """在**整句口述的语境里**判定某一条目的四性（离线路径专用入口）。
+
+    为什么需要它：离线路径此前写的是 `resolve_food(name=name, note=整句口述)`，
+    把整句当备注喂给每一样食物，于是同一个温度词被算到所有食物头上，
+    而且备注通道剥掉温度词后剩下的名字会指向**别的条目**（E15）：
+    实测「炸鸡 冰可乐」里「炸鸡」被按「可乐」条目算成寒。
+
+    这里改成**温度词按位置归属**：只把紧贴本条目命中词之前、且确实是
+    本条目自己的温度词拼进名字，走 name 通道（该通道自带"剥掉前缀后
+    须为完整表内食物名"的准入校验）。判定层 resolve_food 本身不动。
+
+    拒绝认领的三种情况：
+      - 前缀已在本条目规范名里（「去冰奶茶」的「去冰」），不重复叠加；
+      - 温度词落在**另一个已识别食物**的命中范围内（「麻辣烫 可乐」的「烫」）；
+      - 温度词没有自成边界（见 `_claims_prefix`）。
+
+    最后还有一道保险：拼出来的名字必须仍指向**同一个条目**，
+    否则退回不带温度的判定——温度只允许挪动一档四性，不允许换掉条目。
+    """
+    name = str(entry.get("name") or "").strip()
+    if not name or not text:
+        return resolve_food(name=name)
+
+    anchors = [kw for kw in (entry.get("keywords") or [name]) if kw and kw in text]
+    if anchors:
+        anchor = max(anchors, key=len)
+        head = text[: text.find(anchor)]
+        prefix = trailing_temperature_prefix(head)
+        if prefix and not name.replace(" ", "").startswith(prefix):
+            others = _other_spans(text, entry)
+            start = len(head.rstrip()) - len(prefix)
+            span = (start, start + len(prefix))
+            if not _overlaps(span, others) and _claims_prefix(text, start, others):
+                candidate = resolve_food(name=f"{prefix}{name}")
+                if _entry_key(candidate.entry or {}) == _entry_key(entry):
+                    return candidate
+
+    return resolve_food(name=name)
 
 
 def render_reference(text: str) -> str:

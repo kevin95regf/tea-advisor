@@ -17,7 +17,7 @@ from app.domain.safety import (
     scan_free_text,
 )
 from app.services import matcher
-from app.services.food_lookup import match_foods, resolve_food
+from app.services.food_lookup import match_foods, resolve_in_context
 from app.services.orchestrator import _build_basis
 
 logger = logging.getLogger(__name__)
@@ -116,7 +116,11 @@ async def analyze_offline_endpoint(request: OfflineAnalyzeRequest) -> AnalyzeRes
         name = str(entry.get("name") or "").strip()
         if not name:
             continue
-        resolved = resolve_food(name=name, note=text)
+        # 不能再写 resolve_food(name=name, note=text)：把整句口述当备注喂进
+        # 备注通道，温度词会被算到每一样食物头上，且剥掉温度词后的名字会
+        # 指向别的条目（实测「炸鸡 冰可乐」里炸鸡被判成寒，见 E15）。
+        # 改用按位置归属的入口：每样食物只认领紧贴自己命中词之前的温度词。
+        resolved = resolve_in_context(text, entry)
         foods.append(
             ParsedFood(
                 name=name,
