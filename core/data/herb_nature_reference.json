@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "title": "38 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）",
+    "title": "40 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）",
     "version": "1.0.0",
-    "compiled_at": "2026-09-17",
+    "compiled_at": "2026-09-20",
     "purpose": "把项目 core/data/herbs.json 的性味归经与《中国药典》2020 年版一部逐条对照，标出不一致项，供人工判断以哪个为准。**本文件不修改任何项目数据。**",
     "method": "通过国家药典委员会「中国药典在线版」的公开只读接口按饮片名检索词条（限定 bookId=1，即 2020 年版一部），再用词条 id 取回正文，从正文里切出【性味与归经】【功能与主治】【用法与用量】。每条都保留了逐字原文、页码与在线链接。可用 `python scripts/build_herb_crosscheck.py --refresh` 复现。",
     "source": {
@@ -2235,6 +2235,121 @@
         "dosage_verbatim": "5～10g。",
         "entry_id": 303,
         "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=303"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "芡实",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet",
+          "astringent"
+        ],
+        "flavors_cn": [
+          "甘",
+          "涩"
+        ],
+        "meridians": [
+          "脾",
+          "肾"
+        ],
+        "effects": [
+          "益肾固精",
+          "健脾止泻",
+          "除湿止带"
+        ],
+        "max_daily_g": 15
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "芡实",
+        "page": 219,
+        "pinyin": "Qiɑnshi",
+        "latin": "EURYALES SEMEN",
+        "xingwei_verbatim": "甘、涩，平。归脾、肾经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "sweet",
+          "astringent"
+        ],
+        "flavors_cn": [
+          "甘",
+          "涩"
+        ],
+        "meridians": [
+          "脾",
+          "肾"
+        ],
+        "effects_verbatim": "益肾固精，补脾止泻，除湿止带。用于遗精滑精，遗尿尿频，脾虚久泻，白浊，带下。",
+        "dosage_verbatim": "9～15g。",
+        "entry_id": 252,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=252"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "赤小豆",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet",
+          "sour"
+        ],
+        "flavors_cn": [
+          "甘",
+          "酸"
+        ],
+        "meridians": [
+          "心",
+          "小肠"
+        ],
+        "effects": [
+          "利水除湿",
+          "消肿解毒"
+        ],
+        "max_daily_g": 20
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "赤小豆",
+        "page": 214,
+        "pinyin": "Chixiɑodou",
+        "latin": "VIGNAE SEMEN",
+        "xingwei_verbatim": "甘、酸，平。归心、小肠经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "sweet",
+          "sour"
+        ],
+        "flavors_cn": [
+          "甘",
+          "酸"
+        ],
+        "meridians": [
+          "心",
+          "小肠"
+        ],
+        "effects_verbatim": "利水消肿，解毒排脓。用于水肿胀满，脚气浮肿，黄疸尿赤，风湿热痹，痈肿疮毒，肠痈腹痛。",
+        "dosage_verbatim": "9～30g。外用适量，研末调敷。",
+        "entry_id": 243,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=243"
       },
       "nature_match": true,
       "flavors_match": true,

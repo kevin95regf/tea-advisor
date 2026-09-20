@@ -21,6 +21,7 @@ import re
 import sys
 import time
 import warnings
+from datetime import date
 from pathlib import Path
 
 warnings.filterwarnings("ignore")
@@ -118,6 +119,15 @@ DECISION = {
     ),
     "basis": "这些差异均不影响任何确定性判定（见 §3.1 的代码取证），因此不阻塞；而是否改动应听数据审核人的判断。",
 }
+
+
+# ---- `_meta` 的**派生**字段（2026-09-20 落地） ----------------------------
+
+# `_meta.title` 里的味数是**派生**的：每次重建按实际条数覆写。
+# 历史教训：`--refresh` / `--recompute` 分支保留旧 `_meta`（读旧写回），若靠手改就会漏，
+# 而漏一次就是「文档说 35 味、数据是 38 味」。`validate()` 里有对应的派生守护，
+# `--check`（离线、可进 CI）因此能抓住「手改了 title」或「加了味却没重建」。
+TITLE_TEMPLATE = "{n} 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）"
 
 
 
@@ -431,6 +441,14 @@ def validate(ref: dict, herbs: list[dict]) -> list[str]:
     names = [r["herb"] for r in recs]
     if len(names) != len(set(names)):
         problems.append("饮片名有重复")
+    # `_meta.title` 是**派生**字段（见 TITLE_TEMPLATE）：味数必须与实际条数一致。
+    # 这里只比对味数，不校验 `compiled_at`（跨日必红，不是错误）。
+    expected_title = TITLE_TEMPLATE.format(n=len(recs))
+    actual_title = (ref.get("_meta") or {}).get("title")
+    if actual_title != expected_title:
+        problems.append(
+            f"_meta.title 与实际条数不一致：应为「{expected_title}」，实为「{actual_title}」"
+        )
     if set(names) != {h["name"] for h in herbs}:
         missing = {h["name"] for h in herbs} - set(names)
         extra = set(names) - {h["name"] for h in herbs}
@@ -680,6 +698,11 @@ def main(argv: list[str] | None = None) -> int:
         raw = (fetch_pharmacopoeia([h["name"] for h in herbs]) if args.refresh
                else raw_from_reference(loaded))
         loaded["herbs"] = build_records(raw, herbs)
+        # `_meta.title` 的味数派生（覆盖旧值）；`compiled_at` 只在真正联网重取时更新 ——
+        # `--recompute` 没重取药典，不应当刷新「编译时间」。
+        loaded.setdefault("_meta", {})["title"] = TITLE_TEMPLATE.format(n=len(loaded["herbs"]))
+        if args.refresh:
+            loaded["_meta"]["compiled_at"] = date.today().isoformat()
         args.ref.write_text(json.dumps(loaded, ensure_ascii=False, indent=2) + "\n",
                             encoding="utf-8", newline="\n")
         print(f"已{'刷新' if args.refresh else '重算'} {args.ref}")

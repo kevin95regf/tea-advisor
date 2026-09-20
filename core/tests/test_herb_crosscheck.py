@@ -180,6 +180,29 @@ def test_validate_catches_stale_project_snapshot(mod, ref, herbs):
     assert any("快照已过期" in p for p in problems), problems
 
 
+def test_meta_title_count_is_derived(mod, ref):
+    """`_meta.title` 的味数是**派生**的，不是手写的。
+
+    历史坑：`--refresh` 保留旧 `_meta`，靠手改 title 就会漏 —— 漏一次就是
+    「文档说 35 味、数据是 38 味」。（2026-09-20，批二随批落地。）
+    """
+    expected = mod.TITLE_TEMPLATE.format(n=len(ref["herbs"]))
+    assert ref["_meta"]["title"] == expected, (
+        f"title 应为派生值 {expected!r}，实为 {ref['_meta']['title']!r} —— "
+        "重跑 `python scripts/build_herb_crosscheck.py --refresh` 即可修复"
+    )
+
+
+def test_validate_catches_stale_meta_title(mod, ref, herbs):
+    """负控制：把 title 改回旧的味数，`validate()` 必须报出来。"""
+    import copy
+
+    broken = copy.deepcopy(ref)
+    broken["_meta"]["title"] = "35 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）"
+    problems = mod.validate(broken, herbs)
+    assert any("_meta.title" in p for p in problems), problems
+
+
 def test_validate_catches_missing_herb(mod, ref, herbs):
     import copy
 

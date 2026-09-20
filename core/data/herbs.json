@@ -113,7 +113,7 @@
         ],
         "expansion_batch": {
           "date": "2026-09-20",
-          "scope": "扩展第一批（余甘子暂缓）：金银花 1 味 × 9 型 = 9 格（试点，2026-09-20）；阶段 3 分 4 批落地余甘子以外的 9 味 × 9 型 = 81 格（余甘子按拍板 Q2 暂缓，未计入）。累计 **4 味 36 格**。",
+          "scope": "扩展第一批（余甘子暂缓）：金银花 1 味 × 9 型 = 9 格（试点，2026-09-20）；阶段 3 分 4 批落地余甘子以外的 9 味 × 9 型 = 81 格（余甘子按拍板 Q2 暂缓，未计入）。累计 **6 味 54 格**。",
           "decided_by": "项目所有者 2026-09-20（方案 core/var/e2-stage1-2-plan.md 拍板 H 试点 / J 走 TCM.Skill）",
           "judged_by": "TCM.Skill 语料逐条判定（《中药学》七版 + 《中医养生学》第十七章 + 49 判据 R1–R5）",
           "cells": [
@@ -152,23 +152,50 @@
             {"herb": "qingguo", "constitution": "blood_stasis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R1：无「留瘀」记载、非止血收敛类，体质学资料未点名 ⇒ 不得按四气一刀切（49 文件 §1 R1）"},
             {"herb": "qingguo", "constitution": "qi_stagnation", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R2：七版:2160【功效】清热解毒、利咽、生津，**无行气/疏肝功效**；《中医养生学》:2347 未列 ⇒ no_basis"},
             {"herb": "qingguo", "constitution": "special_diathesis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R4：七版:2156–2173 全节无【不良反应】项 ⇒ 无经口过敏记载，不外推"},
-            {"herb": "qingguo", "constitution": "balanced", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2278「至于阴阳气血平调的体质……不必考虑体质问题」⇒ 中性（沿用 34 味批次的平和列口径）"}
+            {"herb": "qingguo", "constitution": "balanced", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2278「至于阴阳气血平调的体质……不必考虑体质问题」⇒ 中性（沿用 34 味批次的平和列口径）"},
+            {"herb": "qianshi", "constitution": "yin_deficiency", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中药学》七版:10046【性能】「甘、涩，平。归脾、肾经。」；功效:10047「益肾固精，健脾止泻，除湿止带」。收涩之品不伤阴，阴虚质宜用/药物清单（:2285、:2287）未列 ⇒ no_basis"},
+            {"herb": "qianshi", "constitution": "yang_deficiency", "verdict": "—", "tier": "no_basis", "field": null, "basis": "七版:10046 性平；全节（:10043–10062）无【使用注意】⇒ 无阳虚方向依据 ⇒ no_basis"},
+            {"herb": "qianshi", "constitution": "qi_deficiency", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2307 气虚质宜用食物清单（粳米、糯米、小米、黄米、大麦、山药、籼米、莜麦、马铃薯、大枣、胡萝卜、香菇、豆腐、鸡肉、鹅肉、兔肉、鹌鹑、牛肉、狗肉、青鱼、鲢鱼）未列芡实；七版无【使用注意】⇒ no_basis（⚠️ 芡实「健脾」虽与气虚同向，但无点名，不升为 I 级宜）"},
+            {"herb": "qianshi", "constitution": "phlegm_damp", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2338 痰湿质宜用清单未列；七版:10057–10058 引《本草求真》「味涩固肾，故能闭气」为**古籍层**（低于教材，不作基准）⇒ no_basis"},
+            {"herb": "qianshi", "constitution": "damp_heat", "verdict": "—", "tier": "no_basis", "field": null, "basis": "口径 (a)（2026-09-20 拍板 Q1）：判据须「有文献点名」。广东省中医药局《如何辨识自己的体质？九种体质调理方，一文说清楚》湿热质宜用清单（薏苡仁、莲子、苦瓜、赤小豆、绿豆、鲫鱼、冬瓜、丝瓜、卷心菜、莲藕、空心菜）与忌用清单（辣椒、大蒜、大葱、韭菜、蜂蜜、酒、牛肉、狗肉、鹿肉）均未点名本味（网页 2026-09-20 逐字核对）⇒ no_basis"},
+            {"herb": "qianshi", "constitution": "blood_stasis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R1：无「留瘀」记载、非止血收敛类，体质学资料未点名 ⇒ 不得按四气一刀切（49 文件 §1 R1）"},
+            {"herb": "qianshi", "constitution": "qi_stagnation", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R3 + R2：芡实味涩，但 49 文件 §1 R3「酸涩不外推」明令不得因涩判气郁不宜；且无行气/疏肝功效 ⇒ no_basis"},
+            {"herb": "qianshi", "constitution": "special_diathesis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R4：七版:10043–10062 全节无【不良反应】项 ⇒ 无经口过敏记载，不外推"},
+            {"herb": "qianshi", "constitution": "balanced", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2278「至于阴阳气血平调的体质……不必考虑体质问题」⇒ 中性（沿用 34 味批次的平和列口径）"},
+            {"herb": "chixiaodou", "constitution": "yin_deficiency", "verdict": "忌", "tier": "I", "field": "unsuitable_for", "basis": "《中医饮食营养学》:1411【功效】「利水除湿，消肿解毒」；药典 2020 年版一部 p.214「甘、酸，平。归心、小肠经。」利水渗湿之品不宜于津液偏少者 —— 循库内同族口径：薏苡仁（七版:3989「津液不足者慎用」，E′）、茯苓（利水渗湿，阴虚不宜，I）。赤小豆七版无独立条目（:10043 前后无「赤小豆」条目头）⇒ 拿不到教材使用注意，本格为 I。"},
+            {"herb": "chixiaodou", "constitution": "yang_deficiency", "verdict": "—", "tier": "no_basis", "field": null, "basis": "药典 p.214 性平；《中医饮食营养学》:1408–1421 无【使用注意】项 ⇒ 无阳虚方向依据 ⇒ no_basis"},
+            {"herb": "chixiaodou", "constitution": "qi_deficiency", "verdict": "—", "tier": "no_basis", "field": null, "basis": "药典 p.214 性平；七版无独立条目、《中医饮食营养学》无【使用注意】⇒ no_basis"},
+            {"herb": "chixiaodou", "constitution": "phlegm_damp", "verdict": "宜", "tier": "E", "field": "suitable_constitutions", "basis": "《中医养生学》:2338 痰湿质饮食调养宜用清单逐字点名「**红小豆**」（原文：「…扁豆、薏苡仁、**红小豆**、蚕豆、包菜」）。名称桥接：项目名「赤小豆」↔ 教材用名「红小豆」（《中医饮食营养学》:1408【基原】「为豆科植物赤豆或赤小豆种子」、:1409【异名】「赤小豆、红豆」）。旁证：广东省中医药局同页痰湿质宜用清单亦点名「赤小豆」。"},
+            {"herb": "chixiaodou", "constitution": "damp_heat", "verdict": "宜", "tier": "X", "field": "suitable_constitutions", "basis": "广东省中医药局《如何辨识自己的体质？九种体质调理方，一文说清楚》（2023-03-22）湿热质「可适当多吃清利湿热的食物」清单逐字点名「赤小豆」（原文：「如薏苡仁、莲子、苦瓜、**赤小豆**、绿豆、鲫鱼、冬瓜、丝瓜、卷心菜、莲藕、空心菜等」）；同页痰湿质宜用清单亦点名赤小豆。按 2026-09-20 拍板 Q1 的口径 (a)：「有文献点名」即成立 ⇒ 本格为 X（沿用粤中医，外部来源、非本库），与库内既有 14 味 damp_heat 的取值口径一致。"},
+            {"herb": "chixiaodou", "constitution": "blood_stasis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R1：无「留瘀」记载、非止血收敛类，体质学资料未点名 ⇒ 不得按四气一刀切（49 文件 §1 R1）"},
+            {"herb": "chixiaodou", "constitution": "qi_stagnation", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R2：判据是「有无行气/疏肝功效」。本方无行气疏肝功效，《中医养生学》:2347 气郁质宜用清单（佛手、橙子、柑皮、荞麦、韭菜、茴香菜、大蒜、火腿、高粱、刀豆、香橼）未列 ⇒ no_basis"},
+            {"herb": "chixiaodou", "constitution": "special_diathesis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R4：七版无独立条目；《中医饮食营养学》:1408–1421 无过敏记载 ⇒ 不外推"},
+            {"herb": "chixiaodou", "constitution": "balanced", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2278「至于阴阳气血平调的体质……不必考虑体质问题」⇒ 中性（沿用 34 味批次的平和列口径）"}
           ],
           "written": {
             "jinyinhua": {"suitable_constitutions": [], "unsuitable_for": ["yang_deficiency", "qi_deficiency"], "cautions": ["脾胃虚寒、易腹泻者不宜多饮", "不宜长期连续大量饮用"]},
             "sangye": {"suitable_constitutions": [], "unsuitable_for": ["yang_deficiency", "qi_deficiency"], "cautions": ["性偏寒凉，脾胃虚寒者不宜多饮", "不宜长期连续大量饮用"]},
             "pugongying": {"suitable_constitutions": [], "unsuitable_for": ["yang_deficiency", "qi_deficiency", "special_diathesis"], "cautions": ["性寒，脾胃虚寒者不宜多饮", "用量过大可致缓泻，宜从少量开始"]},
-            "qingguo": {"suitable_constitutions": [], "unsuitable_for": [], "cautions": ["性平偏寒，脾胃虚寒者不宜多饮", "不宜长期连续大量饮用"]}
+            "qingguo": {"suitable_constitutions": [], "unsuitable_for": [], "cautions": ["性平偏寒，脾胃虚寒者不宜多饮", "不宜长期连续大量饮用"]},
+            "qianshi": {"suitable_constitutions": [], "unsuitable_for": [], "cautions": ["收敛固涩，大便干结者不宜多食"]},
+            "chixiaodou": {"suitable_constitutions": ["phlegm_damp", "damp_heat"], "unsuitable_for": ["yin_deficiency"], "cautions": ["利水渗湿，不宜长期连续大量饮用"]}
           },
-          "counts": {"pilot_jinyinhua": {"herb_count": 1, "total_cells": 9, "tier": {"E_prime": 2, "no_basis": 7}}, "by_batch": {"batch1": {"label": "阶段 3 批一：泡水 3 味", "herb_count": 3, "total_cells": 27, "tier": {"E": 1, "I": 4, "no_basis": 22}, "verdict": {"—": 22, "忌": 5}}}, "cumulative": {"herb_count": 4, "total_cells": 36, "tier": {"E": 1, "E_prime": 2, "I": 4, "no_basis": 29}, "verdict": {"—": 28, "中性": 1, "忌": 7}}},
-          "visibility": "本批（阶段 3 批一：泡水 3 味）写入 3 味：suitable_constitutions 新增 0 味（无）、unsuitable_for 新增 2 味（桑叶, 蒲公英）。⚠️ 新条目一律追加在 `herbs.json` 数组末尾 ⇒ 在 catalog 顺序里排最后。只有**阴虚** suitable 由 3 味增至 6 味时全部落在 `limit=12` 可见区间内（真实候选增量）；湿热（14 味）、痰湿（14 味）、平和（24 味）的 suitable 已 ≥12 ⇒ 追加**不产生候选增量**，只影响账本完整与硬屏蔽。",
+          "counts": {"pilot_jinyinhua": {"herb_count": 1, "total_cells": 9, "tier": {"E_prime": 2, "no_basis": 7}}, "by_batch": {"batch1": {"label": "阶段 3 批一：泡水 3 味", "herb_count": 3, "total_cells": 27, "tier": {"E": 1, "I": 4, "no_basis": 22}, "verdict": {"—": 22, "忌": 5}}, "batch2": {"label": "阶段 3 批二：需煮 2 味", "herb_count": 2, "total_cells": 18, "tier": {"E": 1, "I": 1, "X": 1, "no_basis": 15}, "verdict": {"—": 15, "宜": 2, "忌": 1}}}, "cumulative": {"herb_count": 6, "total_cells": 54, "tier": {"E": 2, "E_prime": 2, "I": 5, "X": 1, "no_basis": 44}, "verdict": {"—": 43, "中性": 1, "宜": 2, "忌": 8}}},
+          "visibility": "本批（阶段 3 批二：需煮 2 味）写入 2 味：suitable_constitutions 新增 1 味（赤小豆）、unsuitable_for 新增 1 味（赤小豆）。⚠️ 新条目一律追加在 `herbs.json` 数组末尾 ⇒ 在 catalog 顺序里排最后。**本批的运行时效果：9 型候选与批一基线逐格完全一致（全型零差异）** —— 赤小豆的 suitable 落痰湿/湿热（各 14 → 15 味）、unsuitable 落阴虚，但两者的 `filter_by_constitution` 窗口（`limit=12`）都已排满 ⇒ 追加**不产生候选增量**；芡实既无 suitable 也无 unsuitable，落 `neutral_fallback` 末尾（池已 ≥12 ⇒ 不可见）。本批只影响账本完整与硬屏蔽。",
           "open_questions": [
             "做法依据（拍板 E）：定为**泡水**（不标 requires_cooking），依据是形态为花蕾 ＋ 七版:1726「疏散风热、清泄里热以生品为佳」；但语料内**无「泡服/代茶饮」的文献原句**（《中医饮食营养学》:820 的「金银花露」是蒸馏品，不是冲泡）⇒ 待外部确认。",
             "与既有凉/寒味的口径差异：菊花/决明子/淡竹叶/槐花/鱼腥草 5 味都带 damp_heat（suitable），本批按现行判据（粤中医未点名）把金银花判 no_basis ⇒ 两者并存。维持（承认那 5 味是判据成文前的项目自拟）还是另案补齐依据，待裁定。",
             "做法依据（蒲公英，与 E10 同族）：定为**泡水**（不标 requires_cooking），依据是形态为全草、轻清，七版:1873【应用】亦以「单用本品浓煎内服」以外用为主；但七版:1877【用法用量】只记「煎服，9~15g」，语料内**无「泡服／代茶饮」的文献原句** ⇒ 待外部确认。对照：**桑叶有直接原句**（七版:1013「每日15g，沸水浸泡后代茶饮」，优于金银花）；**青果有直接原句**（《中医饮食营养学》:701「开水泡服或水煎代茶」）。",
             "`max_daily_g` 是**项目约定、非药典值**（拍板 Q3）：桑叶 10、蒲公英 15、青果 10，三者都取药典【用法与用量】上限（p.359「5～10g」／p.416「10～15g」／p.255「5～10g」）。⚠️ 药典给的是**煎服量**，泡饮量在语料里没有 ⇒ 待中药师确认。",
             "⚠️ **蒲公英×特禀（E）是本批新增的第一条特禀硬禁忌**：依据为七版:1886【不良反应】「口服煎剂……亦有出现全身瘙痒、荨麻疹等」。同判据的**酸枣仁×特禀**（七版:7792）在 34 味批次判为 E 级不宜，但**只落在影子字段、未写入 herbs.json** ⇒ 两条同判据的落地状态不一致，已另立挂起项。",
-            "阳虚／气虚两列的**口径**：本批 3 味里，桑叶、蒲公英的七版条目**都没有【使用注意】项**（桑叶 :1006 直接接【古籍摘要】、蒲公英仅有「用量过大可致缓泻」），因此这两列拿不到 E′，按「库内 18 味寒/凉饮片一律标阳虚不宜」的既有口径判为 I（性味外推，保守方向）。青果性平，两列皆 no_basis。"
+            "阳虚／气虚两列的**口径**：本批 3 味里，桑叶、蒲公英的七版条目**都没有【使用注意】项**（桑叶 :1006 直接接【古籍摘要】、蒲公英仅有「用量过大可致缓泻」），因此这两列拿不到 E′，按「库内 18 味寒/凉饮片一律标阳虚不宜」的既有口径判为 I（性味外推，保守方向）。青果性平，两列皆 no_basis。",
+            "`max_daily_g` 是**项目约定、非药典值**（拍板 Q3）：芡实 15（=药典 p.219 上限「9～15g」）、赤小豆 20（取药典 p.214「9～30g」**区间内**，照薏苡仁 9~30→20、山药 15~30→20 的既有取法）⇒ 待中药师确认。⚠️ 药典给的是**煎服量**，泡/煮饮量在语料里没有。",
+            "做法依据（芡实、赤小豆）：两味均标 `requires_cooking: true`（种仁／豆类质地坚实，七版仅作「煎服」）。这不是新口径，是**沿用库内 6 味**（茯苓／百合／莲子／薏苡仁／山药／白扁豆）的既有口径；依据文本写在各自 `brewing.note`，由 `tests/test_safety.py` 的`EXPECTED_COOK_REQUIRED` 登记表守着。⚠️ 语料里**没有**像桑叶/青果那样的「沸水浸泡代茶饮／开水泡服」直证 ⇒ 与金银花、蒲公英同属「只有形态+煎服依据」那一族，待外部确认。",
+            "**名称桥接**：赤小豆 ↔ 教材「红小豆」↔ 异名「红豆」（《中医饮食营养学》:1409）；此桥接是痰湿那一格 `E` 成立的**前提**，已逐字写进该格 `basis`。",
+            "⚠️ **账本记法不一致（本轮实测）**：平和列的 `verdict` 在试点写「中性」、批一/批二写「—」（`tier` 都是 `no_basis`、`field` 都是 `null`，不影响任何计算）。按「历史批次不 retro 修改」的纪律**只登记不回溯**，批二沿用「—」与批一一致。",
+            "**芡实 9 格全 `—`**：它是「只进候选池、不加任何方向」的一味 —— 既无 suitable 也无 unsuitable，唯一作用是让池子多一个药食同源选项。这是**如实判定**的结果，不是为了凑味数；9 条 `basis` 都写了「为什么判不出」的出处（阴虚 :2285/:2287 清单未列、痰湿 :2338 清单未列、R1/R2/R3/R4、七版全节无【使用注意】/【不良反应】）。",
+            "⚠️ **赤小豆×湿热（X）与 E11 的关系**：本格成立（粤中医湿热质宜用清单逐字点名「赤小豆」），而**金银花×湿热判 no_basis**（同页清单未点名金银花）。二者并存不是矛盾，正是 E11「口径须有文献点名」的执行结果 —— 但「同族饮片对湿热质的口径一致性」仍需 E11 裁定。",
+            "⚠️ 赤小豆**七版无独立条目**（七版:10043 前后无「赤小豆」条目头），故其**属性依据只能用《中医饮食营养学》:1410／药典 p.214**、**体质依据只能靠《中医养生学》:2338 的点名与粤中医**；赤小豆×阴虚（I）因此是**外推**而非教材使用注意，低于药典/教材层，待复核。"
           ]
         },
         "pending": [],
@@ -979,6 +1006,50 @@
         "form": "干青果（成熟果实），用时打碎",
         "note": "打碎后开水泡服；《中医饮食营养学》:701 载「开水泡服或水煎代茶」",
         "prep": "温水快速冲洗一次，敲裂果壳更易出味"
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
+    },
+  {
+      "id": "qianshi",
+      "name": "芡实",
+      "nature": "neutral",
+      "flavors": ["sweet", "astringent"],
+      "meridians": ["脾", "肾"],
+      "effects": ["益肾固精", "健脾止泻", "除湿止带"],
+      "max_daily_g": 15,
+      "cautions": ["收敛固涩，大便干结者不宜多食"],
+      "suitable_constitutions": [],
+      "unsuitable_for": [],
+      "brewing": {
+        "form": "干芡实，颗粒饱满者为佳",
+        "note": "质地坚实，需煮 15 分钟以上才易出味，直接冲泡效果差",
+        "prep": "可先温水浸泡 1 小时再煮",
+        "requires_cooking": true
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
+    },
+  {
+      "id": "chixiaodou",
+      "name": "赤小豆",
+      "nature": "neutral",
+      "flavors": ["sweet", "sour"],
+      "meridians": ["心", "小肠"],
+      "effects": ["利水除湿", "消肿解毒"],
+      "max_daily_g": 20,
+      "cautions": ["利水渗湿，不宜长期连续大量饮用"],
+      "suitable_constitutions": ["phlegm_damp", "damp_heat"],
+      "unsuitable_for": ["yin_deficiency"],
+      "brewing": {
+        "form": "干赤小豆，颗粒完整者为佳",
+        "note": "豆类质地坚硬，务必先煮 20 分钟以上",
+        "prep": "可先浸泡 2 小时再煮",
+        "requires_cooking": true
       },
       "review_status": "pending",
       "reviewed_by": null,
