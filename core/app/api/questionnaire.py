@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
-from tcm_constitution import score_questionnaire
-from tcm_constitution.questions import ANSWER_LABELS, questions_for_sex
 
 from app.domain.constitution_resolver import (
     UndeterminedConstitutionError,
@@ -13,6 +13,25 @@ from app.domain.constitution_resolver import (
 )
 
 router = APIRouter()
+
+
+def _require_questionnaire() -> tuple[Any, dict, Any]:
+    """按需加载可选问卷子包；缺失时只禁用问卷端点。"""
+    try:
+        from tcm_constitution import score_questionnaire
+        from tcm_constitution.questions import ANSWER_LABELS, questions_for_sex
+    except ModuleNotFoundError as exc:
+        if exc.name not in {"tcm_constitution", "tcm_constitution.questions"}:
+            raise
+        raise HTTPException(
+            status_code=501,
+            detail=(
+                "体质问卷子包未安装；请在仓库根目录执行 "
+                "core\\.venv\\Scripts\\python.exe -m pip install -e "
+                "tcm-constitution-questionnaire"
+            ),
+        ) from exc
+    return score_questionnaire, ANSWER_LABELS, questions_for_sex
 
 
 class QuestionnaireRequest(BaseModel):
@@ -43,6 +62,7 @@ class QuestionnaireResponse(BaseModel):
     summary="提交九种体质问卷",
 )
 async def questionnaire_endpoint(request: QuestionnaireRequest) -> QuestionnaireResponse:
+    score_questionnaire, _, _ = _require_questionnaire()
     try:
         result = score_questionnaire(request.answers, request.sex)
     except ValueError as exc:
@@ -92,12 +112,13 @@ async def questionnaire_endpoint(request: QuestionnaireRequest) -> Questionnaire
 async def get_questions(
     sex: str = Query(default="male", pattern="^(female|male)$"),
 ) -> dict:
+    _, answer_labels, questions_for_sex = _require_questionnaire()
     try:
         questions = questions_for_sex(sex)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail="sex 必须是 female 或 male") from exc
     return {
-        "answer_labels": ANSWER_LABELS,
+        "answer_labels": answer_labels,
         "questions": [
             {"id": item.id, "text": item.text, "sex": item.sex}
             for item in questions

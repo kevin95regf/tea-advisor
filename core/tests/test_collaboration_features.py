@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import subprocess
+import sys
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -13,6 +16,52 @@ from app.main import app
 from app.services import medication_reference
 
 client = TestClient(app)
+
+
+def test_web_starts_without_optional_questionnaire_package():
+    """已安装的开发环境也必须覆盖一次“问卷子包不存在”的真实导入链。"""
+    code = textwrap.dedent(
+        """
+        import importlib.abc
+        import sys
+
+        class BlockQuestionnaire(importlib.abc.MetaPathFinder):
+            def find_spec(self, fullname, path=None, target=None):
+                if fullname == "tcm_constitution" or fullname.startswith("tcm_constitution."):
+                    raise ModuleNotFoundError(
+                        f"No module named {fullname!r}", name=fullname
+                    )
+                return None
+
+        sys.meta_path.insert(0, BlockQuestionnaire())
+
+        from fastapi.testclient import TestClient
+        from app.main import app
+
+        client = TestClient(app)
+        assert client.get("/healthz").status_code == 200
+
+        questions = client.get("/api/questionnaire/questions?sex=male")
+        assert questions.status_code == 501, questions.text
+        assert "问卷子包未安装" in questions.json()["detail"]
+
+        result = client.post(
+            "/api/questionnaire",
+            json={"sex": "male", "answers": {}},
+        )
+        assert result.status_code == 501, result.text
+        assert "问卷子包未安装" in result.json()["detail"]
+        """
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=Path(__file__).resolve().parents[1],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
 
 
 def test_offline_analysis_needs_no_key_and_keeps_contract():

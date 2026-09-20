@@ -49,9 +49,10 @@ python -m pytest -q
 
 ### 想让助手用上你的体质：安装国标问卷子包
 
-终端不使用问卷时，这个子包仍是可选的；**启动 Web 服务时必须安装**，因为
-`/api/questionnaire` 会正常 import 它。应用不再在 import 阶段修改 `sys.path`，
-避免全局副作用和仓库相对路径耦合。请把两个项目装进同一个虚拟环境：
+问卷子包仍是可选的：没有安装时 Web 服务和其它功能可以正常启动，只有
+`/api/questionnaire` 与 `/api/questionnaire/questions` 返回 501，终端的
+`--questionnaire` / `:qz` 不可用。应用不会在 import 阶段修改 `sys.path`，
+避免全局副作用和仓库相对路径耦合。要使用问卷，请把两个项目装进同一个虚拟环境：
 
 ```powershell
 cd ..                                   # 回到仓库根
@@ -410,7 +411,7 @@ tea-advisor/
 
 ```powershell
 cd core
-python -m pytest -q          # 513 passed，不调用模型、不需要 API Key
+python -m pytest -q          # 514 passed，不调用模型、不需要 API Key
 ```
 
 | 文件 | 覆盖内容 | 项数 |
