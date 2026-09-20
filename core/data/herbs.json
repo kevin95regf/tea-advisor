@@ -62,7 +62,7 @@
       },
       "evidence_batch": {
         "date": "2026-09-20",
-        "scope": "34 味 × 9 型 = 221 格（契约内四型 136 + 扩展层 85）。⚠️ 本批是 2026-09-20 那一次 34 味批次的**历史记录**：扩味后本批数字**不 retro 修改**，新增饮片另起批次（见同级 expansion_batch）。",
+        "scope": "34 味 × 9 型 = 221 格（契约内四型 136 + 扩展层 85）。⚠️ 本批是 2026-09-20 那一次 34 味批次的**历史记录**：扩味后本批数字**不 retro 修改**，新增饮片另起批次（见其下 expansion_batch）。",
         "source_of_truth": "docs/herbs-9types-evidence-map.md（逐格依据与裁定台账）+ docs/herbs-9types-evidence-shadow.json（影子字段，未并入本文件）",
         "tier_rule": "E 资料直接点名该饮片 / E′ 点名该饮片的同向证候且该证候 ⊂ 该体质定义特征 / I 性味功效外推 / X 沿用粤中医（本轮未独立复核）/ — 无依据",
         "counts": {
