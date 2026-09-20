@@ -347,3 +347,51 @@ def test_pending_a2_matches_actual_data_state():
     assert a2_rows, "概览里找不到 A2 行"
     assert "已" in a2_rows[0], f"A2 已落定，概览状态列应改为「已…」：{a2_rows[0]}"
 
+
+def _status_of(text: str, pid: str) -> str:
+    """取概览表里某一 ID 的状态列（剥掉 ✅/⛔ 等装饰）。"""
+    for line in text.splitlines():
+        if line.startswith("|") and f"**{pid}**" in line:
+            return line.strip("|").split("|")[-1].strip().strip("✅⛔* `")
+    raise AssertionError(f"概览里找不到 {pid}")
+
+
+def test_pending_header_counts_match_overview(pending):
+    """头句声明的「共 N 项」「其余 M 项待处理」必须与概览表**现算**的结果一致。
+
+    派生断言而非快照：数字从概览行现算，头句只负责跟它对上。手工同步计数迟早会烂
+    —— 2026-09-20 加 D31 时核对发现，头句与概览已经各说各的，而没有任何一条测试
+    会因此变红。
+    """
+    head = pending.split("## 概览", 1)[0]
+    total = re.search(r"共 \*\*(\d+)\*\* 项记录在案", head)
+    todo = re.search(r"其余 \*\*(\d+)\*\* 项待处理", head)
+    assert total and todo, "头句计数格式变了 —— 守卫的解析要跟着改，别让它静默失效"
+
+    rows = [
+        line
+        for line in _overview_block(pending).splitlines()
+        if line.startswith("|") and "---" not in line and "ID" not in line
+    ]
+    n_todo = sum(
+        1
+        for row in rows
+        if row.strip("|").split("|")[-1].strip().strip("✅⛔* `").startswith("待")
+    )
+    assert int(total.group(1)) == len(_pending_ids(pending)), "头句总数 ≠ 概览条目数"
+    assert int(todo.group(1)) == n_todo, "头句待处理数 ≠ 概览里「待」开头的行数"
+
+
+def test_pending_header_resolved_ids_are_marked_done(pending):
+    """头句点名「已解决／已实施／已关闭」的 ID，概览状态列必须真是「已…」。
+
+    防的是「正文写了已解决、概览表还挂着待」——两者在同一个文件里却是两处独立陈述，
+    改一处忘一处正是文档腐烂的典型形状（2026-09-20 的 D18／D23／D25 就是这么来的）。
+    """
+    head = pending.split("## 概览", 1)[0]
+    mentioned = sorted(set(re.findall(r"\b([A-E]\d+)\b", head)))
+    assert mentioned, "头句里没解析到任何 ID"
+    for pid in mentioned:
+        status = _status_of(pending, pid)
+        assert status.startswith("已"), f"头句说 {pid} 已处理，概览状态却是：{status!r}"
+
