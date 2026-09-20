@@ -83,6 +83,7 @@ class MealDimension(BaseModel):
     ``cap`` 与 ``action_label`` 也来自数据文件，所以两个壳不需要自己维护「/3」或中文标签。
     """
 
+    label: str = Field(default="", description="维度中文名（冲击度/湿气度），来自数据文件")
     score: int = Field(default=0, description="加权求和后按 cap 封顶的分数")
     cap: int = Field(default=3, description="封顶值，来自数据文件；壳里不要写死")
     action: str = Field(default="none", description="机器可读档位，如 protect_stomach")

@@ -401,6 +401,7 @@ def _dimension(dimension_id: str, hits: Sequence[SignalHit]) -> MealDimension | 
             seen.append(hit.label)
 
     return MealDimension(
+        label=str(dim.get("label") or dimension_id),
         score=result.score,
         cap=int(dim.get("cap") or 0),
         action=result.action,

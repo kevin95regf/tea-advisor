@@ -161,8 +161,9 @@ def test_iced_beer_scores_three() -> None:
     assert signals.impact is not None
     spec = _dim_spec("impact")
 
-    # cap 来自数据文件，测试不写死 3
+    # cap / label 都来自数据文件，测试不写死 3 与「脾胃冲击度」
     assert signals.impact.cap == int(spec["cap"])
+    assert signals.impact.label == str(spec["label"])
     assert signals.impact.score == int(spec["cap"]), "冰镇+酒精+碳酸 应打满"
     assert signals.impact.action == "protect_stomach_plus"
     assert signals.impact.action_label == _label_of("impact", "protect_stomach_plus")
