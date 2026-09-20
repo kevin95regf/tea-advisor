@@ -34,8 +34,9 @@ NOTES.local.md
 *.local.md
 
 # ---------- 内部草稿：不进仓库 ----------
-# 九型相关的提问稿与阶段交接稿：内容未定/过程性，等项目所有者点头后再决定是否入库。
-docs/herbs-9types-questions.md
+# 阶段交接稿：过程性，不入库。
+# 提问稿 docs/herbs-9types-questions.md 已于 2026-09-20 由所有者放行入库
+#   —— 它被 map 头部与 docs/herbs-cautions-yinxu-batch.md:169 引用，属九型依据链的契约件。
 docs/herbs-9types-P1A-handoff.md
 
 # ---------- 杂项 ----------

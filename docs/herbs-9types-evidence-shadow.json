@@ -1,0 +1,871 @@
+{
+  "fuling": {
+    "name": "茯苓",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "yang_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:3965",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "chenpi": {
+    "name": "陈皮",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中医饮食营养学》:1354（橘皮粥条）",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_stagnation": {
+        "verdict": "suitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "shanzha": {
+    "name": "山楂",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "caution_only",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "blood_stasis": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "《中医养生学》:2330",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_stagnation": {
+        "verdict": "suitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:5347",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "gouqizi": {
+    "name": "枸杞子",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "《中医养生学》:2285、2287",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "juhua": {
+    "name": "菊花",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "caution_only",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "meiguihua": {
+    "name": "玫瑰花",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "caution_only",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "blood_stasis": {
+        "verdict": "suitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_stagnation": {
+        "verdict": "suitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "hongzao": {
+    "name": "红枣",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "caution_only",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "blood_stasis": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_stagnation": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "special_diathesis": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_deficiency": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "《中医养生学》:2307",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "phlegm_damp": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "《中医养生学》:2338",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "longyanrou": {
+    "name": "龙眼肉",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "phlegm_damp": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:9335；《中医饮食营养学》:2154",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "maidong": {
+    "name": "麦冬",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "《中医养生学》:2287；《中药学》七版:9431",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "heye": {
+    "name": "荷叶",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "caution_only",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "shengjiang": {
+    "name": "生姜",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:649；《中医饮食营养学》:344",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "blood_stasis": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:649",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "bohe": {
+    "name": "薄荷",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中医饮食营养学》:422",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_stagnation": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "《中医饮食营养学》:424",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:941",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "sangshen": {
+    "name": "桑椹",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "《中医养生学》:2285、2287",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "baihe": {
+    "name": "百合",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "《中医养生学》:2285",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "yiyiren": {
+    "name": "薏苡仁",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:3989",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "phlegm_damp": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "《中医养生学》:2338",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "luohanguo": {
+    "name": "罗汉果",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "suitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "molihua": {
+    "name": "茉莉花",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_stagnation": {
+        "verdict": "suitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "danzhuye": {
+    "name": "淡竹叶",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "caution_only",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "suanzaoren": {
+    "name": "酸枣仁",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:7780、7782",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "special_diathesis": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "《中药学》七版:7792",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "shanyao": {
+    "name": "山药",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "《中医养生学》:2285",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "special_diathesis": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_deficiency": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "《中医养生学》:2307",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "juhong": {
+    "name": "橘红",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_stagnation": {
+        "verdict": "suitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "huaihua": {
+    "name": "槐花",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:5790",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "blood_stasis": {
+        "verdict": "unsuitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "yang_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:5790",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "huoxiang": {
+    "name": "藿香",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:3780",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "zisu": {
+    "name": "紫苏",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_stagnation": {
+        "verdict": "suitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中医饮食营养学》:332",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "foshou": {
+    "name": "佛手",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_stagnation": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "《中医养生学》:2347",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "xiangru": {
+    "name": "香薷",
+    "_constitution_evidence": {
+      "yin_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "inference",
+        "tier": "I",
+        "source": null,
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:671",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "wumei": {
+    "name": "乌梅",
+    "_constitution_evidence": {
+      "blood_stasis": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_stagnation": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "damp_heat": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "juemingzi": {
+    "name": "决明子",
+    "_constitution_evidence": {
+      "damp_heat": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:1427",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "zhizi": {
+    "name": "栀子",
+    "_constitution_evidence": {
+      "damp_heat": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "qi_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:1385",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "yuxingcao": {
+    "name": "鱼腥草",
+    "_constitution_evidence": {
+      "damp_heat": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "X",
+        "source": "粤中医《如何辨识自己的体质？九种体质调理方》｜外部来源，非本库｜http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4138604.html",
+        "reviewed_by": "项目转引粤中医科普（广东省中医药局）｜本轮沿用，未独立复核",
+        "reviewed_at": "2026-09-20"
+      },
+      "yang_deficiency": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:2022",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "baibiandou": {
+    "name": "白扁豆",
+    "_constitution_evidence": {
+      "phlegm_damp": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E",
+        "source": "《中医养生学》:2338",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "jineijin": {
+    "name": "鸡内金",
+    "_constitution_evidence": {
+      "qi_deficiency": {
+        "verdict": "suitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中医饮食营养学》:1152",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  },
+  "gancao": {
+    "name": "甘草",
+    "_constitution_evidence": {
+      "phlegm_damp": {
+        "verdict": "unsuitable",
+        "basis": "evidence",
+        "tier": "E'",
+        "source": "《中药学》七版:8595",
+        "reviewed_by": "WorkBuddy AI（教材语料检索｜非执业医师，须中医师复核）",
+        "reviewed_at": "2026-09-20"
+      }
+    }
+  }
+}
