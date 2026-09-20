@@ -158,7 +158,7 @@ Copy-Item credentials.env.example credentials.env    # 可选：只有用 dsh �
 * **不配 `credentials.env`** → 完全不影响：它不含 Key，而 `DSH_HOME` 有默认值（`<仓库根>/dsh-home`）。
 
 两个真实配置文件都已被 `.gitignore` 忽略（模板文件会入库）。
-**实测：全新 clone 不配任何配置文件也能跑通 `pytest`（335 项）与 `--resolve` 纯规则链路。**
+**实测：全新 clone 不配任何配置文件也能跑通 `pytest`（534 项）与 `--resolve` 纯规则链路。**
 
 ```powershell
 # 环境与数据自检（秒级，不调模型）
@@ -327,7 +327,7 @@ python -m pytest tests\test_food_lookup.py -q   # 表本身与匹配逻辑的单
 * Agent2 管「配什么泡」，只能在白名单候选集内选，不开方剂、不超剂量。
 
 **为什么要有白名单和规则兜底**：提示词里写十遍「不要开方」，不如**让模型无方可开**。
-Agent2 只能从 `herbs.json` 的 35 味里挑，候选集由 `safety.py` 按体质预先收敛。
+Agent2 只能从 `herbs.json` 的 44 味里挑，候选集由 `safety.py` 按体质预先收敛。
 即使模型完全不可用，`matcher.py` 的规则兜底仍会给出合法、安全、不超剂量的搭配
 （响应里 `meta.degraded = true`）。
 
@@ -337,16 +337,16 @@ Agent2 只能从 `herbs.json` 的 35 味里挑，候选集由 `safety.py` 按体
 
 | 文件 | 内容 | 规模 |
 |---|---|---|
-| `core/data/food_properties.json` | 食材 + 茶饮食性表，逐条审核状态 | **146 条**（128 食材 + 18 茶饮） |
-| `core/data/herbs.json` | 药食同源饮片白名单（含剂量上限与禁忌） | **35 味** |
-| `core/data/constitution.json` | 体质速查 | **5 型** |
+| `core/data/food_properties.json` | 食材 + 茶饮食性表，逐条审核状态 | **147 条**（129 食材 + 18 茶饮） |
+| `core/data/herbs.json` | 药食同源饮片白名单（含剂量上限与禁忌） | **44 味** |
+| `core/data/constitution.json` | 体质速查 | **9 型** |
 
 **审核状态是三态**，不是布尔值——`reviewed: false` 无法区分「还没审」和「审了但不认可」：
 
 | 状态 | 效果 |
 |---|---|
 | `approved` | 真·硬规则库，置信度 0.9，界面**不**标注 |
-| `pending` | 置信度 0.9，但界面必须标注「待验证」（**当前 146 条全部是这个**） |
+| `pending` | 置信度 0.9，但界面必须标注「待验证」（**当前 147 条全部是这个**） |
 | `rejected` | 降为组合推理档（0.6），不再作硬规则 |
 
 > 全部为 `pending` 是**刻意**的：界面普遍显示「待验证」标记，
@@ -396,7 +396,7 @@ tea-advisor/
 │  │     └─ orchestrator.py        双 Agent 串行编排 + 降级
 │  ├─ data/                        数据层（上表三个 JSON）
 │  ├─ scripts/                     自检与冒烟脚本
-│  └─ tests/                       335 项离线测试
+│  └─ tests/                       534 项离线测试
 ├─ start-web.cmd                   ★ Windows 双击启动网页版（自动开浏览器）
 ├─ start-terminal.cmd              ★ Windows 双击启动终端版
 └─ docs/three-layer-architecture.md
@@ -411,18 +411,20 @@ tea-advisor/
 
 ```powershell
 cd core
-python -m pytest -q          # 514 passed，不调用模型、不需要 API Key
+python -m pytest -q          # 534 passed，不调用模型、不需要 API Key
 ```
 
 | 文件 | 覆盖内容 | 项数 |
 |---|---|---|
 | `tests/test_nature_math.py` | 编码、夹取、边界取整、两层修正、合成算法 | 48 |
 | `tests/test_temperature_layer.py` | 温度前缀、双通道扫描、准入校验、与表内变体优先级 | 48 |
-| `tests/test_safety.py` | 白名单、剂量裁剪、禁用表述、高风险人群、体质筛选 | 31 |
-| `tests/test_food_lookup.py` | 表完整性、匹配准确性、渲染、名称对齐 | 22 |
+| `tests/test_safety.py` | 白名单、剂量裁剪、禁用表述、高风险人群、体质筛选 | 50 |
+| `tests/test_food_lookup.py` | 表完整性、匹配准确性、渲染、名称对齐 | 24 |
 | `tests/test_calibration.py` | 校准接线、来源标记、Agent2 隔离、已知局限固化 | 20 |
 | `tests/test_json_guard.py` | 围栏剥离、对象提取、schema 校验、失败重试 | 14 |
-| `tests/test_key_handling.py` | Authorization 解析、思考模式映射、**Key 不进日志/响应/异常**、凭据错误码、无 Key 即拒绝 | 48 |
+| `tests/test_key_handling.py` | Authorization 解析、思考模式映射、**Key 不进日志/响应/异常**、凭据错误码、无 Key 即拒绝 | 50 |
+
+> 本表只列核心 7 个文件；`core/tests/` 现共 **24 个测试文件 / 534 项**，完整清单跑 `pytest --collect-only -q`（在 `core/` 目录下）。
 
 需要 API Key 的端到端（**不在 pytest 内**，会产生调用费用）：
 
@@ -511,7 +513,7 @@ python scripts\smoke_agents.py          # 运行时启动 → 原始往返 → A
 ```powershell
 python scripts\check_setup.py       # 环境与数据自检
 python scripts\smoke_offline.py     # 离线全链路冒烟
-python -m pytest -q                 # 335 项
+python -m pytest -q                 # 534 项
 ```
 
 提交 PR 前请读 **[CONTRIBUTING.md](CONTRIBUTING.md)**，其中写明了：

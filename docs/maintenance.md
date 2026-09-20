@@ -46,28 +46,28 @@
 | 数据表**人工审核** | ❌ **147 条全部 `pending`**（刻意的，见 §9.3） |
 | 第二层 `combine()` 接入主流程 | ❌ 已实现并测试，但未接线 |
 | 食性表规模 | 147 条（129 食材 + 18 茶饮） |
-| 饮片白名单 | 35 味 |
+| 饮片白名单 | 44 味 |
 | 体质 | 9 型 |
 
 ### 1.4 规模（随代码变动，更新时请重测）
 
-重测口径：只统计该层的源码文件（`.py`；`ui/web` 为 `.html`；`agents` 另含 `prompts/*.md`），
+重测口径：只统计该层的源码文件（`.py`；`ui/web` 为 `.html`；`agents` 另含 `prompts/*.md`；**不含 `__init__.py`**），
 排除 `__pycache__`，行数按 `\n` 计。
 
 | 层 | 文件 | 行数 | 说明 |
 |---|---|---|---|
-| `core/app/domain` | 5 | 973 | **核心判定，纯逻辑，不依赖 Web 框架** |
-| `core/app/services` | 4 | 1,102 | 编排与规则兜底 |
-| `core/app/agents` | 8 | 1,164 | LLM 层（含两个后端）+ 2 个提示词文件 |
-| `core/app/api` | 3 | 115 | HTTP 适配，极薄 |
-| `core/tests` | 13 | 2,919 | **335 项，全离线，约 0.9 秒** |
-| `core/scripts` | 10 | 2,907 | 运维/自检脚本 |
-| `ui/terminal` | 1 | 398 | 终端壳 |
-| `ui/web` | 1 | 449 | 网页壳 |
-| **合计** | 45 | **10,027** | |
+| `core/app/domain` | 5 | 1,475 | **核心判定，纯逻辑，不依赖 Web 框架** |
+| `core/app/services` | 4 | 1,526 | 编排与规则兜底 |
+| `core/app/agents` | 8 | 1,478 | LLM 层（含两个后端）+ 2 个提示词文件 |
+| `core/app/api` | 6 | 698 | HTTP 适配，极薄 |
+| `core/tests` | 25 | 7,657 | **534 项，全离线，约 3.4 秒** |
+| `core/scripts` | 12 | 4,777 | 运维/自检脚本 |
+| `ui/terminal` | 1 | 518 | 终端壳 |
+| `ui/web` | 1 | 1,020 | 网页壳 |
+| **合计** | 62 | **19,149** | |
 
-数据：`food_properties.json` 66 KB、`herbs.json` 22 KB、`constitution.json` 2.6 KB、
-`food_medicine_catalog.json` 19 KB（合规自检用）、`herb_nature_reference.json` 61 KB（药典核对用）。
+数据：`food_properties.json` 约 78 KB、`herbs.json` 约 93 KB、`constitution.json` 约 4.9 KB、
+`food_medicine_catalog.json` 约 19 KB（合规自检用）、`herb_nature_reference.json` 约 75 KB（药典核对用）。
 后两个**不参与运行时判定**。
 
 > ⚠️ **别用 PowerShell 的 `(Get-Content x).Count` 数行数。** 实测它会把
@@ -346,7 +346,7 @@ Get-Process | Where-Object { $_.ProcessName -match 'python' } | Stop-Process -Fo
 | Agent2 耗时 | 8.2–21.8 s | 11.9–13.6 s | **4.1–4.6 s** |
 | 全链路 | 11.3–24.9 s | 12.6–15.6 s | **5.1–5.7 s** |
 | 推荐条数 | 2–3 | 2–3 | **1–3（3 例实测 3/1/1）** ⚠️ |
-| 单元测试（当时的口径，现在是 §7.3 的 335） | 183 | 230 | 230 |
+| 单元测试（当时的口径，现在是 §7.3 的 534） | 183 | 230 | 230 |
 
 **`direct + low` 那 1 项失败已定位，不是回归**：Agent1 偶然把"配辣椒油"写进 `note`，
 合法触发了 `SPICY_KEYWORDS` 的 +1 规则（「面条」平 → 温）。见 §10.11。
@@ -383,7 +383,7 @@ demo 阶段不值得为此省这点钱和几秒。等并发量上来、需要压
 
 | 脚本 | 测到的 | **测不到的** |
 |---|---|---|
-| `pytest` | 判定逻辑、护栏、JSON 护栏、凭据与日志安全、食药物质目录合规、体质参考与药典核对文档一致性、交接文档结构（335 项，全离线） | 真实模型行为；HTTP 层在缺 `[web]` extra 时会自动跳过 |
+| `pytest` | 判定逻辑、护栏、JSON 护栏、凭据与日志安全、食药物质目录合规、体质参考与药典核对文档一致性、交接文档结构（534 项，全离线） | 真实模型行为；HTTP 层在缺 `[web]` extra 时会自动跳过 |
 | `test_food_accuracy.py` | **只有 Agent1 的属性判定** | **推荐质量、Agent2 的任何东西、文案措辞、注意事项是否到位** |
 | `smoke_agents.py` | 运行时启动、原始往返、Agent1 解析、全链路格式与条数 | 属性准确率（无断言，只打印）；安全性 |
 | `smoke_offline.py` | 数据层→解析→规则兜底→护栏，**不调模型** | 模型相关的任何事 |
@@ -463,11 +463,11 @@ usage["completion_tokens_details"]["reasoning_tokens"]   # 其中思考
 | 文件 | 内容 | 规模 |
 |---|---|---|
 | `food_properties.json` | `foods[]` + `tea_drinks.items[]` + `_meta` | 147 条 |
-| `herbs.json` | `_meta` + `herbs[]`（含剂量上限、禁忌、归经） | 35 味 |
+| `herbs.json` | `_meta` + `herbs[]`（含剂量上限、禁忌、归经） | 44 味 |
 | `constitution.json` | 9 型体质 + `one_line` / `principles` / `avoid` | 9 型 |
 | `food_medicine_catalog.json` | 国家卫健委食药物质目录（4 批公告）汇编，**只用于合规自检，不参与判定** | 106 种 |
-| `herb_nature_reference.json` | 《中国药典》2020 年版一部的性味归经记载 + 与项目的比对结果，**只用于核对，不参与判定** | 35 味 |
-| `herb_evidence_sources.json` | 饮片侧来源登记表：属性依据（域 I）+ 体质适配依据（域 II）+ 来源注册表，**运行时读**，只用来生成 `basis.references` | 35 味 + 24 条 |
+| `herb_nature_reference.json` | 《中国药典》2020 年版一部的性味归经记载 + 与项目的比对结果，**只用于核对，不参与判定** | 44 味 |
+| `herb_evidence_sources.json` | 饮片侧来源登记表：属性依据（域 I）+ 体质适配依据（域 II）+ 来源注册表，**运行时读**，只用来生成 `basis.references` | 44 味 + 24 条 |
 
 字段含义写在各自的 `_meta.field_notes` 里，**改结构时同步改它**。
 
@@ -569,7 +569,7 @@ POST https://ydz.chp.org.cn/front-api/search   {"keyword": "...", "bookId": 1}
 GET  https://ydz.chp.org.cn/front-api/entry/{id}   # 返回 htmlContent，含【性味与归经】
 ```
 
-当前结果：**35 味中一致 27、不一致 7、药典未收载 1**。不一致项见
+当前结果：**44 味中一致 36、不一致 7、药典未收载 1**。不一致项见
 `docs/herb-nature-crosscheck.md` 第 3 节，**脚本只报告，不改数据**，以哪个为准由人定。
 
 **2026-09-17 已决定：7 处不一致先保留项目值，等 nanple 复核后再定。** 决定与每处的
@@ -654,8 +654,8 @@ python scripts/build_herb_sources.py --check    # 只校验不写盘（可进 CI
    登记在册是为了说明「为什么不能用」，`constitution_entries` 引用次数必须为 0。
 4. **`herb_evidence()` 只返回命中本次原料的来源**，且域 II 只在传了 `constitution`
    时参与。把体质级的概述当成某一味的依据，是这条链最容易犯的错。
-5. **覆盖是不完整的，且必须如实呈现**：属性依据 34/35 味（茉莉花药典未收载），
-   体质依据只有 14/35 味。界面脚注与 `EvidenceReference` 的文档字符串都写着同一句边界：
+5. **覆盖是不完整的，且必须如实呈现**：属性依据 43/44 味（茉莉花药典未收载），
+   体质依据只有 14/44 味。界面脚注与 `EvidenceReference` 的文档字符串都写着同一句边界：
    来源支持的是**原料与调养方向**，不是本程序生成的**具体搭配与克数**。
    `review_status: pending` 一律**不进界面** —— 那是审核流程的状态，不是来源可信度的状态。
 
@@ -796,7 +796,7 @@ python -m venv .venv
 | 4 | `ui/web` 展示判定过程 | 现在只有悬停 tooltip；可考虑铺开成终端那种逐项列表 |
 | 5 | Web 壳支持 `--offline` | 需要把离线装配逻辑暴露成接口或前端实现（注意别越过 `ui/`→`core/` 的分层线） |
 | 6 | 异步任务 + 进度反馈 | 全链路 5–25 秒是主要体验瓶颈 |
-| 7 | **体质模型 5 型 → 9 型**（补阴虚/血瘀/气郁/特禀，对齐 GB/T 46939-2025） | **卡在数据，不在代码。** 代码约 100 行（枚举、`constitution.json` 4 条、提示词 9 行（2026-09-18 已补齐 9 型方向提要）、测试 +6 项）；数据才是大头：`herbs.json` 里 34 味 × `suitable_constitutions` + 27 味 × `unsuitable_for`，针对 4 个新体质共约 **244 个配伍判定**（2026-09-17 已落地 15 格，余 239 格）。而 **GB/T 46939-2025 只规定体质分类、问卷、计分与判定阈值，不提供任何饮食或饮片建议** —— 这 244 条无标准可依，必须由懂中医的人判定。防错已就位（见下），所以"只加枚举忘了补数据"现在是**安全的失败**，可以分次推进 |
+| 7 | **体质模型 5 型 → 9 型**（补阴虚/血瘀/气郁/特禀，对齐 GB/T 46939-2025） | **卡在数据，不在代码。** 代码约 100 行（枚举、`constitution.json` 4 条、提示词 9 行（2026-09-18 已补齐 9 型方向提要）、测试 +6 项）；数据才是大头：`herbs.json` 里 34 味 × `suitable_constitutions` + 27 味 × `unsuitable_for`，针对 4 个新体质共约 **244 个配伍判定**（2026-09-17 起分批落地：判定动作 17 格、余 227；数组实测 29 格、余 215，口径见 `docs/pending-items.md` §B3）。而 **GB/T 46939-2025 只规定体质分类、问卷、计分与判定阈值，不提供任何饮食或饮片建议** —— 这 244 条无标准可依，必须由懂中医的人判定。防错已就位（见下），所以"只加枚举忘了补数据"现在是**安全的失败**，可以分次推进 |
 
 > **第 7 项的前期资料已备好（2026-09-17 加）：`docs/constitution-9-types.md`**
 >
@@ -898,7 +898,7 @@ $R = 'D:\work\tea-advisor'; $PY = "$R\core\.venv\Scripts\python.exe"
 
 # 验证
 Set-Location "$R\core"
-& $PY -m pytest -q                                       # 335 项
+& $PY -m pytest -q                                       # 534 项
 & $PY scripts\smoke_offline.py
 & $PY scripts\check_setup.py
 & $PY scripts\test_food_accuracy.py                      # 真实模型，约 3.7 分

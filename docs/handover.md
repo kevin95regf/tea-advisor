@@ -20,9 +20,9 @@
 
 | | |
 |---|---|
-| 代码 | 45 个源文件 / 10,027 行，其中 `domain` + `services`（真正的资产）2,075 行 |
-| 测试 | **428 项，全离线，约 4 秒** |
-| 数据 | 食性表 147 条、饮片 35 味、体质 9 型（全部就绪）、食药物质目录 106 种、药典核对 35 味、饮片来源登记 35+24 条 |
+| 代码 | 62 个源文件 / 19,149 行，其中 `domain` + `services`（真正的资产）3,001 行 |
+| 测试 | **534 项，全离线，约 3.4 秒** |
+| 数据 | 食性表 147 条、饮片 44 味、体质 9 型（全部就绪）、食药物质目录 106 种、药典核对 44 味、饮片来源登记 44+24 条 |
 
 **它明确不是什么**：不是医疗器械、不做体质辨识诊断、不承诺任何疗效。所有输出都带免责声明，且禁用「治疗/根治」这类表述（有护栏强制）。
 
@@ -135,7 +135,7 @@ tea-advisor/
 │  │  └─ main.py                FastAPI 入口
 │  ├─ data/                     数据层（详见 §4）
 │  ├─ scripts/                  运维 / 自检 / 文档生成脚本
-│  ├─ tests/                    428 项离线测试
+│  ├─ tests/                    534 项离线测试
 │  └─ pyproject.toml
 ├─ ui/
 │  ├─ terminal/chat.py          终端壳（仅标准库）
@@ -159,11 +159,11 @@ tea-advisor/
 | 文件 | 内容 | 规模 | 参与运行时判定？ |
 |---|---|---|---|
 | `core/data/food_properties.json` | 食材 + 茶饮食性表，逐条审核状态 | 147 条（129 食材 + 18 茶饮） | ✅ 是 |
-| `core/data/herbs.json` | 饮片白名单（剂量上限、禁忌、归经、宜忌体质） | 35 味 | ✅ 是 |
+| `core/data/herbs.json` | 饮片白名单（剂量上限、禁忌、归经、宜忌体质） | 44 味 | ✅ 是 |
 | `core/data/constitution.json` | 体质定义 + 调养原则 | 9 型（全部就绪） | ✅ 是 |
 | `core/data/food_medicine_catalog.json` | 国家卫健委食药物质目录（4 批公告汇编） | 106 种 | ❌ 只用于合规自检 |
-| `core/data/herb_nature_reference.json` | 药典 2020 一部记载 + 与项目的比对结果 | 35 味 | ❌ 只用于核对 |
-| `core/data/herb_evidence_sources.json` | 饮片侧来源登记表：属性依据 + 体质适配依据 + 来源注册表 | 35 味 + 24 条 | ✅ 是（只生成 `basis.references`，不参与判定） |
+| `core/data/herb_nature_reference.json` | 药典 2020 一部记载 + 与项目的比对结果 | 44 味 | ❌ 只用于核对 |
+| `core/data/herb_evidence_sources.json` | 饮片侧来源登记表：属性依据 + 体质适配依据 + 来源注册表 | 44 味 + 24 条 | ✅ 是（只生成 `basis.references`，不参与判定） |
 
 **审核三态**（`review_status`）：`approved` = 真·硬规则库，界面不标注；`pending` = 0.9 但界面必须标「待验证」；`rejected` = 降为 0.6，不作硬规则。
 
@@ -181,30 +181,30 @@ tea-advisor/
 
 ## 5. 当前状态
 
-### 5.1 规模（口径：Python `bytes.count(b"\n")`，排除 `__pycache__`）
+### 5.1 规模（口径：Python `bytes.count(b"\n")`，排除 `__pycache__` 与 `__init__.py`；`agents` 含 `prompts/*.md`；`ui/web` 计 `index.html`）
 
 | 层 | 文件 | 行数 |
 |---|---|---|
-| `core/app/domain` | 5 | 973 |
-| `core/app/services` | 4 | 1,102 |
-| `core/app/agents` | 8 | 1,164 |
-| `core/app/api` | 3 | 115 |
-| `core/tests` | 13 | 2,919 |
-| `core/scripts` | 10 | 2,907 |
-| `ui/terminal` | 1 | 398 |
-| `ui/web` | 1 | 449 |
-| **合计** | **45** | **10,027** |
+| `core/app/domain` | 5 | 1,475 |
+| `core/app/services` | 4 | 1,526 |
+| `core/app/agents` | 8 | 1,478 |
+| `core/app/api` | 6 | 698 |
+| `core/tests` | 25 | 7,657 |
+| `core/scripts` | 12 | 4,777 |
+| `ui/terminal` | 1 | 518 |
+| `ui/web` | 1 | 1,020 |
+| **合计** | **62** | **19,149** |
 
-> 判断架构是否健康的快速指标：**`domain` + `services` 的行数占比**。这两层是真正的资产（2,075 行）。
+> 判断架构是否健康的快速指标：**`domain` + `services` 的行数占比**。这两层是真正的资产（3,001 行）。
 > 若开始膨胀，说明有人在把界面逻辑或模型逻辑塞进核心层。
 
 ### 5.2 已验证的功能
 
-- ✅ 三层判定 + 置信度体系（428 项离线测试覆盖）
+- ✅ 三层判定 + 置信度体系（534 项离线测试覆盖）
 - ✅ 双 Agent 链路（Agent1 解析 → Agent2 推荐）
 - ✅ 确定性护栏（白名单/剂量/禁忌/禁用表述/高风险人群）
 - ✅ 规则兜底（模型不可用时仍给出合法搭配）
-- ✅ 逐味公开依据链（属性依据 34/35 味 + 体质依据 24 条，随推荐返回 `basis.references`，两个壳都呈现）
+- ✅ 逐味公开依据链（属性依据 43/44 味 + 体质依据 24 条，随推荐返回 `basis.references`，两个壳都呈现）
 - ✅ 两个后端：`direct`（直连官方 API，默认）与 `dsh`（DeepSeekHarness 子进程）
 - ✅ 用户自带 Key，逐请求传递，无服务端兜底
 - ✅ 终端壳 + 本地 Web 壳
@@ -239,7 +239,7 @@ tea-advisor/
 
 ```bash
 cd core
-python -m pytest -q                    # 335 项，全离线，约 0.9 秒
+python -m pytest -q                    # 534 项，全离线，约 3.4 秒
 python scripts/smoke_offline.py        # 数据层→解析→规则兜底→护栏，不调模型
 python scripts/check_setup.py          # 环境与数据自检
 # 以下需要 API Key：
@@ -258,7 +258,7 @@ python scripts/test_food_accuracy.py   # 属性准确率，只测 Agent1
 | # | 决策 | 理由 |
 |---|---|---|
 | 1 | **定位为本地桌面助手 / 开源 CLI+Web 库，不做微信小程序** | 个人主体过不了「深度合成-AI 问答」类目审核，医疗健康类目对个人关闭 |
-| 2 | **保留核心资产、只换壳，不重写** | `resolve_food` 确定性判定、三层架构、双 Agent、34 味食性表、测试体系全部保留 |
+| 2 | **保留核心资产、只换壳，不重写** | `resolve_food` 确定性判定、三层架构、双 Agent、147 条食性表、测试体系全部保留 |
 | 3 | **原地改造，保留 Git 历史，不迁移** | 仓库留在 `D:\work\tea-advisor` |
 | 4 | **LICENSE = MIT** | 开源友好 |
 | 5 | **`ui/` 单向依赖 `core/`** | 验收：删掉 `ui/` 后 `core/` 仍过 pytest + smoke_offline |
@@ -295,7 +295,7 @@ python scripts/test_food_accuracy.py   # 属性准确率，只测 Agent1
 | 21 | **橘红：归属 2002 年附件 1 的「桔红」，视为在目录内** | ✅ 已实施（无需改代码） |
 | 22 | **药典与项目不一致的 7 处：先保留项目值**，文档标注药典值与差异影响，等 nanple 复核 | ⏳ 待 nanple 复核 |
 | 23 | **四气降档约定：微寒→凉、微温→温**。**这是项目约定，不是药典原文**；药典原文用词一律保留 | ✅ 已认可 |
-| 24 | **九型体质 id 全部确认**：`balanced` / `qi_deficiency` / `yang_deficiency` / `yin_deficiency` / `phlegm_damp` / `damp_heat` / `blood_stasis` / `qi_stagnation` / `special_diathesis` | ✅ **已实施（Step 1 + Step 2，2026-09-17）**：枚举 / `constitution.json` / 就绪闸门已扩到 9 型，`herbs.json` 补入 10 格来源点名的配伍标注，九型全部就绪且对外可见；同日第二批又由外部专业意见写入 5 格（见 `docs/herbs-9types-batch2.md`）。244 格里余 239 格的完整判定仍待 nanple，见 B3 |
+| 24 | **九型体质 id 全部确认**：`balanced` / `qi_deficiency` / `yang_deficiency` / `yin_deficiency` / `phlegm_damp` / `damp_heat` / `blood_stasis` / `qi_stagnation` / `special_diathesis` | ✅ **已实施（Step 1 + Step 2，2026-09-17）**：枚举 / `constitution.json` / 就绪闸门已扩到 9 型，`herbs.json` 补入 10 格来源点名的配伍标注，九型全部就绪且对外可见；同日第二批又由外部专业意见写入 5 格（见 `docs/herbs-9types-batch2.md`）。244 格里余 227 格的完整判定仍待 nanple，见 B3 |
 | 25 | **国标 A 栏（九型特征）用官方解读/起草人访谈的转引，逐条标注「非标准正文」** | ✅ 已实施 |
 | 26 | **《中华本草》列统一标「待确认」，不猜** | ✅ 已实施（取不到数据，见挂起事项） |
 
@@ -320,10 +320,10 @@ python scripts/test_food_accuracy.py   # 属性准确率，只测 Agent1
 | 类别 | 事项 | 谁来解 |
 |---|---|---|
 | **对外服务前的硬阻碍** | 147 条食性数据全部未人工审核（全 `pending`） | 具备资质的中医师/中药师 |
-| **只等 nanple** | 7 处药典不一致复核；244 个配伍判定（已落地 15 格，余 239 格）；问卷拼写不一致 | nanple |
+| **只等 nanple** | 7 处药典不一致复核；244 个配伍判定（判定动作已落地 17 格、余 227 格；数组实测 29 格、余 215，口径见 `docs/pending-items.md` §B3）；问卷拼写不一致 | nanple |
 | **只等你决定** | 玫瑰花/茉莉花的代码改动时机 | 项目所有者 |
 | **受外部资源阻塞** | 《中华本草》列全空（取不到公开数据）；国标 A 栏是转引（正文有付费墙） | 取得资料后可解 |
-| **技术债** | 3 条食性表缺 `review_status`；`herbs.json` 缺逐条审核字段 | 开发 |
+| **技术债** | `herbs.json` 的 9 型判定覆盖不完整（E7 出口、E13 守卫范围、E14 软硬脱节等，见 `docs/pending-items.md` E 类） | 开发 |
 
 ---
 
@@ -341,7 +341,7 @@ python scripts/test_food_accuracy.py   # 属性准确率，只测 Agent1
 | `docs/b2-constitution-id-alignment.md` | **体质标识对齐（B2）**：问卷侧 `phlegm_dampness`→`phlegm_damp` 的方案、取证与改动清单（已执行） | 接问卷 / 动体质 id 时 |
 | `docs/b2-questionnaire-integration-plan.md` | **问卷接入的 7 个决策点**：兼体质收敛、「倾向是」不是判定、平和质三档、四处接入点 | 动问卷 → 推荐链路时 |
 | `docs/b2-integration-execution-plan.md` | 上一份的**落地步骤**（6 个提交、守卫测试设计、终端接线） | 实施接入时 |
-| `docs/herb-nature-crosscheck.md` | 35 味药典对照表 + 差异影响分析 | 涉药典数据时 |
+| `docs/herb-nature-crosscheck.md` | 44 味药典对照表 + 差异影响分析 | 涉药典数据时 |
 
 **三份生成型文档不要手工编辑**（重新生成命令写在各自开头的引用块里）：
 
@@ -406,7 +406,7 @@ f3b7b6f docs: 落实四条数据决定，并为药典差异补上代码取证的
 
 > ⚠️ **`NOTES.local.md` 仅供参考，且已部分过期——一切以 `docs/` 下的文档为准。**
 > 实测它与现状不符的地方：写「尚无远程」（实际已有 GitHub 远程）、写「`miniprogram/` 空目录待删」（已删除）、
-> 写「全部提交都是占位符身份」（实际有 3 个作者）、写「pytest 230 项」（实际 335 项）。
+> 写「全部提交都是占位符身份」（实际有 3 个作者）、写「pytest 230 项」（实际 534 项）。
 > 它不在版本控制里，不会随文档同步更新，读到与本文冲突时**一律以本文和 `docs/pending-items.md` 为准**。
 
 ### 9.3 已验证的安全状态
@@ -440,7 +440,7 @@ cd D:\work\tea-advisor\core
 # python -m venv .venv ; .\.venv\Scripts\python.exe -m pip install -e ".[dev,web]"
 
 # 2. 验证一切正常（约 1 分钟，不花钱）
-..\core\.venv\Scripts\python.exe -m pytest -q                 # 期望 335 passed
+..\core\.venv\Scripts\python.exe -m pytest -q                 # 期望 534 passed
 ..\core\.venv\Scripts\python.exe scripts\smoke_offline.py     # 期望全部通过
 
 # 3. 零成本看它怎么工作（不花钱，不需要 Key）

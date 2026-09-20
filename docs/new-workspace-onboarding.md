@@ -1,7 +1,7 @@
 # 新工作区入门提示词
 
 > **用法**：把下面 `## 提示词正文` 起的全部内容复制，作为新工作区会话的第一条消息粘贴。
-> 由 2026-09-18 的工作区生成。项目会继续变，正文里的数字请以仓库现状为准——提示词只负责
+> 由 2026-09-18 生成、2026-09-20 更新。项目会继续变，正文里的数字请以仓库现状为准——提示词只负责
 > 让你知道「去哪儿查」和「哪些坑别人踩过」。
 
 ## 提示词正文
@@ -27,37 +27,37 @@
    ```
    cd core && ./.venv/Scripts/python.exe -m pytest -q
    ```
-   期望 **478 passed**。红就是环境问题，先修再说别的。
+   期望 **534 passed**。红就是环境问题，先修再说别的。
 2. 读 `docs/pending-items.md` —— 挂起项**唯一真源**，概览表 + 每项详情小节。
 3. 读 `docs/handover.md` —— 全貌（设计原则、目录分层、数据资产、决策表、文档地图）。
 
-### 2. 当前状态（2026-09-19 快照）
+### 2. 当前状态（2026-09-20 快照）
 
 | 项 | 值 |
 |---|---|
-| 本地 HEAD | `8308c38` |
-| 远程 `origin/main` | `8308c38`（与本地一致） |
-| 未推送 | 0 —— B1 的 4 个提交已于 2026-09-18 推送（快进 `65956e6..8308c38`） |
+| 本地 HEAD | `88c65a3` |
+| 远程 `origin/main` | `88c65a3`（与本地一致） |
+| 未推送 | 0 —— 阶段 3 四批已于 2026-09-20 推送（快进 `cc56479..88c65a3`） |
 | 工作区 | 干净 |
-| 测试 | 478 passed |
+| 测试 | 534 passed |
 | 唯一 ⛔ 硬阻碍 | **A1**：食性表 147 条全部未人工审核 ⇒ 「对外提供服务」不能算完成 |
 
 数据规模：食物 **129** + 茶饮 **18** = 147 条（都在 `core/data/food_properties.json`）；
-饮片 **34** 味（`core/data/herbs.json`，`_meta.version` 0.5.0）；
-食性来源登记 **58** 条（`docs/food-properties-sources.json`）。
+饮片 **44** 味（`core/data/herbs.json`，`_meta.version` 0.8.0）；
+食性来源登记 **94** 条（`docs/food-properties-sources.json`）。
 
 ### 3. 关键文件地图
 
 **运行时数据（`core/data/`，改之前先出方案）**
 
 - `food_properties.json` —— 食物 129 条 + `tea_drinks` 18 条，四气五味、适宜/不宜体质。
-- `herbs.json` —— 饮片 35 味。**内联数组格式**，`json.load`+`dumps` 回写会炸出巨大假 diff，只能文本级精确替换。
-- `herb_nature_reference.json` —— 35 味 vs 药典 2020 的对照（已废止，见 C3），是核对报告**不是**来源表。
+- `herbs.json` —— 饮片 44 味。**内联数组格式**，`json.load`+`dumps` 回写会炸出巨大假 diff，只能文本级精确替换。
+- `herb_nature_reference.json` —— 44 味 vs 药典 2020 的对照（已废止，见 C3），是核对报告**不是**来源表。
 - `herb_evidence_sources.json` —— 饮片侧依据链（E3），`core/scripts/build_herb_sources.py --write/--check` 维护。
 
 **来源与核验（事实源在 docs/，`docs/*.json` 不被运行时读）**
 
-- `docs/food-properties-sources.json` —— 食性来源登记，58 条，受控词表在 `_meta.controlled_vocab`。
+- `docs/food-properties-sources.json` —— 食性来源登记，94 条，受控词表在 `_meta.controlled_vocab`。
 - `docs/food-properties-review-sheet.md` —— 上面那张表的**脚本产物**（`core/scripts/build_food_review_sheet.py`），不要手编。
 - `docs/pending-items.md`、`docs/handover.md`、`docs/maintenance.md`、`docs/request-flow.md`。
 
@@ -100,7 +100,7 @@
 ### 6. 待确认 / 下一步
 
 - ⛔ **A1**：147 条全未人工审核 —— 唯一硬阻碍，没有它别谈对外服务。
-- **A3**（`口蘑` 凭项目判断挂别名）、**C1/C2/C3**（中华本草空列 / 国标转引 / 药典 2020 已废止）、**D1**（玫瑰·茉莉代码改动）、**D3**（7 味须预处理）、**E2**（herbs 缺逐条审核字段）：都待外部资料或所有者拍板。
+- **A3**（`口蘑` 凭项目判断挂别名）、**C1/C2/C3**（中华本草空列 / 国标转引 / 药典 2020 已废止）、**D1**（玫瑰·茉莉代码改动）、**D3**（7 味须预处理）：都待外部资料或所有者拍板。
 - **E4**：LLM 路径对主导体质的 `unsuitable_for` 是硬排除，离线路径只给 caution —— 同一体质有无 Key 拿到的安全边界不同，**口径未定，先别改**。
 - **茶饮剩 7 条**（普洱/绿茶/红茶/乌龙/大麦茶/水果茶/奶盖茶）：三处基准语料确无依据，按 L3 留在剩余 100 条里，B1 只覆盖 11/18。
 - 剩余 100 条食性分层见 `docs/food-properties-remaining-plan.md`（L1 35 / L2 32 / L3 33，**未动数据**）。
@@ -114,15 +114,14 @@
 
 ### 8. 已知文档滞后（读到时别当真）
 
-- `handover.md` §5.1 规模表失真；§9.1 Git 表已标「历史记录」（那是 2026-09-17 的快照），**当前同步状态看本文 §2**。
-- `pending-items.md` 的 D2「本地提交未推送 ✅已解决」写于 2026-09-17；它在 B1 未推期间曾不成立，**2026-09-18 推送后重新成立**（`origin/main..HEAD` 已空）。
 - 后端 `NO_API_KEY` 文案仍写「API Key 一栏」（前端已改，后端没跟）。
 - `docs/request-flow.md` 标注了三处文档/代码不一致（Agent1 JSON 失败实为 422 硬失败等）。
 - 快照日期写死在 `handover.md` / `pending-items.md` 里（守卫要求），不代表内容是最新的。
+- 另有若干「单据性」文档滞后仍挂在 `docs/pending-items.md` 里（如 **E6** 路线图数字失真），本节的通用提醒不再重复列举。
 
 ### 9. 别动的东西
 
-- `D:\work\tea-advisor-fork-keep` —— 28 个分叉保留文件（含 2075 行 `index.html` 参考版，清单见其 `MANIFEST.md`）。🟡 四项前端改造做完前**不要删**。
+- `D:\work\tea-advisor-fork-keep` —— 27 个分叉保留文件（含 2075 行 `index.html` 参考版，清单见其 `MANIFEST.md`）。🟡 四项前端改造做完前**不要删**。
 - 分支 `remote-backup-nanple` —— 覆盖远程前的备份（远程已用本地覆盖，快进非强推）。
 - `core/.venv` —— 唯一可用的环境。
 
