@@ -20,7 +20,7 @@ from app.agents.agent1_diet import parse_diet
 from app.agents.agent2_recommend import recommend as agent2_recommend
 from app.agents.runtime import CredentialError
 from app.config import get_settings
-from app.domain.diet_signals import build_meal_signals
+from app.domain.diet_signals import build_meal_signals, derive_meal_plan
 from app.domain.enums import CONSTITUTION_LABELS, Constitution, MealTime
 from app.domain.models import (
     AnalyzeRequest,
@@ -301,6 +301,8 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
     # 确定性信号（冲击度 / 湿气度 / 寒热错杂）：Agent2 之前装配好，
     # 这样它会随 parsed 一起进提示词与响应体。口径⑦要求三条链路都显式接线。
     parsed.signals = build_meal_signals(request.text, parsed.foods)
+    # 推荐优先级同样由代码派生（口径⑧），随 parsed 一起进提示词与响应体。
+    parsed.plan = derive_meal_plan(parsed.signals, constitution.value, avoid=avoid)
 
     # ---------- 2. Agent2 ----------
     degraded = False

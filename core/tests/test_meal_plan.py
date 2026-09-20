@@ -64,6 +64,11 @@ def _plan_text(rules: dict, key: str) -> str:
     return str((rules.get("plan") or {}).get(key) or "")
 
 
+def _direction_text(rules: dict, direction_id: str, key: str) -> str:
+    """方向自己的文案（closed_note 等）。"""
+    return str(_direction(rules, direction_id).get(key) or "")
+
+
 # ---------------------------------------------------------------
 # 1. 零行为变化：默认 None ⇒ 既有构造方逐字节不变
 # ---------------------------------------------------------------
@@ -190,8 +195,30 @@ def test_empty_direction_is_closed_and_notes_honestly() -> None:
     plan = derive_meal_plan(_signals(IMPACT_CASE), Constitution.BALANCED.value, rules=rules)
     assert plan is not None
     assert plan.first is None, "方向关闭时不该给 first"
-    assert plan.note == _plan_text(rules, "closed_note")
+    # 关闭文案必须来自**被请求的那个方向**：护脾胃是「药材未定」，
+    # 化湿在某体质下关闭是「候选集里没有该方向的味」——混用一句会说错方向。
+    assert plan.note == _direction_text(rules, "stomach_guard", "closed_note")
     assert plan.note, "关闭时必须给出如实说明，不能静默"
+
+
+def test_closed_note_names_the_direction_that_was_requested() -> None:
+    """阴虚的湿气餐，关闭的是**化湿**方向 —— 不能说成「护脾胃未开放」。
+
+    实测抓到的瑕疵：note 统一取 plan 级兜底文案时，阴虚用户被告知「护脾胃暂未开放」，
+    而他这一餐真正没开放的是化湿（原因也不同：不是药材未定，是候选集里没有该方向的味）。
+    """
+    rules = _rules()
+    guard_note = _direction_text(rules, "stomach_guard", "closed_note")
+    damp_note = _direction_text(rules, "damp_clear", "closed_note")
+    assert guard_note and damp_note and guard_note != damp_note, "两个方向的关闭文案不该是同一句"
+
+    signals = _signals(DAMP_CASE)
+    assert signals.impact is not None and signals.impact.score < 2, "样本需只触发湿气度"
+
+    plan = derive_meal_plan(signals, Constitution.YIN_DEFICIENCY.value, rules=rules)
+    assert plan is not None and plan.first is None
+    assert plan.note == damp_note, "说错了关闭的方向"
+    assert plan.note != guard_note
 
 
 def test_conflict_meal_yields_conflict_note_not_damp_direction() -> None:
@@ -243,7 +270,7 @@ def test_injected_subset_still_respects_candidate_window() -> None:
     plan = derive_meal_plan(_signals(IMPACT_CASE), Constitution.DAMP_HEAT.value, rules=injected)
     assert plan is not None
     assert plan.first is None, "交集为空时不得取子集里的药"
-    assert plan.note == _plan_text(injected, "closed_note")
+    assert plan.note == _direction_text(injected, "stomach_guard", "closed_note")
 
     # 同一份注入在平和质下必须开放 ⇒ 证明差异来自候选集窗口，不是别的
     other = derive_meal_plan(_signals(IMPACT_CASE), Constitution.BALANCED.value, rules=injected)

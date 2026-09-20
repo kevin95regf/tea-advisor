@@ -123,6 +123,39 @@ def _build_unverified_section(parsed: ParsedMeal) -> str:
     return "\n".join(lines)
 
 
+def _plan_lines(parsed: ParsedMeal) -> str:
+    """把代码派生的推荐优先级写成一个**独立小节**。
+
+    阶段 1 时 `signals` 是「随 parsed 自动可见」；阶段 2 的 plan 是**必须被遵守**
+    （口径⑧：优先级由代码派生，不是模型自拍）⇒ 不能指望模型自己从 parsed JSON 里翻，
+    得单独成节并把可用饮片与克数明写出来。
+
+    plan 为 None（未派生／未触发）时给一句明确的放行说明，不静默留空。
+    """
+    plan = getattr(parsed, "plan", None)
+    if plan is None:
+        return "本次没有方向接管（代码未派生 plan）：按「推荐逻辑」第 1 条自己判断这一餐的问题在哪。"
+
+    lines: list[str] = []
+    if plan.first is not None and plan.first.open:
+        amounts = "、".join(
+            f"{name} {float(plan.first.amounts.get(name, 0)):g}g" for name in plan.first.herbs
+        )
+        lines.append(
+            f"1. 本餐先做「{plan.first.label}」：只从 {amounts} 里挑，"
+            f"茶饮名照 {plan.first.title}，克数照上列。"
+        )
+    else:
+        lines.append(
+            "1. 本餐没有开放的方向：按「推荐逻辑」第 1 条自己判断这一餐的问题在哪。"
+        )
+    if plan.second is not None:
+        lines.append(f"2. 「{plan.second.label}」本餐不执行：{plan.second_note}")
+    if plan.note:
+        lines.append(f"3. 必须在说明里如实写出：{plan.note}")
+    return "\n".join(lines)
+
+
 def build_user_prompt(
     parsed: ParsedMeal,
     constitution: Constitution,
@@ -144,6 +177,8 @@ def build_user_prompt(
         f"```json\n{parsed.model_dump_json(indent=2)}\n```",
         "## 可选饮片清单（只能从这里挑，不得超出）\n"
         f"{_candidate_lines(constitution, avoid=avoid)}",
+        "## 本次优先级（代码已判定，须遵守）\n"
+        f"{_plan_lines(parsed)}",
     ]
 
     unverified_section = _build_unverified_section(parsed)

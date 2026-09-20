@@ -555,6 +555,10 @@ def derive_meal_plan(
     directions = spec.get("directions") or {}
 
     first: MealPlanStage | None = None
+    # 被请求（when 命中）却因交集不足而关闭的第一个方向。用来选**正确的**关闭文案：
+    # 护脾胃是「药材未定」，化湿在某体质下关闭是「候选集里没有该方向的味」，
+    # 混用一句会让阴虚的湿气餐被告知「护脾胃未开放」——说错方向。
+    closed_direction = ""
     try:
         for direction_id in spec.get("order") or []:
             direction = directions.get(direction_id) or {}
@@ -570,6 +574,8 @@ def derive_meal_plan(
             if picked:
                 first = _render_stage(direction_id, direction, picked)
                 break
+            if not closed_direction:
+                closed_direction = direction_id
     except MissingConstitutionDataError:
         return MealPlan(
             second=_render_stage(
@@ -586,7 +592,12 @@ def derive_meal_plan(
     if hits.get("conflict"):
         note = str(plan_spec.get("conflict_note") or "")
     elif first is None:
-        note = str(plan_spec.get("closed_note") or "")
+        # 方向自己的 closed_note 优先（原因不同，不能混用一句）
+        note = str(
+            (directions.get(closed_direction) or {}).get("closed_note")
+            or plan_spec.get("closed_note")
+            or ""
+        )
 
     return MealPlan(
         first=first,

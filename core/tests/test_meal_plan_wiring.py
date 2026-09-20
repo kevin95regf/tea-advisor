@@ -216,7 +216,11 @@ def test_closed_stomach_guard_still_gives_a_blend() -> None:
     assert rec.herbs, "契约要求永远给出一条合法搭配"
     assert "stomach_guard_closed" in hits
 
-    note = _plan_text("closed_note")
+    # 关闭文案来自**被请求的那个方向**（护脾胃＝药材未定），不是 plan 级兜底
+    from app.domain.diet_signals import load_meal_plan_rules
+
+    rules = load_meal_plan_rules()
+    note = str(((rules.get("directions") or {}).get("stomach_guard") or {}).get("closed_note") or "")
     assert note and note in rec.fit_reason, "关闭时必须如实说明，不能静默"
 
 
