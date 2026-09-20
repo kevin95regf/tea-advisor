@@ -1,0 +1,59 @@
+{
+  "_meta": {
+    "version": "0.1.0",
+    "created_at": "2026-09-20",
+    "basis": "external_opinion_unreviewed",
+    "basis_note": "2026-09-20 由项目所有者转述的执业中医从业者口头框架，无书面出处。本文件只描述「怎么推荐」（方向与优先级），不描述「怎么识别」（那是 diet_signals.json），两者刻意分开。",
+    "notice": "尚未经过人工审核，不构成医学依据。",
+    "review_status": "unreviewed",
+    "switch_note": "方向 herbs 为空 ⇒ 该方向不开放（照 ready_constitutions 先例，不静默退化成别的方向）。实际可用集合 = 方向 herbs ∩ filter_by_constitution(主导体质, avoid)，按本文件顺序取前 take 味；不足 take 味即关闭。",
+    "closed_note": "护脾胃方向当前为空 ⇒ 恒关闭。这是口径⑥「具体药材暂不定」的落法，不是缺陷：等药材定了往 herbs 里加条目即可，代码不动。",
+    "amount_note": "克数一律不从 max_daily_g 派生（它只有 6/10/12/15/20 五档，不是可派生量）。茯苓 6／陈皮 4 沿用原 RULES.sweet_heavy，保证多数体质的化湿输出与改造前逐字相同；荷叶 5 沿用 CONSTITUTION_DEFAULT 的湿热与痰湿搭配；薏苡仁／白扁豆／赤小豆 10 为本轮新增人工取值，参照山药 10、莲子 10 的既有量级，无书面出处。",
+    "dead_corner_note": "实测（core/var/probe_stage2c_out.txt §G）：护脾胃子集在湿热质候选集里为空、化湿子集在阴虚质候选集里为空；没有任何体质两个方向同时为空 ⇒ 总有方向可用。断言数字由测试从数据反推，不写死。"
+  },
+  "trigger": { "impact_min": 2, "dampness_min": 2 },
+  "order": ["stomach_guard", "damp_clear"],
+  "order_note": "order 只定「先试哪个方向」；每个方向的 when 定「它什么条件下才算候选」，unless 定「什么条件下直接退出」。判据写在数据里而不是代码里，避免方向语义散落到两个地方（同 §B4 三副本的教训）。damp_clear 的 unless=conflict 是实测逼出来的：麻辣烫配冰可乐 impact=3／damp=2／conflict=True，若不排除就会给出「茯苓陈皮化湿饮」，而冲突餐的口径是「不对冲、以护脾胃为准」——方向层必须先让位给冲突处理（方案 §2-② 的 L1）。",
+  "directions": {
+    "stomach_guard": {
+      "label": "先护脾胃",
+      "when": ["impact", "conflict"],
+      "herbs": [],
+      "take": 2,
+      "title_suffix": "和胃饮",
+      "reason": "{herbs}偏于理气健脾，这一餐对脾胃冲击偏大时先顾脾胃。"
+    },
+    "damp_clear": {
+      "label": "兼顾化湿",
+      "when": ["dampness"],
+      "unless": ["conflict"],
+      "herbs": [
+        { "name": "茯苓", "amount_g": 6 },
+        { "name": "陈皮", "amount_g": 4 },
+        { "name": "荷叶", "amount_g": 5 },
+        { "name": "薏苡仁", "amount_g": 10 },
+        { "name": "白扁豆", "amount_g": 10 },
+        { "name": "赤小豆", "amount_g": 10 }
+      ],
+      "take": 2,
+      "title_suffix": "化湿饮",
+      "reason": "{herbs}偏于健脾化湿，这一餐湿气偏重时先化湿。"
+    },
+    "constitution": {
+      "label": "体质方向",
+      "when": [],
+      "herbs": [],
+      "take": 0,
+      "title_suffix": "",
+      "reason": ""
+    }
+  },
+  "plan": {
+    "closed_note": "护脾胃方向暂未开放（药材未定），本次先按下面这一条来。",
+    "second_note": "体质上的调养方向下一餐再调，这一餐先这样。",
+    "conflict_note": "这一餐寒热错杂，先别再加偏性强的东西。",
+    "data_missing_note": "该体质的候选数据尚不齐，本次未做方向接管。",
+    "deferred": true,
+    "deferred_note": "第二段（体质方向）本餐不执行：只给一条推荐，避免用户手里同时有两组搭配而 check_blend 是单条检查、不跨条，剂量叠加没人守。"
+  }
+}

@@ -29,7 +29,14 @@ from typing import Any, Sequence
 
 from app.config import get_settings
 from app.domain.enums import Nature
-from app.domain.models import MealConflict, MealDimension, MealSignals, ParsedFood
+from app.domain.models import (
+    MealConflict,
+    MealDimension,
+    MealPlan,
+    MealPlanStage,
+    MealSignals,
+    ParsedFood,
+)
 from app.domain.nature_math import (
     CHILL_PREFIXES,
     detect_nature_conflict,
@@ -37,6 +44,7 @@ from app.domain.nature_math import (
     has_spicy_marker,
     trailing_temperature_prefix,
 )
+from app.domain.safety import MissingConstitutionDataError, filter_by_constitution
 
 # 可核查性由强到弱。evidence_floor 取本次计分信号里**最弱**的一档：
 # 只要有一次计分依赖弱档，整条结果就要能被标注。
@@ -419,3 +427,173 @@ def _action_labels(levels: Sequence[dict]) -> dict[str, str]:
     避免出现第二份标签表（项目当初把 `SOURCE_LABELS` 收敛进 `enums.py` 就是为此）。
     """
     return {str(lv.get("action", "")): str(lv.get("label") or "") for lv in levels}
+
+
+# ============================================================
+# 阶段 2：推荐优先级派生
+# ============================================================
+# 与阶段 0 同构：先立纯函数与数据（零调用点、测透），接线另一次提交。
+#
+# 三条纪律（都由实测踩出来，见 core/var/stage2-plan.md §1.5）
+# ------------------------------------------------------------
+# 1. **方向不写死一组搭配**。候选集是 `filter_by_constitution(体质)` 的窗口，
+#    实测湿热质的候选集里没有陈皮／茯苓／山药／山楂 ⇒ 写死一组，
+#    离线给得出、LLM 给不出（模型只能从候选集挑）⇒ 又一处跨路径不一致。
+#    所以每个方向只写「方向子集」，实际可用集合 = 子集 ∩ 候选集。
+# 2. **交集不足即关闭，不退化**。方向子集为空（或交集不足 take 味）时
+#    `open=False`，照 `ready_constitutions()` 的先例，不静默换成别的方向。
+# 3. **克数不从 max_daily_g 派生**。它只有 6/10/12/15/20 五档，不是可派生量；
+#    克数写在数据文件里。
+DIRECTION_CONSTITUTION = "constitution"
+PLAN_RULES_FILE = "meal_plan_rules.json"
+# 候选集 limit 与 LLM 路径的 `_candidate_lines` 保持一致（12）⇒
+# 两条路径对「这一味在不在候选集里」的结论必然相同（D23 的验收条款）。
+CANDIDATE_LIMIT = 12
+
+
+@lru_cache(maxsize=1)
+def load_meal_plan_rules() -> dict[str, Any]:
+    """加载推荐优先级定义。
+
+    沿 `load_diet_signals` 的惯例：**文件不存在时返回空字典、不抛异常**。
+    """
+    path: Path = get_settings().data_dir / PLAN_RULES_FILE
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _trigger_hits(signals: MealSignals | None, spec: dict[str, Any]) -> dict[str, bool]:
+    """三项触发各自是否成立。阈值来自数据文件，本文件不写死 2。"""
+    trigger = spec.get("trigger") or {}
+    impact_min = int(trigger.get("impact_min") or 0)
+    dampness_min = int(trigger.get("dampness_min") or 0)
+    return {
+        "impact": bool(signals and signals.impact and signals.impact.score >= impact_min),
+        "dampness": bool(
+            signals and signals.dampness and signals.dampness.score >= dampness_min
+        ),
+        "conflict": bool(signals and signals.conflict and signals.conflict.conflict),
+    }
+
+
+def _pick_herbs(
+    direction: dict[str, Any],
+    constitution: str,
+    avoid: Sequence[str],
+) -> list[tuple[str, float]]:
+    """方向子集 ∩ 候选集，按数据文件的顺序取前 `take` 味。
+
+    不足 `take` 味 ⇒ 返回空（**该方向关闭**，不退化成「取到几味算几味」）。
+    """
+    wanted = [
+        (str(h.get("name") or ""), float(h.get("amount_g") or 0))
+        for h in (direction.get("herbs") or [])
+    ]
+    wanted = [(n, g) for n, g in wanted if n]
+    if not wanted:
+        return []
+
+    take = int(direction.get("take") or 0)
+    if take <= 0:
+        return []
+
+    candidates = filter_by_constitution(
+        constitution, limit=CANDIDATE_LIMIT, avoid=[str(a) for a in (avoid or ())]
+    )
+    names = {str(c.get("name") or "") for c in candidates}
+    picked = [(n, g) for n, g in wanted if n in names][:take]
+    return picked if len(picked) >= take else []
+
+
+def _render_stage(
+    direction_id: str, direction: dict[str, Any], picked: list[tuple[str, float]]
+) -> MealPlanStage:
+    """把取中的饮片渲染成一段。中文与克数全部来自数据文件。"""
+    names = [n for n, _g in picked]
+    suffix = str(direction.get("title_suffix") or "")
+    reason = str(direction.get("reason") or "")
+    return MealPlanStage(
+        direction=direction_id,
+        label=str(direction.get("label") or direction_id),
+        open=bool(picked),
+        herbs=names,
+        amounts={n: g for n, g in picked},
+        title=("".join(names) + suffix) if names else "",
+        reason=reason.format(herbs="、".join(names)) if names else "",
+    )
+
+
+def derive_meal_plan(
+    signals: MealSignals | None,
+    constitution: str,
+    *,
+    avoid: Sequence[str] = (),
+    rules: dict[str, Any] | None = None,
+) -> MealPlan | None:
+    """从 `signals` 派生本次的推荐优先级。**纯函数**：不调模型、不改数据。
+
+    返回 None 表示「本次没有方向接管」——未触发任何一项，或数据文件缺失。
+    `first is None` 而返回值不为 None 表示「触发了但方向都不可用」，
+    此时调用方走老路，`note` 里带着如实说明（不静默退化）。
+
+    `rules` 供**内存注入**：护脾胃方向当前是空集（口径⑥：药材暂不定）⇒
+    生产上恒关闭，「方向开放」这条分支只能靠注入子集来测，否则零覆盖。
+
+    ⚠️ `filter_by_constitution` 在候选数据不齐时抛 `MissingConstitutionDataError`：
+    这里**不吞**，转成 `data_missing=True` 交回调用方 —— 不静默、也不让它炸成 500。
+    """
+    spec = rules if rules is not None else load_meal_plan_rules()
+    if not spec:
+        return None
+
+    hits = _trigger_hits(signals, spec)
+    if not any(hits.values()):
+        return None
+
+    plan_spec = spec.get("plan") or {}
+    directions = spec.get("directions") or {}
+
+    first: MealPlanStage | None = None
+    try:
+        for direction_id in spec.get("order") or []:
+            direction = directions.get(direction_id) or {}
+            when = [str(w) for w in (direction.get("when") or [])]
+            if when and not any(hits.get(w) for w in when):
+                continue
+            # unless：命中即退出。冲突餐（口径⑨「不对冲」）必须先让位给冲突处理，
+            # 否则「麻辣烫+冰可乐」会拿到化湿方向而不是护脾胃/平和。
+            unless = [str(w) for w in (direction.get("unless") or [])]
+            if any(hits.get(w) for w in unless):
+                continue
+            picked = _pick_herbs(direction, constitution, avoid)
+            if picked:
+                first = _render_stage(direction_id, direction, picked)
+                break
+    except MissingConstitutionDataError:
+        return MealPlan(
+            second=_render_stage(
+                DIRECTION_CONSTITUTION, directions.get(DIRECTION_CONSTITUTION) or {}, []
+            ),
+            note=str(plan_spec.get("data_missing_note") or ""),
+            second_note=str(plan_spec.get("second_note") or ""),
+            data_missing=True,
+        )
+
+    # note 的优先级：冲突 > 方向关闭。冲突餐要说「先别再加偏性强的东西」，
+    # 而不是「护脾胃暂未开放」——前者才是这一餐真正该被看见的事。
+    note = ""
+    if hits.get("conflict"):
+        note = str(plan_spec.get("conflict_note") or "")
+    elif first is None:
+        note = str(plan_spec.get("closed_note") or "")
+
+    return MealPlan(
+        first=first,
+        second=_render_stage(
+            DIRECTION_CONSTITUTION, directions.get(DIRECTION_CONSTITUTION) or {}, []
+        ),
+        deferred=bool(plan_spec.get("deferred", True)),
+        note=note,
+        second_note=str(plan_spec.get("second_note") or ""),
+    )

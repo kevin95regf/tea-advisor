@@ -120,6 +120,43 @@ class MealSignals(BaseModel):
     conflict: MealConflict | None = None
 
 
+class MealPlanStage(BaseModel):
+    """推荐计划里的一段（当下这一段 / 推迟到下一餐的那一段）。
+
+    `open=False` 表示**该方向本次不可用**（方向子集与候选集交集为空，或药材未定）。
+    这不是错误，也不得退化成别的方向——照 `ready_constitutions()` 的先例，如实说。
+
+    克数写在 `amounts` 里、与 `herbs` 一一对应：**不从 `max_daily_g` 派生**
+    （它只有 6/10/12/15/20 五档，不是可派生量），见 `meal_plan_rules.json` 的 `amount_note`。
+    """
+
+    direction: str = Field(default="", description="机器可读方向，如 stomach_guard / damp_clear")
+    label: str = Field(default="", description="方向中文名，来自数据文件")
+    open: bool = Field(default=False, description="false 表示该方向本次不开放")
+    herbs: list[str] = Field(default_factory=list, description="可用饮片名，按数据文件顺序")
+    amounts: dict[str, float] = Field(default_factory=dict, description="饮片名 → 克数")
+    title: str = Field(default="", description="由代码拼的茶饮名")
+    reason: str = Field(default="", description="由模板渲染的理由")
+
+
+class MealPlan(BaseModel):
+    """整餐推荐的优先级：先做什么、体质方向推迟到什么时候。
+
+    由 `diet_signals.derive_meal_plan()` 从 `signals` 派生，**代码判定、不是模型自拍**
+    （口径⑧）。`first` 为 None 表示本次没有方向接管，调用方走老路。
+
+    `deferred=True` 时只给**一条**推荐：`check_blend` 是单条检查、不跨条，
+    两组搭配同时给出会导致剂量叠加没人守。
+    """
+
+    first: MealPlanStage | None = None
+    second: MealPlanStage | None = None
+    deferred: bool = Field(default=True, description="第二段是否推迟到下一餐")
+    note: str = Field(default="", description="本次的如实说明（方向关闭／寒热错杂等）")
+    second_note: str = Field(default="", description="推迟话术，来自数据文件；壳与提示词都不自己写")
+    data_missing: bool = Field(default=False, description="候选数据不齐，未做方向接管")
+
+
 class ParsedMeal(BaseModel):
     """Agent 1 的完整输出，也是 Agent 2 的输入。"""
 
@@ -136,6 +173,13 @@ class ParsedMeal(BaseModel):
         description=(
             "整餐确定性信号（冲击度/湿气度/寒热错杂）。"
             "None 表示未计算——既有构造方不传即保持旧行为。"
+        ),
+    )
+    plan: MealPlan | None = Field(
+        default=None,
+        description=(
+            "本次推荐的优先级（先护脾胃／兼顾化湿／体质方向推迟）。"
+            "None 表示未派生——既有构造方不传即保持旧行为。"
         ),
     )
 
