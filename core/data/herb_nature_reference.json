@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "title": "42 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）",
+    "title": "44 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）",
     "version": "1.0.0",
     "compiled_at": "2026-09-20",
     "purpose": "把项目 core/data/herbs.json 的性味归经与《中国药典》2020 年版一部逐条对照，标出不一致项，供人工判断以哪个为准。**本文件不修改任何项目数据。**",
@@ -2460,6 +2460,123 @@
         "dosage_verbatim": "9～15g。",
         "entry_id": 484,
         "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=484"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "葛根",
+      "project": {
+        "nature": "cool",
+        "nature_cn": "凉",
+        "flavors": [
+          "sweet",
+          "pungent"
+        ],
+        "flavors_cn": [
+          "甘",
+          "辛"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "肺"
+        ],
+        "effects": [
+          "解肌退热",
+          "生津止渴",
+          "升阳止泻"
+        ],
+        "max_daily_g": 15
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "葛根",
+        "page": 396,
+        "pinyin": "Gegen",
+        "latin": "PUERARIAE LOBATAE RADIX",
+        "xingwei_verbatim": "甘、辛，凉。归脾、胃、肺经。",
+        "nature_word": "凉",
+        "nature_mapped": "cool",
+        "nature_mapped_cn": "凉",
+        "flavors": [
+          "sweet",
+          "pungent"
+        ],
+        "flavors_cn": [
+          "甘",
+          "辛"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "肺"
+        ],
+        "effects_verbatim": "解肌退热，生津止渴，透疹，升阳止泻，通经活络，解酒毒。用于外感发热头痛，项背强痛，口渴，消渴，麻疹不透，热痢，泄泻，眩晕头痛，中风偏瘫，胸痹心痛，酒毒伤中。",
+        "dosage_verbatim": "10～15g。",
+        "entry_id": 527,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=527"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "天冬",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "甘",
+          "苦"
+        ],
+        "meridians": [
+          "肺",
+          "肾"
+        ],
+        "effects": [
+          "养阴润燥",
+          "清肺生津"
+        ],
+        "max_daily_g": 12
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "天冬",
+        "page": 105,
+        "pinyin": "Tiɑndong",
+        "latin": "ASPARAGI RADIX",
+        "xingwei_verbatim": "甘、苦，寒。归肺、肾经。",
+        "nature_word": "寒",
+        "nature_mapped": "cold",
+        "nature_mapped_cn": "寒",
+        "flavors": [
+          "sweet",
+          "bitter"
+        ],
+        "flavors_cn": [
+          "甘",
+          "苦"
+        ],
+        "meridians": [
+          "肺",
+          "肾"
+        ],
+        "effects_verbatim": "养阴润燥，清肺生津。用于肺燥干咳，顿咳痰黏，腰膝酸痛，骨蒸潮热，内热消渴，热病津伤，咽干口渴，肠燥便秘。",
+        "dosage_verbatim": "6～12g。",
+        "entry_id": 78,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=78"
       },
       "nature_match": true,
       "flavors_match": true,

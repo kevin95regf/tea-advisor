@@ -1,7 +1,7 @@
 {
   "_meta": {
     "title": "药食同源饮片库（demo 版）",
-    "version": "0.7.0",
+    "version": "0.8.0",
     "review_status": "pending",
     "notice": "本文件仅收录『既是食品又是中药材的物质』方向的高频品种，属性依据中医饮食养生通行表述整理，剂量上限为保守的日常茶饮建议值。上线前必须由具备资质的中医师/中药师复核，并以国家卫健委发布的最新目录为准。",
     "field_notes": {
@@ -113,7 +113,7 @@
         ],
         "expansion_batch": {
           "date": "2026-09-20",
-          "scope": "扩展第一批（余甘子暂缓）：金银花 1 味 × 9 型 = 9 格（试点，2026-09-20）；阶段 3 分 4 批落地余甘子以外的 9 味 × 9 型 = 81 格（余甘子按拍板 Q2 暂缓，未计入）。累计 **8 味 72 格**。",
+          "scope": "扩展第一批（余甘子暂缓）：金银花 1 味 × 9 型 = 9 格（试点，2026-09-20）；阶段 3 分 4 批落地余甘子以外的 9 味 × 9 型 = 81 格（余甘子按拍板 Q2 暂缓，未计入）。累计 **10 味 90 格**。",
           "decided_by": "项目所有者 2026-09-20（方案 core/var/e2-stage1-2-plan.md 拍板 H 试点 / J 走 TCM.Skill）",
           "judged_by": "TCM.Skill 语料逐条判定（《中药学》七版 + 《中医养生学》第十七章 + 49 判据 R1–R5）",
           "cells": [
@@ -188,7 +188,25 @@
             {"herb": "huangjing", "constitution": "blood_stasis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R1：无「留瘀」记载、非止血收敛类，体质学资料未点名 ⇒ 不得按四气一刀切（49 文件 §1 R1）"},
             {"herb": "huangjing", "constitution": "qi_stagnation", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R2：判据是「有无行气/疏肝功效」。本方无行气疏肝功效，《中医养生学》:2347 气郁质宜用清单（佛手、橙子、柑皮、荞麦、韭菜、茴香菜、大蒜、火腿、高粱、刀豆、香橼）未列 ⇒ no_basis"},
             {"herb": "huangjing", "constitution": "special_diathesis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R4：七版:9499–9516 全节无【不良反应】项 ⇒ 无经口过敏记载，不外推"},
-            {"herb": "huangjing", "constitution": "balanced", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2278「至于阴阳气血平调的体质……不必考虑体质问题」⇒ 中性（沿用 34 味批次的平和列口径）"}
+            {"herb": "huangjing", "constitution": "balanced", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2278「至于阴阳气血平调的体质……不必考虑体质问题」⇒ 中性（沿用 34 味批次的平和列口径）"},
+            {"herb": "gegen", "constitution": "yin_deficiency", "verdict": "—", "tier": "no_basis", "field": null, "basis": "七版:1106【应用】「治疗消渴证属阴津不足者，可与天花粉、鲜地黄、麦门冬等…配伍」——该句是**配方层**（葛根在方中作升津配伍），按 49 文件 §0.1 的 E′ 边界（山楂「酸甘化阴」同型）**不升为 E′**；《中医养生学》:2287 药物养生清单未列葛根 ⇒ no_basis"},
+            {"herb": "gegen", "constitution": "yang_deficiency", "verdict": "忌", "tier": "I", "field": "unsuitable_for", "basis": "《中药学》七版:1101【性能】「甘、辛，凉。归脾、胃经。」；药典 2020 年版一部 p.396 同作「甘、辛，凉。归脾、胃、肺经」（项目取药典值）。凉性与阳虚质（《中医养生学》:2290）方向相悖。⚠️ 七版葛根全节（:1098–1118）**无【使用注意】**（:1109【用法用量】之后 :1110【鉴别用药】）⇒ 拿不到 E′，本格为 I；库内寒/凉饮片一律标阳虚不宜（既有口径）。"},
+            {"herb": "gegen", "constitution": "qi_deficiency", "verdict": "—", "tier": "no_basis", "field": null, "basis": "**反证**：七版:1107【应用】「热泄热痢，**脾虚泄泻**……若脾虚泄泻，常配伍人参、白术、木香等药，如七味白术散」——葛根是**用于**脾虚泄泻的（升阳止泻），方向与「气虚不宜」相反；:1110【鉴别用药】「柴胡、升麻两者均能升阳举陷，用治气虚下陷」亦是升提而非耗气 ⇒ 本格 no_basis"},
+            {"herb": "gegen", "constitution": "phlegm_damp", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2338 痰湿质宜用清单（白萝卜、荸荠、紫菜、海蜇、洋葱、枇杷、白果、大枣、扁豆、薏苡仁、红小豆、蚕豆、包菜）未列本味；忌用只有肥甘厚味/酒类/过饱 ⇒ no_basis"},
+            {"herb": "gegen", "constitution": "damp_heat", "verdict": "—", "tier": "no_basis", "field": null, "basis": "口径 (a)（2026-09-20 拍板 Q1）：判据须「有文献点名」。广东省中医药局《如何辨识自己的体质？九种体质调理方，一文说清楚》湿热质宜用清单（薏苡仁、莲子、苦瓜、赤小豆、绿豆、鲫鱼、冬瓜、丝瓜、卷心菜、莲藕、空心菜）与忌用清单（辣椒、大蒜、大葱、韭菜、蜂蜜、酒、牛肉、狗肉、鹿肉）均未点名本味（网页 2026-09-20 逐字核对）⇒ no_basis"},
+            {"herb": "gegen", "constitution": "blood_stasis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R1：无「留瘀」记载、非止血收敛类，体质学资料未点名 ⇒ 不得按四气一刀切（49 文件 §1 R1）"},
+            {"herb": "gegen", "constitution": "qi_stagnation", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R2：七版:1102【功效】解肌退热、透疹、生津止渴、升阳止泻，**无行气/疏肝功效**。⚠️ :1110 的「疏肝解郁」主语是**柴胡**，不是葛根（该句为三药鉴别）⇒ no_basis"},
+            {"herb": "gegen", "constitution": "special_diathesis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R4：七版:1098–1118 全节无【不良反应】项 ⇒ 无经口过敏记载，不外推"},
+            {"herb": "gegen", "constitution": "balanced", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2278「至于阴阳气血平调的体质……不必考虑体质问题」⇒ 中性（沿用 34 味批次的平和列口径）"},
+            {"herb": "tiandong", "constitution": "yin_deficiency", "verdict": "宜", "tier": "E", "field": "suitable_constitutions", "basis": "《中医养生学》:2287 阴虚质药物养生点名「**天门冬**」（原文同玉竹/黄精句）。名称桥接（必须显式记，否则复核时对不上）：项目名「天冬」↔ 教材用名「天门冬」（七版:9444 条目头「天冬 Tian dong」、:9460「本品含天门冬素（天冬酰胺）」）。旁证：七版:9447【性能】、:9448【功效】「养阴润燥，清肺生津」，:9450「其养肺阴，清肺热的作用强于麦冬、玉竹」。"},
+            {"herb": "tiandong", "constitution": "yang_deficiency", "verdict": "忌", "tier": "I", "field": "unsuitable_for", "basis": "《中药学》七版:9447【性能】「甘、苦，寒。归肺、肾、胃经。」；药典 2020 年版一部 p.105 作「甘、苦，寒。**归肺、肾经**」（项目取药典值，两版归经差一个「胃」，已登记）。寒性与阳虚质（《中医养生学》:2290）方向相悖。:9454【使用注意】讲的是脾虚/痰湿，未及阳虚⇒ 本格为 I；库内寒/凉饮片一律标阳虚不宜（既有口径）。"},
+            {"herb": "tiandong", "constitution": "qi_deficiency", "verdict": "忌", "tier": "E_prime", "field": "unsuitable_for", "basis": "《中药学》七版:9454【使用注意】「本品甘寒滋腻之性较强，**脾虚泄泻**、痰湿内盛者忌用。」「脾虚」与气虚质同向，且是本饮片自己的使用注意句 —— 与库内先例同型（栀子七版:1385「脾虚便溏者不宜用」、决明子:1427「气虚便溏者不宜用」均判 E′）⇒ 本格为 E′。"},
+            {"herb": "tiandong", "constitution": "phlegm_damp", "verdict": "忌", "tier": "E_prime", "field": "unsuitable_for", "basis": "《中药学》七版:9454【使用注意】逐字点名「**痰湿内盛**者忌用」⇒ 直接命中痰湿质定义（《中医养生学》:2335「形体肥胖……口中粘腻」，:2338 忌肥甘厚味/酒类）。⚠️ 与赤小豆×痰湿（宜）**不冲突**：两味在痰湿列方向相反，各自独立成立。"},
+            {"herb": "tiandong", "constitution": "damp_heat", "verdict": "—", "tier": "no_basis", "field": null, "basis": "口径 (a)（拍板 Q1）：粤中医湿热质宜/忌清单均未点名天冬（网页 2026-09-20 逐字核对）；七版:9454 只点名「痰湿内盛」，未及湿热 ⇒ no_basis"},
+            {"herb": "tiandong", "constitution": "blood_stasis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R1：无「留瘀」记载、非止血收敛类，体质学资料未点名 ⇒ 不得按四气一刀切（49 文件 §1 R1）"},
+            {"herb": "tiandong", "constitution": "qi_stagnation", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R2：判据是「有无行气/疏肝功效」。本方无行气疏肝功效，《中医养生学》:2347 气郁质宜用清单（佛手、橙子、柑皮、荞麦、韭菜、茴香菜、大蒜、火腿、高粱、刀豆、香橼）未列 ⇒ no_basis"},
+            {"herb": "tiandong", "constitution": "special_diathesis", "verdict": "—", "tier": "no_basis", "field": null, "basis": "R4：七版:9444–9462 全节无【不良反应】项 ⇒ 无经口过敏记载，不外推"},
+            {"herb": "tiandong", "constitution": "balanced", "verdict": "—", "tier": "no_basis", "field": null, "basis": "《中医养生学》:2278「至于阴阳气血平调的体质……不必考虑体质问题」⇒ 中性（沿用 34 味批次的平和列口径）"}
           ],
           "written": {
             "jinyinhua": {"suitable_constitutions": [], "unsuitable_for": ["yang_deficiency", "qi_deficiency"], "cautions": ["脾胃虚寒、易腹泻者不宜多饮", "不宜长期连续大量饮用"]},
@@ -198,10 +216,24 @@
             "qianshi": {"suitable_constitutions": [], "unsuitable_for": [], "cautions": ["收敛固涩，大便干结者不宜多食"]},
             "chixiaodou": {"suitable_constitutions": ["phlegm_damp", "damp_heat"], "unsuitable_for": ["yin_deficiency"], "cautions": ["利水渗湿，不宜长期连续大量饮用"]},
             "yuzhu": {"suitable_constitutions": ["yin_deficiency"], "unsuitable_for": ["yang_deficiency", "phlegm_damp"], "cautions": ["性偏凉润，脾胃虚寒、痰湿偏重者不宜多饮"]},
-            "huangjing": {"suitable_constitutions": ["yin_deficiency"], "unsuitable_for": ["phlegm_damp"], "cautions": ["质地滋腻，痰湿偏重、腹胀者不宜多饮"]}
+            "huangjing": {"suitable_constitutions": ["yin_deficiency"], "unsuitable_for": ["phlegm_damp"], "cautions": ["质地滋腻，痰湿偏重、腹胀者不宜多饮"]},
+            "gegen": {"suitable_constitutions": [], "unsuitable_for": ["yang_deficiency"], "cautions": ["性偏凉，胃寒者不宜多饮"]},
+            "tiandong": {"suitable_constitutions": ["yin_deficiency"], "unsuitable_for": ["yang_deficiency", "qi_deficiency", "phlegm_damp"], "cautions": ["孕妇、哺乳期妇女及婴幼儿等特殊人群不推荐食用（2024 年第 4 号公告解读）", "脾胃虚寒、痰湿偏重者不宜", "偏于滋阴润燥，宜对症使用，不宜长期连续大量饮用"]}
           },
-          "counts": {"pilot_jinyinhua": {"herb_count": 1, "total_cells": 9, "tier": {"E_prime": 2, "no_basis": 7}}, "by_batch": {"batch1": {"label": "阶段 3 批一：泡水 3 味", "herb_count": 3, "total_cells": 27, "tier": {"E": 1, "I": 4, "no_basis": 22}, "verdict": {"—": 22, "忌": 5}}, "batch2": {"label": "阶段 3 批二：需煮 2 味", "herb_count": 2, "total_cells": 18, "tier": {"E": 1, "I": 1, "X": 1, "no_basis": 15}, "verdict": {"—": 15, "宜": 2, "忌": 1}}, "batch3a": {"label": "阶段 3 批三a：需煮 2 味（阴虚唯一增量的前两味）", "herb_count": 2, "total_cells": 18, "tier": {"E": 2, "I": 3, "no_basis": 13}, "verdict": {"—": 13, "宜": 2, "忌": 3}}}, "cumulative": {"herb_count": 8, "total_cells": 72, "tier": {"E": 4, "E_prime": 2, "I": 8, "X": 1, "no_basis": 57}, "verdict": {"—": 56, "中性": 1, "宜": 4, "忌": 11}}},
-          "visibility": "本批（阶段 3 批三a：需煮 2 味（阴虚唯一增量的前两味））写入 2 味：suitable_constitutions 新增 2 味（玉竹, 黄精）、unsuitable_for 新增 2 味（玉竹, 黄精）。⚠️ 新条目一律追加在 `herbs.json` 数组末尾 ⇒ 在 catalog 顺序里排最后。**本批是整批 9 味里唯一产生真实候选增量的判定**：玉竹、黄精写入 `suitable_constitutions: [yin_deficiency]`，使阴虚 suitable 由 3 味增至 5 味，**全在 `filter_by_constitution(limit=12)` 的可见区间内**（阴虚原有 suitable 仅 3 味，窗口未满），代价是挤出 neutral 段末尾 2 味（决明子、薄荷）—— 阴虚窗口 n 仍为 12。⚠️ 本批另按拍板 Q1(b) 把两味判为**痰湿不宜**（写入 `unsuitable_for`），但两味本就不在痰湿候选池内 ⇒ **痰湿候选逐格不变**。**其余 8 型候选逐格不变**（它们的 suitable＋neutral 在追加前已 ≥12）。因两味追加在数组末尾，catalog 顺序里天然排在既有 3 味之后 ⇒ **不触发 E7 那类「写入即升位」**。",
+          "counts": {"pilot_jinyinhua": {"herb_count": 1, "total_cells": 9, "tier": {"E_prime": 2, "no_basis": 7}}, "by_batch": {"batch1": {"label": "阶段 3 批一：泡水 3 味", "herb_count": 3, "total_cells": 27, "tier": {"E": 1, "I": 4, "no_basis": 22}, "verdict": {"—": 22, "忌": 5}}, "batch2": {"label": "阶段 3 批二：需煮 2 味", "herb_count": 2, "total_cells": 18, "tier": {"E": 1, "I": 1, "X": 1, "no_basis": 15}, "verdict": {"—": 15, "宜": 2, "忌": 1}}, "batch3a": {"label": "阶段 3 批三a：需煮 2 味（阴虚唯一增量的前两味）", "herb_count": 2, "total_cells": 18, "tier": {"E": 2, "I": 3, "no_basis": 13}, "verdict": {"—": 13, "宜": 2, "忌": 3}}, "batch3b": {"label": "阶段 3 批三b：需煮 2 味（含 2024 年第 4 号公告限定）", "herb_count": 2, "total_cells": 18, "tier": {"E": 1, "E_prime": 2, "I": 2, "no_basis": 13}, "verdict": {"—": 13, "宜": 1, "忌": 4}}}, "cumulative": {"herb_count": 10, "total_cells": 90, "tier": {"E": 5, "E_prime": 4, "I": 10, "X": 1, "no_basis": 70}, "verdict": {"—": 69, "中性": 1, "宜": 5, "忌": 15}}},
+          "visibility": "本批（阶段 3 批三b：需煮 2 味（含 2024 年第 4 号公告限定））写入 2 味：suitable_constitutions 新增 1 味（天冬）、unsuitable_for 新增 2 味（葛根, 天冬）。⚠️ 新条目一律追加在 `herbs.json` 数组末尾 ⇒ 在 catalog 顺序里排最后。**本批预期：阴虚 suitable 由 5 味增至 6 味**（天冬写入 `[yin_deficiency]`，仍在 `limit=12` 可见区间内）；葛根不写 suitable ⇒ 其余 8 型候选**逐格不变**。⚠️ 天冬的 `cautions[0]` 带「2024 年第 4 号公告」的特殊人群限定，故离线兜底路径（`matcher.py` 取 `cautions[:1]`）也可见 —— 这正是把它放首位的理由。",
+          "catalog_batch_2024_04": {
+            "batch_code": "2024-04",
+            "title": "《关于地黄等4种按照传统既是食品又是中药材的物质的公告》（2024年 第4号）",
+            "issued": "2024-08-12",
+            "announcement_url": "https://www.nhc.gov.cn/sps/c100088/202408/53150d0918ec40899b5293147ec0dd01.shtml",
+            "interpretation_published": "2024-08-26",
+            "url": "https://www.nhc.gov.cn/sps/c100087/202408/aa9a6f7bce8e4b4cbcc4b38591676ed6.shtml",
+            "verbatim": "上述物质作为食药物质，建议按照传统方式适量食用，孕妇、哺乳期妇女及婴幼儿等特殊人群不推荐食用。上述物质作为保健食品原料使用时，应当按保健食品有关规定管理；作为中药材使用时，应当按中药材有关规定管理。",
+            "applied_to": ["tiandong"],
+            "not_yet_applied": ["maidong", "dihuang", "huajuhong"],
+            "note": "⚠️ `verbatim` 的出处是**官方解读页**（`url` 指向），**不在公告正文、也不在公告附件表**：公告正文（`announcement_url`）仅「根据《食品安全法》……现将地黄、麦冬、天冬、化橘红等 4 种物质纳入食药物质目录。特此公告。」数句；公告附件 PDF 只有 4 味的铅·镉·砷·汞·二氧化硫安全限量表（2026-09-20 逐字取出核实）。`issued` 是公告落款日、`interpretation_published` 是解读发布日。本项目只收录该公告列为食药物质的 4 味中的麦冬、天冬（地黄已按炮制品性味相反剔除，化橘红见挂起项 E9）。**「2024-04」是公告序号，不是月份** —— `food_medicine_catalog.json` 的 `batch` 字段存的就是这个序号。本块是该限定句在版本控制内的**唯一载体**（catalog 的 `batches[].verbatim` 只存名单串、不存限定句）。"
+          },
           "open_questions": [
             "做法依据（拍板 E）：定为**泡水**（不标 requires_cooking），依据是形态为花蕾 ＋ 七版:1726「疏散风热、清泄里热以生品为佳」；但语料内**无「泡服/代茶饮」的文献原句**（《中医饮食营养学》:820 的「金银花露」是蒸馏品，不是冲泡）⇒ 待外部确认。",
             "与既有凉/寒味的口径差异：菊花/决明子/淡竹叶/槐花/鱼腥草 5 味都带 damp_heat（suitable），本批按现行判据（粤中医未点名）把金银花判 no_basis ⇒ 两者并存。维持（承认那 5 味是判据成文前的项目自拟）还是另案补齐依据，待裁定。",
@@ -220,7 +252,11 @@
             "`max_daily_g` 是**项目约定、非药典值**（拍板 Q3）：玉竹 12（=药典 p.135 上限「6～12g」，照麦冬/山楂/决明子）、黄精 15（=药典 p.368 上限「9～15g」）⇒ 待中药师确认。",
             "⚠️ **本批是整批 9 味里唯一产生真实候选增量的判定**（拍板 Q5）：玉竹／黄精写入`suitable_constitutions: [yin_deficiency]`，使阴虚 suitable 由 3 味增至 5 味，**全在 `filter_by_constitution(limit=12)` 的可见区间内**；因两味是追加在数组末尾的新条目，在 catalog 顺序里天然排在既有 3 味之后 ⇒ **不触发 E7 那类「写入即升位」**。",
             "⚠️ **黄精×气虚未写为「宜」**：七版:9503【功效】「**补气**养阴」、:9506「本品能补益脾气」与该体质同向，但《中医养生学》:2307 气虚质宜用食物清单**未列黄精**，故按 I 级也只能判外推。本批按拍板 Q5 的范围（宜列只写阴虚 3 格）**不写**，登记为待裁候选。",
-            "⚠️ **痰湿两格按拍板 Q1(b) 改判「忌」**（原草案判 no_basis，2026-09-20 改）：玉竹、黄精写入`unsuitable_for: [phlegm_damp]`。三条理由 —— ① 玉竹原依据「滋阴而不碍邪」出自「阴虚之体感受风温」的**外感语境**（七版:9487），说的是不妨碍祛**外邪**，**不支持**「不助痰湿」；② 库内痰湿硬屏蔽 7 味的nature 跨温／凉／寒／平（含平性山药）⇒ 判据是「滋腻助湿」而非四气，两味正在该画像内、与同族 4 味（麦冬／百合／桑椹／罗汉果）取齐；③ 两味自身 cautions 已写「痰湿偏重者不宜」，判 no_basis 等于否认自己的安全提示。⚠️ 本格为 **I 级（库内口径外推）**、非 E′（七版两味全节均无【使用注意】）。"
+            "⚠️ **痰湿两格按拍板 Q1(b) 改判「忌」**（原草案判 no_basis，2026-09-20 改）：玉竹、黄精写入`unsuitable_for: [phlegm_damp]`。三条理由 —— ① 玉竹原依据「滋阴而不碍邪」出自「阴虚之体感受风温」的**外感语境**（七版:9487），说的是不妨碍祛**外邪**，**不支持**「不助痰湿」；② 库内痰湿硬屏蔽 7 味的nature 跨温／凉／寒／平（含平性山药）⇒ 判据是「滋腻助湿」而非四气，两味正在该画像内、与同族 4 味（麦冬／百合／桑椹／罗汉果）取齐；③ 两味自身 cautions 已写「痰湿偏重者不宜」，判 no_basis 等于否认自己的安全提示。⚠️ 本格为 **I 级（库内口径外推）**、非 E′（七版两味全节均无【使用注意】）。",
+            "做法依据（葛根、天冬）：两味均标 `requires_cooking: true`（根／块根质地坚实，教材仅作「煎服」），沿用库内 6 味既有口径；依据文本写在 `brewing.note`，由 `EXPECTED_COOK_REQUIRED` 守着。",
+            "`max_daily_g` 是**项目约定、非药典值**（拍板 Q3）：葛根 15（=药典 p.396 上限「10～15g」）、天冬 12（=药典 p.105 上限「6～12g」）⇒ 待中药师确认。",
+            "⚠️ **天冬的 2024 年第 4 号公告限定**（拍板 Q4）：原句「建议按照传统方式适量食用，**孕妇、哺乳期妇女及婴幼儿等特殊人群不推荐食用**」已逐字落库到两处 —— ① `tiandong.cautions[0]`（放首位，使离线兜底路径 `matcher.py` 的 `cautions[:1]` 也可见）；② 同级 `catalog_batch_2024_04` 块（逐字原文＋出处 URL＋适用与待办清单）。公告落款 2024-08-12，**不是「2024 年 4 月」**。",
+            "⚠️ **同批 2024-04 的麦冬未带该限定**（`maidong.cautions` 仍为「脾胃虚寒、痰湿偏重者不宜」「腹泻期间停用」）。麦冬是**既有条目**，改它的 `cautions[0]` 会改呈现，按停手点 2 不动 ⇒ 只登记挂起项，本批不补。**地黄**（已剔除）与**化橘红**（E9）同理。"
           ]
         },
         "pending": [],
@@ -1117,6 +1153,50 @@
       "brewing": {
         "form": "干黄精片，多为蒸制后的深色切片",
         "note": "蒸制饮片质地坚实，需煮 15 分钟以上，久煮更易出味",
+        "prep": "温水冲洗后煮制",
+        "requires_cooking": true
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
+    },
+  {
+      "id": "gegen",
+      "name": "葛根",
+      "nature": "cool",
+      "flavors": ["sweet", "pungent"],
+      "meridians": ["脾", "胃", "肺"],
+      "effects": ["解肌退热", "生津止渴", "升阳止泻"],
+      "max_daily_g": 15,
+      "cautions": ["性偏凉，胃寒者不宜多饮"],
+      "suitable_constitutions": [],
+      "unsuitable_for": ["yang_deficiency"],
+      "brewing": {
+        "form": "干葛根片或小块（野葛）",
+        "note": "质硬，需煮 15 分钟以上才易出味",
+        "prep": "可先温水浸泡 30 分钟再煮",
+        "requires_cooking": true
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
+    },
+  {
+      "id": "tiandong",
+      "name": "天冬",
+      "nature": "cold",
+      "flavors": ["sweet", "bitter"],
+      "meridians": ["肺", "肾"],
+      "effects": ["养阴润燥", "清肺生津"],
+      "max_daily_g": 12,
+      "cautions": ["孕妇、哺乳期妇女及婴幼儿等特殊人群不推荐食用（2024 年第 4 号公告解读）", "脾胃虚寒、痰湿偏重者不宜", "偏于滋阴润燥，宜对症使用，不宜长期连续大量饮用"],
+      "suitable_constitutions": ["yin_deficiency"],
+      "unsuitable_for": ["yang_deficiency", "qi_deficiency", "phlegm_damp"],
+      "brewing": {
+        "form": "干天冬，半透明条状",
+        "note": "质地柔韧，需煮 10 分钟以上",
         "prep": "温水冲洗后煮制",
         "requires_cooking": true
       },
