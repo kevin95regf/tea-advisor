@@ -9,6 +9,10 @@
 
 2. **提示词文字与 `herbs.json` 标记脱钩。** 提示词是「范式」：示例用什么冲泡方式，
    模型就照着答。缺口 2 的反例正是提示词自己教的（「茯苓 + 保温杯焖 8 分钟」）。
+
+3. **提示词教「寒热对冲」。** 第 3 条原本写着「吃了燥热的，配清凉的」，与已定口径⑨
+   （不对冲、以护脾胃为准）直接矛盾。提示词是范式，模型会照着答 ⇒ 用户拿到的
+   正是被否掉的方向。2026-09-20 随阶段 1 改掉，并加守卫防回退。
 """
 
 from __future__ import annotations
@@ -203,3 +207,72 @@ def test_candidate_lines_only_mark_cook_required() -> None:
         assert herb_requires_cooking(by_name[name]), f"{name} 带了提示却没有标记"
     for name in plain:
         assert not herb_requires_cooking(by_name[name]), f"{name} 有标记却没带提示"
+
+
+# ============================================================
+# 缺口 3：第 3 条不得教「寒热对冲」（口径⑨）
+# ============================================================
+# 旧文案里的这两句就是被否掉的方向。它们作为**字串**出现在守卫里，
+# 是为了负控制能把旧文案塞回去验证守卫会变红。
+HEDGE_WORDS: tuple[str, ...] = ("配清凉的", "配温性的")
+
+OLD_ITEM_3 = "3. **寒热要平衡**：吃了燥热的，配清凉的；吃了生冷的，配温性的。\n"
+
+
+def _numbered_items(text: str, number: int) -> list[str]:
+    """取出**所有**编号为 N 的条目（含续行）。
+
+    为什么是复数：提示词里有**两组**编号列表（硬规则 1–8、搭配原则 1–6），
+    取「第一个 N.」会拿到硬规则那一组，判据就守错了对象（实测踩到）。
+
+    **只认行首的 `N. `**，不全文扫 —— 全文扫会被示例段里偶然出现的同义词蒙混
+    （与缺口 1「示例里的体质名把提要缺口盖住」是同一个形状）。
+    """
+    out: list[str] = []
+    for part in re.split(r"(?m)^(?=\s*\d+\.\s)", text):
+        m = re.match(r"\s*(\d+)\.\s", part)
+        if m and int(m.group(1)) == number:
+            out.append(part)
+    return out
+
+
+def _item3_violations(prompt_text: str) -> list[str]:
+    """纯函数：正向测试与负控制**共用同一份判定**。"""
+    items = _numbered_items(prompt_text, 3)
+    if not items:
+        return ["提示词里找不到第 3 条 —— 改了编号请同步更新本测试"]
+
+    bad: list[str] = []
+    for item in items:
+        bad.extend(
+            f"第 3 条仍写着「{word}」——那是被口径⑨否掉的寒热对冲"
+            for word in HEDGE_WORDS
+            if word in item
+        )
+    if not any("signals.conflict" in item for item in items):
+        bad.append(
+            "两条编号列表的第 3 条里都没有 parsed.signals.conflict "
+            "—— 模型无从知道这一餐寒热错杂"
+        )
+    # 正面锚点：只禁不禁不行——删成一句废话也能「不含禁用词」。
+    if not any("护脾胃" in item for item in items):
+        bad.append("第 3 条没有给出正面方向（护脾胃）—— 口径⑨是「不对冲 + 护脾胃」两件事")
+    return bad
+
+
+def test_item3_forbids_hedging_and_names_signals() -> None:
+    assert _item3_violations(load_prompt()) == [], (
+        "agent2_system.md 第 3 条与已定口径⑨矛盾：方向是「不对冲、以护脾胃为准」"
+    )
+
+
+def test_item3_guard_negative_control() -> None:
+    """旧文案塞回去必须变红 —— 否则上一条是恒真断言。"""
+    prompt = load_prompt()
+    assert _item3_violations(prompt) == []
+
+    # 锁定「搭配原则」里那一条（提到 signals.conflict 的），塞回旧文案。
+    target = next(i for i in _numbered_items(prompt, 3) if "signals.conflict" in i)
+    reverted = prompt.replace(target, OLD_ITEM_3)
+    assert reverted != prompt, "替换没生效，负控制形同虚设"
+    assert _item3_violations(reverted), "改回旧文案后守卫没变红 —— 判据恒真"
