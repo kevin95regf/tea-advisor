@@ -95,7 +95,16 @@
             "verdict": "宜",
             "tier": "E",
             "source": "《中医养生学》:2287 药物养生清单点名「麦门冬」；《中药学》七版:9431",
-            "decision": "选 A′：依据采纳（E 级直接点名），但本轮不写入 suitable_constitutions —— dry-run 实测写入后麦冬（catalog 下标 8）会跃居阴虚候选第 1 位，与 rulings.priority_review 里山楂×气郁同属「写入即升位」问题。本轮无用户可见出口，留待 E2（影子字段并入本文件）再给出"
+            "decision": "选 A′：依据采纳（E 级直接点名），但本轮不写入 suitable_constitutions —— dry-run 实测写入后麦冬（catalog 下标 8）会跃居阴虚候选第 1 位，与 rulings.priority_review 里山楂×气郁同属「写入即升位」问题。2026-09-20 E2 复核后订正：本格出口不在数据位（补审核字段/并入影子字段都打不开它），而在渲染位 —— 只要麦冬不在 suitable_constitutions，herb_evidence() 就不会把它带进 Basis.references。出口两选一：① 写入数组并接受升位（须同步登记 priority_review）；② 新增一个独立于推荐排序的依据渲染位。详见 docs/pending-items.md E7。"
+          }
+        ],
+        "excluded": [
+          {
+            "herb": "dihuang",
+            "name": "地黄",
+            "date": "2026-09-20",
+            "reason": "药典与教材均按炮制品分列：鲜地黄/生地黄性寒、熟地黄性微温，四气方向相反，一条目录条目无法表达（同「葱拆部位」族）。另：质地滋腻碍脾，日常茶饮/煮水传统弱。",
+            "decided_by": "项目所有者 2026-09-20 扩展第一批裁定（方案 core/var/e2-stage1-2-plan.md 拍板 D）"
           }
         ],
         "pending": [],
@@ -120,7 +129,11 @@
         "note": "需先煎或久煮 10 分钟以上才易出味，直接冲泡效果差",
         "prep": "可先用温水浸泡 10 分钟再煮",
         "requires_cooking": true
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "chenpi",
@@ -137,7 +150,11 @@
         "form": "干燥老陈皮，掰成小块",
         "note": "越陈越香，建议选三年以上",
         "prep": "温水快速冲洗一次去浮尘"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "shanzha",
@@ -154,7 +171,11 @@
         "form": "干山楂片，可略炒后用",
         "note": "消肉食油腻效果明显，适合聚餐后",
         "prep": "炒山楂偏温和，生山楂偏酸"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "gouqizi",
@@ -171,7 +192,11 @@
         "form": "干果，颗粒饱满者佳",
         "note": "最后 3 分钟放入，避免久煮发酸；可连果一起吃掉",
         "prep": "温水稍洗即可"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "juhua",
@@ -188,7 +213,11 @@
         "form": "干花，杭白菊偏清甜，胎菊偏清苦",
         "note": "水温 90℃ 左右即可，沸水久煮易苦",
         "prep": "第一泡快速倒掉可去浮尘与涩味"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "meiguihua",
@@ -205,7 +234,11 @@
         "form": "干花蕾",
         "note": "水温 85–90℃，焖 3–5 分钟，久煮香气尽失",
         "prep": "可配少量陈皮同泡"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "hongzao",
@@ -222,7 +255,11 @@
         "form": "干枣，切片或掰开",
         "note": "整颗冲泡不出味，务必掰开或切片",
         "prep": "去核可减弱燥性"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "longyanrou",
@@ -239,7 +276,11 @@
         "form": "干桂圆肉",
         "note": "3–5 粒即可，多则甜腻生痰",
         "prep": "可配菊花平衡温性"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "maidong",
@@ -256,7 +297,11 @@
         "form": "干块状，质地柔润",
         "note": "与枸杞同泡是经典搭配，适合熬夜后口干",
         "prep": "温水洗一次即可"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "heye",
@@ -273,7 +318,11 @@
         "form": "干荷叶丝或碎块",
         "note": "适合油腻餐后，清爽解腻",
         "prep": "沸水焖 5 分钟"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "juemingzi",
@@ -290,7 +339,11 @@
         "form": "炒决明子，需略捣碎",
         "note": "整粒几乎不出味，务必捣碎或买打碎款",
         "prep": "建议先干锅小火炒香再泡"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "shengjiang",
@@ -307,7 +360,11 @@
         "form": "鲜姜切薄片 2–3 片",
         "note": "吃了生冷之后最合适，可配红枣",
         "prep": "去皮减弱辛辣，留皮偏发散"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "bohe",
@@ -324,7 +381,11 @@
         "form": "干薄荷叶",
         "note": "最后 2 分钟放入或直接焖泡，久煮挥发油尽失",
         "prep": "加盖焖泡，减少香气逸散"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "sangshen",
@@ -341,7 +402,11 @@
         "form": "干桑椹",
         "note": "偏酸甜，适合熬夜后口干",
         "prep": "温水洗去浮尘"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "baihe",
@@ -359,7 +424,11 @@
         "note": "需煮 8–10 分钟，冲泡难以出味",
         "prep": "温水泡发 20 分钟更易煮软",
         "requires_cooking": true
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "lianzi",
@@ -377,7 +446,11 @@
         "note": "莲子心偏苦寒，不喜苦味可去芯",
         "prep": "需煮 10 分钟以上",
         "requires_cooking": true
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "yiyiren",
@@ -395,7 +468,11 @@
         "note": "质地坚硬，建议先煮 15 分钟或直接用炒制打碎款",
         "prep": "生薏苡仁偏凉，炒后偏健脾",
         "requires_cooking": true
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "wumei",
@@ -412,7 +489,11 @@
         "form": "干乌梅，可略捣",
         "note": "酸甘化阴，夏季生津解渴；可配少量甘草与陈皮",
         "prep": "温水洗后焖泡 10 分钟"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "luohanguo",
@@ -429,7 +510,11 @@
         "form": "干果，掰碎 1/4 个",
         "note": "天然甜味，可替代糖；嗓子不适时合适",
         "prep": "连壳掰碎冲泡"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "gancao",
@@ -450,7 +535,11 @@
         "form": "甘草片 2–3 片",
         "note": "主要作用是调和味道，用量宜少，不建议作为主料",
         "prep": "可先煮 5 分钟"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "molihua",
@@ -467,7 +556,11 @@
         "form": "干茉莉花蕾，或茉莉花茶",
         "note": "香气易挥发，水温 85–90℃、加盖焖 3 分钟即可",
         "prep": "市售茉莉花茶已含绿茶底，注意别与寒凉饮片叠加"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "danzhuye",
@@ -484,7 +577,11 @@
         "form": "干叶切段",
         "note": "夏季心烦口渴时合适",
         "prep": "沸水焖 5 分钟"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "zhizi",
@@ -501,7 +598,11 @@
         "form": "栀子果实，可略捣碎",
         "note": "偏苦寒，一次 2–3 枚即可，多则伤胃",
         "prep": "捣碎后沸水焖 5 分钟"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "suanzaoren",
@@ -518,7 +619,11 @@
         "form": "炒酸枣仁，捣碎",
         "note": "整粒不出味；适合睡前 1 小时温饮",
         "prep": "捣碎后沸水焖 10 分钟"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "shanyao",
@@ -536,7 +641,11 @@
         "note": "需煮 10 分钟以上，冲泡难出味",
         "prep": "温水泡 20 分钟后煮",
         "requires_cooking": true
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "jineijin",
@@ -553,7 +662,11 @@
         "form": "炒鸡内金粉",
         "note": "研粉冲服或冲入茶中，消食方向里最直接的一味",
         "prep": "以粉直接冲入温茶"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "baibiandou",
@@ -571,7 +684,11 @@
         "note": "质地坚硬，务必先煮 15 分钟",
         "prep": "炒后捣碎更易出味",
         "requires_cooking": true
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "juhong",
@@ -588,7 +705,11 @@
         "form": "橘红片或丝",
         "note": "比陈皮更偏于化痰，量宜少",
         "prep": "沸水焖 5 分钟"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "huaihua",
@@ -605,7 +726,11 @@
         "form": "干槐花",
         "note": "夏季偏燥热时可用",
         "prep": "沸水焖 4 分钟"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "huoxiang",
@@ -622,7 +747,11 @@
         "form": "干藿香叶",
         "note": "夏季湿重、食欲不振时合适；最后 2 分钟放入",
         "prep": "加盖焖泡，减少香气逸散"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "zisu",
@@ -639,7 +768,11 @@
         "form": "干紫苏叶",
         "note": "吃了生冷海鲜之后合适",
         "prep": "最后 2 分钟放入，或直接焖泡"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "foshou",
@@ -656,7 +789,11 @@
         "form": "干佛手片",
         "note": "情绪不畅、饭后胀气时合适，方向与玫瑰花相近",
         "prep": "沸水焖 6 分钟"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "xiangru",
@@ -673,7 +810,11 @@
         "form": "干香薷",
         "note": "夏季空调房受凉后合适",
         "prep": "沸水焖 5 分钟"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     },
     {
       "id": "yuxingcao",
@@ -690,7 +831,11 @@
         "form": "干鱼腥草",
         "note": "偏于清热，适合湿热明显时短期使用",
         "prep": "沸水焖 5 分钟"
-      }
+      },
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null
     }
   ]
 }
