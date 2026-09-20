@@ -10,7 +10,7 @@
   3. deepseek-harness-sdk 是否安装（仅 dsh 后端需要）
   4. herbs.json / constitution.json 是否能通过 Pydantic 校验
   5. 安全护栏的若干基本行为
-  6. 中医体质问卷子包是否可用（**可选**依赖，缺失只影响终端的 --questionnaire）
+  6. 中医体质问卷子包是否可用（可选依赖；缺失时问卷 API 返回 501）
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 for _stream in (sys.stdout, sys.stderr):
     try:
         _stream.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 - 控制台流不一定支持 reconfigure
         pass
 
 OK = "  [OK]  "
@@ -107,7 +107,7 @@ def main() -> int:
         import deepseek_harness  # noqa: F401
 
         line(OK, "deepseek-harness-sdk 已安装")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - 自检需把任意导入失败转成可读诊断
         line(FAIL, f"deepseek-harness-sdk 未安装或无法导入: {exc}")
         line(WARN, "执行：pip install deepseek-harness-sdk")
         problems.append("SDK 未安装")
@@ -132,7 +132,7 @@ def main() -> int:
     for item in herbs:
         try:
             CatalogHerb(**item)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 汇总每条数据的校验失败
             bad.append(f"{item.get('name', '?')}: {str(exc)[:80]}")
     if bad:
         line(FAIL, f"{len(bad)} 味饮片字段不合法")
@@ -191,20 +191,21 @@ def main() -> int:
             else:
                 line(FAIL, f"{desc} —— 未按预期触发")
                 problems.append(desc)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - 自检应继续执行并汇总所有失败
             line(FAIL, f"{desc} —— 抛异常: {exc}")
             problems.append(desc)
 
     # ---------- 6. 问卷子包（可选依赖）----------
-    # ⚠️ 这里是 WARN 不是 FAIL：问卷是**可选**依赖（core 的任何模块都不 import 它），
-    # 缺了只影响终端的 --questionnaire。标 FAIL 会让本脚本退出码变 1，
-    # 把「没装问卷」误报成环境不健康 —— 那才是真的掩盖问题。
+    # ⚠️ 这里是 WARN 不是 FAIL：问卷仍是可选依赖。core 的问卷 API 只在请求到来时
+    # lazy import 它；缺失时两个 /api/questionnaire 端点返回 501，Web 其它功能照常。
+    # 终端的 --questionnaire / :qz 同样不可用，但数据层和推荐功能不受影响。
     print("\n[6/6] 中医体质问卷子包（可选依赖）")
     if importlib.util.find_spec("tcm_constitution") is None:
-        line(WARN, "问卷子包未安装 —— 终端 --questionnaire 不可用（不影响其它功能）")
+        line(WARN, "问卷子包未安装 —— 问卷 API 将返回 501，Web 其它功能照常")
+        line(WARN, "  终端 --questionnaire / :qz 也不可用")
         line(WARN, "  安装：pip install -e tcm-constitution-questionnaire")
     else:
-        line(OK, "问卷子包可用（终端 --questionnaire / :qz 可直接跑）")
+        line(OK, "问卷子包可用（Web 问卷及终端 --questionnaire / :qz 可直接跑）")
 
     # ---------- 汇总 ----------
     print("\n" + "=" * 62)

@@ -35,7 +35,7 @@
 cd core
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -e ".[dev]"        # 只想跑终端壳就够；要 Web 界面用 ".[dev,web]"
+pip install -e ".[dev]"        # 只想跑终端壳就够；要 Web 界面见下一节
 
 # ① 纯规则查表：零 LLM、零成本、毫秒级
 python ..\ui\terminal\chat.py --resolve 冰啤酒 茉莉花茶 冰淇淋
@@ -47,14 +47,17 @@ python ..\ui\terminal\chat.py --offline "中午吃了碗麻辣烫，还喝了杯
 python -m pytest -q
 ```
 
-### 想让助手用上你的体质：跑国标问卷（可选）
+### 想让助手用上你的体质：安装国标问卷子包
 
-问卷子包 `tcm-constitution-questionnaire/` 是**可选**依赖 —— `core/` 里的任何模块都不 import 它，
-不装只是用不上这个功能，其它一切照常。要装就装进同一个虚拟环境：
+问卷子包仍是可选的：没有安装时 Web 服务和其它功能可以正常启动，只有
+`/api/questionnaire` 与 `/api/questionnaire/questions` 返回 501，终端的
+`--questionnaire` / `:qz` 不可用。应用不会在 import 阶段修改 `sys.path`，
+避免全局副作用和仓库相对路径耦合。要使用问卷，请把两个项目装进同一个虚拟环境：
 
 ```powershell
 cd ..                                   # 回到仓库根
 core\.venv\Scripts\python.exe -m pip install -e tcm-constitution-questionnaire
+core\.venv\Scripts\python.exe -m pip install -e ".\core[dev,web]"
 ```
 
 之后（`--offline` 也能用，问卷本身不调模型）：
@@ -195,8 +198,25 @@ python -m uvicorn app.main:app --reload --port 8000
 * 接口文档：<http://127.0.0.1:8000/docs>
 * 自检：<http://127.0.0.1:8000/healthz>
 
+网页版在原有「今日茶饮建议」主流程之外，以可折叠面板提供以下功能：
+
+* **离线规则**：勾选后调用 `/api/analyze-offline`，不需要 Key、不调用模型。
+* **体质问卷**：加载九种体质问卷，完成后把主导体质带回主表单；兼夹体质只作为屏蔽集。
+* **饮食记录**：成功分析后仅在浏览器本地保存记录，并可离线汇总近 7 天内容。
+* **茶小助对话**：保留最近 20 条对话上下文，可选择多个兼容模型；沿用用户自带 Key。
+* **调理资料**：只读展示指南资料摘要，不提供剂量，也不进入茶饮推荐链路。
+
 界面与接口由同一个服务同源提供，因此**不需要**、也不应该打开 CORS 通配。
 `app/main.py` 只放行本机来源；请勿改回 `["*"]`——那会让局域网内任意网页都能调用你本机的接口。
+
+#### 两条模型执行路径的定位
+
+* `/api/analyze` 是茶饮建议的主流程，由 `agents/runtime.py` 与
+  `services/orchestrator.py` 统一编排，并执行确定性安全护栏。
+* `/api/chat` 是为旧版网页多模型选择保留的兼容对话入口，当前仍通过
+  `multi_provider.py` 调用 OpenAI 兼容接口；它不是茶饮建议主流程。
+* 两个入口共用 `api/auth.py` 的 Bearer Key 解析与相同的隐私边界。后续若要合并模型实现，
+  应先抽出统一的逐请求运行时接口，不再在路由内新增第三套鉴权或供应商判断。
 
 > 只用终端界面时**不必**启动这个服务，也不必安装 `web` extra。
 
@@ -391,7 +411,7 @@ tea-advisor/
 
 ```powershell
 cd core
-python -m pytest -q          # 335 passed，约 0.9 秒，不调用模型、不需要 API Key
+python -m pytest -q          # 514 passed，不调用模型、不需要 API Key
 ```
 
 | 文件 | 覆盖内容 | 项数 |

@@ -131,6 +131,44 @@
   }
   .cfgstate.off .dot { background: var(--warn); }
   .cfgstate.on .dot { background: #3f7a48; }
+  .feature-nav {
+    display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px;
+  }
+  .feature-nav button { flex: 1; min-width: 120px; }
+  details.feature-panel {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 16px; margin: 14px 0;
+  }
+  details.feature-panel > summary {
+    cursor: pointer; color: var(--accent); font-weight: 700;
+  }
+  details.feature-panel[open] > summary { margin-bottom: 14px; }
+  .question-list { max-height: 520px; overflow: auto; padding-right: 4px; }
+  .question-item {
+    display: grid; grid-template-columns: 1fr minmax(130px, 180px);
+    gap: 12px; align-items: center; padding: 10px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+  .question-item select { width: 100%; }
+  .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+  .score-item { background: #f7f4ed; border-radius: 8px; padding: 8px; font-size: 13px; }
+  .history-item { border-bottom: 1px dashed var(--line); padding: 10px 0; }
+  .history-item:last-child { border-bottom: 0; }
+  .chat-log {
+    min-height: 120px; max-height: 420px; overflow: auto;
+    background: #fdfcfa; border: 1px solid var(--line); border-radius: 9px;
+    padding: 10px; margin: 10px 0;
+  }
+  .chat-message { max-width: 88%; padding: 8px 11px; border-radius: 10px; margin: 7px 0; }
+  .chat-message.user { margin-left: auto; background: #e9e2d5; }
+  .chat-message.assistant { background: #f2efe8; }
+  .feature-output { margin-top: 12px; }
+  .feature-output pre { white-space: pre-wrap; font: inherit; margin: 0; }
+  button.danger { background: var(--warn); }
+  @media (max-width: 560px) {
+    .question-item { grid-template-columns: 1fr; gap: 5px; }
+    .feature-nav button { min-width: calc(50% - 8px); }
+  }
 </style>
 </head>
 <body>
@@ -143,6 +181,12 @@
 </header>
 
 <main>
+  <nav class="feature-nav" aria-label="扩展功能">
+    <button class="ghost feature-open" type="button" data-target="questionnairePanel">体质问卷</button>
+    <button class="ghost feature-open" type="button" data-target="historyPanel">饮食记录</button>
+    <button class="ghost feature-open" type="button" data-target="chatPanel">AI 对话</button>
+    <button class="ghost feature-open" type="button" data-target="medicationPanel">调理资料</button>
+  </nav>
   <details class="guide" open>
     <summary>测试指引（先看这个，约 1 分钟）</summary>
     <p class="hint" style="margin:0">
@@ -184,6 +228,9 @@
     <div class="row">
       <label for="const">我的体质</label>
       <select id="const"></select>
+      <label class="chk" title="只用本地数据与规则，不调用模型、不需要 API Key">
+        <input id="offline" type="checkbox" /> 离线规则
+      </label>
       <button id="go">给我建议</button>
     </div>
     <div class="hint">体质仅用于饮食养生方向的粗略区分，不构成体质辨识或医学诊断。</div>
@@ -196,6 +243,49 @@
   </div>
 
   <div id="out"></div>
+
+  <details id="questionnairePanel" class="feature-panel">
+    <summary>中医九种体质问卷</summary>
+    <div class="hint">问卷是健康筛查工具，不构成医学诊断。请按近一年的通常情况回答。</div>
+    <div class="row">
+      <label for="questionSex">性别</label>
+      <select id="questionSex"><option value="male">男</option><option value="female">女</option></select>
+      <button id="loadQuestions" type="button">加载问卷</button>
+    </div>
+    <div id="questionnaireBody" class="question-list"></div>
+    <div class="row"><button id="submitQuestionnaire" type="button" hidden>提交问卷</button></div>
+    <div id="questionnaireResult" class="feature-output"></div>
+  </details>
+
+  <details id="historyPanel" class="feature-panel">
+    <summary>近期饮食记录与 7 天汇总</summary>
+    <div class="hint">记录只保存在当前浏览器，不上传到服务器。</div>
+    <div id="historyList"></div>
+    <div class="row">
+      <button id="analyzeHistory" type="button">离线汇总近 7 天</button>
+      <button id="clearHistory" class="danger" type="button">清空记录</button>
+    </div>
+    <div id="historyResult" class="feature-output"></div>
+  </details>
+
+  <details id="chatPanel" class="feature-panel">
+    <summary>茶小助连续对话</summary>
+    <div class="hint">对话会使用“API 设置”中的 Key；聊天内容只随本次请求发送。</div>
+    <div class="row">
+      <label for="chatModel">模型</label><select id="chatModel"></select>
+      <button id="clearChat" class="ghost" type="button">清空对话</button>
+    </div>
+    <div id="chatLog" class="chat-log" aria-live="polite"></div>
+    <textarea id="chatInput" placeholder="继续问饮食、体质和茶饮，例如：刚才那顿饭之后要注意什么？"></textarea>
+    <div class="row"><button id="sendChat" type="button">发送</button></div>
+  </details>
+
+  <details id="medicationPanel" class="feature-panel">
+    <summary>体质药物调理资料（只读参考）</summary>
+    <div class="disclaimer"><b>安全边界</b><br>此处只展示指南资料摘要，不提供剂量，不进入茶饮推荐，也不构成用药建议。具体用药必须由执业医师辨证决定。</div>
+    <div class="row"><button id="loadMedication" type="button">查看当前体质资料</button></div>
+    <div id="medicationResult" class="feature-output"></div>
+  </details>
 </main>
 
 <dialog id="cfg">
@@ -230,12 +320,18 @@ let META = null;
 const out = document.getElementById('out');
 const btn = document.getElementById('go');
 const sel = document.getElementById('const');
+const offlineEl = document.getElementById('offline');
 const keyEl = document.getElementById('key');
 const rememberEl = document.getElementById('remember');
 const keyHintEl = document.getElementById('keyHint');
 const cfgEl = document.getElementById('cfg');
 const keyStateEl = document.getElementById('keyState');
 let disclaimerCache = null;
+let currentAvoidConstitutions = [];
+let chatMessages = [];
+const browserStore = window.localStorage;
+const DIET_HISTORY_KEY = 'ta_diet_history_v1';
+const CONSTITUTION_KEY = 'ta_constitution_v1';
 
 // 两个存储位：勾了「记住 Key」写 localStorage（跨会话），否则写 sessionStorage（仅本标签页）。
 // 保存前先把两处都清掉，否则取消勾选后旧值会残留。
@@ -337,7 +433,15 @@ async function loadInit() {
     ]);
     META = m;
     sel.innerHTML = cs.map(c => `<option value="${esc(c.id)}" title="${esc(c.one_line)}">${esc(c.label)}</option>`).join('');
+    try {
+      const savedConstitution = browserStore.getItem(CONSTITUTION_KEY);
+      if (savedConstitution && [...sel.options].some(o => o.value === savedConstitution)) {
+        sel.value = savedConstitution;
+      }
+    } catch (e) { /* 浏览器禁用存储时不影响使用 */ }
     disclaimerCache = dis;
+    await loadChatModels();
+    renderHistory();
   } catch (e) {
     // 拿不到 meta 就不放行：否则标签与阈值都会失准
     btn.disabled = true;
@@ -432,20 +536,28 @@ async function run() {
   // 记住/清除 Key 的选择在提交时落定，避免每敲一个键就写一次存储
   saveKey();
   const userKey = currentKey();
+  const offlineMode = offlineEl.checked;
 
   setBusy(true);
-  out.innerHTML = '<div class="card loading">正在解析你的饮食…（双 Agent 串行，通常 10–30 秒）</div>';
+  out.innerHTML = offlineMode
+    ? '<div class="card loading">正在用本地规则整理建议…</div>'
+    : '<div class="card loading">正在解析你的饮食…（双 Agent 串行，通常 10–30 秒）</div>';
   const t0 = Date.now();
   try {
     const headers = { 'Content-Type': 'application/json' };
     // 用户自带 Key：逐请求通过 Authorization 头发给本机后端。
     // 只有填了才带这个头。本项目不内置 Key，所以不填会被后端拒绝（NO_API_KEY）。
-    if (userKey) headers['Authorization'] = 'Bearer ' + userKey;
+    if (userKey && !offlineMode) headers['Authorization'] = 'Bearer ' + userKey;
 
-    const res = await fetch('/api/analyze', {
+    const endpoint = offlineMode ? '/api/analyze-offline' : '/api/analyze';
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ text, constitution_override: sel.value }),
+      body: JSON.stringify({
+        text,
+        constitution_override: sel.value,
+        avoid_constitutions: currentAvoidConstitutions,
+      }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -478,9 +590,16 @@ async function run() {
     // 会再调一次模型、再花一次钱 —— 这两句不能省，省了就是诱导重复付费。
     html += `<div class="card"><div class="row" style="margin-top:0">
       <button id="again" type="button">按当前输入重新分析</button>
-      <span class="hint">会再次调用模型（约 1 分钱），以输入框里的当前内容为准。</span>
+      <span class="hint">${offlineMode ? '仍使用本地规则，不调用模型。' : '会再次调用模型（约 1 分钱），以输入框里的当前内容为准。'}</span>
     </div></div>`;
     out.innerHTML = html;
+    saveDietRecord({
+      text,
+      constitution: sel.value,
+      offline: offlineMode,
+      titles: (data.recommendations || []).map(item => item.title),
+      created_at: new Date().toISOString(),
+    });
   } catch (e) {
     out.innerHTML = `<div class="card error"><b>请求失败</b><br>${esc(e.message)}
       <div class="hint">确认服务在运行，且 URL 是 http://127.0.0.1:8000</div></div>`;
@@ -532,6 +651,244 @@ function renderReferences(refs) {
     + `<div class="hint">来源支持原料与调养方向，<b>不代表支持具体搭配、克数</b>。</div></div>`;
 }
 
+
+function readDietHistory() {
+  try {
+    const parsed = JSON.parse(browserStore.getItem(DIET_HISTORY_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveDietRecord(record) {
+  try {
+    const items = readDietHistory();
+    items.unshift(record);
+    browserStore.setItem(DIET_HISTORY_KEY, JSON.stringify(items.slice(0, 100)));
+  } catch (e) { /* 存储被禁用时不影响本次分析 */ }
+  renderHistory();
+}
+
+function recentDietHistory() {
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  return readDietHistory().filter(item => {
+    const when = Date.parse(item.created_at || '');
+    return Number.isFinite(when) && when >= cutoff;
+  });
+}
+
+function renderHistory() {
+  const target = document.getElementById('historyList');
+  if (!target) return;
+  const items = recentDietHistory();
+  if (!items.length) {
+    target.innerHTML = '<div class="hint">近 7 天还没有饮食记录。成功生成一次建议后会自动记录。</div>';
+    return;
+  }
+  target.innerHTML = items.map(item => {
+    const when = new Date(item.created_at).toLocaleString();
+    const titles = (item.titles || []).length ? ' ｜ 建议：' + (item.titles || []).join('、') : '';
+    return `<div class="history-item"><b>${esc(item.text)}</b>
+      <div class="hint">${esc(when)} ｜ ${item.offline ? '离线规则' : '联网分析'}${esc(titles)}</div></div>`;
+  }).join('');
+}
+
+async function analyzeRecentHistory() {
+  const target = document.getElementById('historyResult');
+  const items = recentDietHistory();
+  if (!items.length) {
+    target.innerHTML = '<div class="error">近 7 天没有可汇总的记录。</div>';
+    return;
+  }
+  const combined = items.slice().reverse().map(item => item.text).join('；').slice(-500);
+  target.innerHTML = '<div class="loading">正在用本地规则汇总近 7 天饮食…</div>';
+  try {
+    const res = await fetch('/api/analyze-offline', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: combined,
+        constitution_override: sel.value,
+        avoid_constitutions: currentAvoidConstitutions,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error((data.detail && data.detail.message) || JSON.stringify(data.detail || data));
+    target.innerHTML = (data.user_message ? `<div class="reason">${esc(data.user_message)}</div>` : '')
+      + renderParsed(data.parsed) + renderRecs(data.recommendations || [])
+      + renderReferences(data.basis && data.basis.references) + renderDisclaimer();
+  } catch (e) {
+    target.innerHTML = `<div class="error">汇总失败：${esc(e.message || e)}</div>`;
+  }
+}
+
+let questionnaireQuestions = [];
+
+async function loadQuestionnaire() {
+  const body = document.getElementById('questionnaireBody');
+  const result = document.getElementById('questionnaireResult');
+  const submit = document.getElementById('submitQuestionnaire');
+  const sex = document.getElementById('questionSex').value;
+  body.innerHTML = '<div class="loading">正在加载题目…</div>';
+  result.innerHTML = '';
+  submit.hidden = true;
+  try {
+    const res = await fetch('/api/questionnaire/questions?sex=' + encodeURIComponent(sex));
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data.detail || data));
+    questionnaireQuestions = data.questions || [];
+    const labels = data.answer_labels || {};
+    body.innerHTML = questionnaireQuestions.map((item, index) => {
+      const opts = ['<option value="">请选择</option>'];
+      for (let score = 1; score <= 5; score++) {
+        opts.push(`<option value="${score}">${score} · ${esc(labels[String(score)] || labels[score] || '')}</option>`);
+      }
+      return `<label class="question-item"><span>${index + 1}. ${esc(item.text)}</span>
+        <select data-question-id="${esc(item.id)}">${opts.join('')}</select></label>`;
+    }).join('');
+    submit.hidden = false;
+  } catch (e) {
+    body.innerHTML = `<div class="error">问卷加载失败：${esc(e.message || e)}</div>`;
+  }
+}
+
+async function submitQuestionnaire() {
+  const result = document.getElementById('questionnaireResult');
+  const selects = [...document.querySelectorAll('#questionnaireBody select[data-question-id]')];
+  const missing = selects.filter(node => !node.value);
+  if (missing.length) {
+    result.innerHTML = `<div class="error">还有 ${missing.length} 道题未回答。</div>`;
+    missing[0].focus();
+    return;
+  }
+  const answers = {};
+  selects.forEach(node => { answers[node.dataset.questionId] = Number(node.value); });
+  result.innerHTML = '<div class="loading">正在计算体质结果…</div>';
+  try {
+    const res = await fetch('/api/questionnaire', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sex: document.getElementById('questionSex').value, answers }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail || data));
+    const scores = (data.scores || []).map(item =>
+      `<div class="score-item"><b>${esc(item.name)}</b><br>${esc(item.score)} 分 · ${esc(item.status)}</div>`
+    ).join('');
+    if (data.dominant_constitution && [...sel.options].some(o => o.value === data.dominant_constitution)) {
+      sel.value = data.dominant_constitution;
+      currentAvoidConstitutions = data.avoid_constitutions || [];
+      try { browserStore.setItem(CONSTITUTION_KEY, sel.value); } catch (e) { /* ignore */ }
+    }
+    const headline = data.requires_manual_selection
+      ? '本次未能自动确定体质，请在上方手动选择。'
+      : `主导体质：<b>${esc(data.dominant_constitution_name)}</b>，已自动选入主分析表单。`;
+    result.innerHTML = `<div class="reason">${headline}<br>${esc(data.resolution_note || '')}</div>
+      <div class="score-grid">${scores}</div>
+      <div class="disclaimer" style="margin-top:10px">问卷结果仅作健康筛查和日常饮食参考，不构成诊断。</div>`;
+  } catch (e) {
+    result.innerHTML = `<div class="error">问卷提交失败：${esc(e.message || e)}</div>`;
+  }
+}
+
+async function loadChatModels() {
+  const modelSelect = document.getElementById('chatModel');
+  if (!modelSelect) return;
+  try {
+    const res = await fetch('/api/chat/models');
+    const models = await res.json();
+    if (!res.ok) throw new Error('模型列表读取失败');
+    modelSelect.innerHTML = models.map(item =>
+      `<option value="${esc(item.id)}">${esc(item.provider)} · ${esc(item.name)}</option>`
+    ).join('');
+  } catch (e) {
+    modelSelect.innerHTML = '<option value="deepseek-flash">DeepSeek Chat</option>';
+  }
+}
+
+function renderChatLog() {
+  const log = document.getElementById('chatLog');
+  if (!log) return;
+  if (!chatMessages.length) {
+    log.innerHTML = '<div class="hint">还没有对话。可以接着询问刚才的饮食与茶饮建议。</div>';
+    return;
+  }
+  log.innerHTML = chatMessages.map(item =>
+    `<div class="chat-message ${item.role}"><b>${item.role === 'user' ? '你' : '茶小助'}</b><br>${esc(item.content)}</div>`
+  ).join('');
+  log.scrollTop = log.scrollHeight;
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chatInput');
+  const send = document.getElementById('sendChat');
+  const content = input.value.trim();
+  if (!content) return;
+  chatMessages.push({ role: 'user', content });
+  input.value = '';
+  renderChatLog();
+  send.disabled = true;
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    const key = currentKey();
+    if (key) headers.Authorization = 'Bearer ' + key;
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        messages: chatMessages.slice(-20).map(item => ({ role: item.role, content: item.content })),
+        model: document.getElementById('chatModel').value,
+        constitution: sel.value,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const detail = data.detail || {};
+      if (detail.code === 'NO_API_KEY' || detail.code === 'API_KEY_REJECTED') openCfg();
+      throw new Error(detail.message || JSON.stringify(data));
+    }
+    chatMessages.push({ role: 'assistant', content: data.reply });
+    renderChatLog();
+    if (data.references && data.references.length) {
+      document.getElementById('chatLog').insertAdjacentHTML('beforeend', renderReferences(data.references));
+    }
+  } catch (e) {
+    chatMessages.push({ role: 'assistant', content: '请求失败：' + (e.message || e) });
+    renderChatLog();
+  } finally {
+    send.disabled = false;
+  }
+}
+
+async function loadMedicationReference() {
+  const target = document.getElementById('medicationResult');
+  target.innerHTML = '<div class="loading">正在读取资料…</div>';
+  try {
+    const res = await fetch('/api/medication-reference/' + encodeURIComponent(sel.value));
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data.detail || data));
+    const p = data.profile || {};
+    const formulas = (p.recommended_formulas || []).map(item => {
+      const grade = [item.recommendation_class, item.evidence_level].filter(Boolean).join(' · ');
+      return `<li><b>${esc(item.name)}</b>${grade ? '（' + esc(grade) + '）' : ''}</li>`;
+    }).join('');
+    const sources = (data.sources || []).map(item =>
+      `<li><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title || item.standard_no || item.id)}</a></li>`
+    ).join('');
+    target.innerHTML = `<div class="card"><h2>${esc(p.label || p.name)} · ${esc(p.clause)}</h2>
+      <div class="reason">${esc(p.principle || '')}</div>
+      ${p.drug_notes ? `<p>${esc(p.drug_notes)}</p>` : ''}
+      ${formulas ? `<h3>指南列举的方剂名称</h3><ul>${formulas}</ul>` : '<p class="hint">该体质资料未列举方剂。</p>'}
+      <div class="disclaimer">${esc(p.referral_note || data.usage_policy)}</div>
+      ${sources ? `<h3 style="margin-top:12px">资料来源</h3><ul>${sources}</ul>` : ''}
+    </div>`;
+  } catch (e) {
+    target.innerHTML = `<div class="error">资料读取失败：${esc(e.message || e)}</div>`;
+  }
+}
+
+
 document.getElementById('examples').addEventListener('click', e => {
   if (e.target.tagName === 'SPAN') {
     document.getElementById('text').value = e.target.textContent;
@@ -546,11 +903,42 @@ keyEl.addEventListener('input', updateKeyState);
 keyEl.addEventListener('change', updateKeyState);
 rememberEl.addEventListener('change', updateKeyState);
 document.querySelectorAll('.opencfg').forEach(b => b.addEventListener('click', openCfg));
+document.querySelectorAll('.feature-open').forEach(button => button.addEventListener('click', () => {
+  const panel = document.getElementById(button.dataset.target);
+  if (!panel) return;
+  panel.open = true;
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}));
+document.getElementById('loadQuestions').addEventListener('click', loadQuestionnaire);
+document.getElementById('submitQuestionnaire').addEventListener('click', submitQuestionnaire);
+document.getElementById('analyzeHistory').addEventListener('click', analyzeRecentHistory);
+document.getElementById('clearHistory').addEventListener('click', () => {
+  try { browserStore.removeItem(DIET_HISTORY_KEY); } catch (e) { /* ignore */ }
+  renderHistory();
+  document.getElementById('historyResult').innerHTML = '';
+});
+document.getElementById('sendChat').addEventListener('click', sendChatMessage);
+document.getElementById('chatInput').addEventListener('keydown', event => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendChatMessage();
+  }
+});
+document.getElementById('clearChat').addEventListener('click', () => {
+  chatMessages = [];
+  renderChatLog();
+});
+document.getElementById('loadMedication').addEventListener('click', loadMedicationReference);
+sel.addEventListener('change', () => {
+  currentAvoidConstitutions = [];
+  try { browserStore.setItem(CONSTITUTION_KEY, sel.value); } catch (e) { /* ignore */ }
+});
 btn.addEventListener('click', run);
 // 结果区是整体重绘的，「重新分析」每次都是新元素 ⇒ 用委托，不要 render 后 addEventListener
 document.getElementById('out').addEventListener('click', e => {
   if (e.target && e.target.id === 'again') run();
 });
+renderChatLog();
 loadInit();
 </script>
 </body>

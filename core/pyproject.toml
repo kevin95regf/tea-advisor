@@ -25,6 +25,11 @@ dev = [
     "ruff>=0.6",
 ]
 
+[tool.setuptools.packages.find]
+# 正式支持从 core/ 执行 ``pip install .``。flat-layout 下 setuptools 会把同级
+# data/ 误判为顶层命名空间包；只收录 app*，既修复构建歧义，也不把数据目录当代码发布。
+include = ["app*"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"
