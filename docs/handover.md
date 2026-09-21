@@ -21,7 +21,7 @@
 | | |
 |---|---|
 | 代码 | `core/app/domain` 7 文件 / 2,288 行 ＋ `core/app/services` 5 文件 / 1,836 行 ＝ **12 文件 / 4,124 行**（口径：这两个目录下全部 `*.py`，含 `__init__.py`；2026-09-21 实测） |
-| 测试 | **776 项，全离线，约 6 秒** |
+| 测试 | **782 项，全离线，约 6 秒** |
 | 数据 | 食性表 147 条、饮片 44 味、体质 9 型（全部就绪）、食药物质目录 106 种、药典核对 44 味、饮片来源登记 44+24 条 |
 
 **它明确不是什么**：不是医疗器械、不做体质辨识诊断、不承诺任何疗效。所有输出都带免责声明，且禁用「治疗/根治」这类表述（有护栏强制）。
@@ -151,7 +151,7 @@ tea-advisor/
 │  │  └─ main.py                FastAPI 入口
 │  ├─ data/                     数据层（详见 §4）
 │  ├─ scripts/                  运维 / 自检 / 文档生成脚本
-│  ├─ tests/                    776 项离线测试
+│  ├─ tests/                    782 项离线测试
 │  └─ pyproject.toml
 ├─ ui/
 │  ├─ terminal/chat.py          终端壳（仅标准库）
@@ -216,7 +216,7 @@ tea-advisor/
 
 ### 5.2 已验证的功能
 
-- ✅ 三层判定 + 置信度体系（776 项离线测试覆盖）
+- ✅ 三层判定 + 置信度体系（782 项离线测试覆盖）
 - ✅ 双 Agent 链路（Agent1 解析 → Agent2 推荐）
 - ✅ 确定性护栏（白名单/剂量/禁忌/禁用表述/高风险人群）
 - ✅ 规则兜底（模型不可用时仍给出合法搭配）
@@ -255,7 +255,7 @@ tea-advisor/
 
 ```bash
 cd core
-python -m pytest tests -q               # 776 项，全离线，约 6 秒
+python -m pytest tests -q               # 782 项，全离线，约 6 秒
 python scripts/smoke_offline.py        # 数据层→解析→规则兜底→护栏，不调模型
 python scripts/check_setup.py          # 环境与数据自检
 # 以下需要 API Key：
@@ -462,7 +462,7 @@ cd D:\work\tea-advisor\core
 # python -m venv .venv ; .\.venv\Scripts\python.exe -m pip install -e ".[dev,web]"
 
 # 2. 验证一切正常（约 1 分钟，不花钱）
-..\core\.venv\Scripts\python.exe -m pytest tests -q          # 期望 776 passed
+..\core\.venv\Scripts\python.exe -m pytest tests -q          # 期望 782 passed
 ..\core\.venv\Scripts\python.exe scripts\smoke_offline.py     # 期望全部通过
 
 # 3. 零成本看它怎么工作（不花钱，不需要 Key）

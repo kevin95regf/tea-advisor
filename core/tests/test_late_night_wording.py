@@ -20,7 +20,8 @@ CORE_DIR = Path(__file__).resolve().parent.parent
 if str(CORE_DIR) not in sys.path:
     sys.path.insert(0, str(CORE_DIR))
 
-from app.api.analyze_offline import _guess_meal_time, _match_nature_from_text  # noqa: E402
+from app.api.analyze_offline import _match_nature_from_text  # noqa: E402
+from app.domain.meal_time import guess_meal_time  # noqa: E402
 from app.domain.models import Constitution, ParsedFood, ParsedMeal  # noqa: E402
 from app.services.food_lookup import match_foods, resolve_in_context  # noqa: E402
 from app.services.matcher import RULES, _pick_rule, fallback_recommend  # noqa: E402
@@ -47,7 +48,7 @@ def _parsed(text: str) -> ParsedMeal:
         )
     return ParsedMeal(
         foods=foods,
-        meal_time=_guess_meal_time(text),
+        meal_time=guess_meal_time(text),
         overall_nature=_match_nature_from_text(text),
         confidence=0.9 if foods else 0.3,
     )

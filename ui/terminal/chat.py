@@ -53,7 +53,6 @@ from app.domain.enums import (  # noqa: E402
     NATURE_LABELS,
     SOURCE_LABELS,
     Constitution,
-    MealTime,
     Nature,
 )
 from app.domain.constitution_resolver import (  # noqa: E402
@@ -61,6 +60,8 @@ from app.domain.constitution_resolver import (  # noqa: E402
     resolve_from_scores,
 )
 from app.domain.diet_signals import build_meal_signals, derive_meal_plan  # noqa: E402
+# D28：餐次猜测与 API 离线路径**同一份**实现（原先这里写死 UNKNOWN）
+from app.domain.meal_time import guess_meal_time  # noqa: E402
 from app.domain.models import AnalyzeRequest, ParsedFood, ParsedMeal  # noqa: E402
 from app.services import matcher  # noqa: E402
 from app.services.food_lookup import (  # noqa: E402
@@ -309,7 +310,7 @@ def _offline_analyze(
     conf = round(sum(f.verification.confidence for f in foods) / len(foods), 2)
     parsed = ParsedMeal(
         foods=foods,
-        meal_time=MealTime.UNKNOWN,
+        meal_time=guess_meal_time(text),
         overall_nature=Nature.UNKNOWN,
         confidence=conf,
         summary="（离线模式：由关键词匹配 + 查表装配，未使用模型）",

@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from app.domain.diet_signals import build_meal_signals, derive_meal_plan
 from app.domain.enums import CONSTITUTION_LABELS, Constitution, MealTime, Nature
+from app.domain.meal_time import guess_meal_time
 from app.domain.models import AnalyzeResponse, Meta, ParsedFood, ParsedMeal, Verification
 from app.domain.safety import (
     detect_high_risk,
@@ -47,29 +48,6 @@ def _match_nature_from_text(text: str) -> Nature:
     if warm > cold:
         return Nature.WARM
     return Nature.UNKNOWN
-
-
-def _guess_meal_time(text: str) -> MealTime:
-    keyword_map = (
-        (("早餐", "早上", "早饭"), MealTime.BREAKFAST),
-        (("午餐", "中午", "午饭"), MealTime.LUNCH),
-        (("晚餐", "晚上", "晚饭"), MealTime.DINNER),
-        (("夜宵", "半夜"), MealTime.LATE_NIGHT),
-        (("下午茶", "加餐"), MealTime.SNACK),
-    )
-    for words, value in keyword_map:
-        if any(word in text for word in words):
-            return value
-    hour = time.localtime().tm_hour
-    if 5 <= hour < 10:
-        return MealTime.BREAKFAST
-    if 10 <= hour < 14:
-        return MealTime.LUNCH
-    if 14 <= hour < 17:
-        return MealTime.SNACK
-    if 17 <= hour < 21:
-        return MealTime.DINNER
-    return MealTime.LATE_NIGHT
 
 
 @router.post(
@@ -138,7 +116,7 @@ async def analyze_offline_endpoint(request: OfflineAnalyzeRequest) -> AnalyzeRes
 
     parsed = ParsedMeal(
         foods=foods,
-        meal_time=_guess_meal_time(text),
+        meal_time=guess_meal_time(text),
         overall_nature=_match_nature_from_text(text),
         confidence=0.9 if foods else 0.3,
         summary=(
