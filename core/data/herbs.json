@@ -402,7 +402,7 @@
       "max_daily_g": 15,
       "cautions": ["湿盛腹胀、痰湿偏重者不宜多食", "含糖量高，血糖偏高者需控制", "建议掰开去核再泡"],
       "suitable_constitutions": ["qi_deficiency", "yang_deficiency", "balanced", "blood_stasis", "qi_stagnation", "special_diathesis"],
-      "unsuitable_for": ["damp_heat"],
+      "unsuitable_for": ["damp_heat", "phlegm_damp"],
       "brewing": {
         "form": "干枣，切片或掰开",
         "note": "整颗冲泡不出味，务必掰开或切片",
@@ -1062,7 +1062,7 @@
       "max_daily_g": 10,
       "cautions": ["性平偏寒，脾胃虚寒者不宜多饮", "不宜长期连续大量饮用"],
       "suitable_constitutions": [],
-      "unsuitable_for": [],
+      "unsuitable_for": ["yang_deficiency"],
       "brewing": {
         "form": "干青果（成熟果实），用时打碎",
         "note": "打碎后开水泡服；《中医饮食营养学》:701 载「开水泡服或水煎代茶」",

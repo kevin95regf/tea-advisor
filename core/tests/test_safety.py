@@ -262,9 +262,18 @@ def test_yang_deficiency_excludes_cold_herbs() -> None:
 # ============================================================
 # cautions → unsuitable_for 的一致性（阴虚方向）
 # ============================================================
-# 阴虚方向的关键词。刻意只取这 5 个明确指向阴虚的词，不含宽泛的「燥」——
-# 宽词会把「性质平和、不燥」这类正面描述也命中。
-YINXU_CAUTION_KEYWORDS = ("阴虚", "津液", "口干", "上火", "内热")
+# 各体质方向的关键词。刻意只取**明确指向该体质**的词，不收宽泛词：
+#   阴虚不收「燥」（宽词会把「性质平和、不燥」这类正面描述也命中）；
+#   阳虚不收「寒凉／偏寒／性寒」（那是药的性气、不是体质，会误伤）。
+# 实测（2026-09-21）：阳虚命中 15 味、痰湿命中 7 味；两方向的软硬缺口各 1 味（见 E14）。
+CAUTION_DIRECTIONS: dict[str, tuple[str, ...]] = {
+    "yin_deficiency": ("阴虚", "津液", "口干", "上火", "内热"),
+    "yang_deficiency": ("阳虚", "虚寒", "畏寒"),
+    "phlegm_damp": ("痰湿", "湿盛", "助湿", "滋腻"),
+}
+
+# 阴虚关键词的历史别名（既有调用点与文档沿用）。真源＝上面的表。
+YINXU_CAUTION_KEYWORDS = CAUTION_DIRECTIONS["yin_deficiency"]
 
 # 2026-09-17 落地的批次（docs/herbs-cautions-yinxu-batch.md）
 CAUTIONS_BATCH_YINXU = frozenset(
@@ -295,20 +304,29 @@ def load_rulings_cells() -> list[dict]:
     return list(load_rulings().get("cells") or [])
 
 
-def _cautions_soft_gap(catalog: dict, cells: list[dict]) -> dict:
-    """算出『cautions 命中阴虚方向关键词』与『软通道登记』之间的三类缺口。
+def _cautions_soft_gap(
+    catalog: dict,
+    cells: list[dict],
+    *,
+    keywords: tuple[str, ...] = YINXU_CAUTION_KEYWORDS,
+    constitution: str = "yin_deficiency",
+) -> dict:
+    """算出『cautions 命中某方向关键词』与『软通道登记』之间的三类缺口。
 
     纯函数：不读文件、不依赖真实数据 —— 正向测试与负控制共用同一份逻辑
     （否则负控制只是把判定又写了一遍，属假保证）。每个 key 为空列表即代表该类问题不存在。
+
+    `keywords`／`constitution` 默认＝阴虚方向（既有调用点一字不变）；阳虚／痰湿方向
+    复用**同一份逻辑与负控制**，只换关键词与体质 id。三条规则与方向无关。
     """
     hit = {
         herb_id
         for herb_id, item in catalog.items()
-        if any(k in c for c in (item.get("cautions") or []) for k in YINXU_CAUTION_KEYWORDS)
+        if any(k in c for c in (item.get("cautions") or []) for k in keywords)
     }
-    yin = [c for c in cells if c.get("constitution") == "yin_deficiency"]
-    exempt = {c.get("herb") for c in yin}
-    soft = [c for c in yin if c.get("field") != "unsuitable_for"]
+    directed = [c for c in cells if c.get("constitution") == constitution]
+    exempt = {c.get("herb") for c in directed}
+    soft = [c for c in directed if c.get("field") != "unsuitable_for"]
     return {
         "hit": hit,
         # 规则①：豁免项必须 ∈ 命中集（登记表不能当垃圾桶/后门）
@@ -320,7 +338,7 @@ def _cautions_soft_gap(catalog: dict, cells: list[dict]) -> dict:
         # 规则②：命中集里未登记的仍必须硬屏蔽
         "escaped": sorted(
             h for h in hit - exempt
-            if "yin_deficiency" not in (catalog[h].get("unsuitable_for") or [])
+            if constitution not in (catalog[h].get("unsuitable_for") or [])
         ),
     }
 
@@ -387,6 +405,93 @@ def test_cautions_soft_gap_negative_controls() -> None:
     broken = {**catalog, "a": {"cautions": ["阴虚者不宜"], "unsuitable_for": []}}
     g = _cautions_soft_gap(broken, good)
     assert g["escaped"] == ["a"], "规则②失效：未登记的条目可以逃脱硬屏蔽"
+
+
+@pytest.mark.parametrize("constitution", sorted(CAUTION_DIRECTIONS))
+def test_cautions_naming_direction_must_be_blocked(constitution: str) -> None:
+    """三个体质方向都必须满足同一条派生不变式 —— 不只是阴虚（E13）。
+
+    与 `test_cautions_naming_yinxu_must_be_blocked` 是同一判据（那条保留，因为它的
+    docstring 记着豁免出口的历史）。分立这条是因为：只守一个方向 ⇒ 其余方向出现
+    「项目自己认定不宜、却照样推给该体质用户」时**无声无息**。2026-09-21 放开到三个
+    方向时，实测精确照出 2 处既有脱节（青果×阳虚、红枣×痰湿，见 E14），无第三处。
+
+    每条都先断言 `hit` 非空 —— 关键词一旦全部失配，本测试就失去覆盖面却仍报绿。
+    """
+    gap = _cautions_soft_gap(
+        load_herb_catalog(),
+        load_rulings_cells(),
+        keywords=CAUTION_DIRECTIONS[constitution],
+        constitution=constitution,
+    )
+    assert gap["hit"], (
+        f"{constitution} 方向的关键词一条都没命中，该方向的覆盖已失效 —— "
+        "需同步更新关键词或 cautions"
+    )
+    assert not gap["stray"], (
+        f"{constitution}：这些饮片登记为『只走 cautions』，但 cautions 并不命中该方向关键词："
+        f"{gap['stray']}"
+    )
+    assert not gap["soft_evidence"], (
+        f"{constitution}：这些登记项依据等级是 evidence，却想走 cautions 软通道："
+        f"{gap['soft_evidence']}"
+    )
+    assert not gap["escaped"], (
+        f"{constitution}：这些饮片的 cautions 已明写该方向，却既没被屏蔽、也没登记豁免："
+        f"{gap['escaped']}。要么补 unsuitable_for，要么在 `_meta` 的 rulings 块里登记为 cautions-only"
+    )
+
+
+def test_cautions_direction_negative_controls() -> None:
+    """人造数据必须让**每个方向**的缺口各自报出来（否则上一条可能根本没在检查）。
+
+    同时验证**方向隔离**：把某方向的关键词套到只写了别方向 cautions 的条目上，命中集必须为空 ——
+    否则三个方向实际共用了同一批命中项，参数化就成了摆设。
+    """
+    catalog = {
+        "a": {"cautions": ["阳虚者忌"], "unsuitable_for": ["yang_deficiency"]},
+        "b": {"cautions": ["脾胃虚寒者慎"], "unsuitable_for": []},
+        "c": {"cautions": ["痰湿偏重者不宜"], "unsuitable_for": []},
+    }
+
+    # 阳虚方向：a 已屏蔽不报；b 命中却未屏蔽 ⇒ escaped
+    g = _cautions_soft_gap(
+        catalog, [], keywords=CAUTION_DIRECTIONS["yang_deficiency"],
+        constitution="yang_deficiency",
+    )
+    assert g["hit"] == {"a", "b"}, g
+    assert g["escaped"] == ["b"], "阳虚方向规则②失效：命中却未屏蔽的没被报出来"
+
+    # 痰湿方向：c 命中未屏蔽 ⇒ escaped；a/b 不该被痰湿关键词命中
+    g = _cautions_soft_gap(
+        catalog, [], keywords=CAUTION_DIRECTIONS["phlegm_damp"],
+        constitution="phlegm_damp",
+    )
+    assert g["hit"] == {"c"}, g
+    assert g["escaped"] == ["c"], "痰湿方向规则②失效"
+
+    # 方向隔离：阴虚关键词不该命中只写了阳虚/痰湿的 cautions
+    g = _cautions_soft_gap(
+        catalog, [], keywords=CAUTION_DIRECTIONS["yin_deficiency"],
+        constitution="yin_deficiency",
+    )
+    assert g["hit"] == set(), f"方向未隔离：阴虚关键词命中了别的方向：{g['hit']}"
+
+    # 规则①/③ 在两个新方向上同样生效
+    g = _cautions_soft_gap(
+        catalog,
+        [{"herb": "c", "constitution": "yang_deficiency", "level": "inference", "field": "cautions"}],
+        keywords=CAUTION_DIRECTIONS["yang_deficiency"],
+        constitution="yang_deficiency",
+    )
+    assert g["stray"] == ["c"], "规则①失效：登记了并不命中阳虚关键词的条目"
+    g = _cautions_soft_gap(
+        catalog,
+        [{"herb": "b", "constitution": "yang_deficiency", "level": "evidence", "field": "cautions"}],
+        keywords=CAUTION_DIRECTIONS["yang_deficiency"],
+        constitution="yang_deficiency",
+    )
+    assert g["soft_evidence"] == ["b"], "规则③失效：明确忌可以走软通道"
 
 
 def test_rulings_cells_are_well_formed() -> None:
