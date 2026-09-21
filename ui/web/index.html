@@ -29,7 +29,7 @@
   }
   header h1 { margin: 0 0 4px; font-size: 19px; letter-spacing: .5px; }
   header p { margin: 0; color: var(--muted); font-size: 12.5px; }
-  main { max-width: 680px; margin: 0 auto; padding: 16px; }
+  main { width: min(100%, 960px); margin: 0 auto; padding: clamp(12px, 3vw, 24px); }
   .card {
     background: var(--card); border: 1px solid var(--line);
     border-radius: 12px; padding: 16px; margin-bottom: 14px;
@@ -169,9 +169,68 @@
     .question-item { grid-template-columns: 1fr; gap: 5px; }
     .feature-nav button { min-width: calc(50% - 8px); }
   }
+  [hidden] { display: none !important; }
+  #welcome { min-height: 100dvh; padding: clamp(14px, 3vw, 32px); overflow-y: auto; background: #17392f; color: #e7c985; font-family: "STKaiti", "KaiTi", serif; }
+  .welcome-card { max-width: 780px; margin: 0 auto; padding: clamp(18px, 3vw, 32px); border: 1px solid #c8ad7180; border-radius: 18px; background: #102b2470; line-height: 1.8; }
+  .welcome-card h1 { margin: 0 0 12px; font-size: clamp(24px, 4vw, 34px); }
+  .welcome-card h3 { margin: 18px 0 4px; color: #f4daa0; }
+  .welcome-card ol, .welcome-card ul { padding-left: 1.5em; }
+  .welcome-card li { margin: 4px 0; }
+  .welcome-card .no { color: #ec736c; font-weight: 700; }
+  .welcome-card code { overflow-wrap: anywhere; }
+  .welcome-next { font-size: clamp(18px, 2.7vw, 22px); font-weight: 700; }
+  #startQuestionnaire { background: #d8b878; color: #17392f; min-width: 140px; }
+  .mode-tabs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .mode-tabs button { flex: 1 1 180px; min-width: 0; background: #eae4d7; color: var(--ink); border: 1px solid var(--line); }
+  .mode-tabs button.active { background: var(--accent); color: #fff; }
+  .key-field { display: flex; flex: 1 1 240px; gap: 6px; min-width: 0; }
+  .key-field input { min-width: 0; width: 100%; }
+  .key-field button { padding: 8px 10px; white-space: nowrap; }
+  .chat-log { height: clamp(230px, 39dvh, 460px); overflow-y: auto; overflow-wrap: anywhere; }
+  .chat-message { max-width: min(85%, 66ch); overflow-wrap: anywhere; white-space: pre-wrap; }
+  .question-list { max-height: min(60dvh, 620px); }
+  #cfg { max-width: min(540px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow-y: auto; }
+  #appShell.questionnaire-stage .feature-nav, #appShell.questionnaire-stage .mode-tabs, #appShell.questionnaire-stage #analysisArea,
+  #appShell.questionnaire-stage #historyPanel, #appShell.questionnaire-stage #chatPanel,
+  #appShell.questionnaire-stage #medicationPanel { display: none; }
+  @media (max-width: 600px) { header.bar { flex-wrap: wrap; } .mode-tabs button { flex-basis: 100%; } }
 </style>
 </head>
 <body>
+<section id="welcome" aria-label="程序介绍">
+  <div class="welcome-card">
+    <h1>中医食性助手</h1>
+    <p>
+      这个程序的核心是：<b>食物是寒是热，不靠模型猜，而是查表 + 纯规则判定</b>，
+      并且每一档结论都能追溯来源。模型只负责把你打的字解析成食物、把结论写成人话。
+    </p>
+
+    <h3>建议按顺序试这 4 次</h3>
+    <ol>
+      <li>完成问卷后在「规则速览」输入饮食，再点「给我建议」——使用本机规则，不调用模型。切换到 API 对话后才会调用所选模型并产生费用。</li>
+      <li><b>把鼠标停在结果里任意一个食物标签上</b>，会浮出它的判定来源与完整推导过程（如「查表 ｜ 置信度 90% ｜『麻辣烫』原形态下属性为热（查表直取）」）。这是本产品最重要的部分。</li>
+      <li>输入 <code>我怀孕了，今天吃了火锅，能喝什么茶</code> —— <b>秒回</b>，且不给推荐，只引导就医。这条<b>不调用模型</b>，免费。</li>
+      <li>输入一句表里没有的食物，如 <code>晚上吃了佛跳墙</code> —— 看它会不会"装懂"（应当标记为模型推测或未判定，而不是给你一个确定结论）。</li>
+    </ol>
+
+    <h3>看到这些<b>不是</b> bug</h3>
+    <ul>
+      <li><span class="no">满屏「待验证」</span>：食性表中尚待专业人员审核的条目会保留标记，标记密度也是审核进度的可见反馈。</li>
+      <li><span class="no">属性显示成「未判定」</span>：置信度低于 30% 时界面统一不显示寒热属性，这是安全设计，不是漏渲染。</li>
+      <li><span class="no">「麻辣烫」把「辣椒」也带出来了</span>：关键词子串匹配的固有歧义（"麻辣烫"含"麻辣"），已在文档「已知局限」记录，需要别名库才能根治。</li>
+      <li><span class="no">复杂菜名无法按规则识别</span>：表里没收录的整菜名可能无法由本机规则判定；API 对话中的模型推测会另行标注。</li>
+    </ul>
+
+    <h3>反馈时请带上</h3>
+    <ul>
+      <li>你输入的原文、以及页面底部那行 <code>request_id</code>（便于我按请求定位日志）。</li>
+      <li>你<b>预期</b>看到什么、实际看到什么。判断"属性对不对"请看标签悬停里的来源：<code>查表</code>与<code>按烹饪方式推算</code>是可以争论数据对不对的，<code>模型推测</code>本来就不保证准。</li>
+    </ul>
+    <p class="welcome-next">下面进行问卷测试，请点击开始</p>
+    <button id="startQuestionnaire" type="button">开始</button>
+  </div>
+</section>
+<div id="appShell" hidden>
 <header class="bar">
   <div>
     <h1>今日茶饮建议</h1>
@@ -181,68 +240,31 @@
 </header>
 
 <main>
+  <div class="mode-tabs" role="group" aria-label="使用方式">
+    <button id="modeRules" class="active" type="button" aria-pressed="true">规则速览</button>
+    <button id="modeLocalChat" type="button" aria-pressed="false">联网对话 · 无需模型 Key</button>
+    <button id="modeApiChat" type="button" aria-pressed="false">API 对话</button>
+  </div>
   <nav class="feature-nav" aria-label="扩展功能">
     <button class="ghost feature-open" type="button" data-target="questionnairePanel">体质问卷</button>
     <button class="ghost feature-open" type="button" data-target="historyPanel">饮食记录</button>
-    <button class="ghost feature-open" type="button" data-target="chatPanel">AI 对话</button>
     <button class="ghost feature-open" type="button" data-target="medicationPanel">调理资料</button>
   </nav>
-  <details class="guide" open>
-    <summary>测试指引（先看这个，约 1 分钟）</summary>
-    <p class="hint" style="margin:0">
-      这个页面不是「AI 聊天」。它的核心是：<b>食物是寒是热，不靠模型猜，而是查表 + 纯规则判定</b>，
-      并且每一档结论都能追溯来源。模型只负责把你打的字解析成食物、把结论写成人话。
-    </p>
 
-    <h3>建议按顺序试这 4 次</h3>
-    <ol>
-      <li>点上面任意一条示例句，再点「给我建议」——约 <b>13–18 秒</b>，每次会真实调用模型（约 1 分钱）。</li>
-      <li><b>把鼠标停在结果里任意一个食物标签上</b>，会浮出它的判定来源与完整推导过程（如「查表 ｜ 置信度 90% ｜『麻辣烫』原形态下属性为热（查表直取）」）。这是本产品最重要的部分。</li>
-      <li>输入 <code>我怀孕了，今天吃了火锅，能喝什么茶</code> —— <b>秒回</b>，且不给推荐，只引导就医。这条<b>不调用模型</b>，免费。</li>
-      <li>输入一句表里没有的食物，如 <code>晚上吃了佛跳墙</code> —— 看它会不会"装懂"（应当标记为模型推测或未判定，而不是给你一个确定结论）。</li>
-    </ol>
-
-    <h3>看到这些<b>不是</b> bug</h3>
-    <ul>
-      <li><span class="no">满屏「待验证」</span>：食性表 146 条目前全部未经中医师审核，标注是<b>刻意</b>的——标记密度就是审核进度的可见反馈。</li>
-      <li><span class="no">属性显示成「未判定」</span>：置信度低于 30% 时界面统一不显示寒热属性，这是安全设计，不是漏渲染。</li>
-      <li><span class="no">「麻辣烫」把「辣椒」也带出来了</span>：关键词子串匹配的固有歧义（"麻辣烫"含"麻辣"），已在文档「已知局限」记录，需要别名库才能根治。</li>
-      <li><span class="no">复杂菜名落到「模型推测」</span>：表里没收录的整菜名会降级到第三层，属预期行为。</li>
-    </ul>
-
-    <h3>反馈时请带上</h3>
-    <ul>
-      <li>你输入的原文、以及页面底部那行 <code>request_id</code>（便于我按请求定位日志）。</li>
-      <li>你<b>预期</b>看到什么、实际看到什么。判断"属性对不对"请看标签悬停里的来源：<code>查表</code>与<code>按烹饪方式推算</code>是可以争论数据对不对的，<code>模型推测</code>本来就不保证准。</li>
-    </ul>
-  </details>
-
+  <div id="analysisArea">
   <div class="card">
     <textarea id="text" placeholder="例：中午吃了碗麻辣烫，还喝了杯冰可乐，米饭没吃完"></textarea>
-    <div class="examples" id="examples">
-      <span>中午吃了碗麻辣烫，还喝了杯冰可乐</span>
-      <span>晚上火锅吃撑了，都是肉，还喝了啤酒</span>
-      <span>早上就一杯冰美式，中午吃了份沙拉</span>
-      <span>夜宵吃了炸鸡配奶茶</span>
-    </div>
     <div class="row">
-      <label for="const">我的体质</label>
-      <select id="const"></select>
-      <label class="chk" title="只用本地数据与规则，不调用模型、不需要 API Key">
-        <input id="offline" type="checkbox" /> 离线规则
-      </label>
+      <span id="constitutionDisplay" class="hint">请先完成体质问卷</span>
+      <select id="const" hidden aria-label="问卷判定的体质"></select>
+      <input id="offline" type="checkbox" checked hidden />
       <button id="go">给我建议</button>
     </div>
     <div class="hint">体质仅用于饮食养生方向的粗略区分，不构成体质辨识或医学诊断。</div>
-
-    <hr style="border:0;border-top:1px solid var(--line);margin:14px 0 12px" />
-    <div class="row" style="margin-top:0">
-      <span class="cfgstate off" id="keyState"><span class="dot"></span>未填写 API Key</span>
-      <button class="ghost opencfg" type="button">打开设置</button>
-    </div>
   </div>
 
   <div id="out"></div>
+  </div>
 
   <details id="questionnairePanel" class="feature-panel">
     <summary>中医九种体质问卷</summary>
@@ -270,11 +292,10 @@
     <div id="historyResult" class="feature-output"></div>
   </details>
 
-  <details id="chatPanel" class="feature-panel">
+  <details id="chatPanel" class="feature-panel" hidden>
     <summary>茶小助连续对话</summary>
-    <div class="hint">对话会使用“API 设置”中的 Key；聊天内容只随本次请求发送。</div>
+    <div class="hint" id="chatModeHint">联网对话通过本机服务使用现有数据和规则，不调用外部模型 API。</div>
     <div class="row">
-      <label for="chatModel">模型</label><select id="chatModel"></select>
       <button id="clearChat" class="ghost" type="button">清空对话</button>
     </div>
     <div id="chatLog" class="chat-log" aria-live="polite"></div>
@@ -289,14 +310,19 @@
     <div id="medicationResult" class="feature-output"></div>
   </details>
 </main>
+</div>
 
 <dialog id="cfg">
   <form method="dialog">
     <h2>API 设置</h2>
+    <div class="row">
+      <label for="chatModel">模型</label><select id="chatModel"></select>
+    </div>
     <div class="row" style="margin-top:0">
       <label for="key">API Key</label>
-      <input id="key" type="password" autocomplete="off" spellcheck="false"
-             placeholder="sk-…（必填；本服务不内置 Key）" />
+      <span class="key-field"><input id="key" type="password" autocomplete="off" spellcheck="false"
+             placeholder="sk-…（仅 API 对话需要）" />
+        <button id="toggleKey" type="button" aria-label="显示 API Key" aria-pressed="false">👁 显示</button></span>
     </div>
     <div class="row">
       <label class="chk" title="勾选后写入浏览器 localStorage；不勾选只存在本次标签页，关掉即失效">
@@ -331,6 +357,8 @@ const keyStateEl = document.getElementById('keyState');
 let disclaimerCache = null;
 let currentAvoidConstitutions = [];
 let chatMessages = [];
+let ruleChatMessages = [];
+let conversationMode = 'rules';
 const browserStore = window.localStorage;
 const DIET_HISTORY_KEY = 'ta_diet_history_v1';
 const CONSTITUTION_KEY = 'ta_constitution_v1';
@@ -367,6 +395,41 @@ function saveConstitution(id, source) {
 function constitutionLabel(id) {
   const opt = [...sel.options].find(item => item.value === id);
   return opt ? opt.textContent : id;
+}
+
+function beginQuestionnaire() {
+  document.getElementById('welcome').hidden = true;
+  const shell = document.getElementById('appShell');
+  shell.hidden = false;
+  shell.classList.add('questionnaire-stage');
+  document.getElementById('questionnairePanel').open = true;
+  window.scrollTo(0, 0);
+  loadQuestionnaire();
+}
+
+function finishQuestionnaire() {
+  document.getElementById('appShell').classList.remove('questionnaire-stage');
+  document.getElementById('questionnairePanel').open = false;
+  document.getElementById('constitutionDisplay').textContent = '问卷结果：' + constitutionLabel(sel.value);
+  setConversationMode('rules');
+  window.scrollTo(0, 0);
+}
+
+function setConversationMode(mode) {
+  conversationMode = mode;
+  document.getElementById('analysisArea').hidden = mode !== 'rules';
+  const panel = document.getElementById('chatPanel');
+  panel.hidden = mode === 'rules';
+  panel.open = mode !== 'rules';
+  document.getElementById('chatModeHint').textContent = mode === 'local'
+    ? '联网对话通过本机服务使用现有数据和规则，不调用外部模型 API，也不需要 Key。'
+    : 'API 对话使用右上角选择的模型和你填写的 Key。';
+  for (const [id, value] of [['modeRules', 'rules'], ['modeLocalChat', 'local'], ['modeApiChat', 'api']]) {
+    const button = document.getElementById(id);
+    button.classList.toggle('active', mode === value);
+    button.setAttribute('aria-pressed', String(mode === value));
+  }
+  renderChatLog();
 }
 
 function showStoredConstitution(entry) {
@@ -444,6 +507,15 @@ function openCfg() {
   if (typeof cfgEl.showModal === 'function') cfgEl.showModal();
   else cfgEl.setAttribute('open', '');   // 极老浏览器兜底
   refreshKeyHint();
+}
+
+function toggleKeyVisibility() {
+  const button = document.getElementById('toggleKey');
+  const visible = keyEl.type === 'password';
+  keyEl.type = visible ? 'text' : 'password';
+  button.textContent = visible ? '🙈 隐藏' : '👁 显示';
+  button.setAttribute('aria-label', visible ? '隐藏 API Key' : '显示 API Key');
+  button.setAttribute('aria-pressed', String(visible));
 }
 
 /** 主界面只显示「已填写 / 未填写」两级；绝不回显 Key 的任何部分 */
@@ -812,7 +884,7 @@ let questionnaireQuestions = [];
 // 端点 501 的 detail 是给运维的安装指令，不原样透给用户（换成这句人话）。
 function questionnaireUnavailableHint() {
   return '问卷功能未启用（服务端缺少可选的体质问卷子包）。'
-    + '你可以直接在上方手动选择体质，其它功能不受影响。';
+    + '请安装仓库中的问卷子包后刷新页面。';
 }
 
 async function loadQuestionnaire() {
@@ -880,18 +952,23 @@ async function submitQuestionnaire() {
     const scores = (data.scores || []).map(item =>
       `<div class="score-item"><b>${esc(item.name)}</b><br>${esc(item.score)} 分 · ${esc(item.status)}</div>`
     ).join('');
-    if (data.dominant_constitution && [...sel.options].some(o => o.value === data.dominant_constitution)) {
+    const validDominant = data.dominant_constitution
+      && [...sel.options].some(o => o.value === data.dominant_constitution);
+    if (validDominant) {
       sel.value = data.dominant_constitution;
       currentAvoidConstitutions = data.avoid_constitutions || [];
       saveConstitution(sel.value, 'questionnaire');
     }
     const headline = data.requires_manual_selection
-      ? '本次未能自动确定体质，请在上方手动选择。'
-      : `主导体质：<b>${esc(data.dominant_constitution_name)}</b>，已自动选入主分析表单。`;
+      ? '本次未能自动确定体质，请重新作答。'
+      : `主导体质：<b>${esc(data.dominant_constitution_name)}</b>，已用于后续食养建议。`;
     result.innerHTML = `<div class="reason">${headline}<br>${esc(data.resolution_note || '')}</div>
       <div class="score-grid">${scores}</div>
       <div class="disclaimer" style="margin-top:10px">问卷结果仅作健康筛查和日常饮食参考，不构成诊断。</div>
-      <div class="hint">结果保存在本机浏览器，换设备／换浏览器／清缓存后需重新测。</div>`;
+      <div class="hint">结果保存在本机浏览器，换设备／换浏览器／清缓存后需重新测。</div>
+      ${validDominant && !data.requires_manual_selection ? '<div class="row"><button id="finishQuestionnaire" type="button">查看茶饮建议</button></div>' : ''}`;
+    const finish = document.getElementById('finishQuestionnaire');
+    if (finish) finish.addEventListener('click', finishQuestionnaire);
   } catch (e) {
     result.innerHTML = `<div class="error">问卷提交失败：${esc(e.message || e)}</div>`;
   }
@@ -915,11 +992,12 @@ async function loadChatModels() {
 function renderChatLog() {
   const log = document.getElementById('chatLog');
   if (!log) return;
-  if (!chatMessages.length) {
+  const messages = conversationMode === 'local' ? ruleChatMessages : chatMessages;
+  if (!messages.length) {
     log.innerHTML = '<div class="hint">还没有对话。可以接着询问刚才的饮食与茶饮建议。</div>';
     return;
   }
-  log.innerHTML = chatMessages.map(item =>
+  log.innerHTML = messages.map(item =>
     `<div class="chat-message ${item.role}"><b>${item.role === 'user' ? '你' : '茶小助'}</b><br>${esc(item.content)}</div>`
   ).join('');
   log.scrollTop = log.scrollHeight;
@@ -930,11 +1008,40 @@ async function sendChatMessage() {
   const send = document.getElementById('sendChat');
   const content = input.value.trim();
   if (!content) return;
-  chatMessages.push({ role: 'user', content });
+  const messages = conversationMode === 'local' ? ruleChatMessages : chatMessages;
+  messages.push({ role: 'user', content });
   input.value = '';
   renderChatLog();
   send.disabled = true;
   try {
+    if (conversationMode === 'local') {
+      const res = await fetch('/api/analyze-offline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: content,
+          constitution_override: sel.value,
+          avoid_constitutions: currentAvoidConstitutions,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail && data.detail.message || '本机规则请求失败');
+      const lines = [];
+      if (data.user_message) lines.push(data.user_message);
+      if (data.parsed && data.parsed.summary) lines.push(data.parsed.summary);
+      (data.recommendations || []).forEach((rec, index) => {
+        lines.push(`${index + 1}. ${rec.title}`);
+        if (rec.fit_reason) lines.push(rec.fit_reason);
+        const herbs = (rec.herbs || []).map(item => item.name).filter(Boolean);
+        if (herbs.length) lines.push('原料：' + herbs.join('、'));
+        (rec.cautions || []).forEach(item => lines.push('注意：' + item));
+      });
+      if (!lines.length) lines.push('现有规则未找到合适的建议，请补充具体饮食内容。');
+      lines.push(data.disclaimer && data.disclaimer.text || '仅供日常饮食参考，不构成医疗建议。');
+      ruleChatMessages.push({ role: 'assistant', content: lines.join('\n') });
+      renderChatLog();
+      return;
+    }
     const headers = { 'Content-Type': 'application/json' };
     const key = currentKey();
     if (key) headers.Authorization = 'Bearer ' + key;
@@ -959,7 +1066,7 @@ async function sendChatMessage() {
       document.getElementById('chatLog').insertAdjacentHTML('beforeend', renderReferences(data.references));
     }
   } catch (e) {
-    chatMessages.push({ role: 'assistant', content: '请求失败：' + (e.message || e) });
+    messages.push({ role: 'assistant', content: '请求失败：' + (e.message || e) });
     renderChatLog();
   } finally {
     send.disabled = false;
@@ -994,12 +1101,12 @@ async function loadMedicationReference() {
 }
 
 
-document.getElementById('examples').addEventListener('click', e => {
-  if (e.target.tagName === 'SPAN') {
-    document.getElementById('text').value = e.target.textContent;
-    document.getElementById('text').focus();
-  }
-});
+document.getElementById('startQuestionnaire').addEventListener('click', beginQuestionnaire);
+document.getElementById('modeRules').addEventListener('click', () => setConversationMode('rules'));
+document.getElementById('modeLocalChat').addEventListener('click', () => setConversationMode('local'));
+document.getElementById('modeApiChat').addEventListener('click', () => setConversationMode('api'));
+document.getElementById('toggleKey').addEventListener('click', toggleKeyVisibility);
+cfgEl.addEventListener('close', () => { if (keyEl.type === 'text') toggleKeyVisibility(); });
 // 勾选/取消「记住 Key」立刻生效（取消时要把已存的清掉，不能等下次提交）
 rememberEl.addEventListener('change', saveKey);
 keyEl.addEventListener('change', saveKey);
@@ -1031,20 +1138,11 @@ document.getElementById('chatInput').addEventListener('keydown', event => {
   }
 });
 document.getElementById('clearChat').addEventListener('click', () => {
-  chatMessages = [];
+  if (conversationMode === 'local') ruleChatMessages = [];
+  else chatMessages = [];
   renderChatLog();
 });
 document.getElementById('loadMedication').addEventListener('click', loadMedicationReference);
-sel.addEventListener('change', () => {
-  currentAvoidConstitutions = [];
-  saveConstitution(sel.value, 'manual');
-  // 安全边界变窄了必须让用户看见：问卷判定的兼体质屏蔽（avoid）随手动选择一起失效。
-  const el = document.getElementById('questionnaireResult');
-  if (el) {
-    el.innerHTML = '<div class="hint">已改为手动选择，问卷判定的兼体质屏蔽已清空。<br>'
-      + '结果保存在本机浏览器，换设备／换浏览器／清缓存后需重新测。</div>';
-  }
-});
 btn.addEventListener('click', run);
 // 结果区是整体重绘的，「重新分析」每次都是新元素 ⇒ 用委托，不要 render 后 addEventListener
 document.getElementById('out').addEventListener('click', e => {

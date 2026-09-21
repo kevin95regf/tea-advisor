@@ -133,16 +133,16 @@ def _guard4_key_error_opens_dialog(html: str) -> list[str]:
 # ---------------------------------------------------------------- 守卫 5
 
 def _guard5_key_state_no_echo(html: str) -> list[str]:
-    """主界面必须有 Key 状态指示（配置收进弹窗后就看不见了），且绝不回显 Key。"""
+    """Key 只在设置弹窗中显示，默认隐藏；主界面不再展示 Key 状态。"""
     bad = []
-    if 'id="keyState"' not in html:
-        bad.append('主界面缺少 Key 状态指示（#keyState）')
+    if 'id="keyState"' in html:
+        bad.append('主界面不应再展示 Key 状态指示（#keyState）')
+    if 'id="key" type="password"' not in html or 'id="toggleKey"' not in html:
+        bad.append('设置弹窗缺少默认隐藏的 Key 输入框或显隐按钮')
     assigns = re.findall(r'keyStateEl\.innerHTML\s*=\s*([^;]*)', html, re.S)
-    if not assigns:
-        bad.append('没有对 #keyState 的渲染赋值')
     for a in assigns:
         if 'keyEl.value' in a or 'currentKey()' in a:
-            bad.append(f"状态指示回显了 Key 的内容：{a.strip()[:40]}")
+            bad.append(f"页面回显了 Key 的内容：{a.strip()[:40]}")
     return bad
 
 
@@ -254,9 +254,10 @@ const isKeyIssue = d.code === 'NO_API_KEY' || d.code === 'API_KEY_REJECTED';
 if (isKeyIssue && keyEl) keyEl.focus();
 """
 
-# 故意带上 id="keyState"，确保这条样本是被「回显 Key」抓出来的，不是因为缺字段
+# 保留旧状态栏与回显逻辑，确认守卫能识别 Key 泄露。
 BAD5_STATE_ECHOES_KEY = """
 <span id="keyState"></span>
+<input id="key" type="password"><button id="toggleKey" type="button">显示</button>
 keyStateEl.innerHTML = '<span class="dot"></span>' + (filled ? '已填：' + keyEl.value.slice(0, 4) : '未填写');
 """
 
