@@ -158,7 +158,7 @@ Copy-Item credentials.env.example credentials.env    # 可选：只有用 dsh �
 * **不配 `credentials.env`** → 完全不影响：它不含 Key，而 `DSH_HOME` 有默认值（`<仓库根>/dsh-home`）。
 
 两个真实配置文件都已被 `.gitignore` 忽略（模板文件会入库）。
-**实测：全新 clone 不配任何配置文件也能跑通 `pytest`（534 项）与 `--resolve` 纯规则链路。**
+**实测：全新 clone 不配任何配置文件也能跑通 `pytest`（754 项）与 `--resolve` 纯规则链路。**
 
 ```powershell
 # 环境与数据自检（秒级，不调模型）
@@ -301,8 +301,8 @@ print(r.verification.detail)       # 完整判定过程，可追溯
 回归测试：
 
 ```powershell
-python scripts\test_food_accuracy.py            # 真实模型 23 条语料 / 29 项断言
-python -m pytest tests\test_food_lookup.py -q   # 表本身与匹配逻辑的单测
+python core\scripts\test_food_accuracy.py        # 真实模型 23 条语料
+python -m pytest core\tests\test_food_lookup.py -q   # 表本身与匹配逻辑的单测
 ```
 
 ### 双 Agent 协作：通过一个 JSON 通信，谁都不越界
@@ -396,7 +396,7 @@ tea-advisor/
 │  │     └─ orchestrator.py        双 Agent 串行编排 + 降级
 │  ├─ data/                        数据层（上表三个 JSON）
 │  ├─ scripts/                     自检与冒烟脚本
-│  └─ tests/                       534 项离线测试
+│  └─ tests/                       754 项离线测试
 ├─ start-web.cmd                   ★ Windows 双击启动网页版（自动开浏览器）
 ├─ start-terminal.cmd              ★ Windows 双击启动终端版
 └─ docs/three-layer-architecture.md
@@ -411,8 +411,10 @@ tea-advisor/
 
 ```powershell
 cd core
-python -m pytest -q          # 534 passed，不调用模型、不需要 API Key
+python -m pytest tests -q    # 754 passed，不调用模型、不需要 API Key
 ```
+
+> ⚠️ 别在 `core/` 下直接跑裸 `pytest -q`：它会把 `core/var/` 下的临时脚本一起收集（其中有 GBK 编码文件，会报 `UnicodeDecodeError`）。带上 `tests` 就不会。
 
 | 文件 | 覆盖内容 | 项数 |
 |---|---|---|
@@ -424,13 +426,13 @@ python -m pytest -q          # 534 passed，不调用模型、不需要 API Key
 | `tests/test_json_guard.py` | 围栏剥离、对象提取、schema 校验、失败重试 | 14 |
 | `tests/test_key_handling.py` | Authorization 解析、思考模式映射、**Key 不进日志/响应/异常**、凭据错误码、无 Key 即拒绝 | 50 |
 
-> 本表只列核心 7 个文件；`core/tests/` 现共 **24 个测试文件 / 534 项**，完整清单跑 `pytest --collect-only -q`（在 `core/` 目录下）。
+> 本表只列核心 7 个文件；`core/tests/` 现共 **34 个测试文件 / 754 项**，完整清单跑 `pytest --collect-only -q`（在 `core/` 目录下）。
 
 需要 API Key 的端到端（**不在 pytest 内**，会产生调用费用）：
 
 ```powershell
-python scripts\test_food_accuracy.py    # 属性准确率：23 条语料 / 29 项断言
-python scripts\smoke_agents.py          # 运行时启动 → 原始往返 → Agent1 → 全链路
+python core\scripts\test_food_accuracy.py    # 属性准确率：23 条语料
+python core\scripts\smoke_agents.py      # 运行时启动 → 原始往返 → Agent1 → 全链路
 ```
 
 ---
@@ -511,9 +513,9 @@ python scripts\smoke_agents.py          # 运行时启动 → 原始往返 → A
 | [docs/maintenance.md](docs/maintenance.md) | **维护者** | 全貌、数据流、运维、验证基线、成本模型、排错手册 |
 
 ```powershell
-python scripts\check_setup.py       # 环境与数据自检
-python scripts\smoke_offline.py     # 离线全链路冒烟
-python -m pytest -q                 # 534 项
+python core\scripts\check_setup.py   # 环境与数据自检
+python core\scripts\smoke_offline.py # 离线全链路冒烟
+python -m pytest core\tests -q       # 754 项
 ```
 
 提交 PR 前请读 **[CONTRIBUTING.md](CONTRIBUTING.md)**，其中写明了：
