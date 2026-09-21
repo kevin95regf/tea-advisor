@@ -2662,13 +2662,12 @@
         "鸡蛋",
         "水煮蛋",
         "煎蛋",
-        "荷包蛋",
-        "蛋"
+        "荷包蛋"
       ],
       "reviewed": false,
       "reviewed_by": null,
       "reviewed_at": null,
-      "review_note": null,
+      "review_note": "D29：移除裸字「蛋」——它是别的条目词（蛋糕/卤蛋/茶叶蛋）的子串，会让「蛋糕」同时命中鸡蛋。其余单字（鱼/姜/梨/糖/盐）同类问题已登记，由 tests/test_single_char_keywords.py 的白名单守着，新增即变红。",
       "review_status": "pending"
     },
     {
