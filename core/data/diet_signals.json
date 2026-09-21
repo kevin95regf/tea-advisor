@@ -8,6 +8,7 @@
     "review_status": "unreviewed",
     "structure_note": "signals 是原子信号，只定义一次；dimensions 每维各带 weights 与 aggregation。iced／fried 等信号会同时喂两个维度，此时只在权重层重复、不在定义层重复——两维各建一套识别器必然漂移。",
     "judge_note": "judge 标明判据来源：prefix＝温度前缀层（确定性）／entry＝条目名单／category＝类目字段／hybrid＝两条并用／derived＝由其它信号派生。名单一律写条目规范名，不写别名（解析层已把别名并入条目）。",
+    "scene_rules_note": "scene_rules 是「场景 → 首选搭配」表（含它的关键词）：关键词**故意**做子串匹配（扫条目名 + note），与 signals 的「只认条目／类目」是两套判据机制，不能并进 signals —— signals 层由 core/tests/test_diet_signals.py 的 test_no_bare_substring_scanning 钉住「不裸扫原文」。两个 labels 因此分属两段，不是重复。**数组顺序即语义**：平手时靠顺序（见 matcher._pick_rule 的严格大于比较）。迁移见挂起项 D24。",
     "unexecutable_thresholds": [
       {
         "dimension": "dampness",
@@ -136,6 +137,49 @@
       "evidence": "none",
       "rule": { "requires_any_nature": ["hot"], "requires_signal": "iced" },
       "note": "per-meal 跨条目信号，不是单条目属性——否则「火锅配冰饮」会被拆成两条各自无信号。"
+    }
+  ],
+  "scene_rules": [
+    {
+      "id": "greasy",
+      "label": "油腻餐后偏消食",
+      "priority": 3,
+      "match_natures": ["warm", "hot"],
+      "keywords": ["麻辣", "炸", "烤", "烧烤", "油", "红烧", "火锅", "肉", "肥", "奶油"],
+      "blend": [{"name": "陈皮", "amount_g": 5}, {"name": "山楂", "amount_g": 6}],
+      "title": "陈皮山楂消食饮",
+      "reason": "这餐偏油腻，陈皮与山楂偏于理气消食，餐后温饮较合适。"
+    },
+    {
+      "id": "cold_intake",
+      "label": "生冷之后偏温中",
+      "priority": 2,
+      "match_natures": ["cool", "cold"],
+      "keywords": ["冰", "冷", "凉", "雪糕", "冰淇淋", "生鱼", "刺身", "沙拉", "冷饮"],
+      "blend": [{"name": "生姜", "amount_g": 5}, {"name": "红枣", "amount_g": 6}],
+      "title": "生姜红枣温中饮",
+      "reason": "这餐偏生冷，生姜与红枣偏温，适合暖一暖胃。"
+    },
+    {
+      "id": "spicy",
+      "label": "辛辣燥热偏生津",
+      "priority": 2,
+      "match_natures": ["hot"],
+      "keywords": ["辣", "麻辣", "椒", "烧烤", "孜然"],
+      "blend": [{"name": "麦冬", "amount_g": 6}, {"name": "罗汉果", "amount_g": 3}],
+      "title": "麦冬罗汉果润喉饮",
+      "reason": "这餐辛辣偏燥，麦冬与罗汉果偏于生津润喉。"
+    },
+    {
+      "id": "late_night",
+      "label": "未判出偏向·和胃安神",
+      "priority": 1,
+      "match_natures": ["unknown"],
+      "keywords": [],
+      "blend": [{"name": "陈皮", "amount_g": 4}, {"name": "茯苓", "amount_g": 6}],
+      "title": "陈皮茯苓和胃饮",
+      "reason": "这一餐没判出明显的寒热偏向，先用偏于理气和胃的温性搭配，量宜少。",
+      "note": "名字叫 late_night，但它不是夜宵规则：keywords 为空、只靠 match_natures={unknown} 拿分，实际是「没判出任何场景」的兜底。所以 label 与 reason 一律不许提「夜里／夜宵」——实测中午「米饭青菜」、早餐「面包牛奶」都会走到这里（D31）。"
     }
   ],
   "dimensions": {

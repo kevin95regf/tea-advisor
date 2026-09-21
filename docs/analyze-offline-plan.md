@@ -196,6 +196,12 @@ recs, msg, rule_hits = matcher.fallback_recommend(parsed, constitution)
 它与 `matcher.RULES` 的 `keywords` 高度重复，改一处不改另一处就会静默漂移。
 `RULES` 里的 `keywords` 保留原样（那是**规则命中**用的，与**食物识别**是两件事）。
 
+> ⚠️ **2026-09-21 注记（历史记录未改写）**：这条**结论不变**，但**位置变了** ——
+> `RULES` 整表（含 `keywords`）已迁进 `core/data/diet_signals.json` 的 `scene_rules` 段
+> （**D24**），`matcher.RULES` 改为从数据派生。⇒ 上面「它与 `RULES` 的 `keywords` 高度重复」
+> 仍成立，只是要找词表现在该去 `diet_signals.json`。另：`_match_nature_from_text` 与
+> `RULES.keywords` 这两份词表的**静默漂移风险仍在**（本次未消除）。
+
 ---
 
 ## 5. 改动清单与工作量

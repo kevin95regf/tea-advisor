@@ -100,6 +100,39 @@ def load_diet_signals() -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+SCENE_RULES_KEY = "scene_rules"
+
+
+class MissingSceneRulesError(RuntimeError):
+    """`diet_signals.json` 里缺 `scene_rules` 段。
+
+    刻意**不**沿用 `load_diet_signals` 的「缺文件返回空字典」惯例：本段缺失时
+    `matcher._pick_rule` 会退化成「任何场景都命不中」⇒ 用户的搭配会**悄悄**变成
+    体质默认，而输出表面看不出来。照 `MissingConstitutionDataError` 的先例，
+    宁可不启动，也不静默降级。
+    """
+
+
+@lru_cache(maxsize=1)
+def load_scene_rules() -> tuple[dict, ...]:
+    """加载「场景 → 首选搭配」表 —— D24 起，场景关键词的真源在这里。
+
+    返回**元组**（不可变）：调用方 `matcher.RULES` 是模块级常量，现场改它应是
+    显式替换、而不是就地 append。
+    """
+    spec = load_diet_signals()
+    if not spec:
+        raise MissingSceneRulesError(
+            "diet_signals.json 缺失或为空 ⇒ 场景规则没有真源，拒绝静默降级"
+        )
+    rules = spec.get(SCENE_RULES_KEY)
+    if not rules:
+        raise MissingSceneRulesError(
+            f"diet_signals.json 缺 `{SCENE_RULES_KEY}` 段 ⇒ 场景规则没有真源，拒绝静默降级"
+        )
+    return tuple(rules)
+
+
 @lru_cache(maxsize=1)
 def _food_index() -> dict[str, dict]:
     """名字／别名 → 表内条目。

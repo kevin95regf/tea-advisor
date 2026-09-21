@@ -10,7 +10,11 @@ import logging
 from typing import Sequence
 
 from app.domain.enums import CONSTITUTION_LABELS, Constitution, Nature
-from app.domain.diet_signals import derive_meal_plan, load_meal_plan_rules
+from app.domain.diet_signals import (
+    derive_meal_plan,
+    load_meal_plan_rules,
+    load_scene_rules,
+)
 from app.domain.models import (
     BrewGuide,
     HerbInBlend,
@@ -21,53 +25,45 @@ from app.domain.safety import blend_needs_cooking, herb_by_name
 
 logger = logging.getLogger(__name__)
 
-# 场景 → 首选搭配（饮片名 + 克数）
-RULES: list[dict] = [
-    {
-        "id": "greasy",
-        "label": "油腻餐后偏消食",
-        "priority": 3,
-        "match_natures": {Nature.WARM, Nature.HOT},
-        "keywords": ("麻辣", "炸", "烤", "烧烤", "油", "红烧", "火锅", "肉", "肥", "奶油"),
-        "blend": [("陈皮", 5), ("山楂", 6)],
-        "title": "陈皮山楂消食饮",
-        "reason": "这餐偏油腻，陈皮与山楂偏于理气消食，餐后温饮较合适。",
-    },
-    {
-        "id": "cold_intake",
-        "label": "生冷之后偏温中",
-        "priority": 2,
-        "match_natures": {Nature.COLD, Nature.COOL},
-        "keywords": ("冰", "冷", "凉", "雪糕", "冰淇淋", "生鱼", "刺身", "沙拉", "冷饮"),
-        "blend": [("生姜", 5), ("红枣", 6)],
-        "title": "生姜红枣温中饮",
-        "reason": "这餐偏生冷，生姜与红枣偏温，适合暖一暖胃。",
-    },
-    {
-        "id": "spicy",
-        "label": "辛辣燥热偏生津",
-        "priority": 2,
-        "match_natures": {Nature.HOT},
-        "keywords": ("辣", "麻辣", "椒", "烧烤", "孜然"),
-        "blend": [("麦冬", 6), ("罗汉果", 3)],
-        "title": "麦冬罗汉果润喉饮",
-        "reason": "这餐辛辣偏燥，麦冬与罗汉果偏于生津润喉。",
-    },
-    {
-        "id": "late_night",
-        # ⚠️ 名字叫 late_night，但它**不是夜宵规则**：keywords 是空元组、只靠
-        # `match_natures={UNKNOWN}` 拿分 ⇒ 实际是「没判出任何场景」的**兜底**。
-        # 所以 label 与 reason 一律不许提「夜里/夜宵」—— 实测中午「米饭炒青菜」、
-        # 早餐「面包牛奶」都会走到这里（D31）。
-        "label": "未判出偏向·和胃安神",
-        "priority": 1,
-        "match_natures": {Nature.UNKNOWN},
-        "keywords": (),
-        "blend": [("陈皮", 4), ("茯苓", 6)],
-        "title": "陈皮茯苓和胃饮",
-        "reason": "这一餐没判出明显的寒热偏向，先用偏于理气和胃的温性搭配，量宜少。",
-    },
-]
+# 场景 → 首选搭配。**整表（含关键词）的真源在 `core/data/diet_signals.json` 的
+# `scene_rules` 段**（D24，2026-09-21 迁移）；本文件只做形状转换，不再持有任何词表。
+#
+# 为什么单列一段、不并进 `signals`：`signals` 是**计分层**，纪律是「不裸扫原文、
+# 只长在解析后的条目名上」（由 `test_diet_signals.py::test_no_bare_substring_scanning`
+# 钉住）；本表的关键词**故意**做子串匹配（扫条目名 + note）⇒ 两套判据机制，不能混。
+#
+# ⚠️ **数组顺序即语义**：平手时 `_pick_rule` 取先遇到的那条（严格大于比较）。
+def _scene_rules() -> list[dict]:
+    """把 `scene_rules` 数据转成既有内部形状（下游 `_pick_rule`／`_scene_rule_ids` 一行不改）。
+
+    - `match_natures` 在数据里是 `"warm"` 这类字符串值 ⇒ 转成 `Nature` 集合；
+      未知值会 `ValueError`，**响亮地失败**，不静默当成「不匹配」。
+    - `blend` 在数据里是 `{name, amount_g}` 对象 ⇒ 转成 `(name, amount)` 元组；
+      克数**原样带入**（JSON 里的 `5` 仍是 `int`），不做 `float()` 归一 ——
+      否则改前/改后探针会多出一堆 `5` vs `5.0` 的假差异。
+    - 数据缺失时 `load_scene_rules()` **抛异常**（不静默退化成「一条场景规则都没有」）。
+    """
+    rules: list[dict] = []
+    for spec in load_scene_rules():
+        rules.append(
+            {
+                "id": str(spec["id"]),
+                "label": str(spec.get("label") or ""),
+                "priority": int(spec.get("priority") or 0),
+                "match_natures": {Nature(n) for n in (spec.get("match_natures") or [])},
+                "keywords": tuple(str(k) for k in (spec.get("keywords") or [])),
+                "blend": [
+                    (str(h["name"]), h["amount_g"]) for h in (spec.get("blend") or [])
+                ],
+                "title": str(spec.get("title") or ""),
+                "reason": str(spec.get("reason") or ""),
+            }
+        )
+    return rules
+
+
+# 导入期即构建：缺数据要**启动就炸**，不是在某个请求里静默降级。
+RULES: list[dict] = _scene_rules()
 
 # 体质 → 首选搭配（无场景匹配时使用）
 CONSTITUTION_DEFAULT: dict[str, tuple[list[tuple[str, float]], str, str]] = {
