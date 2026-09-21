@@ -9,6 +9,7 @@
     "structure_note": "signals 是原子信号，只定义一次；dimensions 每维各带 weights 与 aggregation。iced／fried 等信号会同时喂两个维度，此时只在权重层重复、不在定义层重复——两维各建一套识别器必然漂移。",
     "judge_note": "judge 标明判据来源：prefix＝温度前缀层（确定性）／entry＝条目名单／category＝类目字段／hybrid＝两条并用／derived＝由其它信号派生。名单一律写条目规范名，不写别名（解析层已把别名并入条目）。",
     "scene_rules_note": "scene_rules 是「场景 → 首选搭配」表（含它的关键词）：关键词**故意**做子串匹配（扫条目名 + note），与 signals 的「只认条目／类目」是两套判据机制，不能并进 signals —— signals 层由 core/tests/test_diet_signals.py 的 test_no_bare_substring_scanning 钉住「不裸扫原文」。两个 labels 因此分属两段，不是重复。**数组顺序即语义**：平手时靠顺序（见 matcher._pick_rule 的严格大于比较）。迁移见挂起项 D24。",
+    "nature_keywords_note": "`_match_nature_from_text`（离线路径猜整餐四性）用的三组词。它与 `scene_rules` 的判据**不是一回事**：那是「选哪条搭配」，这是「这餐偏寒还是偏热」，只是恰好有重叠（cold 与 `scene_rules.cold_intake.keywords` 目前逐字相同）。⇒ 刻意**不做交叉引用**，避免「改搭配词表顺手改掉四性判定」。三份词表之间的**漂移**由 `core/tests/test_nature_keywords.py` 按登记关系守住。权重（cold/hot 各 2、warm 各 1）仍是代码里的评分参数，未下沉。",
     "unexecutable_thresholds": [
       {
         "dimension": "dampness",
@@ -182,6 +183,11 @@
       "note": "名字叫 late_night，但它不是夜宵规则：keywords 为空、只靠 match_natures={unknown} 拿分，实际是「没判出任何场景」的兜底。所以 label 与 reason 一律不许提「夜里／夜宵」——实测中午「米饭青菜」、早餐「面包牛奶」都会走到这里（D31）。"
     }
   ],
+  "nature_keywords": {
+    "cold": ["冰", "冷", "凉", "雪糕", "冰淇淋", "生鱼", "刺身", "沙拉", "冷饮"],
+    "hot": ["辣", "麻辣", "椒", "烧烤", "孜然", "火锅", "炸"],
+    "warm": ["热", "温", "姜", "羊肉", "炖"]
+  },
   "dimensions": {
     "impact": {
       "label": "脾胃冲击度",

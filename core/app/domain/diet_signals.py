@@ -133,6 +133,41 @@ def load_scene_rules() -> tuple[dict, ...]:
     return tuple(rules)
 
 
+NATURE_KEYWORDS_KEY = "nature_keywords"
+
+
+class MissingNatureKeywordsError(RuntimeError):
+    """`diet_signals.json` 里缺 `nature_keywords` 段。
+
+    同 `MissingSceneRulesError` 的理由：缺了它 `_match_nature_from_text` 会把**每一餐**
+    都判成 `unknown`（进而不命中任何 `match_natures`、也不进冲突判定），
+    这是**静默**的行为降级 ⇒ 宁可不启动。
+    """
+
+
+@lru_cache(maxsize=1)
+def load_nature_keywords() -> dict[str, tuple[str, ...]]:
+    """加载离线路径「猜整餐四性」用的三组词（cold／hot／warm）。
+
+    返回元组（不可变）。⚠️ 它与 `scene_rules` 是**两套判据**：那是「选哪条搭配」，
+    这是「这餐偏寒还是偏热」，只是恰好有重叠（`cold` 与
+    `scene_rules.cold_intake.keywords` 目前逐字相同）—— 刻意**不做交叉引用**，
+    免得「改搭配词表顺手改掉四性判定」。三份词表之间的漂移由
+    `core/tests/test_nature_keywords.py` 按登记关系守住。
+    """
+    spec = load_diet_signals()
+    if not spec:
+        raise MissingNatureKeywordsError(
+            "diet_signals.json 缺失或为空 ⇒ 四性关键词没有真源，拒绝静默降级"
+        )
+    raw = spec.get(NATURE_KEYWORDS_KEY)
+    if not raw:
+        raise MissingNatureKeywordsError(
+            f"diet_signals.json 缺 `{NATURE_KEYWORDS_KEY}` 段 ⇒ 四性关键词没有真源，拒绝静默降级"
+        )
+    return {str(k): tuple(str(w) for w in (v or ())) for k, v in raw.items()}
+
+
 @lru_cache(maxsize=1)
 def _food_index() -> dict[str, dict]:
     """名字／别名 → 表内条目。

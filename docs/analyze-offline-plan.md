@@ -199,8 +199,10 @@ recs, msg, rule_hits = matcher.fallback_recommend(parsed, constitution)
 > ⚠️ **2026-09-21 注记（历史记录未改写）**：这条**结论不变**，但**位置变了** ——
 > `RULES` 整表（含 `keywords`）已迁进 `core/data/diet_signals.json` 的 `scene_rules` 段
 > （**D24**），`matcher.RULES` 改为从数据派生。⇒ 上面「它与 `RULES` 的 `keywords` 高度重复」
-> 仍成立，只是要找词表现在该去 `diet_signals.json`。另：`_match_nature_from_text` 与
-> `RULES.keywords` 这两份词表的**静默漂移风险仍在**（本次未消除）。
+> 仍成立，只是要找词表现在该去 `diet_signals.json`。另：`_match_nature_from_text` 的
+> 三组词也已下沉（`diet_signals.json` 的 `nature_keywords` 段，**值逐字未改**）；
+> 它与 `scene_rules` 之间的**漂移风险仍在**（现在成了两份数据表，且 `SPICY_KEYWORDS`
+> 仍是代码常量），由 `core/tests/test_nature_keywords.py` 按登记关系守住。
 
 ---
 

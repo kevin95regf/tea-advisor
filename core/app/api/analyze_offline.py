@@ -9,7 +9,11 @@ import uuid
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from app.domain.diet_signals import build_meal_signals, derive_meal_plan
+from app.domain.diet_signals import (
+    build_meal_signals,
+    derive_meal_plan,
+    load_nature_keywords,
+)
 from app.domain.enums import CONSTITUTION_LABELS, Constitution, MealTime, Nature
 from app.domain.meal_time import guess_meal_time
 from app.domain.models import AnalyzeResponse, Meta, ParsedFood, ParsedMeal, Verification
@@ -35,9 +39,17 @@ class OfflineAnalyzeRequest(BaseModel):
 
 
 def _match_nature_from_text(text: str) -> Nature:
-    cold_kw = ("冰", "冷", "凉", "雪糕", "冰淇淋", "生鱼", "刺身", "沙拉", "冷饮")
-    hot_kw = ("辣", "麻辣", "椒", "烧烤", "孜然", "火锅", "炸")
-    warm_kw = ("热", "温", "姜", "羊肉", "炖")
+    """按关键词粗判整餐四性（离线路径用）。
+
+    ⚠️ 三组词的**真源在 `core/data/diet_signals.json` 的 `nature_keywords` 段**
+    （2026-09-21 搬迁，**值逐字未改**）—— 它们原先是与 `RULES` 并存的**第三份**
+    代码常量表，改一处不改另一处就会静默漂移（`docs/analyze-offline-plan.md` 记过这条）。
+    权重（cold／hot 各 2、warm 各 1）仍是本函数的评分参数，未下沉。
+    """
+    words = load_nature_keywords()
+    cold_kw = words["cold"]
+    hot_kw = words["hot"]
+    warm_kw = words["warm"]
     cold = sum(2 for word in cold_kw if word in text)
     hot = sum(2 for word in hot_kw if word in text)
     warm = sum(1 for word in warm_kw if word in text)
