@@ -572,9 +572,16 @@ def test_matcher_does_not_crash_when_constitution_default_missing(
     assert recs[0].herbs
     assert "尚未收录" in recs[0].fit_reason, "必须说明这不是为他体质配的"
     assert hits[0] == "constitution_default_missing"
-    # 确认真的退到了平和质的搭配，而不是随手编一组
+    # 确认真的退到了平和质的搭配，而不是随手编一组。
+    # ⚠️ E4(α) 起通用兜底**同样要过主导体质的硬剔除** ⇒ 期望＝balanced 搭配**减去**
+    # 对湿热标了不宜的饮片（不是原样照抄 balanced）。
     balanced_blend = {name for name, _ in matcher.CONSTITUTION_DEFAULT["balanced"][0]}
-    assert {h.name for h in recs[0].herbs} == balanced_blend
+    blocked = matcher._herbs_unsuitable_for_any({Constitution.DAMP_HEAT.value})
+    got = {h.name for h in recs[0].herbs}
+    assert got == balanced_blend - blocked
+    assert got, "通用兜底不该被剔空"
+    # 负控制：本例必须有饮片被剔掉，否则上一条退化成「原样相等」而看不出硬剔除在生效
+    assert balanced_blend & blocked, "样本前提失效：balanced 搭配里没有对湿热标不宜的饮片"
 
 
 # ============================================================

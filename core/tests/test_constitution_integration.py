@@ -141,11 +141,59 @@ def test_both_paths_block_avoid_consistently() -> None:
     assert any(t.startswith("llm:") for t in tested), "LLM 路径一次都没被真正测到"
 
 
+def test_offline_path_excludes_primary_constitution_unsuitable() -> None:
+    """E4(α)：离线路径对**主导体质**也要硬排除，与 LLM 路径取齐。
+
+    缺这条时，同一味药对主导体质标了 `unsuitable_for`：LLM 路径 `continue`（硬排除），
+    离线路径只追加一句 caution（软提示）⇒ 同一个用户「有 Key / 没 Key」拿到不同的安全
+    边界，而界面只显示最终搭配、看不出差异来源。判据用第三方 oracle（直接读 catalog 的
+    `unsuitable_for`），不照抄任一方的实现。覆盖 rule 与 default 两个分支。
+    """
+    def offline_names(primary: str, use_rule: bool) -> set[str]:
+        original = matcher._pick_rule
+        try:
+            if not use_rule:
+                matcher._pick_rule = lambda parsed: None  # type: ignore[assignment]
+            recs, _, _ = matcher.fallback_recommend(_meal(Nature.WARM), Constitution(primary))
+        finally:
+            matcher._pick_rule = original
+        return {h.name for rec in recs for h in rec.herbs}
+
+    for primary in ALL_NINE:
+        for use_rule in (True, False):
+            leftover = _unsafe_for(offline_names(primary, use_rule), {primary})
+            assert leftover == set(), (
+                f"离线路径（{'rule' if use_rule else 'default'} 分支）给 {primary} "
+                f"留下了对**主导体质**不宜的饮片：{leftover}"
+            )
+
+    # ---- 负控制：把硬剔除整个关掉（模拟 E4 之前），必须有组合会违规 ----
+    # 否则这条判据可能一组都没真正约束到（恒真）。这也顺带证明「E4 之前确实违规」。
+    original_block = matcher._herbs_unsuitable_for_any
+    violations: list[str] = []
+    try:
+        matcher._herbs_unsuitable_for_any = lambda consts: set()  # type: ignore[assignment]
+        for primary in ALL_NINE:
+            for use_rule in (True, False):
+                if _unsafe_for(offline_names(primary, use_rule), {primary}):
+                    violations.append(f"{primary}/{'rule' if use_rule else 'default'}")
+    finally:
+        matcher._herbs_unsuitable_for_any = original_block
+    assert violations, (
+        "把硬剔除关掉后一组违规都没有 ⇒ 本测试的判据是真空的（数据已不覆盖 E4）"
+    )
+
+
 def test_avoid_empty_keeps_offline_path_unchanged(monkeypatch) -> None:
-    """收口判据：不传 avoid 时，离线路径必须与改动前**完全一致**（遍历九型）。
+    """收口判据：`avoid` **不传与传空等价**（默认不额外引入屏蔽）。
 
     LLM 路径的同一条等价性在 `test_safety.py` 里守，这里守离线这一侧 ——
     两处分开写，是因为它们不共用代码，不能互相代表。
+
+    ⚠️ 本测试原写作「离线路径必须与**改动前**完全一致」—— **E4(α) 之后这句不再成立**：
+    主导体质现在也硬剔除，是**刻意的行为变更**（另见
+    `test_offline_path_excludes_primary_constitution_unsuitable`）。保留的是
+    「默认 `avoid` 不额外动手」这半件：不传 vs 传空必须逐字相同。
     """
     meal = _meal(Nature.WARM)
     for cid in ALL_NINE:

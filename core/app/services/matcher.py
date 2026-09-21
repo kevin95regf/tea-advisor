@@ -500,14 +500,21 @@ def fallback_recommend(
 
     返回 (推荐列表, user_message, rule_hits)。
 
-    `avoid`：兼体质屏蔽集（B2 接入，D6-A′ **硬剔除**）。命中的饮片直接从搭配里去掉，
-    与 LLM 路径的候选集过滤保持一致 —— 不是追加一句提示就完事。
+    **硬剔除分两类**（都从搭配里**去掉**饮片，与 LLM 路径的候选集过滤一致，不是追加提示）：
+    * `avoid`：兼体质屏蔽集（B2 接入，D6-A′）。
+    * **主导体质**：E4(α) 起同样硬剔除。原先只对主导体质追加一句 caution（软提示），
+      于是同一个用户「有 Key / 没 Key」会拿到**不同的安全边界**，而界面只显示最终搭配、
+      看不出差异来源。两类都用同一份判据（`unsuitable_for`）算，所以两条路径的结论一致
+      —— 由 `tests/test_constitution_integration.py` 钉死。
     ⚠️ 过滤必须放在 **blend 确定之后**：`_pick_rule` 命中的场景搭配**完全不经过体质**，
     塞进 `_constitution_default` 里会漏掉整个 rule 分支。
-    默认空 ⇒ 既有行为不变。
+    ⚠️ 剔空时退通用兜底（契约是「永远给出合法且安全的搭配」），并把**归因**写进
+    `rule_hits` 与理由：是主导体质剔的、还是兼夹剔的。
     """
     exclude = set(exclude_herbs or [])
+    blocked_by_constitution = _herbs_unsuitable_for_any({constitution.value})
     blocked_by_avoid = _herbs_unsuitable_for_any({str(a) for a in avoid})
+    blocked = blocked_by_avoid | blocked_by_constitution
     blend, title, reason, hits, fallback_note, plan_note = _choose_blend(
         parsed, constitution, avoid=avoid
     )
@@ -515,9 +522,10 @@ def fallback_recommend(
     blend = [(name, amount) for name, amount in blend if name not in exclude]
     if not blend:
         return [], "你排除的饮片正好是这组搭配的全部，换一组或去掉排除项再试试。", hits
+    original_blend = list(blend)
 
-    if blocked_by_avoid:
-        kept = [(name, amount) for name, amount in blend if name not in blocked_by_avoid]
+    if blocked:
+        kept = [(name, amount) for name, amount in blend if name not in blocked]
         if not kept:
             # 硬剔除把整组剔空了 ⇒ 退通用兜底。契约是「永远给出合法且安全的搭配」，
             # 不能返回空推荐，也不能把剔空的原因藏起来。
@@ -528,14 +536,25 @@ def fallback_recommend(
                 g_kept = [
                     (name, amount)
                     for name, amount in g_blend
-                    if name not in exclude and name not in blocked_by_avoid
+                    if name not in exclude and name not in blocked
                 ]
             if not g_kept:
                 return [], "按你的体质（含兼夹体质）筛下来没有可用饮片，请换个说法或咨询医师。", hits
             blend = g_kept
             title, reason = generic[1], generic[2]
-            fallback_note = "原搭配对兼夹体质不宜，已改用平和质的通用搭配"
-            hits = [*hits, "avoid_cleared_blend"]
+            # 归因：到底是主导体质剔的空、兼夹剔的空，还是两者都有（照实说，别一律写「兼夹」）
+            by_avoid = any(name in blocked_by_avoid for name, _ in original_blend)
+            by_const = any(name in blocked_by_constitution for name, _ in original_blend)
+            if by_avoid:
+                hits = [*hits, "avoid_cleared_blend"]
+            if by_const:
+                hits = [*hits, "constitution_cleared_blend"]
+            if by_avoid and not by_const:
+                fallback_note = "原搭配对兼夹体质不宜，已改用平和质的通用搭配"
+            elif by_const and not by_avoid:
+                fallback_note = "原搭配对你当前体质不宜，已改用平和质的通用搭配"
+            else:
+                fallback_note = "原搭配对你当前体质（含兼夹体质）不宜，已改用平和质的通用搭配"
         else:
             blend = kept
 
@@ -548,6 +567,8 @@ def fallback_recommend(
     for herb in herbs:
         entry = catalog.get(herb.name) or {}
         cautions.extend(entry.get("cautions", [])[:1])
+        # E4(α) 后这条对**主导体质**已不可达（上面已把主导体质不宜的味硬剔掉）；
+        # 保留为纵深防御 —— 万一将来有分支绕过硬剔，也不要静默推荐。
         if constitution.value in (entry.get("unsuitable_for") or []):
             cautions.append(f"{herb.name} 与你当前体质方向不完全契合，建议减量")
 
