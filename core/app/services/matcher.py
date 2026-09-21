@@ -55,13 +55,17 @@ RULES: list[dict] = [
     },
     {
         "id": "late_night",
-        "label": "夜宵偏和胃安神",
+        # ⚠️ 名字叫 late_night，但它**不是夜宵规则**：keywords 是空元组、只靠
+        # `match_natures={UNKNOWN}` 拿分 ⇒ 实际是「没判出任何场景」的**兜底**。
+        # 所以 label 与 reason 一律不许提「夜里/夜宵」—— 实测中午「米饭炒青菜」、
+        # 早餐「面包牛奶」都会走到这里（D31）。
+        "label": "未判出偏向·和胃安神",
         "priority": 1,
         "match_natures": {Nature.UNKNOWN},
         "keywords": (),
         "blend": [("陈皮", 4), ("茯苓", 6)],
         "title": "陈皮茯苓和胃饮",
-        "reason": "夜里吃得多，偏于理气和胃的温性搭配更稳妥，量宜少。",
+        "reason": "这一餐没判出明显的寒热偏向，先用偏于理气和胃的温性搭配，量宜少。",
     },
 ]
 
@@ -314,8 +318,8 @@ def _scene_rule_ids(parsed: ParsedMeal, conflict: object) -> set[str]:
 
     要求关键词命中这一条是实测逼出来的（`probe_stage2c` §E/F）：
     `late_night` 的 keywords 是空元组，只靠 `match_natures={UNKNOWN}` 拿 1 分就能赢。
-    不设这条门槛，冲突餐会退到「夜宵偏和胃安神」，给用户一句「夜里吃得多」
-    的错误时间叙述——兜底规则不是场景结论。
+    不设这条门槛，冲突餐会退到这条兜底规则，给用户一句「夜里吃得多」
+    的错误时间叙述——兜底规则不是场景结论（**D31**：该叙述已改为不提时间）。
     """
     text = _meal_text(parsed)
     heat_side = list(getattr(conflict, "heat_side", None) or [])
