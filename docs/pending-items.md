@@ -744,6 +744,7 @@
 | **实测现值（可直接替换）** | 登记表 `docs/food-properties-sources.json`：**94** 条（layer ①55／②21／③18）；B4 派生 `note`：**53** 条；「第一批」判据已改为按来源登记表的 `batch` 字段（33 条），不再按类别；核验单多出 §4.5／§4.6 两节 |
 | **需要什么** | 按实测现值重写 §0／§1 的口径与数字，并把「上游给的清单是**余数**、不是名单」写成显式警告（否则后来人还会照着它排期）|
 | **验收标准** | 文档数字与 `docs/food-properties-sources.json` 的实测值一致；「余数不是名单」这条教训留在文内 |
+| **2026-09-21 进展** | 已在 `docs/food-properties-remaining-plan.md` 的 §0 与 §1 各加一条**注记**（照 `docs/agent2-9types-brew-plan.md` 的先例：历史方案**不改写正文**，只在旁边写清现值）。⚠️ 本条**仍未关闭**：注记只解决「别照它排期」，没解决「数字本身是错的」—— 真正结案要按上面的「需要什么」重写 §0／§1 |
 | **相关文件** | `docs/food-properties-remaining-plan.md`、`docs/food-properties-sources.json`、`docs/food-properties-b5-l3.md` |
 
 ## E7　麦冬 × 阴虚：判定了，但没有用户可见出口
