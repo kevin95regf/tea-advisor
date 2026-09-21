@@ -59,6 +59,7 @@
 
 - `docs/food-properties-sources.json` —— 食性来源登记，94 条，受控词表在 `_meta.controlled_vocab`。
 - `docs/food-properties-review-sheet.md` —— 上面那张表的**脚本产物**（`core/scripts/build_food_review_sheet.py`），不要手编。
+- `docs/data-contracts.md` —— **数据契约**：`core/data/*.json` 与食性登记表的形状、派生纪律、批脚本陷阱（改数据前先读）。
 - `docs/pending-items.md`、`docs/handover.md`、`docs/maintenance.md`、`docs/request-flow.md`。
 
 **修改通道**

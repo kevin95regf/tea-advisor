@@ -503,7 +503,7 @@ python core\scripts\smoke_agents.py      # 运行时启动 → 原始往返 → 
 
 ## 开发与贡献
 
-**四份文档的分工**（想深入哪一块就读哪一份）：
+**五份文档的分工**（想深入哪一块就读哪一份）：
 
 | 文档 | 给谁 | 内容 |
 |---|---|---|
@@ -511,6 +511,7 @@ python core\scripts\smoke_agents.py      # 运行时启动 → 原始往返 → 
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 贡献者 | 十条不可随手改的契约、数据表怎么改、PR 流程 |
 | [docs/three-layer-architecture.md](docs/three-layer-architecture.md) | 想改判定逻辑的人 | 三层架构的原理、数值编码、**已知局限** |
 | [docs/maintenance.md](docs/maintenance.md) | **维护者** | 全貌、数据流、运维、验证基线、成本模型、排错手册 |
+| [docs/data-contracts.md](docs/data-contracts.md) | **改数据的人** | `core/data/*.json` 与食性登记表的**形状与派生纪律**、批脚本文案陷阱 |
 
 ```powershell
 python core\scripts\check_setup.py   # 环境与数据自检

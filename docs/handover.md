@@ -364,6 +364,7 @@ python scripts/test_food_accuracy.py   # 属性准确率，只测 Agent1
 | `docs/b2-questionnaire-integration-plan.md` | **问卷接入的 7 个决策点**：兼体质收敛、「倾向是」不是判定、平和质三档、四处接入点 | 动问卷 → 推荐链路时 |
 | `docs/b2-integration-execution-plan.md` | 上一份的**落地步骤**（6 个提交、守卫测试设计、终端接线） | 实施接入时 |
 | `docs/herb-nature-crosscheck.md` | 44 味药典对照表 + 差异影响分析 | 涉药典数据时 |
+| `docs/data-contracts.md` | **数据契约**：`core/data/*.json` 与食性登记表的形状、派生纪律、批脚本陷阱 | 改数据前 |
 
 **三份生成型文档不要手工编辑**（重新生成命令写在各自开头的引用块里）：
 
