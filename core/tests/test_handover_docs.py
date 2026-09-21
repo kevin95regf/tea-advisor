@@ -382,6 +382,21 @@ def test_pending_header_counts_match_overview(pending):
     assert int(todo.group(1)) == n_todo, "头句待处理数 ≠ 概览里「待」开头的行数"
 
 
+def _declared_done_ids(head: str) -> set[str]:
+    """头句里**被声明为已处理**的 ID。
+
+    只认**加粗块内、且块里带状态词**（已／关闭／冻结／解除）的那些。头句里还会
+    **引用**别的条目（例如「等 A1 审核那轮顺手处理」里的 A1），那是引用不是声明
+    —— 不加这层区分，守卫会把引用当成声明、对着「待人工」的 A1 报错（2026-09-21 踩到）。
+    """
+    out: set[str] = set()
+    for block in re.findall(r"\*\*(.+?)\*\*", head):
+        if not re.search(r"已|关闭|冻结|解除", block):
+            continue
+        out.update(re.findall(r"\b([A-E]\d+)\b", block))
+    return out
+
+
 def test_pending_header_resolved_ids_are_marked_done(pending):
     """头句点名「已解决／已实施／已关闭」的 ID，概览状态列必须真是「已…」。
 
@@ -389,8 +404,8 @@ def test_pending_header_resolved_ids_are_marked_done(pending):
     改一处忘一处正是文档腐烂的典型形状（2026-09-20 的 D18／D23／D25 就是这么来的）。
     """
     head = pending.split("## 概览", 1)[0]
-    mentioned = sorted(set(re.findall(r"\b([A-E]\d+)\b", head)))
-    assert mentioned, "头句里没解析到任何 ID"
+    mentioned = sorted(_declared_done_ids(head))
+    assert mentioned, "头句里没解析到任何 ID（解析规则该改了，别让它静默失效）"
     for pid in mentioned:
         status = _status_of(pending, pid)
         assert status.startswith("已"), f"头句说 {pid} 已处理，概览状态却是：{status!r}"
