@@ -170,6 +170,54 @@
     .feature-nav button { min-width: calc(50% - 8px); }
   }
   [hidden] { display: none !important; }
+  /* —— 饮食助手互动小人（联网对话 / API 对话）—— */
+  .mascot-dock {
+    position: fixed; right: 18px; bottom: 18px; z-index: 40;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+    pointer-events: none;
+  }
+  .mascot-dock[hidden] { display: none !important; }
+  .mascot-img {
+    width: 96px; height: 132px; object-fit: contain; object-position: center bottom;
+    border-radius: 18px; background: #f7f3ec;
+    box-shadow: 0 8px 22px rgba(46, 42, 36, .16);
+    animation: mascot-float 2.8s ease-in-out infinite;
+    pointer-events: auto; cursor: default; user-select: none;
+  }
+  .mascot-dock.is-thinking .mascot-img {
+    animation: mascot-think 0.9s ease-in-out infinite;
+  }
+  @keyframes mascot-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes mascot-think {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-3px) rotate(2deg); }
+  }
+  .mascot-bubble {
+    max-width: min(280px, calc(100vw - 120px));
+    background: #fffdf8; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px 12px; font-size: 12.5px; line-height: 1.55;
+    box-shadow: 0 6px 18px rgba(46, 42, 36, .12);
+    position: relative; pointer-events: auto;
+  }
+  .mascot-bubble::after {
+    content: ''; position: absolute; right: 18px; bottom: -7px;
+    width: 12px; height: 12px; background: #fffdf8;
+    border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    transform: rotate(45deg);
+  }
+  .mascot-bubble .think-label {
+    display: block; font-size: 11px; color: var(--warm); font-weight: 700; margin-bottom: 4px;
+  }
+  .mascot-bubble .think-text { white-space: pre-wrap; }
+  .mascot-bubble[hidden] { display: none !important; }
+  @media (max-width: 600px) {
+    .mascot-img { width: 76px; height: 104px; }
+    .mascot-dock { right: 12px; bottom: 12px; }
+  }
   #welcome { min-height: 100dvh; padding: clamp(14px, 3vw, 32px); overflow-y: auto; background: #17392f; color: #e7c985; font-family: "STKaiti", "KaiTi", serif; }
   .welcome-card { max-width: 780px; margin: 0 auto; padding: clamp(18px, 3vw, 32px); border: 1px solid #c8ad7180; border-radius: 18px; background: #102b2470; line-height: 1.8; }
   .welcome-card h1 { margin: 0 0 12px; font-size: clamp(24px, 4vw, 34px); }
@@ -301,6 +349,14 @@
     <div id="chatLog" class="chat-log" aria-live="polite"></div>
     <textarea id="chatInput" placeholder="继续问饮食、体质和茶饮，例如：刚才那顿饭之后要注意什么？"></textarea>
     <div class="row"><button id="sendChat" type="button">发送</button></div>
+    <div id="mascotDock" class="mascot-dock" hidden aria-live="polite">
+      <div id="mascotBubble" class="mascot-bubble" hidden>
+        <span class="think-label">小助思考中</span>
+        <div id="mascotThinkText" class="think-text"></div>
+      </div>
+      <img class="mascot-img" src="assets/mascot.png" width="96" height="132"
+           alt="饮食助手互动小人" draggable="false" />
+    </div>
   </details>
 
   <details id="medicationPanel" class="feature-panel">
@@ -415,6 +471,57 @@ function finishQuestionnaire() {
   window.scrollTo(0, 0);
 }
 
+const MASCOT_THINK_STEPS = [
+  '正在读取你的饮食清单…',
+  '对照食性表逐项匹配…',
+  '结合当前体质判断寒热…',
+  '整理可追溯的冲泡建议…',
+];
+let mascotThinkTimer = null;
+
+function setMascotVisible(visible) {
+  const dock = document.getElementById('mascotDock');
+  if (dock) dock.hidden = !visible;
+}
+
+function hideMascotThinking() {
+  if (mascotThinkTimer) {
+    clearInterval(mascotThinkTimer);
+    mascotThinkTimer = null;
+  }
+  const dock = document.getElementById('mascotDock');
+  const bubble = document.getElementById('mascotBubble');
+  if (dock) dock.classList.remove('is-thinking');
+  if (bubble) bubble.hidden = true;
+}
+
+function showMascotThinking(seedText) {
+  const dock = document.getElementById('mascotDock');
+  const bubble = document.getElementById('mascotBubble');
+  const textEl = document.getElementById('mascotThinkText');
+  if (!dock || !bubble || !textEl) return;
+  setMascotVisible(true);
+  dock.classList.add('is-thinking');
+  bubble.hidden = false;
+  const steps = [];
+  if (seedText) {
+    const brief = seedText.replace(/\s+/g, ' ').trim().slice(0, 42);
+    steps.push('已收到饮食清单：' + brief + (seedText.trim().length > 42 ? '…' : ''));
+  }
+  steps.push(...MASCOT_THINK_STEPS);
+  let i = 0;
+  textEl.textContent = steps[0];
+  if (mascotThinkTimer) clearInterval(mascotThinkTimer);
+  mascotThinkTimer = setInterval(() => {
+    i = Math.min(i + 1, steps.length - 1);
+    textEl.textContent = steps[i];
+    if (i >= steps.length - 1 && mascotThinkTimer) {
+      clearInterval(mascotThinkTimer);
+      mascotThinkTimer = null;
+    }
+  }, 1400);
+}
+
 function setConversationMode(mode) {
   conversationMode = mode;
   document.getElementById('analysisArea').hidden = mode !== 'rules';
@@ -429,6 +536,9 @@ function setConversationMode(mode) {
     button.classList.toggle('active', mode === value);
     button.setAttribute('aria-pressed', String(mode === value));
   }
+  // 互动小人只出现在「联网对话」「API 对话」
+  setMascotVisible(mode === 'local' || mode === 'api');
+  if (mode === 'rules') hideMascotThinking();
   renderChatLog();
 }
 
@@ -1013,6 +1123,7 @@ async function sendChatMessage() {
   input.value = '';
   renderChatLog();
   send.disabled = true;
+  showMascotThinking(content);
   try {
     if (conversationMode === 'local') {
       const res = await fetch('/api/analyze-offline', {
@@ -1070,6 +1181,7 @@ async function sendChatMessage() {
     renderChatLog();
   } finally {
     send.disabled = false;
+    hideMascotThinking();
   }
 }
 
