@@ -50,7 +50,7 @@ def _guard1_remember_defaults_off(html: str) -> list[str]:
 # 长期存储按内容分域：**白名单必须写死在这里**，不可以从页面里反推
 # —— 反推 ⇒ 新增一个 key 自动合法 ⇒ 守卫恒真。新增长期存储必须来这里显式登记。
 SENSITIVE_STORAGE_KEYS = frozenset({"KEY_LS"})            # API Key：必须经勾选把关
-PUBLIC_STORAGE_KEYS = frozenset({"CONSTITUTION_KEY", "DIET_HISTORY_KEY"})  # 非敏感：允许无条件持久化
+PUBLIC_STORAGE_KEYS = frozenset({"CONSTITUTION_KEY", "DIET_HISTORY_KEY", "QUESTIONNAIRE_RESULT_KEY"})  # 非敏感：允许无条件持久化
 
 
 def _guard2_no_session_to_local_upgrade(html: str) -> list[str]:

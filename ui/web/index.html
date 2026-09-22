@@ -418,6 +418,28 @@ let conversationMode = 'rules';
 const browserStore = window.localStorage;
 const DIET_HISTORY_KEY = 'ta_diet_history_v1';
 const CONSTITUTION_KEY = 'ta_constitution_v1';
+const QUESTIONNAIRE_RESULT_KEY = 'ta_questionnaire_result_v1';
+
+function loadQuestionnaireResult() {
+  try {
+    const saved = JSON.parse(browserStore.getItem(QUESTIONNAIRE_RESULT_KEY));
+    return saved && typeof saved.dominant_constitution === 'string'
+      && Array.isArray(saved.scores) ? saved : null;
+  } catch (e) { return null; }
+}
+
+function saveQuestionnaireResult(data) {
+  try {
+    browserStore.setItem(QUESTIONNAIRE_RESULT_KEY, JSON.stringify({
+      dominant_constitution: data.dominant_constitution,
+      dominant_constitution_name: data.dominant_constitution_name,
+      resolution_note: data.resolution_note,
+      scores: data.scores,
+      avoid_constitutions: data.avoid_constitutions || [],
+      sex: document.getElementById('questionSex').value,
+    }));
+  } catch (e) { /* 浏览器禁用存储时不影响本次使用 */ }
+}
 
 // 体质结果写成 {id, source, at}；老用户存的是裸 id 字符串 ⇒ 解析失败即按旧格式读，不迁移、不换 key。
 function loadConstitution() {
@@ -545,6 +567,11 @@ function setConversationMode(mode) {
 function showStoredConstitution(entry) {
   const el = document.getElementById('questionnaireResult');
   if (!el || !entry) return;
+  const savedResult = loadQuestionnaireResult();
+  if (savedResult && savedResult.dominant_constitution === entry.id) {
+    renderQuestionnaireResult(savedResult, true);
+    return;
+  }
   const src = entry.source === 'questionnaire' ? '问卷'
     : (entry.source === 'manual' ? '手动选择' : '未知来源');
   const when = entry.at ? new Date(entry.at).toLocaleDateString('zh-CN') : '时间未知';
@@ -665,6 +692,14 @@ async function loadInit() {
       const savedConstitution = loadConstitution();
       if (savedConstitution && [...sel.options].some(o => o.value === savedConstitution.id)) {
         sel.value = savedConstitution.id;
+        const savedResult = loadQuestionnaireResult();
+        if (savedResult && savedResult.dominant_constitution === savedConstitution.id) {
+          currentAvoidConstitutions = savedResult.avoid_constitutions || [];
+          document.getElementById('questionSex').value = savedResult.sex === 'female' ? 'female' : 'male';
+        }
+        document.getElementById('constitutionDisplay').textContent = '问卷结果：' + constitutionLabel(sel.value);
+        document.getElementById('welcome').hidden = true;
+        document.getElementById('appShell').hidden = false;
       }
       showStoredConstitution(savedConstitution);
     } catch (e) { /* 浏览器禁用存储时不影响使用 */ }
@@ -991,6 +1026,23 @@ async function analyzeRecentHistory() {
 
 let questionnaireQuestions = [];
 
+function renderQuestionnaireResult(data, stored = false) {
+  const scores = (data.scores || []).map(item =>
+    `<div class="score-item"><b>${esc(item.name)}</b><br>${esc(item.score)} 分 · ${esc(item.status)}</div>`
+  ).join('');
+  const headline = stored
+    ? `上次问卷结果：<b>${esc(data.dominant_constitution_name || constitutionLabel(data.dominant_constitution))}</b>，已用于后续食养建议。`
+    : `主导体质：<b>${esc(data.dominant_constitution_name)}</b>，已用于后续食养建议。`;
+  document.getElementById('questionnaireResult').innerHTML =
+    `<div class="reason">${headline}<br>${esc(data.resolution_note || '')}</div>
+      <div class="score-grid">${scores}</div>
+      <div class="disclaimer" style="margin-top:10px">问卷结果仅作健康筛查和日常饮食参考，不构成诊断。</div>
+      <div class="hint">结果保存在本机浏览器，换设备／换浏览器／清缓存后需重新测。</div>
+      ${stored ? '' : '<div class="row"><button id="finishQuestionnaire" type="button">查看茶饮建议</button></div>'}`;
+  const finish = document.getElementById('finishQuestionnaire');
+  if (finish) finish.addEventListener('click', finishQuestionnaire);
+}
+
 // 端点 501 的 detail 是给运维的安装指令，不原样透给用户（换成这句人话）。
 function questionnaireUnavailableHint() {
   return '问卷功能未启用（服务端缺少可选的体质问卷子包）。'
@@ -1059,26 +1111,17 @@ async function submitQuestionnaire() {
       return;
     }
     const data = await res.json();
-    const scores = (data.scores || []).map(item =>
-      `<div class="score-item"><b>${esc(item.name)}</b><br>${esc(item.score)} 分 · ${esc(item.status)}</div>`
-    ).join('');
     const validDominant = data.dominant_constitution
       && [...sel.options].some(o => o.value === data.dominant_constitution);
-    if (validDominant) {
+    if (validDominant && !data.requires_manual_selection) {
       sel.value = data.dominant_constitution;
       currentAvoidConstitutions = data.avoid_constitutions || [];
       saveConstitution(sel.value, 'questionnaire');
+      saveQuestionnaireResult(data);
+      renderQuestionnaireResult(data);
+      return;
     }
-    const headline = data.requires_manual_selection
-      ? '本次未能自动确定体质，请重新作答。'
-      : `主导体质：<b>${esc(data.dominant_constitution_name)}</b>，已用于后续食养建议。`;
-    result.innerHTML = `<div class="reason">${headline}<br>${esc(data.resolution_note || '')}</div>
-      <div class="score-grid">${scores}</div>
-      <div class="disclaimer" style="margin-top:10px">问卷结果仅作健康筛查和日常饮食参考，不构成诊断。</div>
-      <div class="hint">结果保存在本机浏览器，换设备／换浏览器／清缓存后需重新测。</div>
-      ${validDominant && !data.requires_manual_selection ? '<div class="row"><button id="finishQuestionnaire" type="button">查看茶饮建议</button></div>' : ''}`;
-    const finish = document.getElementById('finishQuestionnaire');
-    if (finish) finish.addEventListener('click', finishQuestionnaire);
+    result.innerHTML = `<div class="reason">本次未能自动确定体质，请重新作答。<br>${esc(data.resolution_note || '')}</div>`;
   } catch (e) {
     result.innerHTML = `<div class="error">问卷提交失败：${esc(e.message || e)}</div>`;
   }
