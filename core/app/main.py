@@ -203,3 +203,9 @@ async def web_ui() -> FileResponse:
     `/` 与 `/demo` 指向同一个页面；`/demo` 作为历史路径保留，避免旧书签失效。
     """
     return FileResponse(settings.web_dir / "index.html")
+
+
+@app.get("/assets/mascot.png", include_in_schema=False)
+async def mascot_image() -> FileResponse:
+    """Serve the local mascot image referenced by the Web page."""
+    return FileResponse(settings.web_dir / "assets" / "mascot.png")
