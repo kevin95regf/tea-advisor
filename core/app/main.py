@@ -202,8 +202,14 @@ async def web_ui() -> FileResponse:
     """本地 Web 界面（仓库根 ui/web/index.html）。
 
     `/` 与 `/demo` 指向同一个页面；`/demo` 作为历史路径保留，避免旧书签失效。
+
+    禁缓存：本地开发时 index.html 改动频繁，若让浏览器按启发式缓存复用旧副本，
+    改完文件刷新页面仍会看到旧界面。这里强制每次重新向本机服务取回。
     """
-    return FileResponse(settings.web_dir / "index.html")
+    return FileResponse(
+        settings.web_dir / "index.html",
+        headers={"Cache-Control": "no-store, must-revalidate"},
+    )
 
 
 @app.get("/assets/mascot.png", include_in_schema=False)
