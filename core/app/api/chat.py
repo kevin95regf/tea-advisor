@@ -13,7 +13,12 @@ from typing import Literal
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
 
-from app.agents.multi_provider import MODEL_MAPPING, get_multi_provider_runtime
+from app.agents.multi_provider import (
+    MODEL_MAPPING,
+    PROVIDERS,
+    get_multi_provider_runtime,
+    get_provider_for_model,
+)
 from app.agents.runtime import CredentialError
 from app.api.auth import extract_api_key
 from app.config import get_settings
@@ -190,6 +195,135 @@ async def list_models() -> list[dict[str, str]]:
         {"id": "mimo-v2.5-pro", "name": "MiMo V2.5 Pro", "provider": "小米", "desc": "深度推理"},
         {"id": "hy4", "name": "HY4", "provider": "HY", "desc": "通用对话"},
     ]
+
+
+# 模型的展示名与用途。**只有展示层用它**：判定"这个模型能不能调"一律看
+# multi_provider.MODEL_MAPPING（由 PROVIDERS 生成），这里写错不会让调用出错，
+# 只会让界面显示得不好看 —— 未登记的模型回退成模型 ID 本身。
+_MODEL_META: dict[str, dict[str, str]] = {
+    "deepseek-flash": {"name": "DeepSeek Chat", "desc": "快速响应"},
+    "deepseek-v4-pro": {"name": "DeepSeek Reasoner", "desc": "深度思考"},
+    "qwen-3.8": {"name": "通义千问 Plus", "desc": "通用对话"},
+    "qwen-turbo": {"name": "通义千问 Turbo", "desc": "更快更省"},
+    "qwen-max": {"name": "通义千问 Max", "desc": "效果优先"},
+    "mimo-v2.5": {"name": "MiMo V2.5", "desc": "标准模型"},
+    "mimo-v2.5-pro": {"name": "MiMo V2.5 Pro", "desc": "深度推理"},
+    "hy4": {"name": "HY4", "desc": "通用对话"},
+}
+
+
+@router.get("/chat/providers", summary="可用模型供应商")
+async def list_providers() -> list[dict]:
+    """配置向导第 1 步「选择供应商」用。
+
+    与 `/chat/models` 的分工：那个是扁平模型列表（按策划顺序），
+    这个按供应商分组并带上 `base_url`，好让用户在界面上看清**请求到底发去哪儿** ——
+    接入第三方模型时这是最关键的一条信息，藏起来等于让人盲填 Key。
+
+    真源是 `multi_provider.PROVIDERS`，所以新增供应商只要改那里，界面自动出现。
+    """
+    out: list[dict] = []
+    for provider_id, info in PROVIDERS.items():
+        models = [
+            {
+                "id": model_id,
+                "name": _MODEL_META.get(model_id, {}).get("name", model_id),
+                "desc": _MODEL_META.get(model_id, {}).get("desc", ""),
+            }
+            for model_id in info["models"]
+        ]
+        out.append(
+            {
+                "id": provider_id,
+                "name": info["name"],
+                "base_url": info["base_url"],
+                # 默认模型 = 该供应商映射表的第一项，与运行时缺省行为一致
+                "default_model": models[0]["id"] if models else "",
+                "models": models,
+            }
+        )
+    return out
+
+
+class ChatTestRequest(BaseModel):
+    model: str = Field(default="deepseek-flash", description="前端模型 key，须在 MODEL_MAPPING 内")
+
+
+class ChatTestResponse(BaseModel):
+    ok: bool
+    model: str
+    provider: str
+    provider_name: str
+    remote_model: str
+    base_url: str
+    elapsed_ms: int
+    message: str
+    usage: dict | None = None
+
+
+@router.post("/chat/test", response_model=ChatTestResponse, summary="连接测试")
+async def chat_test(
+    request: ChatTestRequest,
+    authorization: str | None = Header(default=None),
+) -> ChatTestResponse:
+    """配置向导第 4 步「连接测试」：真发一次极小的请求，验证 Key + 模型 + 网络。
+
+    为什么必须真发请求：光校验 Key 格式会给出"通过"，而 Key 失效、模型未开通、
+    端点不通这三种情况格式校验一概看不出来 —— 这正是连接测试要排除的东西。
+
+    错误码与 `/chat` 保持一致（NO_API_KEY / API_KEY_REJECTED / UNKNOWN_MODEL /
+    MODEL_ERROR），前端已按这套码做过引导，复用即可，不另造一套。
+    Key 只经 Authorization 头进函数，不进日志、不进响应体。
+    """
+    if request.model not in MODEL_MAPPING:
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "UNKNOWN_MODEL", "message": "请选择模型列表中的有效模型。"},
+        )
+
+    api_key = extract_api_key(authorization)
+    if not api_key:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "NO_API_KEY", "message": get_settings().missing_credentials_hint()},
+        )
+
+    provider_id, base_url, remote_model = get_provider_for_model(request.model)
+    provider_name = PROVIDERS.get(provider_id, {}).get("name", provider_id)
+
+    started = time.perf_counter()
+    try:
+        result = get_multi_provider_runtime().run(
+            prompt="连接测试：请只回复 OK。",
+            messages=[{"role": "user", "content": "连接测试：请只回复 OK。"}],
+            api_key=api_key,
+            model=request.model,
+            session_id=f"test-{uuid.uuid4().hex[:8]}",
+            timeout_s=20.0,
+        )
+    except CredentialError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "API_KEY_REJECTED", "message": str(exc)},
+        ) from exc
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail={"code": "MODEL_ERROR", "message": str(exc)},
+        ) from exc
+
+    elapsed_ms = int((time.perf_counter() - started) * 1000)
+    return ChatTestResponse(
+        ok=bool(result.text),
+        model=request.model,
+        provider=provider_id,
+        provider_name=provider_name,
+        remote_model=remote_model,
+        base_url=base_url,
+        elapsed_ms=elapsed_ms,
+        message=f"{provider_name} 连接正常，模型已应答。",
+        usage=result.usage,
+    )
 
 
 @router.get("/chat/personas", summary="旧版兼容接口")

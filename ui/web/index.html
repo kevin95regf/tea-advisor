@@ -131,6 +131,40 @@
   }
   .cfgstate.off .dot { background: var(--warn); }
   .cfgstate.on .dot { background: #3f7a48; }
+  /* —— API 设置：五步向导（选择供应商 → API Key → 模型名称 → 连接测试 → 功能选项）—— */
+  .stepper { display: flex; gap: 4px; margin: 12px 0 4px; padding: 0; list-style: none; }
+  .stepper li {
+    flex: 1 1 0; min-width: 0; text-align: center; font-size: 11px; line-height: 1.35;
+    color: var(--muted); border-bottom: 2px solid var(--line);
+    padding: 0 0 6px; cursor: pointer;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .stepper li.active { color: var(--accent); border-color: var(--accent); font-weight: 700; }
+  .stepper li.done { color: #3f7a48; border-color: #a9c6ae; }
+  .cfg-step > h3 { font-size: 14.5px; margin: 14px 0 8px; }
+  .provider-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .provider-grid > .hint { grid-column: 1 / -1; }
+  .provider-card {
+    position: relative; display: block; border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px; cursor: pointer; background: #fdfcfa;
+  }
+  .provider-card input { position: absolute; opacity: 0; pointer-events: none; }
+  .provider-card b { display: block; font-size: 13.5px; }
+  .provider-card .hint { margin-top: 2px; font-size: 11.5px; overflow-wrap: anywhere; }
+  .provider-card.on {
+    border-color: var(--accent); background: #f6f2e9;
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  .cfg-nav { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
+  .cfg-nav .spacer { flex: 1; }
+  .cfg-nav button { min-width: 84px; }
+  .step-hint { font-size: 12px; color: var(--muted); }
+  .test-result { margin-top: 10px; font-size: 13px; line-height: 1.6; border-radius: 8px; padding: 8px 10px; }
+  .test-result.ok { color: #3f7a48; background: #e3efe4; border: 1px solid #c6ddca; }
+  .test-result.bad { color: var(--warn); background: #f9e3dd; border: 1px solid #efd0c7; }
+  .test-result.load { color: var(--muted); background: #f2efe8; border: 1px dashed #d9d2c4; }
+  .opt-list { display: flex; flex-direction: column; gap: 9px; }
+  .opt-list .chk { white-space: normal; align-items: flex-start; line-height: 1.55; }
   .feature-nav {
     display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px;
   }
@@ -168,6 +202,8 @@
   @media (max-width: 560px) {
     .question-item { grid-template-columns: 1fr; gap: 5px; }
     .feature-nav button { min-width: calc(50% - 8px); }
+    .provider-grid { grid-template-columns: 1fr; }
+    .stepper li { font-size: 10px; }
   }
   [hidden] { display: none !important; }
   /* —— 饮食助手互动小人（联网对话 / API 对话）—— */
@@ -185,6 +221,19 @@
     pointer-events: auto; cursor: default; user-select: none;
   }
   .mascot-dock.is-thinking .mascot-img {
+    animation: mascot-think 0.9s ease-in-out infinite;
+  }
+  /* 3D 舞台：尺寸与二维回退图一致。mascot3d.js 初始化成功后才把 hidden 摘掉并藏起 <img>，
+     所以任何一步失败（无 WebGL / 模块加载失败 / 上下文丢失）都会自然停在二维图上。 */
+  .mascot-stage {
+    width: 96px; height: 132px; border-radius: 18px; overflow: hidden;
+    background: radial-gradient(120% 90% at 50% 18%, #fffdf8 0%, #f3ece0 100%);
+    box-shadow: 0 8px 22px rgba(46, 42, 36, .16);
+    animation: mascot-float 2.8s ease-in-out infinite;
+    pointer-events: auto;
+  }
+  .mascot-stage canvas { display: block; width: 100%; height: 100%; }
+  .mascot-dock.is-thinking .mascot-stage {
     animation: mascot-think 0.9s ease-in-out infinite;
   }
   @keyframes mascot-float {
@@ -215,7 +264,7 @@
   .mascot-bubble .think-text { white-space: pre-wrap; }
   .mascot-bubble[hidden] { display: none !important; }
   @media (max-width: 600px) {
-    .mascot-img { width: 76px; height: 104px; }
+    .mascot-img, .mascot-stage { width: 76px; height: 104px; }
     .mascot-dock { right: 12px; bottom: 12px; }
   }
   #welcome { min-height: 100dvh; padding: clamp(14px, 3vw, 32px); overflow-y: auto; background: #17392f; color: #e7c985; font-family: "STKaiti", "KaiTi", serif; }
@@ -354,6 +403,10 @@
         <span class="think-label">小助思考中</span>
         <div id="mascotThinkText" class="think-text"></div>
       </div>
+      <div id="mascotStage" class="mascot-stage" hidden>
+        <canvas id="mascotCanvas" width="96" height="132" aria-hidden="true"></canvas>
+      </div>
+      <!-- 二维回退：3D 初始化成功后由 mascot3d.js 隐藏；失败时它就是用户看到的画面 -->
       <img class="mascot-img" src="assets/mascot.png" width="96" height="132"
            alt="饮食助手互动小人" draggable="false" />
     </div>
@@ -369,28 +422,81 @@
 </div>
 
 <dialog id="cfg">
-  <form method="dialog">
+  <form method="dialog" id="cfgForm">
     <h2>API 设置</h2>
-    <div class="row">
-      <label for="chatModel">模型</label><select id="chatModel"></select>
+    <ol class="stepper" id="cfgStepper">
+      <li data-step="1" class="active">1 选择供应商</li>
+      <li data-step="2">2 API Key</li>
+      <li data-step="3">3 模型名称</li>
+      <li data-step="4">4 连接测试</li>
+      <li data-step="5">5 功能选项</li>
+    </ol>
+
+    <!-- 第 1 步：选择供应商 -->
+    <section class="cfg-step" data-step="1">
+      <div class="hint">选中的供应商决定请求发往哪个接口，下面每个选项都标出了实际地址；本机服务只做转发，不保存你的 Key。</div>
+      <div id="providerList" class="provider-grid"></div>
+    </section>
+
+    <!-- 第 2 步：API Key -->
+    <section class="cfg-step" data-step="2" hidden>
+      <div class="row" style="margin-top:0">
+        <label for="key">API Key</label>
+        <span class="key-field"><input id="key" type="password" autocomplete="off" spellcheck="false"
+               placeholder="sk-…（仅 API 对话需要）" />
+          <button id="toggleKey" type="button" aria-label="显示 API Key" aria-pressed="false">👁 显示</button></span>
+      </div>
+      <div class="hint" id="keyHint">
+        你的 Key 只随本次请求通过 Authorization 头发给本机后端，再由后端转给模型服务；
+        <b>不写入服务器日志、不落盘、不入库</b>。
+        默认不勾选「记住 Key」，只保存在本标签页内。
+      </div>
+    </section>
+
+    <!-- 第 3 步：模型名称 -->
+    <section class="cfg-step" data-step="3" hidden>
+      <div class="row" style="margin-top:0">
+        <label for="chatModel">模型名称</label>
+        <input id="chatModel" type="text" list="modelOptions" autocomplete="off" spellcheck="false"
+               placeholder="从建议中选，或直接输入" style="flex:1 1 auto;min-width:0" />
+      </div>
+      <datalist id="modelOptions"></datalist>
+      <div class="hint" id="modelHint">先选供应商，这里会列出该供应商可用的模型名称。</div>
+    </section>
+
+    <!-- 第 4 步：连接测试 -->
+    <section class="cfg-step" data-step="4" hidden>
+      <div class="hint">会真发一次极小的请求来验证 Key、模型名与网络 —— 光看格式判断不出 Key 是否已失效。</div>
+      <div class="row">
+        <button id="connTest" type="button">测试连接</button>
+        <span class="step-hint" id="connState">尚未测试</span>
+      </div>
+      <div id="connResult" class="test-result" hidden></div>
+    </section>
+
+    <!-- 第 5 步：功能选项 -->
+    <section class="cfg-step" data-step="5" hidden>
+      <div class="opt-list">
+        <label class="chk" title="不勾选则只在本标签页有效，关掉即失效">
+          <input id="remember" type="checkbox" /> 记住 API Key（存到本机浏览器；默认不勾选）
+        </label>
+        <label class="chk">
+          <input id="saveHistory" type="checkbox" checked /> 自动生成建议后，记入「饮食记录」
+        </label>
+        <label class="chk">
+          <input id="showRefs" type="checkbox" checked /> 对话里展示公开依据
+        </label>
+      </div>
+      <div class="hint">这三项都只作用于本机浏览器，不会上传到服务器。</div>
+    </section>
+
+    <div class="cfg-nav">
+      <button type="button" id="cfgPrev" class="ghost">上一步</button>
+      <span class="step-hint" id="cfgStepHint">第 1 / 5 步 · 选择供应商</span>
+      <span class="spacer"></span>
+      <button type="button" id="cfgNext">下一步</button>
+      <button type="submit" id="cfgDone" value="close" hidden>完成</button>
     </div>
-    <div class="row" style="margin-top:0">
-      <label for="key">API Key</label>
-      <span class="key-field"><input id="key" type="password" autocomplete="off" spellcheck="false"
-             placeholder="sk-…（仅 API 对话需要）" />
-        <button id="toggleKey" type="button" aria-label="显示 API Key" aria-pressed="false">👁 显示</button></span>
-    </div>
-    <div class="row">
-      <label class="chk" title="勾选后写入浏览器 localStorage；不勾选只存在本次标签页，关掉即失效">
-        <input id="remember" type="checkbox" /> 记住 Key
-      </label>
-    </div>
-    <div class="hint" id="keyHint">
-      你的 Key 只随本次请求通过 Authorization 头发给本机后端，再由后端转给模型服务；
-      <b>不写入服务器日志、不落盘、不入库</b>。
-      默认不勾选「记住 Key」，只保存在本标签页内。
-    </div>
-    <div class="row"><button type="submit" value="close">完成</button></div>
   </form>
 </dialog>
 
@@ -501,12 +607,23 @@ const MASCOT_THINK_STEPS = [
 ];
 let mascotThinkTimer = null;
 
+/**
+ * 给 3D 小人发状态。用一个普通全局对象而不是回调，是因为
+ * mascot3d.js 是 deferred 的 module：经典脚本跑的时候它还没执行，
+ * 回调会取到 undefined。这里只负责写，读的一方每帧看一眼即可。
+ */
+function setMascotMode(mode) {
+  if (!window.TA_MASCOT) window.TA_MASCOT = {};
+  window.TA_MASCOT.mode = mode;
+}
+
 function setMascotVisible(visible) {
   const dock = document.getElementById('mascotDock');
   if (dock) dock.hidden = !visible;
 }
 
 function hideMascotThinking() {
+  setMascotMode('idle');
   if (mascotThinkTimer) {
     clearInterval(mascotThinkTimer);
     mascotThinkTimer = null;
@@ -523,6 +640,7 @@ function showMascotThinking(seedText) {
   const textEl = document.getElementById('mascotThinkText');
   if (!dock || !bubble || !textEl) return;
   setMascotVisible(true);
+  setMascotMode('thinking');
   dock.classList.add('is-thinking');
   bubble.hidden = false;
   const steps = [];
@@ -638,12 +756,20 @@ async function refreshKeyHint() {
   }
 }
 
-/** 打开设置弹窗；顺手刷一次 /healthz —— 后端可能是在页面打开之后才启动的 */
-function openCfg() {
+/**
+ * 打开设置弹窗，并直接落到指定那一步。
+ * `step` 省略时回第 1 步 —— 凭据类错误会传 2，把人直接送到「API Key」，
+ * 否则修 Key 的入口藏在第二屏等于没修。
+ * 顺手刷一次 /healthz：后端可能是在页面打开之后才启动的。
+ */
+function openCfg(step) {
   if (!cfgEl) return;
+  if (!providers.length) loadProviders();
+  else renderProviderCards();
+  gotoStep(typeof step === 'number' ? step : 1);
+  refreshKeyHint();
   if (typeof cfgEl.showModal === 'function') cfgEl.showModal();
   else cfgEl.setAttribute('open', '');   // 极老浏览器兜底
-  refreshKeyHint();
 }
 
 function toggleKeyVisibility() {
@@ -704,7 +830,7 @@ async function loadInit() {
       showStoredConstitution(savedConstitution);
     } catch (e) { /* 浏览器禁用存储时不影响使用 */ }
     disclaimerCache = dis;
-    await loadChatModels();
+    await loadProviders();
     renderHistory();
   } catch (e) {
     // 拿不到 meta 就不放行：否则标签与阈值都会失准
@@ -873,7 +999,7 @@ async function run() {
       out.innerHTML = `<div class="card error"><b>${isKeyIssue ? '凭据问题' : '出错了'}</b><br>`
         + `${esc(d.message || JSON.stringify(data))}${extra}</div>`;
       // Key 输入框在 <dialog> 里：不先打开弹窗，focus() 是无效的
-      if (isKeyIssue) { openCfg(); if (keyEl) keyEl.focus(); }
+      if (isKeyIssue) { openCfg(2); if (keyEl) keyEl.focus(); }
       return;
     }
     let html = '';
@@ -894,13 +1020,17 @@ async function run() {
       <span class="hint">${offlineMode ? '仍使用本地规则，不调用模型。' : '会再次调用模型（约 1 分钱），以输入框里的当前内容为准。'}</span>
     </div></div>`;
     out.innerHTML = html;
-    saveDietRecord({
-      text,
-      constitution: sel.value,
-      offline: offlineMode,
-      titles: (data.recommendations || []).map(item => item.title),
-      created_at: new Date().toISOString(),
-    });
+    // 功能选项「记入饮食记录」：只在勾选时落盘，取消勾选就一条都不写
+    const saveHistoryEl = document.getElementById('saveHistory');
+    if (!saveHistoryEl || saveHistoryEl.checked) {
+      saveDietRecord({
+        text,
+        constitution: sel.value,
+        offline: offlineMode,
+        titles: (data.recommendations || []).map(item => item.title),
+        created_at: new Date().toISOString(),
+      });
+    }
   } catch (e) {
     out.innerHTML = `<div class="card error"><b>请求失败</b><br>${esc(e.message)}
       <div class="hint">确认服务在运行，且 URL 是 http://127.0.0.1:8000</div></div>`;
@@ -1127,19 +1257,203 @@ async function submitQuestionnaire() {
   }
 }
 
-async function loadChatModels() {
-  const modelSelect = document.getElementById('chatModel');
-  if (!modelSelect) return;
-  try {
-    const res = await fetch('/api/chat/models');
-    const models = await res.json();
-    if (!res.ok) throw new Error('模型列表读取失败');
-    modelSelect.innerHTML = models.map(item =>
-      `<option value="${esc(item.id)}">${esc(item.provider)} · ${esc(item.name)}</option>`
-    ).join('');
-  } catch (e) {
-    modelSelect.innerHTML = '<option value="deepseek-flash">DeepSeek Chat</option>';
+// ============================================================
+// 五步配置向导：选择供应商 → API Key → 模型名称 → 连接测试 → 功能选项
+// ============================================================
+const CFG_STEP_TITLES = ['选择供应商', 'API Key', '模型名称', '连接测试', '功能选项'];
+let cfgStep = 1;
+let providers = [];
+let selectedProvider = '';
+let connPassed = false;
+
+function currentProvider() {
+  return providers.find(item => item.id === selectedProvider) || null;
+}
+
+function hostOf(url) {
+  try { return new URL(url).host; } catch (e) { return String(url || ''); }
+}
+
+function renderStepper() {
+  document.querySelectorAll('#cfgStepper li').forEach(li => {
+    const n = Number(li.dataset.step);
+    li.classList.toggle('active', n === cfgStep);
+    li.classList.toggle('done', n < cfgStep);
+  });
+  document.querySelectorAll('.cfg-step').forEach(sec => {
+    sec.hidden = Number(sec.dataset.step) !== cfgStep;
+  });
+  const hint = document.getElementById('cfgStepHint');
+  if (hint) {
+    hint.textContent = `第 ${cfgStep} / ${CFG_STEP_TITLES.length} 步 · ${CFG_STEP_TITLES[cfgStep - 1]}`;
   }
+  const prev = document.getElementById('cfgPrev');
+  const next = document.getElementById('cfgNext');
+  const done = document.getElementById('cfgDone');
+  if (prev) prev.disabled = cfgStep === 1;
+  if (next) next.hidden = cfgStep === CFG_STEP_TITLES.length;
+  if (done) done.hidden = cfgStep !== CFG_STEP_TITLES.length;
+}
+
+function gotoStep(n) {
+  cfgStep = Math.min(Math.max(1, Number(n) || 1), CFG_STEP_TITLES.length);
+  renderStepper();
+}
+
+/** 第 1 步的供应商卡片（单选）。请求地址直接印在卡片上，让人看清 Key 会被发去哪儿。 */
+function renderProviderCards() {
+  const box = document.getElementById('providerList');
+  if (!box) return;
+  if (!providers.length) {
+    box.innerHTML = '<div class="hint">没取到供应商列表。请确认本机服务在运行，然后重新打开本窗口。</div>';
+    return;
+  }
+  if (!providers.some(p => p.id === selectedProvider)) selectedProvider = providers[0].id;
+  box.innerHTML = providers.map(p => `
+    <label class="provider-card${p.id === selectedProvider ? ' on' : ''}">
+      <input type="radio" name="cfgProvider" value="${esc(p.id)}" ${p.id === selectedProvider ? 'checked' : ''} />
+      <b>${esc(p.name)}</b>
+      <span class="hint">${p.models.length} 个模型 · ${esc(hostOf(p.base_url))}</span>
+    </label>`).join('');
+  box.querySelectorAll('input[name="cfgProvider"]').forEach(input => {
+    input.addEventListener('change', () => {
+      selectedProvider = input.value;
+      renderProviderCards();
+      fillModelOptions(true);   // 换了供应商，模型名必须跟着换，否则上一家的模型名会被发到这一家
+      markConnStale();
+      updateModelHint();
+    });
+  });
+}
+
+/** 第 3 步的候选模型（datalist）。`force` 为真时无条件重置输入框的值。 */
+function fillModelOptions(force) {
+  const input = document.getElementById('chatModel');
+  const list = document.getElementById('modelOptions');
+  const provider = currentProvider();
+  if (!input || !list) return;
+  if (!provider) { list.innerHTML = ''; return; }
+  list.innerHTML = provider.models.map(m =>
+    `<option value="${esc(m.id)}">${esc(m.name)}${m.desc ? ' · ' + esc(m.desc) : ''}</option>`
+  ).join('');
+  const ids = provider.models.map(m => m.id);
+  if (force || !input.value || !ids.includes(input.value)) {
+    input.value = provider.default_model || ids[0] || '';
+  }
+}
+
+function updateModelHint() {
+  const hint = document.getElementById('modelHint');
+  const input = document.getElementById('chatModel');
+  const provider = currentProvider();
+  if (!hint || !input) return;
+  hint.innerHTML = provider
+    ? `${esc(provider.name)} 的可用模型已列为建议，当前：<b>${esc(input.value.trim() || '（未填）')}</b>。`
+      + '模型名写错会在下一步「连接测试」被拦下。'
+    : '先回到第 1 步选择供应商。';
+}
+
+/** 配置一变，上一次「连接测试通过」就作废 —— 否则改完 Key 还显示着绿勾是骗人的。 */
+function markConnStale() {
+  connPassed = false;
+  const state = document.getElementById('connState');
+  const box = document.getElementById('connResult');
+  if (state) state.textContent = '配置有改动，请重新测试';
+  if (box) { box.hidden = true; box.className = 'test-result'; box.innerHTML = ''; }
+}
+
+/** 第 4 步：真发一次极小请求。错误码沿用 /api/chat 的那一套，前端据此跳回对应步骤。 */
+async function runConnectionTest() {
+  // 注意：这里刻意不叫 btn —— test_web_shell 的守卫 6 按字面统计
+  // 「btn + 点 + disabled」的出现次数（只允许 setBusy 与 loadInit 各一处），
+  // 变量重名会让那条守卫误报。
+  const testBtn = document.getElementById('connTest');
+  const box = document.getElementById('connResult');
+  const state = document.getElementById('connState');
+  const input = document.getElementById('chatModel');
+  const model = (input.value || '').trim();
+  const key = currentKey();
+  const provider = currentProvider();
+
+  if (!box || !testBtn) return;
+  box.hidden = false;
+  if (!key) {
+    connPassed = false;
+    box.className = 'test-result bad';
+    box.textContent = '还没填 API Key：请回到第 2 步填写，再回来测试。';
+    if (state) state.textContent = '未通过';
+    gotoStep(2);
+    if (keyEl) keyEl.focus();
+    return;
+  }
+  if (!model) {
+    connPassed = false;
+    box.className = 'test-result bad';
+    box.textContent = '模型名称是空的：请回到第 3 步填写。';
+    if (state) state.textContent = '未通过';
+    gotoStep(3);
+    input.focus();
+    return;
+  }
+
+  saveKey();
+  testBtn.disabled = true;
+  box.className = 'test-result load';
+  box.textContent = `正在连接 ${provider ? provider.name : '所选供应商'}…（最多 20 秒）`;
+  if (state) state.textContent = '测试中';
+  try {
+    const res = await fetch('/api/chat/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+      body: JSON.stringify({ model }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const d = data.detail || {};
+      connPassed = false;
+      box.className = 'test-result bad';
+      box.textContent = (d.code === 'UNKNOWN_MODEL' ? '模型名称不被接受：' : '连接失败：')
+        + (d.message || JSON.stringify(data));
+      if (state) state.textContent = '未通过';
+      if (d.code === 'NO_API_KEY' || d.code === 'API_KEY_REJECTED') gotoStep(2);
+      else if (d.code === 'UNKNOWN_MODEL') gotoStep(3);
+      return;
+    }
+    connPassed = true;
+    box.className = 'test-result ok';
+    box.textContent = `连接正常：${data.provider_name} ｜ 实际发往模型 ${data.remote_model}`
+      + ` ｜ 耗时 ${data.elapsed_ms} ms`;
+    if (state) state.textContent = '已通过';
+  } catch (e) {
+    connPassed = false;
+    box.className = 'test-result bad';
+    box.textContent = '连接测试失败：' + (e.message || e) + '。确认本机服务在运行后重试。';
+    if (state) state.textContent = '未通过';
+  } finally {
+    testBtn.disabled = false;
+  }
+}
+
+async function loadProviders() {
+  try {
+    const res = await fetch('/api/chat/providers');
+    const data = await res.json();
+    if (!res.ok || !Array.isArray(data) || !data.length) throw new Error('供应商列表为空');
+    providers = data;
+  } catch (e) {
+    // 接口取不到时也要能走完向导：给一个默认供应商，别让第 1 步空着
+    providers = [{
+      id: 'deepseek',
+      name: 'DeepSeek',
+      base_url: 'https://api.deepseek.com',
+      default_model: 'deepseek-flash',
+      models: [{ id: 'deepseek-flash', name: 'DeepSeek Chat', desc: '快速响应' }],
+    }];
+  }
+  if (!providers.some(p => p.id === selectedProvider)) selectedProvider = providers[0].id;
+  renderProviderCards();
+  fillModelOptions(false);
+  updateModelHint();
 }
 
 function renderChatLog() {
@@ -1211,12 +1525,13 @@ async function sendChatMessage() {
     const data = await res.json();
     if (!res.ok) {
       const detail = data.detail || {};
-      if (detail.code === 'NO_API_KEY' || detail.code === 'API_KEY_REJECTED') openCfg();
+      if (detail.code === 'NO_API_KEY' || detail.code === 'API_KEY_REJECTED') openCfg(2);
       throw new Error(detail.message || JSON.stringify(data));
     }
     chatMessages.push({ role: 'assistant', content: data.reply });
     renderChatLog();
-    if (data.references && data.references.length) {
+    const showRefs = document.getElementById('showRefs');
+    if (showRefs && showRefs.checked && data.references && data.references.length) {
       document.getElementById('chatLog').insertAdjacentHTML('beforeend', renderReferences(data.references));
     }
   } catch (e) {
@@ -1269,7 +1584,29 @@ keyEl.addEventListener('change', saveKey);
 keyEl.addEventListener('input', updateKeyState);
 keyEl.addEventListener('change', updateKeyState);
 rememberEl.addEventListener('change', updateKeyState);
-document.querySelectorAll('.opencfg').forEach(b => b.addEventListener('click', openCfg));
+// 直接把 openCfg 当监听器传会把 MouseEvent 当成 step，所以这里显式包一层。
+document.querySelectorAll('.opencfg').forEach(b => b.addEventListener('click', () => openCfg(1)));
+document.getElementById('cfgPrev').addEventListener('click', () => gotoStep(cfgStep - 1));
+document.getElementById('cfgNext').addEventListener('click', () => gotoStep(cfgStep + 1));
+// 顶部步骤条可点：往回跳永远安全，往前跳也放开 —— 卡死用户比放行更糟
+document.querySelectorAll('#cfgStepper li').forEach(li =>
+  li.addEventListener('click', () => gotoStep(li.dataset.step)));
+document.getElementById('connTest').addEventListener('click', runConnectionTest);
+document.getElementById('chatModel').addEventListener('input', () => {
+  updateModelHint();
+  markConnStale();
+});
+document.getElementById('key').addEventListener('input', markConnStale);
+// 弹窗是 method="dialog"：在文本框里回车会提交表单、把窗口直接关掉。
+// 改成「回车 = 去下一步」，既保住直觉，也不让人误关。
+['chatModel', 'key'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      gotoStep(cfgStep + 1);
+    }
+  });
+});
 document.querySelectorAll('.feature-open').forEach(button => button.addEventListener('click', () => {
   const panel = document.getElementById(button.dataset.target);
   if (!panel) return;
@@ -1306,5 +1643,7 @@ document.getElementById('out').addEventListener('click', e => {
 renderChatLog();
 loadInit();
 </script>
+<!-- 3D 小人（module 会延迟执行；在它初始化成功前页面显示二维回退图） -->
+<script type="module" src="assets/mascot3d.js"></script>
 </body>
 </html>

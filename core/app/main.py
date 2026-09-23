@@ -25,6 +25,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api import analyze as analyze_api
 from app.api import analyze_offline as analyze_offline_api
@@ -209,3 +210,13 @@ async def web_ui() -> FileResponse:
 async def mascot_image() -> FileResponse:
     """Serve the local mascot image referenced by the Web page."""
     return FileResponse(settings.web_dir / "assets" / "mascot.png")
+
+
+# 3D 小人用的 three.js（r160，单文件 ES module，670KB）随仓库内联，**不走 CDN**：
+# 本服务按设计只绑定 127.0.0.1，断网时界面也必须能启动，3D 小人不能依赖外网。
+# 挂载在 mascot.png 的显式路由之后：同名路径先注册者先匹配，行为不变。
+app.mount(
+    "/assets",
+    StaticFiles(directory=settings.web_dir / "assets"),
+    name="web-assets",
+)

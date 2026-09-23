@@ -105,7 +105,7 @@ core/data/          规则库与数据文件（10 个 JSON）
 | `core/app/domain/constitution_resolver.py` | 206 | 问卷分数 → 主导体质/兼夹体质的收敛与屏蔽集 |
 | `core/app/domain/meal_time.py` | 44 | 餐次猜测（两条离线链路共用一份） |
 | `core/data/*.json` | 10 个 | 规则库与数据（结构见 §4.6） |
-| `core/tests/` | 43 个文件 | 828 项离线测试（不调模型、不需要 Key） |
+| `core/tests/` | 45 个文件 | 841 项离线测试（不调模型、不需要 Key） |
 | `core/scripts/` | 12 个 | 数据构建/同步/自查脚本 + 冒烟脚本 |
 
 ### 2.3 核心链路：四道闸门 + 一道结构性限制
@@ -828,7 +828,7 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 
 | 项 | 值 | 来源 |
 |---|---|---|
-| 测试收集数 | **828 项**（43 个测试文件） | 实测 `pytest --collect-only` 等价口径 |
+| 测试收集数 | **841 项**（45 个测试文件） | 实测 `pytest --collect-only` 等价口径 |
 | 本次实跑结果 | **821 passed / 2 skipped / 1 failed / 4 errors** | 在 DSH 沙箱内跑 `core/tests` |
 | 5 项失败的原因 | **全部是 `PermissionError`**：测试需往 `%TEMP%\dsh-*\pytest-of-*` 写临时目录，被沙箱拒绝。涉及 `test_herb_evidence`、`test_catalog_check`、`test_questionnaire_dependency` | 报错原文为 `[WinError 5] 拒绝访问` |
 | **结论** | **不是代码缺陷**，是运行环境限制；在可写临时目录的环境下应全绿 | — |
