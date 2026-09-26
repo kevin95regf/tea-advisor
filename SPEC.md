@@ -6,11 +6,13 @@
 
 | 项 | 值 |
 |---|---|
-| 版本锚点 | `tea-advisor` @ git `9adbd49`（"test(数据契约): 新增 test_data_contracts.py + 修文档 4 处事实错误"） |
+| 版本锚点 | 内容锚点 `tea-advisor` @ git `9adbd49`（"test(数据契约): 新增 test_data_contracts.py + 修文档 4 处事实错误"）；本文件自身于 `9a52528` 入库（该提交**纯新增本文件**，未改任何代码/数据/测试） |
+| 最近复核 | 2026-09-21：全部规模数字按仓库现状**重测**（见附录 A，0 处不符）；4 条原待确认项已核实（见 §9.3）；1 条不成立的「文档滞后」已撤销（见 §9.2） |
 | 描述范围 | `D:\work\tea-advisor\` 这一套**实际运行系统** |
 | 生成方式 | 只读复核：通读源码 + 数据文件结构提取 + 离线测试实跑。**未修改任何既有文件**（`git status --porcelain` 为空） |
 | 明确不在范围内 | `tea-advisor-fork-keep/`（未吸收素材）、`ta-recon/`（外部调研）、`core/var/`（历史痕迹区）、`dsh-home/`（DSH 会话存储）、`.venv/` |
 | 行号含义 | 全部为 LF 行号（与编辑器一致）。⚠️ 本环境 `Get-Content` 会漏计空行，**不要**用它的计数复核本文件的行号 |
+| 锚点写法 | 带目录的锚点一律写全路径（`core/app/...`、`ui/...`、`tcm-constitution-questionnaire/...`）；裸文件名（如 `safety.py:81`）指 `core/app/` 下的同名模块 |
 | 标记约定 | ✅ 已实现（代码可指认）　❓ 待确认（未核实，见 §9.1）　🚫 当前不支持（明确没做）　📌 文档滞后（代码与文档不一致，以代码为准，见 §9.2） |
 
 ---
@@ -105,12 +107,12 @@ core/data/          规则库与数据文件（10 个 JSON）
 | `core/app/domain/constitution_resolver.py` | 206 | 问卷分数 → 主导体质/兼夹体质的收敛与屏蔽集 |
 | `core/app/domain/meal_time.py` | 44 | 餐次猜测（两条离线链路共用一份） |
 | `core/data/*.json` | 10 个 | 规则库与数据（结构见 §4.6） |
-| `core/tests/` | 43 个文件 | 828 项离线测试（不调模型、不需要 Key） |
+| `core/tests/` | 45 个文件 | 835 项离线测试（不调模型、不需要 Key） |
 | `core/scripts/` | 12 个 | 数据构建/同步/自查脚本 + 冒烟脚本 |
 
 ### 2.3 核心链路：四道闸门 + 一道结构性限制
 
-编排入口只有一个：`orchestrator.analyze()`（`services/orchestrator.py:192`）。HTTP、终端、脚本三条入口**全部**经它，所以手搓 API 也绕不过闸门。
+编排入口只有一个：`orchestrator.analyze()`（`core/app/services/orchestrator.py:192`）。HTTP、终端、脚本三条入口**全部**经它，所以手搓 API 也绕不过闸门。
 
 | 顺序 | 闸门 | 拦什么 | 放在这个位置的**原因**（代码注释明写） |
 |---|---|---|---|
@@ -212,7 +214,7 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 
 | 环节 | 现状 |
 |---|---|
-| 题库 | 国标 30 个计分条目中，本子包含 **27 个不同问题**；因湿热质的两个性别限定题只答其一，**每位答题者实际回答 26 题**（`tcm_constitution/questions.py:3-5`） |
+| 题库 | 国标 30 个计分条目中，本子包含 **27 个不同问题**；因湿热质的两个性别限定题只答其一，**每位答题者实际回答 26 题**（`tcm-constitution-questionnaire/tcm_constitution/questions.py:3-5`） |
 | 计分 | 转化分 = （原始分 − 条目数）/（条目数 × 4）× 100；逆向题按 6 − 取值处理 |
 | 偏颇体质判定 | ≥ 40 →「是」；≥ 30 →「倾向是」；否则「否」 |
 | 平和质判定 | ≥ 60 且其余 8 型均 < 30 →「是」；≥ 60 且均 < 40 →「基本是」；否则「否」 |
@@ -363,7 +365,7 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
   分组：孕产与经期（怀孕/孕妇/备孕/哺乳/喂奶/经期/月经）、儿童（小孩/孩子/儿童/婴儿/宝宝/幼儿）、重大情况（化疗/手术/糖尿病/高血压/心脏病/肾病/肝病）、用药与过敏（吃药/服药/中药/西药/过敏）。
 - **行为**：不调用模型、不花一分钱；`recommendations=[]`；`basis.guardrail_applied` 写明"命中高风险关键词：…"；`meta.degraded=True` / `degraded_reason="high_risk_group"` / `key_source="not_used"`；`user_message` 引导咨询执业医师或药师（`orchestrator.py:218-248`）。
 - **位置刻意**：在凭据校验**之前**——没填 Key 的用户说"我怀孕了"，应看到安全提示而不是"缺少 API Key"。
-- **离线路径同样生效**：`/api/analyze-offline` 也用同一个 `detect_high_risk`，命中同样返回就医话术且不调模型（`api/analyze_offline.py:148-171`）。
+- **离线路径同样生效**：`/api/analyze-offline` 也用同一个 `detect_high_risk`，命中同样返回就医话术且不调模型（`core/app/api/analyze_offline.py:148-171`）。
 - **对话入口同样生效**：`/api/chat` 先跑同一判据，命中即返回固定话术并标 `safety_intercepted=true`，此时不检查 Key、不调模型。
 - ⚠️ **已知语义**：这是"用户自述"触发，不是"发物拦截"。README 亦说明：本项目**不做事前提醒**，不拦、不挡、不报警，所有输出都是"吃了之后怎么调"（详见 §8.1）。
 
@@ -396,9 +398,9 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 ### 5.5 禁用表述 ✅
 
 - `FORBIDDEN_PHRASES` 共 **15 个**词：治疗、治愈、根治、药到病除、主治、疗效、疗程、处方、代替吃药、停药、包好、确诊、癌症、肿瘤、药方（`safety.py:29-33`）。
-- 扫描对象：推荐的 `title`、`fit_reason`、`cautions` 拼成的文本（`orchestrator.py:162`；离线路径同样扫，`api/analyze_offline.py:179-190`）。
+- 扫描对象：推荐的 `title`、`fit_reason`、`cautions` 拼成的文本（`orchestrator.py:162`；离线路径同样扫，`core/app/api/analyze_offline.py:179-190`）。
 - 判定：命中即 `ok=False`，**整条推荐作废**（`orchestrator.py:163-167`）。
-- 离线路径的处理略不同：命中者从结果中移除，并把 `user_message` 换成"部分推荐未通过安全检查，已从结果中移除。"（`api/analyze_offline.py:188-190`）。
+- 离线路径的处理略不同：命中者从结果中移除，并把 `user_message` 换成"部分推荐未通过安全检查，已从结果中移除。"（`core/app/api/analyze_offline.py:188-190`）。
 - `/api/chat` 也扫模型输出，不合规则替换为固定文案。
 
 ### 5.6 体质适配 ✅
@@ -441,8 +443,8 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 | 规则 | 实现 |
 |---|---|
 | **不存在服务端内置 Key** | `config.py` 不读取任何 API Key（`config.py:19-27`）；"服务端兜底 Key"已从代码中彻底移除。Key 只有两个来源：网页 `Authorization` 头、终端/脚本的环境变量 `DEEPSEEK_API_KEY` |
-| Key 逐请求传递 | `api/auth.py:28` 解析 Bearer（大小写不敏感、内部不允许空白、长度 > 256 视为无效）；格式不对**返回 None 而不抛异常**——宁可回明确的"请填 Key"，也不要给用户一个难懂的 500 |
-| **Key 绝不进日志/响应/异常** | `api/auth.py:9-14` 写成硬规则；`api/analyze.py:9-13` 声明本文件不记录 Authorization 头、异常 message 只来自 `AnalyzeError`；`api/analyze.py:56` 注释要求 detail 里不放 key。由 `tests/test_key_handling.py` 的 sentinel 串测试守着 |
+| Key 逐请求传递 | `core/app/api/auth.py:28` 解析 Bearer（大小写不敏感、内部不允许空白、长度 > 256 视为无效）；格式不对**返回 None 而不抛异常**——宁可回明确的"请填 Key"，也不要给用户一个难懂的 500 |
+| **Key 绝不进日志/响应/异常** | `core/app/api/auth.py:9-14` 写成硬规则；`core/app/api/analyze.py:9-13` 声明本文件不记录 Authorization 头、异常 message 只来自 `AnalyzeError`；`core/app/api/analyze.py:56` 注释要求 detail 里不放 key。由 `tests/test_key_handling.py` 的 sentinel 串测试守着 |
 | 不支持时明确报错，不静默换 Key | `TA_BACKEND=dsh` 时返回 400 `USER_KEY_UNSUPPORTED`（`orchestrator.py:259-265`）——静默复用别人的 Key 会让用户以为费用记在自己账上 |
 | CORS 只放行本机 | `main.py:99-108` 只允许 `http://127.0.0.1:<port>` 与 `http://localhost:<port>`，并注明**不要改回通配**（那会让局域网内任意网页调用你本机的接口） |
 | 前端 Key 默认不记住 | 默认存 `sessionStorage`（仅当前标签页）；勾选后才写 `localStorage`；主界面不回显 Key 任何部分 |
@@ -464,11 +466,11 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 
 ### 5.11 与推荐链路硬隔离的模块 ✅
 
-`services/medication_reference.py`（用药调理资料）有一条明确的隔离契约：**不收录标准正文、不计算剂量、不做体质匹配推荐、不生成搭配**；`describe_profile()` 刻意不含剂量字段；`safety.py`、`food_lookup.py`、`matcher.py`、`orchestrator.py`、两个提示词文件**一律不得** import 或读取它；`constitution_medication.json` 不是 `herbs.json` 的来源、不可互相同步；免责声明必须原样展示、不得裁剪。以上由 `tests/test_medication_reference.py` 守卫。
+`core/app/services/medication_reference.py`（用药调理资料）有一条明确的隔离契约：**不收录标准正文、不计算剂量、不做体质匹配推荐、不生成搭配**；`describe_profile()` 刻意不含剂量字段；`safety.py`、`food_lookup.py`、`matcher.py`、`orchestrator.py`、两个提示词文件**一律不得** import 或读取它；`constitution_medication.json` 不是 `herbs.json` 的来源、不可互相同步；免责声明必须原样展示、不得裁剪。以上由 `tests/test_medication_reference.py` 守卫。
 
 ### 5.12 安全层的不变量（写进注释的契约）
 
-1. 被拦的内容**绝不原样返回**给用户（`orchestrator.py:187`、`safety.py:156-158`）。
+1. 被拦的内容**绝不原样返回**给用户（纪律写在 `safety.py:156-158`；落点在 `core/app/services/orchestrator.py:153-159`——拦即剔除、剔空即整条作废）。
 2. 全部被拦 → 整条作废并走规则兜底，**而不是抛异常变成 500**（`orchestrator.py:338-347`）。
 3. 自动改写必须**留痕**：剂量裁剪记 `adjusted`，冲泡改写记 `guardrail_applied`——项目原则是"不静默改写"，不是"不许改写"。
 4. `basis.references` 由**本次真正留下的推荐**决定，**不看 Agent 原始输出**——被护栏拦掉的饮片不该出现在公开依据里（`orchestrator.py:113-117`）。
@@ -598,6 +600,19 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 | L4 | 湿气触发但方向不可用 | 退体质默认（`damp_clear_closed`），**不走"夜宵和胃"那种兜底顶上** |
 | 其余 | 冲击度触发而护脾胃未开放 | 走老路 + 如实说明（`stomach_guard_closed`）——**仍给搭配，不静默替换** |
 
+**4 条场景规则的实际取值**（`core/data/diet_signals.json` 的 `scene_rules` 段，2026-09-21 实测）：
+
+| id | priority | 关键词 | 搭配 | 茶饮名 | `match_natures` |
+|---|---|---|---|---|---|
+| `greasy` | 3 | 麻辣 / 炸 / 烤 / 烧烤 / 油 / 红烧 / 火锅 / 肉 / 肥 / 奶油 | 陈皮 5 + 山楂 6 | 陈皮山楂消食饮 | warm, hot |
+| `cold_intake` | 2 | 冰 / 冷 / 凉 / 雪糕 / 冰淇淋 / 生鱼 / 刺身 / 沙拉 / 冷饮 | 生姜 5 + 红枣 6 | 生姜红枣温中饮 | cool, cold |
+| `spicy` | 2 | 辣 / 麻辣 / 椒 / 烧烤 / 孜然 | 麦冬 6 + 罗汉果 3 | 麦冬罗汉果润喉饮 | hot |
+| `late_night` | 1 | **（空元组）** | 陈皮 4 + 茯苓 6 | 陈皮茯苓和胃饮 | unknown |
+
+⚠️ `late_night` 的 `keywords` 是**空元组**，只能靠 `match_natures={unknown}` 拿 1 分 ⇒ 所以 `_scene_rule_ids()` 额外要求"必须有关键词命中"，否则非夜宵的一餐会被它说成"夜里吃得多"（D31）。
+
+**化湿方向的可用饮片**（`meal_plan_rules.json`，实测）：茯苓 6 / 陈皮 4 / 荷叶 5 / 薏苡仁 10 / 白扁豆 10 / 赤小豆 10 —— 实际取「这 6 味 ∩ 候选集」按方向顺序的前 `take=2` 味。
+
 **"不对冲"的判据**（`_is_counter_rule()`，`matcher.py:297`）：搭配**整体**偏一侧、而这一餐的对侧非空 ⇒ 判为对冲。混合寒热的搭配不算。这条规则由提示词与代码**双写**：提示词要求"不要刻意对冲"，代码在 L1 直接排除对冲型规则——因为"没 Key 的用户走的还是被否掉的旧口径"会造成同一用户"有 Key / 没 Key 拿到相反的推荐方向"。
 
 ### 6.7 模型侧的隔离：未验证项不许参与计算
@@ -667,15 +682,15 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 
 | # | 触发条件 | 标注 | 锚点 |
 |---|---|---|---|
-| **7** | **输入为空** | `degraded=True` / `degraded_reason="输入为空"` / `key_source="not_used"` / `backend="offline"`；`user_message="请先说说你吃了什么。"` | `api/analyze_offline.py:87-103`（标注 `:97-98`） |
-| **8** | **命中高风险关键词** | 200 + `degraded=True` / `"高风险拦截"` + 就医话术；`guardrail_applied` 写明命中词；不调用模型 | `api/analyze_offline.py:148-171`（标注 `:165-166`） |
-| **9** | **用户主动选择的正常离线模式** | `degraded=True` / `"离线模式：不调用模型"` / `model="offline-rules"` / `backend="offline"` | `api/analyze_offline.py:192-213`（标注 `:209-210`） |
+| **7** | **输入为空** | `degraded=True` / `degraded_reason="输入为空"` / `key_source="not_used"` / `backend="offline"`；`user_message="请先说说你吃了什么。"` | `core/app/api/analyze_offline.py:87-103`（标注 `:97-98`） |
+| **8** | **命中高风险关键词** | 200 + `degraded=True` / `"高风险拦截"` + 就医话术；`guardrail_applied` 写明命中词；不调用模型 | `core/app/api/analyze_offline.py:148-171`（标注 `:165-166`） |
+| **9** | **用户主动选择的正常离线模式** | `degraded=True` / `"离线模式：不调用模型"` / `model="offline-rules"` / `backend="offline"` | `core/app/api/analyze_offline.py:192-213`（标注 `:209-210`） |
 
 离线路径另有两条**不是降级**的出口：文案安全检查不过 → 移除该条并把 message 换成"部分推荐未通过安全检查，已从结果中移除。"（`:179-190`）；体质未就绪 → **422** `CONSTITUTION_NOT_READY`（`:78-85`）。
 
 ### 7.4 降级链的尽头：唯一的 500 点
 
-`matcher._constitution_default()` 里，若连 `GENERIC_FALLBACK_KEY="balanced"` 都缺失，会 `raise RuntimeError`（`matcher.py:253-257`，代码标注 `pragma: no cover - 数据表被改坏才会走到`）。它处在 #2 的 `except` 分支内被调用，异常会冒出 `analyze()` → `api/analyze.py:62-67` → **500 `INTERNAL_ERROR`**。
+`matcher._constitution_default()` 里，若连 `GENERIC_FALLBACK_KEY="balanced"` 都缺失，会 `raise RuntimeError`（`matcher.py:253-257`，代码标注 `pragma: no cover - 数据表被改坏才会走到`）。它处在 #2 的 `except` 分支内被调用，异常会冒出 `analyze()` → `core/app/api/analyze.py:62-67` → **500 `INTERNAL_ERROR`**。
 
 这是全链路**唯一**会因为"数据表被改坏"而变成 500 的点；其余所有"给不出搭配"的情况都被设计成上面 §7.2 的空出口话术。
 
@@ -689,9 +704,9 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 | `USER_KEY_UNSUPPORTED` | `TA_BACKEND=dsh`（Key 与子进程绑定，无法逐请求换） | 400 | `orchestrator.py:259-265` |
 | `API_KEY_REJECTED` | 模型服务方拒绝凭据（401/402/403） | 400 | `orchestrator.py:272-276`；映射 `direct_api.py` 状态码分支 |
 | `AGENT1_FAILED` | Agent1 其它异常，**含 JSON 解析失败** | 422 | `orchestrator.py:277-281` |
-| `CONSTITUTION_NOT_READY` | 主导体质或屏蔽集里某型数据未备齐 | 422 | `orchestrator.py:62-96`、`:253`；离线侧 `api/analyze_offline.py:78-85` |
+| `CONSTITUTION_NOT_READY` | 主导体质或屏蔽集里某型数据未备齐 | 422 | `orchestrator.py:62-96`、`:253`；离线侧 `core/app/api/analyze_offline.py:78-85` |
 
-HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → **400**（配置/凭据问题，换个说法重试没用）；其余 `AnalyzeError` → **422**；未预期异常 → **500**（`api/analyze.py:32`、`:57`、`:62-67`）。
+HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → **400**（配置/凭据问题，换个说法重试没用）；其余 `AnalyzeError` → **422**；未预期异常 → **500**（`core/app/api/analyze.py:32`、`:57`、`:62-67`）。
 
 **为什么这些不降级**（代码注释的理由，值得原样保留）：
 - 体质未就绪：项目讲的"降级而非失败"针对的是**基础设施故障**（没 Key、模型挂、JSON 失败），那些情况下降级还能给出有用的东西；而阴虚与平和**需要的是不同的饮片**，降级没有有意义的答案，只能显式拒绝。回落平和质等于"用平和质的答案冒充阴虚质的答案"。
@@ -705,7 +720,7 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 |---|---|---|---|
 | **A** | **一个食物都没认出来**：`recommendations=[]` + "没太看明白你吃了什么…" | `degraded` **保持 `False`**——这是**正常结果**，不是降级。Agent1 正常跑完了，只是没识别到食物 | `orchestrator.py:284-299` |
 | **B** | **高风险分支**：`degraded=True` / `degraded_reason="high_risk_group"` | 这是"**刻意不调用模型**"的正常分支，不是故障。判故障要看 `degraded_reason`：`high_risk_group` 是正常的，`guardrail_removed_all` 才是异常 | `orchestrator.py:224-248` |
-| **C** | **离线模式**：`degraded=True` / `"离线模式：不调用模型"` | 它是用户**主动选的正常模式**，没有任何东西"降级"了。⚠️ 语义与主链路**相反**：同一个兜底函数在主链路里 `degraded=True` 意味着"出问题了"，在离线路径里是"本来就这样" | `api/analyze_offline.py:192-213` |
+| **C** | **离线模式**：`degraded=True` / `"离线模式：不调用模型"` | 它是用户**主动选的正常模式**，没有任何东西"降级"了。⚠️ 语义与主链路**相反**：同一个兜底函数在主链路里 `degraded=True` 意味着"出问题了"，在离线路径里是"本来就这样" | `core/app/api/analyze_offline.py:192-213` |
 
 > 📌 **文档滞后（D2）**：`docs/analyze-offline-plan.md:95-96` 规划的是离线标 `degraded=False` 并新增 `meta.mode="offline"` 来区分"本次没调模型"。**实测代码与此相反**：离线路径标 `degraded=True`，`meta` 里也**没有** `mode` 字段。本 SPEC 以代码为准。
 
@@ -760,7 +775,7 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 | 离线路径的食物识别率 | `--offline` 依赖关键词匹配，**只能识别表内条目**，表里没有的一律认不出。它牺牲识别率换取零成本、零延迟与确定性，是刻意的取舍 |
 | 未安装问卷子包 | `/api/questionnaire` 与 `/api/questionnaire/questions` 不可用；终端 `--questionnaire`/`:qz` 不可用。其余功能正常 |
 | 两条离线路径的护栏等价性 | **API 离线路径**会逐条跑禁用表述扫描；**终端 `cmd_offline`** 只走 `matcher`，**不经过** `_sanitize_recommendations`。安全由"兜底配方本身来自白名单 + 固定克数"保证，但这与联网路径**不是同一条护栏** |
-| 终端壳测试覆盖 | `ui/terminal/chat.py`（含离线路径）**零单元测试**，只有 `core/scripts/smoke_offline.py` 冒烟 |
+| 终端壳测试覆盖 | ✅ **CLI 行为层已补**（2026-09-26）：`core/tests/test_terminal_shell.py`（4 项）覆盖 `--resolve` 的食性输出、`--offline` 认不出食物 → **返回码 1**、`--offline` 出推荐 → **返回码 0**，并用"空推荐负控制"证明返回 0 不是恒真。⚠️ **仍未覆盖**：`cmd_full`（需 Key 与模型）、`repl()` 交互循环、`run_questionnaire()`；另有 `core/scripts/smoke_offline.py` 冒烟 |
 | Web 端"无 Key 的对话" | `/api/chat` 必须带 Key；无 Key 只能走 `/api/analyze-offline` |
 | 数据目录可配置 | 数据路径固定为 `core/data/`（`config.py:78`），换位置需改代码或调工作目录 |
 
@@ -771,7 +786,7 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
    ⚠️ 这一局限在 `--offline` 下**更容易被看到**：`match_foods()` 是"表里哪些条目在句子里出现过"，而不是"识别出你吃了什么"。所以离线模式的物品列表应理解为**表命中项**，与实际所吃并不等价。
 3. **黄历式的诚实标注**：`herb_nature_reference.json` 是"饮片 vs 药典 2020 的**核对报告**"而非来源表；`_meta.known_limitations` 与 `open_items` 如实记录未决项。药典引用的是 2020 版（已被 2025 版废止）这类"必须跟着依据走"的诚实边界，由 `EvidenceReference.note` 带出且**前端不得省略**。
 4. **九型体质矩阵未填满**：`docs/constitution-9-types.md:277` 记录 244 格中大量格子仍待专业判定；**空缺 ≠ 安全或不宜，空缺只表示"未判定"**。⚠️ 未标"不宜"的饮片**仍然会被推荐**（只是排序靠后），所以"应当禁忌却没标"是真实风险。
-5. **数据词表存在多份分叉**：辣/寒热词表在代码与数据文件中曾并存三份，2026-09-21 已部分下沉到 `diet_signals.json` 的 `nature_keywords`，但**评分权重仍是代码常量未下沉**（`api/analyze_offline.py:44-48` 注释明写）；库内另有"三份辣/寒热词表不合并、但登记守卫"的决定。
+5. **数据词表存在多份分叉**：辣/寒热词表在代码与数据文件中曾并存三份，2026-09-21 已部分下沉到 `diet_signals.json` 的 `nature_keywords`（实测现存 cold **9** / hot **7** / warm **5** 个词），但**评分权重（cold/hot 各 2、warm 各 1）仍是代码里的评分参数、未下沉**（`core/app/api/analyze_offline.py:44-48` 注释明写）；库内另有"三份辣/寒热词表不合并、但登记守卫"的决定。
 
 ### 8.4 工程层面的已知缺口
 
@@ -792,25 +807,21 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 
 | # | 事项 | 现状与边界 |
 |---|---|---|
-| 1 | 问卷子包未安装时，`/api/questionnaire` 是否确实返回 **501** | `README.md:52-55` 如此声明；本次未实测该降级分支，也未逐行核对异常处理 |
-| 2 | `constitution_resolver.resolve_from_scores()` 内部的收敛规则 | 只知道它抛出 `UndeterminedConstitutionError` 时端点会返回 `requires_manual_selection=true`；主导/兼夹的**具体挑选算法**未逐行读 |
-| 3 | `nature_math.PREFIX_BOUNDARY_CHARS` 的外部引用 | 在本文件内**未被任何函数引用**；`food_lookup._claims_prefix()`（`food_lookup.py:533`）用的是自有关键词集合，两者关系未确证 |
-| 4 | `matcher.RULES.late_night` 的具体关键词与搭配 | 已知其 `keywords` 为空元组（`matcher.py:316`、`:430-431` 注释），具体内容来自 `diet_signals.json` 的 `scene_rules`，未逐条列出 |
-| 5 | 4 条场景规则的完整取值 | 只知有 4 条（`scene_rules` 段）、平手时按数组顺序取先出现者；未逐条抄录其 `keywords`/`blend` |
-| 6 | `herb_evidence_sources.json` 域 II 的 24 条体质依据明细 | 只确证结构与硬约束（只返回命中本次原料的来源、域 II 需给体质才参与），未逐条核对 |
-| 7 | `catalog-compliance.md` 提到的"目录级排除"能力 | 该文档记录"现有 `exclude_herbs` 是**每个请求的用户自选排除**，不是目录级开关"，并计划新增；**当前代码里是否已有该能力未确证** |
-| 8 | `dsh` 后端是否真的无超时强制 | 从 `runtime.py` 看 `timeout_s` 形参未被使用；未实际构造超时场景验证 |
-| 9 | 官方模型列表与 `/api/chat` 的 6 个模型在真实调用中的可用性 | 只确证接口返回 6 个硬编码 key，未实测每个 key 都能通 |
+| 1 | `constitution_resolver.resolve_from_scores()` 内部的收敛规则 | 只确证：判不出时抛 `UndeterminedConstitutionError`，端点据此返回 `requires_manual_selection=true`（`core/app/api/questionnaire.py:82-92`）；主导/兼夹的**具体挑选算法**未逐行读 |
+| 2 | `herb_evidence_sources.json` 域 II 的体质依据明细 | 结构与硬约束已确证（只返回命中本次原料的来源、域 II 需给体质才参与），计数已实测（`constitution_entries` = 24、`source_registry` = 6），但**未逐条核对内容** |
+| 3 | `catalog-compliance.md` 提到的"目录级排除"能力 | 该文档记录"现有 `exclude_herbs` 是**每个请求的用户自选排除**，不是目录级开关"，并计划新增；**当前代码里是否已有该能力未确证** |
+| 4 | `dsh` 后端是否真的无超时强制 | 从 `runtime.py` 看 `timeout_s` 形参未被使用；未实际构造超时场景验证 |
+| 5 | 官方模型列表与 `/api/chat` 的 6 个模型在真实调用中的可用性 | 只确证接口返回 6 个硬编码 key，未实测每个 key 都能通 |
 
 ### 9.2 文档滞后清单 📌（**一律以代码为准**）
 
 | # | 文档说法 | 代码实测 | 位置 |
 |---|---|---|---|
 | **D1** | `docs/request-flow.md` §5.6：`/api/analyze-offline` **"尚未立项"** | **已实现并注册**：`core/app/api/analyze_offline.py`（215 行）、`main.py:111`；网页已有"离线规则"勾选框 | `docs/request-flow.md:330` |
-| **D2** | `docs/analyze-offline-plan.md`：离线应标 `degraded=False`，并新增 `meta.mode="offline"` 区分 | 实测离线标 **`degraded=True`**（`degraded_reason="离线模式：不调用模型"`），且 `Meta` **没有** `mode` 字段 | `docs/analyze-offline-plan.md:95-96`；`api/analyze_offline.py:209-210`；`models.py:254-278` |
-| **D3** | `docs/request-flow.md` §5.6：终端离线"**不过闸门④**"（并把该差异记为已知差异） | 该说法对**终端**仍成立；但**API 离线路径已跑禁用表述扫描**（`scan_free_text`），只是**没有**跑完整的 `_sanitize_recommendations`。即：现在有**两条**离线路径，护栏强度各不相同 | `docs/request-flow.md:342-345`；`api/analyze_offline.py:179-190`；`ui/terminal/chat.py:347-358` |
+| **D2** | `docs/analyze-offline-plan.md`：离线应标 `degraded=False`，并新增 `meta.mode="offline"` 区分 | 实测离线标 **`degraded=True`**（`degraded_reason="离线模式：不调用模型"`），且 `Meta` **没有** `mode` 字段 | `docs/analyze-offline-plan.md:95-96`；`core/app/api/analyze_offline.py:209-210`；`models.py:254-278` |
+| **D3** | `docs/request-flow.md` §5.6：终端离线"**不过闸门④**"（并把该差异记为已知差异） | 该说法对**终端**仍成立；但**API 离线路径已跑禁用表述扫描**（`scan_free_text`），只是**没有**跑完整的 `_sanitize_recommendations`。即：现在有**两条**离线路径，护栏强度各不相同 | `docs/request-flow.md:342-345`；`core/app/api/analyze_offline.py:179-190`；`ui/terminal/chat.py:347-358` |
 | **D4** | `README.md` 指明 Web 端口 **8180** | 网页里的两处错误提示写的是 `http://127.0.0.1:8000`（后端默认端口确实是 8000，`start-web.cmd` 用 8180） | `README.md:184/194/197`；`ui/web/index.html:654`、`:689` |
-| **D5** | `README.md:207` 写"食性表 **146** 条" | 实测 **147** 条（129 食材 + 18 茶饮），与同文件 `:340`/`:349` 一致 | `README.md:207`；`food_lookup.table_stats()` |
+| ~~**D5**~~ | ~~`README.md:207` 写"食性表 **146** 条"~~ | **本条已撤销**（2026-09-21 复核）：README **全文没有 "146"**，`:207` 是「调理资料」那一条，`:340`/`:349` 均写 147；`git log -S"146" -- README.md` 显示该数字在更早的 `dc83af1` 就已改掉，即在本文件的锚点 `9adbd49` 上**本来就不存在**。该说法源自一次未核实的转述 ⇒ **不成立，已删除**。保留此行的目的是留痕；**D1–D4、D6 不受影响，仍然成立** | 复核方式：`git log -S"146" -- README.md` + 全仓检索 |
 | **D6** | `agent1_system.md:30` 要求份量"未提及写「未指明」" | 同文件 `:60` 的示例输出用了 `"amount_desc":"未吃完"`，与字段定义不一致（属提示词内部不一致） | `core/app/agents/prompts/agent1_system.md:30`、`:60` |
 
 **另有一处"文档与代码一致但容易误读"**：`docs/three-layer-architecture.md` 说 `combine()` 未接入主流程 —— 实测**确实未接入**（`core/app/` 下无调用点），此条不是滞后，是事实。
@@ -821,6 +832,94 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 |---|---|
 | `CONF_SHOW_THRESHOLD` 是否被壳层实际使用 | **是，但通过 `/api/meta` 间接使用**：后端由 `main.py:173-195` 下发 `conf_show_threshold`，网页壳在 `ui/web/index.html:318/513/529` 消费，终端壳在 `ui/terminal/chat.py:68/106/108` 消费；`agent2_recommend.py:26/111` 用于提示词措辞。**网页壳未硬编码该数值** |
 | 白名单规模、就绪体质、食性表规模 | 实测：白名单 **44 味**；`ready_constitutions()` 返回**全部 9 型**；食性表 **147 条**（129 + 18） |
+| 问卷子包缺失时的行为 | **确实返回 501**：`core/app/api/questionnaire.py:18-34` 的 `_require_questionnaire()` 捕获 `ModuleNotFoundError`，且**仅当** `exc.name` ∈ {`tcm_constitution`, `tcm_constitution.questions`} 时转 501（其它 ImportError 照抛）；detail 就是那段安装命令，网页壳再把它换成"问卷功能未启用…"的人话提示（`ui/web/index.html:813-829`） |
+| `nature_math.PREFIX_BOUNDARY_CHARS` 的引用关系 | 定义在 `nature_math.py:211`（在 nature_math 内部**无使用**），但**被 `food_lookup.py:26` 导入、在 `food_lookup.py:548` 的 `_claims_prefix()` 里实际使用** ⇒ 它就是温度词"自成边界"三种判据之一（见 §6.2）。原"两者关系未确证"的说法不成立 |
+| 4 条场景规则的完整取值 | 已逐条实测（id / priority / 关键词 / 搭配 / `match_natures`），见 §6.6 的表 |
+| `RULES.late_night` 的关键词与搭配 | `keywords` 是**空元组**；搭配为陈皮 4 + 茯苓 6（"陈皮茯苓和胃饮"）、`match_natures` = {unknown}（见 §6.6） |
+| 白名单里的数据标注分布 | 实测：`brewing.requires_cooking` 为真的 **12 味**；有 `unsuitable_for` 的 **38 味**；有 `suitable_constitutions` 的 **38 味** |
+
+---
+
+## 10. 工具层验证结论（Function Calling 实验）
+
+> **本节口径**：素材来自**项目外**的一次实验（`D:\experiments\test_tool_calls.py`），它**不属于 tea-advisor 代码库**。验证对象是"**把护栏函数包成工具交给模型调用**"这一**机制**的可行性与边界。
+> 本节只写**验证了什么、意味着什么**，不写后续计划。
+> ⚠️ **现状前提**：tea-advisor 目前**没有任何 tool / function-calling 代码**——对 `core/**/*.py` 与全仓 `*.md` 检索 `tool_calls` / `tool_choice` / `tools=` / `function_call` / `函数调用` **全部零命中**；两个 Agent 走的是"纯文本 → JSON"，靠提示词 + `core/app/agents/json_guard.py:134` 的 `validate_with_retry` 兜住格式。因此本节所有条目的状态都是 **未接入主流程** 🚫。
+
+### 10.1 实验装置（可逐一核对的代码面）
+
+| 装置 | 实验里的实际实现 | 锚点（`test_tool_calls.py`） |
+|---|---|---|
+| 调用方式 | 用 `openai` SDK **直连** `https://api.deepseek.com`，**不走项目运行时**；模型写的是 `deepseek-chat` | `:229-234`、`:344` |
+| 工具数 | **2 个**：`screen_health_risk`、`check_blend` | `:237-277` |
+| `screen_health_risk` schema | 参数 `text`（string，required）；描述写明"命中时应引导就医，不推荐茶饮" | `:241-250`、`:242`、`:248` |
+| `check_blend` schema | `herbs` 为数组，每项 `name`(string) + `amount_g`(number)，二者 required；顶层 required `["herbs"]` | `:255-275`、`:266-269`、`:273` |
+| `screen_health_risk` 实现 | 关键词表 **8 个**（怀孕/哺乳/化疗/手术/糖尿病/高血压/过敏/吃药），返回 `{risk, matched}` | `:281-286`、`:282` |
+| `check_blend` 实现 | 自建 **6 味** `WHITELIST`（每味一个上限）+ `MAX_HERBS = 4`；超味数整组拒绝；白名单外记 `blocked`；超量裁剪并记 `adjusted[{name, from, to}]` | `:289-293`、`:300-301`、`:308-310`、`:312-315` |
+| `ok` 的判据 | `ok = len(blocked)==0 and len(adjusted)==0` | `:319` |
+| 分发方式 | `json.loads(tool_call.function.arguments)` → `TOOL_FUNCTIONS[name](**tool_args)`；未知工具名有兜底分支 | `:324-327`、`:365`、`:371`、`:372-373` |
+| 主循环 | 上限 **5 轮**；**不传 `tool_choice`**；`for tool_call in message.tool_calls`；结果以 `role:"tool"` + `tool_call_id` 回灌 | `:335`、`:343-347`、`:363`、`:377-381` |
+| 触发修正的输入 | 用户要求"金银花、菊花、薄荷**各 15 克**"，而白名单里薄荷上限 6、菊花上限 10 ⇒ **首次** `check_blend` 必然返回 `ok=false` 且带 `adjusted` | `:332`、`:290` |
+
+### 10.2 已验证的能力（实验内 ✅）
+
+| # | 结论 | 代码依据 | 本次的边界 |
+|---|---|---|---|
+| 1 | **模型能正确选工具** | 两个工具都塞进 `tools`，按 `function.name` 分发；脚本会打印被选中的名字 | `:237-277`、`:364`、`:370-371` | 候选只有 **2 个**，且只有 **1 条**用户输入（`:332`） |
+| 2 | **模型能正确传参数（结构 / 类型）** | 分发是 `TOOL_FUNCTIONS[name](**tool_args)`：参数名必须精确为 `text` / `herbs`，`herbs` 每项必须含 `name`+`amount_g`，结构或类型不符会直接抛错 | `:365`、`:371`、`:266-269` | **枚举值**这一条 ❓ 待确认：实测版两个 schema **都没有枚举参数**（`constitution` 的 `enum` 只出现在被注释掉的旧稿 `:90-94`） |
+| 3 | **模型能自我修正** | 工具描述本身就写明"若返回 `ok=false`，需根据 `adjusted` 修改后再次调用，直到 `ok=true`"；返回值含**机器可读**的 `adjusted`；工具结果回灌进对话供下一轮使用 | `:256`、`:314`、`:319`、`:377-381` | 修正后的具体数值与 `adjusted.to` 是否逐字一致，由实验结论给出；脚本内**没有断言**可复核 |
+| 4 | **模型能一次调多个工具** | 单轮内 `for tool_call in message.tool_calls` 逐个执行，并给每个结果带各自的 `tool_call_id` | `:363`、`:377-381` | 未验证 3 个以上、或同一工具被并行调多次时的顺序依赖 |
+| 5 | **模型能自己决定什么时候停** | 停止条件是**代码侧**判断"这一轮没有 `tool_calls`"即 break 并输出最终回答 | `:352-355` | 未验证"模型会不会无限调下去"；安全网是硬编码的 5 轮上限（`:335`） |
+
+### 10.3 已验证的限制（含两项外部来源）
+
+| # | 限制 | 状况与锚点 |
+|---|---|---|
+| 1 | **脚本不传 `tool_choice`** | 发起请求时只传 `model` / `messages` / `tools`（`:343-347`）⇒ 走的是**默认 auto**；因此"思考模式下不能用 `required`"这条**在脚本内无法证实**，属**外部来源**（DeepSeek 官方 issue #1376）❓ |
+| 2 | **模型可能不调工具，约 40% 概率** | **外部来源**（同上）。⚠️ 本实验只跑了**1 条**输入，脚本内没有任何重复次数或统计代码 ⇒ 这 40% **不是**本实验测出来的数 |
+| 3 | **模型名与思考模式的对应关系** | 脚本写死 `model="deepseek-chat"`（`:344`），且完全没有 `reasoning_effort` 之类参数 ⇒ 它与项目 `TA_MODEL=deepseek-v4-flash` / `TA_REASONING_EFFORT=low`（`core/app/config.py:54-58`）的**对应关系未核实** ❓ |
+| 4 | **证据强度：无断言、无留痕** | 全脚本只有 `print`（`:340`、`:367-375`、`:353-354`），**没有 `assert`、没有落盘记录**；本版 `while` 循环**也没有** max-turn 的 `else` 分支（被注释的旧稿有一个 `:148-149`）⇒ 达到 5 轮上限时**静默退出**，不留任何标记 |
+| 5 | **脚本内含一处硬编码凭据** | `:232`（以及注释稿 `:1`、`:7`）把 API Key 直接写进了源码。⚠️ 该文件**不在本仓库内**，所以 §9.3「全仓库无残留 API Key」的结论不受影响；**本节不记录该凭据的任何内容** |
+
+### 10.4 本次实验**没有**验证的东西（防误读清单 🚫）
+
+被包成工具的是**等价 stub**，不是项目真函数——下列能力**一概未验证**：
+
+| 未验证项 | 与项目真实现的差距 |
+|---|---|
+| 真实饮片白名单 | 实验用**自建 6 味**（`:289-292`）；项目是 `core/data/herbs.json` 的 **44 味**（`safety.py:81`） |
+| 真实 `safety.check_blend` | 项目版还有**总量 45 g** 上限、`cautions` → warning、用户 `exclude_herbs`（`core/app/domain/safety.py:148-219`；§5.4），实验版**一项都没有** |
+| 体质适配 | 实测版两个 tool 的 schema **没有 `constitution` 参数**（`:255-275`）⇒ `filter_by_constitution` 的候选集收敛（`safety.py:353`；§5.3、§5.6）**未参与** |
+| 高风险判据的规模 | 实验用 **8** 个关键词（`:282`）；项目是 **25** 个（`safety.py:21-26`；§5.2） |
+| 禁用表述 / 煎煮适配 / 依据链 | `scan_free_text`（§5.5）、`check_brew_adequacy`（§5.7）、`herb_evidence`（§5.12）**均未出现在实验里** |
+| 模型对"被拒"的反应 | 未验证模型拿到 `blocked`（白名单外）时会怎么处理——实验输入（`:332`）里的三味**都在**白名单内，只会触发 `adjusted` |
+| 异常与边界 | 未验证错误工具名、参数缺字段、参数类型错误时模型的表现（脚本只有"未知工具"的兜底分支 `:372-373`） |
+| 并发 / 超时 / 重试 | 脚本是单线程串行、无超时、无重试 |
+| 真实入口 | `/api/analyze`、终端、离线路径**都不是**本实验的对象；实验绕过 `orchestrator` 直接调 SDK |
+
+### 10.5 对后续改动意味着什么
+
+> ### **原则：代码护栏是底线，模型自查是增强。**
+> 模型自查是**概率性**的（外部来源：约 40% 的情况下模型根本不调工具，`§10.3`）。因此**不能因为"模型会自查"就取消、放宽或绕过 `safety.py` 的任何检查**。工具层最多是"同一份护栏的第二次机会"，**不是**护栏的替代品——在本项目现有链路里，护栏的执行点始终在**代码侧**（`core/app/services/orchestrator.py:129-189` 的 `_sanitize_recommendations`）。
+
+| # | 含义 | 依据 |
+|---|---|---|
+| 1 | **护栏的返回值必须机器可读、且可据以修正。** 自我修正在本次实验里能发生，前提是返回值同时给出"通过与否"与"差多少"：`ok` + `adjusted[{name, from, to}]`。项目现有 `GuardrailResult` 已经是这个形状（`ok` / `blocked` / `warnings` / `adjusted`，`core/app/domain/safety.py:48-60`）——即"可被模型读懂并据以改正"这一点，项目侧的返回结构**天然满足** | 实验 `:314`、`:319`；`safety.py:48-60` |
+| 2 | **判据必须同源，不能另写一套。** 项目已经踩过同形风险：LLM 路径与离线路径必须用**同一份** `unsuitable_for` 判据，否则同一用户"有 Key / 没 Key"会拿到不同安全边界，而界面只显示最终搭配、看不出差异来源（§5.6，E4；由 `core/tests/test_constitution_integration.py` 钉死）。工具层若自带一份判据，就是同一个失效形状 | `§5.6`；同源判据的既有做法见 `core/app/services/matcher.py:469-485`（`_herbs_unsuitable_for_any`）与 `safety.py:395-398`（候选集侧的同一判据） |
+| 3 | **终止权不能完全交给模型。** 本次实验里"模型自己停"（`:352-355`）与"硬上限 5 轮"（`:335`）**同时存在**；含义是：模型自主停止是一次**行为观察**，不是**保证**。链路必须自己持有轮数/重试上限 | 实验 `:335`、`:352-355` |
+| 4 | **本实验支持的范围是"暴露已有的确定性函数"，不是"让模型承担判定"。** 已验的是"能选中工具、按 schema 传参、读结果、改正、停止"；它**不改变** §5 里那些靠结构锁死的结论——候选集收敛、44 味白名单、剂量上限、禁词、体质硬剔除仍然是底线，与模型是否配合无关 | `§5.1`–`§5.12`；全仓零 tool 代码 |
+
+### 10.6 状态标注（本节收口）
+
+| 项 | 状态 |
+|---|---|
+| 工具选择 / 参数结构类型 / 一次多工具 / 自主停止 | **已验证（实验内，stub 规模）** ✅ |
+| 自我修正闭环（`ok=false` → 按 `adjusted` 改 → `ok=true`） | **已验证（实验内）** ✅ |
+| 参数**枚举值**正确 | **❓ 待确认**（实测 schema 无枚举参数，见 §10.2 第 2 条） |
+| 模型名与项目思考模式的对应关系 | **❓ 待确认**（脚本写 `deepseek-chat`，见 §10.3 第 3 条） |
+| 思考模式下 `tool_choice` 不能用 `required` / 约 40% 不调 | **外部来源**（DeepSeek issue #1376），**非**本实验测得 |
+| 真实 `safety.py` 各护栏在工具层下的行为 | **未验证** 🚫（见 §10.4） |
+| 接入 tea-advisor 主流程 | **未接入** 🚫（全仓零 tool 代码，见本节开篇） |
 
 ---
 
@@ -828,10 +927,12 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 
 | 项 | 值 | 来源 |
 |---|---|---|
-| 测试收集数 | **828 项**（43 个测试文件） | 实测 `pytest --collect-only` 等价口径 |
-| 本次实跑结果 | **821 passed / 2 skipped / 1 failed / 4 errors** | 在 DSH 沙箱内跑 `core/tests` |
-| 5 项失败的原因 | **全部是 `PermissionError`**：测试需往 `%TEMP%\dsh-*\pytest-of-*` 写临时目录，被沙箱拒绝。涉及 `test_herb_evidence`、`test_catalog_check`、`test_questionnaire_dependency` | 报错原文为 `[WinError 5] 拒绝访问` |
-| **结论** | **不是代码缺陷**，是运行环境限制；在可写临时目录的环境下应全绿 | — |
+| 测试收集数 | **835 项**（45 个测试文件） | 实测：`python -m pytest core/tests --collect-only -q`（2026-09-26 复核；较上次 828 项 **+7**：`test_degradation_paths.py` +3、`test_terminal_shell.py` +4） |
+| 实跑结果（A：临时目录可写） | **833 passed / 2 skipped / 0 failed** | 2026-09-26 复核实测（835 收集 − 2 skip） |
+| 实跑结果（B：DSH 沙箱只读临时目录） | 821 passed / 2 skipped / 1 failed / 4 errors（**当时共 828 项**） | 同一套测试、同一份代码，仅环境不同 |
+| B 里那 5 项失败的原因 | **全部是 `PermissionError`**：测试要往 `%TEMP%\dsh-*\pytest-of-*` 写临时目录被拒。涉及 `test_herb_evidence`、`test_catalog_check`、`test_questionnaire_dependency` | 报错原文 `[WinError 5] 拒绝访问` |
+| **结论** | **不是代码缺陷**：两次结果的差异只由运行环境的临时目录写权限决定（B 的失败项在 A 下全绿） | — |
+| ⚠️ 未纳入守卫的数字 | `README.md` 的**每文件项数表**不在 `core/tests/test_doc_facts.py` 的覆盖范围内（该守卫只认"测试项数"语境的 3–4 位数字与"N 个测试文件"，不认 2 位的每文件计数）⇒ 它会静默过期。2026-09-21 实测就发现 `test_safety.py` 在 README 里写 50、实际 **54**（已修正） | `core/tests/test_doc_facts.py:41-46`、`:127-135` |
 | 测试性质 | 全部离线：不调用模型、不需要 API Key（约数秒级） | — |
 | 白名单 | 44 味 | `herbs.json` |
 | 食性表 | 147 条（129 食材 + 18 茶饮） | `food_properties.json` |
@@ -869,7 +970,9 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 | 数据契约与派生不变式 | `tests/test_data_contracts.py`、`tests/test_herb_evidence.py`、`tests/test_catalog_check.py` |
 | 信号与餐单接线 | `tests/test_meal_signals_wiring.py`、`tests/test_meal_plan_wiring.py`、`tests/test_offline_segmentation.py` |
 | 壳层（网页） | `tests/test_web_shell.py` |
-| **零覆盖** | `ui/terminal/chat.py`（含离线路径） |
+| 壳层（终端）CLI 行为 | `tests/test_terminal_shell.py`（2026-09-26 新增，4 项：`--resolve` 食性 / `--offline` 返回码 1 / `--offline` 出推荐 / 空推荐负控制） |
+| `late_night` 兜底的判据与文案 | `tests/test_late_night_wording.py`（含"样本必须真的命中 late_night"的前置断言与文案变异检验） |
+| **零覆盖** | 终端壳的 `cmd_full`（需 Key 与模型）、`repl()` 交互循环、`run_questionnaire()` |
 
 ---
 

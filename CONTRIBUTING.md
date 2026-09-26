@@ -161,7 +161,7 @@ python ui\terminal\chat.py                            # 交互模式（默认走
 #### `scripts/add_review_fields.py` —— 历史上的一次性迁移，**现在跑是空操作**
 
 * 它给每个条目补上布尔字段 `reviewed`（以及 `reviewed_by` / `reviewed_at` / `review_note`）。
-* 当前表内 **146 条已全部含有 `reviewed`**，所以现在运行它不会改动任何条目。
+* 当前表内 **147 条已全部含有 `reviewed`**，所以现在运行它不会改动任何条目。
 * 保留它只是为了记录迁移历史与可复现性。
 
 #### `scripts/patch_food_table.py` —— 结构升级 + 定向修正
@@ -195,7 +195,7 @@ python scripts\patch_food_table.py --dry-run
 | 状态 | 含义 | 效果 |
 |---|---|---|
 | `approved` | 已由具备资质的人员审核通过 | 真·硬规则库，置信度 0.9，界面**不**标注 |
-| `pending` | 待审核（**当前 146 条全部是这个**） | 置信度 0.9，但界面必须标注「待验证」 |
+| `pending` | 待审核（**当前 147 条全部是这个**） | 置信度 0.9，但界面必须标注「待验证」 |
 | `rejected` | 审核不通过 | 降为组合推理档（0.6），不再作硬规则 |
 
 **普通贡献者请一律填 `pending`**，不要自行标 `approved`——那等于声称属性已被专业审核。

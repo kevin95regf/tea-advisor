@@ -342,8 +342,8 @@ text → match_foods(关键词命中，长词优先)
   - ⚠️ **不过闸门④**（`_sanitize_recommendations` 没被调用）：兜底配方本身就是从 `herbs.json`
     取的白名单条目 + 固定克数，安全由数据保证；但这与联网路径**不是同一条护栏**，是已知差异
   - ⚠️ `overall_nature` 恒为 `UNKNOWN` ⇒ `RULES.late_night`（只匹配 UNKNOWN）才可能命中
-  - **测试覆盖**：⚠️ **`ui/terminal/chat.py` 零测试**；只有 `core/scripts/smoke_offline.py` 冒烟
-- **测试**：无（这是「离线链路住在壳层里」这个待办的根因）
+  - **测试覆盖**：CLI 行为层已由 `core/tests/test_terminal_shell.py` 覆盖（4 项：`--resolve` 食性 / `--offline` 返回码 / `--offline` 出推荐 / 空推荐负控制）；`cmd_full`（需 Key）与 `repl()` 交互循环仍无测试，另有 `core/scripts/smoke_offline.py` 冒烟
+- **测试**：CLI 行为层已覆盖（见上）；`cmd_full` 与交互循环仍无测试（这是「离线链路住在壳层里」这个待办的根因）
 
 ---
 
@@ -364,18 +364,19 @@ text → match_foods(关键词命中，长词优先)
 
 | 环节 | 测试文件 | 项数 |
 |---|---|---|
-| HTTP / 凭据 / 日志安全 | `test_key_handling.py` | 29 |
-| 护栏（白名单/剂量/禁用表述/体质/煎煮） | `test_safety.py` | 34 |
-| 体质就绪闸门 | `test_constitution_readiness.py` | 17 |
+| HTTP / 凭据 / 日志安全 | `test_key_handling.py` | 50 |
+| 护栏（白名单/剂量/禁用表述/体质/煎煮） | `test_safety.py` | 54 |
+| 体质就绪闸门 | `test_constitution_readiness.py` | 18 |
 | 三层判定接线与隔离 | `test_calibration.py` | 20 |
 | 查表与匹配 | `test_food_lookup.py` | 24 |
-| 温度前缀层 | `test_temperature_layer.py` | 26 |
-| 四性运算 | `test_nature_math.py` | 35 |
+| 温度前缀层 | `test_temperature_layer.py` | 48 |
+| 四性运算 | `test_nature_math.py` | 48 |
 | JSON 容错 | `test_json_guard.py` | 14 |
-| Agent2 提示词不变式 | `test_agent2_prompt.py` | 6 |
+| Agent2 提示词不变式 | `test_agent2_prompt.py` | 8 |
 | 依据链 | `test_herb_evidence.py` | 31 |
-| 网页壳静态守卫 | `test_web_shell.py` | 12 |
-| **零覆盖** | `ui/terminal/chat.py`（含离线路径）、`matcher.RULES.late_night` | **0** |
+| 网页壳静态守卫 | `test_web_shell.py` | 19 |
+| `late_night` 兜底的判据与文案 | `test_late_night_wording.py`（6 项） |
+| **零覆盖** | 终端壳的 `cmd_full`（需 Key）与 `repl()` 交互循环 | **0** |
 
 ---
 

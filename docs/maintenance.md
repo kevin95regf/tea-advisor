@@ -56,26 +56,28 @@
 
 | 层 | 文件 | 行数 | 说明 |
 |---|---|---|---|
-| `core/app/domain` | 5 | 1,475 | **核心判定，纯逻辑，不依赖 Web 框架** |
-| `core/app/services` | 4 | 1,526 | 编排与规则兜底 |
-| `core/app/agents` | 8 | 1,478 | LLM 层（含两个后端）+ 2 个提示词文件 |
-| `core/app/api` | 6 | 698 | HTTP 适配，极薄 |
-| `core/tests` | 25 | 7,657 | **534 项，全离线，约 3.4 秒** |
-| `core/scripts` | 12 | 4,777 | 运维/自检脚本 |
-| `ui/terminal` | 1 | 518 | 终端壳 |
-| `ui/web` | 1 | 1,020 | 网页壳 |
-| **合计** | 62 | **19,149** | |
+| `core/app/domain` | 7 | 2,399 | **核心判定，纯逻辑，不依赖 Web 框架** |
+| `core/app/services` | 4 | 1,856 | 编排与规则兜底 |
+| `core/app/agents` | 8 | 1,523 | LLM 层（含两个后端）+ 2 个提示词文件 |
+| `core/app/api` | 6 | 700 | HTTP 适配，极薄 |
+| `core/tests` | 46 | 12,240 | **835 项，全离线，约 6 秒** |
+| `core/scripts` | 12 | 4,792 | 运维/自检脚本 |
+| `ui/terminal` | 1 | 606 | 终端壳 |
+| `ui/web` | 1 | 1,057 | 网页壳 |
+| **合计** | 85 | **25,173** | |
 
 数据：`food_properties.json` 约 78 KB、`herbs.json` 约 93 KB、`constitution.json` 约 4.9 KB、
 `food_medicine_catalog.json` 约 19 KB（合规自检用）、`herb_nature_reference.json` 约 75 KB（药典核对用）。
 后两个**不参与运行时判定**。
 
-> ⚠️ **别用 PowerShell 的 `(Get-Content x).Count` 数行数。** 实测它会把
-> `core/app/agents/prompts/*.md` 数成 32/29 行，实际是 66/64 行（差一倍）。
-> 用 Python 的 `bytes.count(b"\n")` 口径重测。
+> ⚠️ **别用 PowerShell 的 `(Get-Content x).Count` 数行数。** 实测它会**漏掉空行**
+> （`core/app/services/matcher.py` 被数成 513 行，实际 595 行），UTF-8 无 BOM 时还可能
+> 按 GBK 解码把中文注释弄乱。用 Python 的 `bytes.count(b"\n")` 口径重测；
+> 注意该口径会比编辑器**少 1 行**的情况也存在 —— 末行没有换行符时
+> （如 `agent1_system.md`：本口径 65 行，编辑器 66 行）。
 
 > 判断架构是否还健康的快速指标：**`domain` + `services` 的行数占比**。
-> 这两层是真正的资产（2,075 行），其余是壳与测试。若这两层开始膨胀，
+> 这两层是真正的资产（4,255 行），其余是壳与测试。若这两层开始膨胀，
 > 说明有人在把界面逻辑或模型逻辑塞进核心层。
 
 ---
@@ -147,25 +149,25 @@ AnalyzeResponse  ← 必带 disclaimer；meta 带 key_source / backend / 耗时 
 
 | 文件 | 行数 | 职责 | 改动风险 |
 |---|---|---|---|
-| `domain/enums.py` | 117 | 四气/五味/时段/烹饪/体质枚举 + 中文标签（含 `SOURCE_LABELS`） | 低（加取值安全，改取值名=改契约） |
-| `domain/nature_math.py` | 355 | 四性数值轴、`shift_nature`、`combine`、**温度前缀唯一入口** | **高** |
-| `domain/models.py` | 236 | 请求/响应/中间结构**唯一真源** | **高**（改字段名=改对外契约） |
-| `domain/safety.py` | 264 | 白名单/剂量/禁用表述/高风险人群/体质收敛 | **高**（安全层） |
-| `services/food_lookup.py` | 561 | `resolve_food` 三层判定、`match_foods`、`render_reference` | **高** |
-| `services/matcher.py` | 268 | 规则兜底、体质默认搭配 | 中 |
-| `services/orchestrator.py` | 272 | 编排、凭据前置校验、护栏调用、降级 | **高** |
+| `domain/enums.py` | 134 | 四气/五味/时段/烹饪/体质枚举 + 中文标签（含 `SOURCE_LABELS`） | 低（加取值安全，改取值名=改契约） |
+| `domain/nature_math.py` | 462 | 四性数值轴、`shift_nature`、`combine`、**温度前缀唯一入口** | **高** |
+| `domain/models.py` | 361 | 请求/响应/中间结构**唯一真源** | **高**（改字段名=改对外契约） |
+| `domain/safety.py` | 514 | 白名单/剂量/禁用表述/高风险人群/体质收敛 | **高**（安全层） |
+| `services/food_lookup.py` | 663 | `resolve_food` 三层判定、`match_foods`、`render_reference` | **高** |
+| `services/matcher.py` | 595 | 规则兜底、体质默认搭配 | 中 |
+| `services/orchestrator.py` | 378 | 编排、凭据前置校验、护栏调用、降级 | **高** |
 | `agents/runtime.py` | 251 | 后端选择器、dsh 后端、`AgentRun`、`CredentialError` | 中 |
-| `agents/direct_api.py` | 224 | 直连官方 API 后端、思考参数映射、错误文案 | 中 |
+| `agents/direct_api.py` | 235 | 直连官方 API 后端、思考参数映射、错误文案 | 中 |
 | `agents/agent1_diet.py` | 195 | 解析器 + `calibrate_parsed` | **高** |
-| `agents/agent2_recommend.py` | 197 | 推荐器 + 未验证项隔离 | 中 |
+| `agents/agent2_recommend.py` | 257 | 推荐器 + 未验证项隔离 | 中 |
 | `agents/json_guard.py` | 166 | JSON 提取/校验/重试 | 中（最容易被低估） |
-| `agents/prompts/*.md` | 130 | 两个 system prompt | 中（改完必须跑真实回归） |
+| `agents/prompts/*.md` | 164 | 两个 system prompt | 中（改完必须跑真实回归） |
 | `api/auth.py` | 47 | Bearer 头 → 裸 Key | 低 |
 | `api/analyze.py` | 67 | 路由 + 凭据错误码映射 | 低 |
 | `config.py` | 129 | 环境变量集中读取（**Key 的唯一读取点**） | 低 |
-| `main.py` | 177 | FastAPI 入口、`/`、`/healthz`、`/api/meta` | 低 |
-| `ui/terminal/chat.py` | 398 | 终端壳（仅标准库） | 低 |
-| `ui/web/index.html` | 449 | 网页壳（单文件，内联 JS） | 低 |
+| `main.py` | 205 | FastAPI 入口、`/`、`/healthz`、`/api/meta` | 低 |
+| `ui/terminal/chat.py` | 606 | 终端壳（仅标准库） | 低 |
+| `ui/web/index.html` | 1057 | 网页壳（单文件，内联 JS） | 低 |
 
 > 行数口径同 §1.4（Python `bytes.count(b"\n")`，不含 `__pycache__`）。
 > 别用 PowerShell `(Get-Content x).Count` —— 它还会把 UTF-8 当 GBK 解，中文注释会乱码。

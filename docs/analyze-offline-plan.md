@@ -243,11 +243,16 @@ recs, msg, rule_hits = matcher.fallback_recommend(parsed, constitution)
 
 前提：不碰 `matcher.py` / `safety.py` / `food_lookup.py` 的既有行为（本方案确实不碰）。
 
-⚠️ **但"不红"不等于"没变"**：选 (乙) 会改变终端 `--offline` 的输出，
-而 **`late_night` 与 `ui/terminal/chat.py` 都没有任何测试覆盖**（实测 grep：`tests/` 里
-既无 `late_night` 也无 `chat.py` 的引用）⇒ 行为变了**不会有任何断言报错**。
-这正是项目最警惕的形状（"没报错"与"检查没跑"长得一样）。
-**处置：人工跑一次 `chat.py --offline "夜宵吃了炸鸡配奶茶"`，改动前后各一次，人工比对。**
+⚠️ **但"不红"不等于"没变"**：选 (乙) 会改变终端 `--offline` 的输出。
+⚠️ **本段原前提已被推翻（2026-09-26 复核）**：原文写「**`late_night` 与 `ui/terminal/chat.py`
+都没有任何测试覆盖**（实测 grep：`tests/` 里既无 `late_night` 也无 `chat.py` 的引用）」——
+现在**两者都有覆盖**：`late_night` 的兜底判据与文案由 `core/tests/test_late_night_wording.py`
+守着（含"样本必须真的命中 late_night"的前置断言 `:61-68`，以及把文案改回「夜里」的变异检验
+`:92-98`），终端壳的 CLI 行为由 `core/tests/test_terminal_shell.py` 守着（4 项）。
+⇒ 改动若动了 late_night 的文案或终端链路的输出契约，**会有断言报错**，
+不再是"没报错"的沉默形状。
+**处置（仍建议保留）：人工跑一次 `chat.py --offline "夜宵吃了炸鸡配奶茶"`，改动前后各一次，人工比对。**
+—— 断言只钉住已经写下来的那几条契约，不等于覆盖了全部输出差异。
 
 ### 6.2 新增测试（建议清单）
 
