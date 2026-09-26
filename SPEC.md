@@ -188,7 +188,7 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 | `TA_PROVIDER` / `TA_MODEL` | `deepseek-official` / `deepseek-v4-flash` | 模型选择（`config.py:54-55`） |
 | `TA_REASONING_EFFORT` | `low` | 本模型支持 `max/high/low/off`；`medium`/`none`/`minimal` 会导致启动失败（`config.py:56-58`）。默认 `low` 是因为 `off` 虽快约 3 倍但推荐常只剩 1 条 |
 | `TA_MAX_TOKENS` | `8192` | 上限 |
-| `APP_HOST` / `APP_PORT` | `127.0.0.1` / `8000` | 服务地址（`start-web.cmd` 用 8180） |
+| `APP_HOST` / `APP_PORT` | `127.0.0.1` / `8000` | 服务地址（`start-web.cmd` 同用 8000；曾误记为 8180，见 §9.2 撤销记录） |
 | `AGENT1_TIMEOUT_S` / `AGENT2_TIMEOUT_S` | `45` / `60` | Agent 超时 |
 | `DSH_HOME` | `<仓库根>/dsh-home` | 只在 `credentials.env` 里配（`dsh` 拒绝 `.env` 里的 `DSH_*`） |
 | `DEEPSEEK_BASE_URL` | 官方地址 | 走兼容代理端点时才需要 |
@@ -859,11 +859,12 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 | **D1** | `docs/request-flow.md` §5.6：`/api/analyze-offline` **"尚未立项"** | **已实现并注册**：`core/app/api/analyze_offline.py`（215 行）、`main.py:111`；网页已有"离线规则"勾选框 | `docs/request-flow.md:330` |
 | **D2** | `docs/analyze-offline-plan.md`：离线应标 `degraded=False`，并新增 `meta.mode="offline"` 区分 | 实测离线标 **`degraded=True`**（`degraded_reason="离线模式：不调用模型"`），且 `Meta` **没有** `mode` 字段 | `docs/analyze-offline-plan.md:95-96`；`core/app/api/analyze_offline.py:212-213`；`models.py:254-278` |
 | **D3** | `docs/request-flow.md` §5.6：终端离线"**不过闸门④**"（并把该差异记为已知差异） | 该说法对**终端**仍成立；但**API 离线路径已跑禁用表述扫描**（`scan_free_text`），只是**没有**跑完整的 `_sanitize_recommendations`。即：现在有**两条**离线路径，护栏强度各不相同 | `docs/request-flow.md:342-343`；`core/app/api/analyze_offline.py:180-191`；`ui/terminal/chat.py:347-358` |
-| **D4** | `README.md` 指明 Web 端口 **8180** | 网页里的两处错误提示写的是 `http://127.0.0.1:8000`（后端默认端口确实是 8000，`start-web.cmd` 用 8180） | `README.md:184/194/197`；`ui/web/index.html:726`、`:761` |
 | **D5** | `docs/handover.md` §2.5：模型不可用、**没给 Key、JSON 解析失败**、推荐全被拦——"以上任何一种情况都**不能变成 500**" | 其中两项与代码相反：**没给 Key** 会 `raise AnalyzeError("NO_API_KEY")` → 400（`orchestrator.py:267-268`），**Agent1 的 JSON 解析失败**会 `raise AnalyzeError("AGENT1_FAILED")` → 422（`:287-291`）。SPEC §7.5 已按代码写清"刻意不降级的硬失败 5 条" | `docs/handover.md:76`；`orchestrator.py:267-268`、`:287-291`；§7.5 |
 | **D6** | `core/app/agents/prompts/agent1_system.md:30` 要求份量"未提及写「未指明」" | 同文件 `:60` 的示例输出用了 `"amount_desc":"未吃完"`，与字段定义不一致（属提示词内部不一致） | `core/app/agents/prompts/agent1_system.md:30`、`:60` |
 
 > **撤销记录（不再占用编号）**：曾列为本表 D5 的一条「`README.md:209` 写"食性表 146 条"」**不成立**——README 全文没有 "146"，`:209` 是「调理资料」那一条，`:342`/`:351` 均写 147；`git log -S"146" -- README.md` 显示该数字在更早的 `dc83af1` 就已改掉。该说法源自一次未核实的转述。
+>
+> 原 **D4** 亦撤销：该行记「`README.md` 指明 Web 端口 **8180**」，并断言「`start-web.cmd` 用 8180」。实测该断言**不成立**——`start-web.cmd` 自 `9adbd49` 起第 23/34/37 行一直是 **8000**，全仓检索 `8180` **只出现在 SPEC 自己这两处**；而远端提交 `5c44b45` 已把 README 的四处端口改为 `8000`，网页里的两处提示（`ui/web/index.html:726`、`:761`）本来就是 `8000`。即当时是 **README 写错、SPEC 的推断也错**，现在三处一致于 `8000`，D4 不成立。
 
 ### 9.3 已确认（从待确认移入）✅
 
