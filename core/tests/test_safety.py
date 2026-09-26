@@ -56,7 +56,7 @@ def test_non_whitelisted_herb_is_blocked() -> None:
     # 附子等不在药食同源目录内的药材必须被拦
     result = check_blend([{"name": "附子", "amount_g": 3}])
     assert result.ok is False
-    assert any("附子" in item for item in result.blocked)
+    assert any(item.get("target") == "附子" for item in result.blocked)
 
 
 def test_all_whitelisted_herbs_pass() -> None:
@@ -70,14 +70,14 @@ def test_all_whitelisted_herbs_pass() -> None:
 # ============================================================
 def test_overdose_is_trimmed_with_warning() -> None:
     result = check_blend([{"name": "甘草", "amount_g": 100}])
-    assert any("甘草" in w for w in result.warnings)
-    assert "甘草" in result.adjusted
+    assert any(w.get("target") == "甘草" for w in result.warnings)
+    assert any(a.get("target") == "甘草" for a in result.adjusted)
 
 
 def test_hard_ceiling_is_respected() -> None:
     """即使目录限量写错，硬上限也必须兜住。"""
     result = check_blend([{"name": "茯苓", "amount_g": HARD_DOSE_CEILING_G + 50}])
-    assert any("茯苓" in w for w in result.warnings)
+    assert any(w.get("target") == "茯苓" for w in result.warnings)
 
 
 def test_total_dose_ceiling() -> None:
@@ -93,8 +93,8 @@ def test_total_dose_ceiling() -> None:
         {"name": "荷叶", "amount_g": 10},
     ]
     result = check_blend(herbs)
-    assert any("合计用量" in w for w in result.warnings), result.warnings
-    assert "总量" in result.adjusted
+    assert any(w.get("code") == "total_over_limit" for w in result.warnings), result.warnings
+    assert any(a.get("code") == "total_adjusted" for a in result.adjusted)
 
 
 def test_per_herb_trimming_can_keep_total_legal() -> None:
@@ -105,14 +105,14 @@ def test_per_herb_trimming_can_keep_total_legal() -> None:
         {"name": "陈皮", "amount_g": 10},    # 上限 10，不裁
     ]
     result = check_blend(herbs)
-    assert not any("合计用量" in w for w in result.warnings), result.warnings
+    assert not any(w.get("code") == "total_over_limit" for w in result.warnings), result.warnings
 
 
 def test_too_many_herbs_is_blocked() -> None:
     names = list(herb_whitelist_names())[: MAX_HERBS_PER_BLEND + 1]
     result = check_blend([{"name": n, "amount_g": 3} for n in names])
     assert result.ok is False
-    assert any("味" in item for item in result.blocked)
+    assert any(item.get("code") == "too_many_herbs" for item in result.blocked)
 
 
 # ============================================================
@@ -121,7 +121,7 @@ def test_too_many_herbs_is_blocked() -> None:
 def test_user_exclusion_is_blocked() -> None:
     result = check_blend([{"name": "陈皮", "amount_g": 5}], exclude_herbs=["陈皮"])
     assert result.ok is False
-    assert any("用户已排除" in item for item in result.blocked)
+    assert any(item.get("code") == "excluded_by_user" for item in result.blocked)
 
 
 # ============================================================
@@ -675,7 +675,7 @@ def test_check_brew_adequacy_negative_control() -> None:
     # ① 须煎煮 + 焖泡 → 报（且是「改写」不是「拦截」，ok 仍为 True）
     result = check_brew_adequacy([{"name": "茯苓", "amount_g": 8}], warm)
     assert result.ok is True
-    assert result.warnings and "茯苓" in result.warnings[0]
+    assert result.warnings and result.warnings[0].get("target") == "茯苓"
 
     # ② 须煎煮 + 已煎煮 → 不报
     assert not check_brew_adequacy([{"name": "茯苓", "amount_g": 8}], cook).warnings

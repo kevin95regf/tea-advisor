@@ -20,6 +20,7 @@ from app.domain.models import AnalyzeResponse, Meta, ParsedFood, ParsedMeal, Ver
 from app.domain.safety import (
     detect_high_risk,
     ready_constitutions,
+    render_guardrail_entry,
     scan_free_text,
 )
 from app.services import matcher
@@ -183,7 +184,9 @@ async def analyze_offline_endpoint(request: OfflineAnalyzeRequest) -> AnalyzeRes
         if result.ok:
             kept.append(rec)
         else:
-            guardrail.extend(result.blocked)
+            guardrail.extend(
+                render_guardrail_entry(item) for item in result.blocked
+            )
             logger.warning("离线推荐未通过文案安全检查：%s", result.blocked)
     if guardrail:
         recs = kept

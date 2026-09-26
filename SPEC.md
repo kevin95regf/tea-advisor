@@ -850,6 +850,7 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 | 4 | `dsh` 后端是否真的无超时强制 | 从 `runtime.py` 看 `timeout_s` 形参未被使用；未实际构造超时场景验证 |
 | 5 | 官方模型列表与 `/api/chat` 的 6 个模型在真实调用中的可用性 | 只确证接口返回 6 个硬编码 key，未实测每个 key 都能通 |
 | 6 | `ErrorBody` / `ProfileResponse` / `ProfileUpdateRequest` **是否有意保留** | 定义在 `core/app/domain/models.py:40-43`、`:317-322`、`:325-328`；全仓检索**只有定义处这一处引用**，没有任何路由或模块使用它们。是预留、还是历史遗留 ⇒ 未确证。**因此本文件不把它们的字段写进 §4 的契约表**——如果它们其实是有意的对外结构，§4 需要补 |
+| 7 | `GuardrailResult.adjusted` 里**逐味**条目的 `from == to` **是否有意** | **只出现在逐味裁剪分支**：`core/app/domain/safety.py:261` 先把 `amount` 改成 `ceiling`，紧接着 `:262-268` 的 `adjusted.append({"from": amount, …})` 读到的已是裁剪后的值 ⇒ 实测 `{"code":"dose_adjusted","target":"甘草","from":6.0,"to":6.0}`；而**同一次**的 `dose_over_limit` 警告（`:254-260`）里 `from/to` 是正确的 `100.0 → 6.0`。⚠️ **总量分支没有这个问题**：`:288-293` 的 `from: total` 与警告（`:282-287`）一致，实测 `55.0 → 45.0` 正确。若前端按 `adjusted` 显示"原量→新量"，逐味那条会显示成 `6→6`。属取值逻辑问题、非类型问题 ⇒ 是否有意未确证（2026-09-26 发现，**未修**） |
 
 ### 9.2 文档滞后清单 📌（**一律以代码为准**）
 

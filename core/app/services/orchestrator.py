@@ -38,6 +38,7 @@ from app.domain.safety import (
     detect_high_risk,
     herb_evidence,
     ready_constitutions,
+    render_guardrail_entry,
     scan_free_text,
 )
 from app.services import matcher
@@ -136,6 +137,10 @@ def _sanitize_recommendations(
 
     `avoid`：兼体质屏蔽集（第 ④ 处接入点）。LLM 路径的候选集、离线路径的默认搭配
     都已各自硬剔除过，这里是最后一道 —— 兼体质同样要参与契合度提示。
+
+    ⚠️ `GuardrailResult` 的三个字段是结构化的 dict，而对外契约
+    （`Basis.guardrail_applied`、`Recommendation.cautions`）是**字符串列表**，
+    因此统一经 `safety.render_guardrail_entry()` 翻译一次 —— 唯一入口，两条路径共用。
     """
     applied: list[str] = []
     cleaned: list[Recommendation] = []
@@ -145,10 +150,10 @@ def _sanitize_recommendations(
         result = check_blend(herbs, exclude_herbs)
 
         blocked_names = {
-            item.split("：", 1)[0] for item in result.blocked
+            item.get("target") or "" for item in result.blocked
         }
-        applied.extend(result.blocked)
-        applied.extend(result.warnings)
+        applied.extend(render_guardrail_entry(item) for item in result.blocked)
+        applied.extend(render_guardrail_entry(item) for item in result.warnings)
 
         if blocked_names:
             # 剔除被拦的饮片；剔空则整条推荐作废
@@ -162,7 +167,9 @@ def _sanitize_recommendations(
         text_blob = " ".join([rec.title, rec.fit_reason, *rec.cautions])
         text_result = scan_free_text(text_blob)
         if not text_result.ok:
-            applied.extend(text_result.blocked)
+            applied.extend(
+                render_guardrail_entry(item) for item in text_result.blocked
+            )
             logger.warning("推荐「%s」含禁用表述，作废", rec.title)
             continue
 
@@ -171,9 +178,10 @@ def _sanitize_recommendations(
             [h.model_dump() for h in rec.herbs], constitution.value, avoid=avoid
         )
         for warning in fit.warnings:
-            if warning not in rec.cautions:
-                rec.cautions.append(warning)
-        applied.extend(fit.warnings)
+            rendered = render_guardrail_entry(warning)
+            if rendered not in rec.cautions:
+                rec.cautions.append(rendered)
+        applied.extend(render_guardrail_entry(warning) for warning in fit.warnings)
 
         # 冲泡方式要跟着饮片走：模型可能给须煎煮的饮片配了保温杯焖泡
         # （提示词已标「⚠️ 须煎煮」，但模型不保证听）。与剂量处理同构——
@@ -182,7 +190,9 @@ def _sanitize_recommendations(
         if brew_fix.warnings:
             rec.brew = matcher.COOK_BREW
             for warning in brew_fix.warnings:
-                applied.append(f"冲泡方式已调整为煎煮：{warning}")
+                applied.append(
+                    f"冲泡方式已调整为煎煮：{render_guardrail_entry(warning)}"
+                )
 
         cleaned.append(rec)
 

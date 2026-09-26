@@ -55,9 +55,56 @@ class GuardrailResult:
     """
 
     ok: bool = True
-    blocked: list[str] = field(default_factory=list)
-    warnings: list[str] = field(default_factory=list)
-    adjusted: list[str] = field(default_factory=list)
+    blocked: list[dict] = field(default_factory=list)
+    warnings: list[dict] = field(default_factory=list)
+    adjusted: list[dict] = field(default_factory=list)
+
+
+# ============================================================
+# 护栏条目 → 中文文案（对外字符串契约的唯一翻译点）
+# ============================================================
+# `GuardrailResult` 的三个字段是结构化的 `{code, target, ...}`，但对外契约
+# （`Basis.guardrail_applied`、`Recommendation.cautions`）一直是**字符串列表**，
+# 所以翻译集中在这里做一次 —— `orchestrator` 与 `api/analyze_offline` 都调它。
+# 两边分头各拼一遍中文必然漂移，那是 E4 的形状（两条路径边界不同）。
+_ENTRY_TEMPLATES: dict[str, str] = {
+    "forbidden_phrase": "检测到禁用表述：{target}",
+    "too_many_herbs": f"单次搭配 {{target}}，超过 {MAX_HERBS_PER_BLEND} 味上限，已按药食同源茶饮简化处理",
+    "not_in_whitelist": "{target}：不在药食同源白名单内，已移除",
+    "excluded_by_user": "{target}：用户已排除，已移除",
+    "dose_over_limit": "{target}：{from:g}g 超过建议上限，已调整为 {to:g}g",
+    "herb_caution": "{target}：{detail}",
+    "total_over_limit": f"合计用量约 {{from:g}}g 偏多，建议控制在 {TOTAL_DOSE_CEILING_G:g}g 以内",
+    "constitution_mismatch": "{target} 与你当前体质方向不完全契合，建议减量或更换",
+    "brew_needs_cooking": "{target}：须煎煮，{detail}",
+}
+
+
+def render_guardrail_entry(entry: dict) -> str:
+    """把一条护栏结果（`{code, target, ...}`）渲染成给用户看的中文。
+
+    **这是唯一入口**：`orchestrator` 与 `api/analyze_offline` 都通过它产出
+    字符串，不在各自的模块里再拼一遍中文。
+
+    未知 `code` 或字段缺失时**不抛异常** —— 护栏多出一个新 code 不该让整次
+    请求失败；退化成「取 `detail`，否则取 `target`，最差给 code 本身」，
+    最坏也是一句可读的话。
+    """
+    code = str(entry.get("code") or "")
+    template = _ENTRY_TEMPLATES.get(code)
+    if template is not None:
+        try:
+            return template.format(**entry)
+        except (KeyError, ValueError, TypeError):
+            # 字段缺失或类型不符 ⇒ 落到下面兜底，绝不让渲染把请求打挂
+            pass
+    detail = entry.get("detail")
+    if detail:
+        return str(detail)
+    target = entry.get("target")
+    if target:
+        return str(target)
+    return code or "护栏介入"
 
 
 class MissingConstitutionDataError(ValueError):
@@ -141,9 +188,11 @@ def scan_free_text(text: str) -> GuardrailResult:
         return GuardrailResult()
     return GuardrailResult(
         ok=False,
-        blocked=[f"检测到禁用表述：{h}" for h in hits],
+        blocked=[
+            {"code": "forbidden_phrase", "target": h, "action": "blocked"}
+            for h in hits
+        ],
     )
-
 
 def check_blend(
     herbs: list[dict],
@@ -157,19 +206,20 @@ def check_blend(
     调用方约定：不要静默丢弃 blocked 内容，要么剔除对应饮片后重算，
     要么整条推荐作废并走规则兜底——绝不能把被拦的内容照原样返回给用户。
     """
-    blocked: list[str] = []
-    warnings: list[str] = []
-    adjusted: list[str] = []
+    blocked: list[dict] = []
+    warnings: list[dict] = []
+    adjusted: list[dict] = []
 
     catalog = herb_by_name()
     exclude = {name.strip() for name in (exclude_herbs or []) if name.strip()}
 
     # 1) 味数上限：超过就整组拒绝，避免像方剂
     if len(herbs) > MAX_HERBS_PER_BLEND:
-        blocked.append(
-            f"单次搭配 {len(herbs)} 味，超过 {MAX_HERBS_PER_BLEND} 味上限，"
-            "已按药食同源茶饮简化处理"
-        )
+        blocked.append({
+            "code": "too_many_herbs",
+            "target": f"{len(herbs)}味",
+            "action": "rejected",
+        })
 
     total = 0.0
     for herb in herbs:
@@ -178,12 +228,19 @@ def check_blend(
 
         # 2) 必须在白名单内
         if name not in catalog:
-            blocked.append(f"{name or '(未命名)'}：不在药食同源白名单内，已移除")
+            blocked.append({
+                "code": "not_in_whitelist",
+                "target": name or "(未命名)",
+                "action": "removed",
+            })
             continue
-
-        # 3) 用户手动排除
+            # 3) 用户手动排除
         if name in exclude:
-            blocked.append(f"{name}：用户已排除，已移除")
+            blocked.append({
+                "code": "excluded_by_user",
+                "target": name,
+                "action": "removed",
+            })
             continue
 
         entry = catalog[name]
@@ -194,22 +251,46 @@ def check_blend(
             HARD_DOSE_CEILING_G,
         )
         if amount > ceiling:
-            warnings.append(f"{name}：{amount:g}g 超过建议上限，已调整为 {ceiling:g}g")
+            warnings.append({
+                "code": "dose_over_limit",
+                "target": name,
+                "from": amount,
+                "to": ceiling,
+                "action": "adjusted",
+            })
             amount = ceiling
-            adjusted.append(name)
+            adjusted.append({
+                "code": "dose_adjusted",
+                "target": name,
+                "from": amount,
+                "to": ceiling,
+            })
 
         total += amount
 
         # 5) 饮片自身禁忌逐条转成提示
         for caution in entry.get("cautions", []):
-            warnings.append(f"{name}：{caution}")
+            warnings.append({
+                "code": "herb_caution",
+                "target": name,
+                "action": "noted",
+                "detail": caution,
+            })
 
     # 6) 总量上限
     if total > TOTAL_DOSE_CEILING_G:
-        warnings.append(
-            f"合计用量约 {total:g}g 偏多，建议控制在 {TOTAL_DOSE_CEILING_G:g}g 以内"
-        )
-        adjusted.append("总量")
+        warnings.append({
+            "code": "total_over_limit",
+            "from": total,
+            "to": TOTAL_DOSE_CEILING_G,
+            "action": "warned",
+        })
+        adjusted.append({
+            "code": "total_adjusted",
+            "target": "总量",
+            "from": total,
+            "to": TOTAL_DOSE_CEILING_G,
+        })
 
     return GuardrailResult(
         ok=not blocked,
@@ -234,7 +315,7 @@ def check_constitution_fit(
     默认空 ⇒ 既有行为不变。
     """
     blocked = {str(constitution), *(str(a) for a in avoid)}
-    warnings: list[str] = []
+    warnings: list[dict] = []
     catalog = herb_by_name()
     for herb in herbs:
         name = str(herb.get("name", "")).strip()
@@ -243,7 +324,11 @@ def check_constitution_fit(
             continue
         unsuitable = {str(x) for x in (entry.get("unsuitable_for") or [])}
         if unsuitable & blocked:
-            warnings.append(f"{name} 与你当前体质方向不完全契合，建议减量或更换")
+            warnings.append({
+                "code": "constitution_mismatch",
+                "target": name,
+                "action": "warned",
+            })
     return GuardrailResult(ok=True, warnings=warnings)
 
 
@@ -345,10 +430,14 @@ def check_brew_adequacy(herbs: list[dict], brew: object) -> GuardrailResult:
     joined = "、".join(names)
     return GuardrailResult(
         warnings=[
-            f"{joined}：须煎煮，保温杯焖泡出不了味，应改用养生壶或小锅煮 20–30 分钟"
+            {
+                "code": "brew_needs_cooking",
+                "target": joined,
+                "action": "warned",
+                "detail": "保温杯焖泡出不了味，应改用养生壶或小锅煮 20–30 分钟",
+            }
         ]
     )
-
 
 def filter_by_constitution(
     constitution: str,
