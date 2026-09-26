@@ -884,6 +884,7 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 | 缺口 | 说明 | 位置 |
 |---|---|---|
 | `README.md` 的**每文件项数表**不在守卫覆盖内 | `core/tests/test_doc_facts.py` 只认"测试项数"语境的 3–4 位数字与"N 个测试文件"，**不认 2 位的每文件计数** ⇒ 会静默过期。2026-09-21 实测就发现 `test_safety.py` 在 README 里写 50、实际 **54**（已修正） | `core/tests/test_doc_facts.py:41-46`、`:127-135` |
+| **SPEC.md 的行号锚点**不在任何守卫覆盖内 | `core/tests/test_doc_facts.py` 只守 `README.md` / `docs/handover.md` / `docs/new-workspace-onboarding.md` 的**项数与引用路径**，完全不认 SPEC 的 `path:行号` ⇒ 锚点随每次改动静默过期。2026-09-26 重同步时实测：213 个带文件名锚点里 **79 个已漂移**（`safety.py` +89 行、`orchestrator.py` +10、`analyze_offline.py` +3、`index.html` +242/−93 由远端合并带入）。可加的守卫：锚点文件存在 + 行号在文件范围内 + 锚定行非空——挡不住"指错函数"，但能挡住这次的整类错。代价：新增测试会改变收集项数，需同步 README / handover / onboarding 三处计数 | `core/tests/test_doc_facts.py:33-37`（`GUARDED_DOCS` 不含 `SPEC.md`）；本次重同步见 `b75e8bd` |
 
 ---
 
