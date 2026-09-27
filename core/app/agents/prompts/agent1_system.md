@@ -27,7 +27,7 @@
 
 - `foods`：数组，每个元素是一个食物条目
   - `name`：食物名称，用用户的说法，如「麻辣烫」「冰可乐」「茉莉花茶」
-  - `amount_desc`：份量描述，如「一份」「两碗」「一杯」，未提及写「未指明」
+  - `amount_desc`：份量描述。**用户怎么说的就怎么写**（如「一份」「两碗」「一杯」「没吃完」）；**只有用户完全没提份量时才写「未指明」**——程序按这个字面量判断"没提到"，不要用它表达别的情况
   - `nature`：寒热属性，只能取 `cold`(寒) / `cool`(凉) / `neutral`(平) / `warm`(温) / `hot`(热) / `unknown`
   - `flavors`：五味数组，元素只能取 `sour` / `bitter` / `sweet` / `pungent` / `salty` / `bland` / `astringent`
   - `cooking`：烹饪方式，只能取 `raw` / `boiled` / `steamed` / `stir_fried` / `deep_fried` / `grilled` / `cold` / `pickled` / `unknown`

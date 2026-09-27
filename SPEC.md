@@ -307,7 +307,7 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 
 | 对象 | 定义处 | 字段 | 说明 |
 |---|---|---|---|
-| `ParsedFood` | `models.py:67` | `name`、`amount_desc`、`nature`、`flavors[]`、`cooking`、`note`、`verification` | `note` 是**运行时字段**：温度前缀层会扫它 |
+| `ParsedFood` | `models.py:67` | `name`、`amount_desc`、`nature`、`flavors[]`、`cooking`、`note`、`verification` | `note` 是**运行时字段**：温度前缀层会扫它；`amount_desc` 的「未指明」是**代码依赖的哨兵**（`models.py:71` 的默认值、终端 `ui/terminal/chat.py:114` 用它决定要不要显示该字段）—— 提示词已按此收紧措辞（见 §9.2 D6） |
 | `ParsedMeal` | `models.py:160` | `foods[]`、`meal_time`、`overall_nature`、`confidence`、`uncertain_items[]`、`summary`、`signals`、`plan` | `signals`/`plan` 为 `None` 表示未计算，既有关联方不传即保持旧行为 |
 | `Verification` | `models.py:49` | `source`、`confidence`、`unverified`、`detail` | 三层架构的元数据出口 |
 | `MealDimension` | `models.py:79` | `label`、`score`、`cap`、`action`、`action_label`、`signals[]`、`evidence_floor`、`basis` | 阈值与中文标签**全部来自数据文件**，代码不写死 |
@@ -887,7 +887,7 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 | **D2** | `docs/analyze-offline-plan.md`：离线应标 `degraded=False`，并新增 `meta.mode="offline"` 区分 | 实测离线标 **`degraded=True`**（`degraded_reason="离线模式：不调用模型"`），且 `Meta` **没有** `mode` 字段 | `docs/analyze-offline-plan.md:95-96`；`core/app/api/analyze_offline.py:212-213`；`models.py:254-278` |
 | **D3** | `docs/request-flow.md` §5.6：终端离线"**不过闸门④**"（并把该差异记为已知差异） | 该说法对**终端**仍成立；但**API 离线路径已跑禁用表述扫描**（`scan_free_text`），只是**没有**跑完整的 `_sanitize_recommendations`。即：现在有**两条**离线路径，护栏强度各不相同 | `docs/request-flow.md:342-343`；`core/app/api/analyze_offline.py:180-191`；`ui/terminal/chat.py:347-358` |
 | **D5** | `docs/handover.md` §2.5：模型不可用、**没给 Key、JSON 解析失败**、推荐全被拦——"以上任何一种情况都**不能变成 500**" | 其中两项与代码相反：**没给 Key** 会 `raise AnalyzeError("NO_API_KEY")` → 400（`orchestrator.py:267-268`），**Agent1 的 JSON 解析失败**会 `raise AnalyzeError("AGENT1_FAILED")` → 422（`:287-291`）。SPEC §7.5 已按代码写清"刻意不降级的硬失败 5 条" | `docs/handover.md:76`；`orchestrator.py:267-268`、`:287-291`；§7.5 |
-| **D6** | `core/app/agents/prompts/agent1_system.md:30` 要求份量"未提及写「未指明」" | 同文件 `:60` 的示例输出用了 `"amount_desc":"未吃完"`，与字段定义不一致（属提示词内部不一致） | `core/app/agents/prompts/agent1_system.md:30`、`:60` |
+| **D6** | `core/app/agents/prompts/agent1_system.md:30` 曾要求份量"未提及写「未指明」" | **已修（2026-09-26）**：判定为**定义侧表述不全**，不是示例错——`:60` 的 `"amount_desc":"未吃完"` 是**用户原话**，符合同文件 `:46`「看不出克数就写原话，不要编造克数」；且「未指明」是**代码依赖的哨兵**（`models.py:71` 默认值、`ui/terminal/chat.py:114` 用它决定要不要显示该字段，等于"没提到"）。⇒ **改定义、示例不动**：现在写「用户怎么说的就怎么写；**只有完全没提份量才写「未指明」**——程序按这个字面量判断」 | `core/app/agents/prompts/agent1_system.md:30`（现文）、`:46`、`:60` |
 | **D7** | `SPEC.md` §5.1/§5.4 写「超味数**整组拒绝**」，且 `safety.py:72` 的护栏文案写「已按药食同源茶饮简化处理」 | 实测**既不拒绝也不处理**：编排层按 `blocked` 条目的 `target` 剔饮片，而 `too_many_herbs` 的 `target` 是计数串「N味」而非饮片名 ⇒ `kept` 保留全部饮片（没有哪味叫「5味」），推荐**原样返回**；且 `models.Recommendation.herbs` 无数量上限、`filter_by_constitution` 与提示词都只是**建议** ≤4 味。同类风险：任何 `target` 不是饮片名的 blocked 条目都会踩空 | `core/app/domain/safety.py:249-256`、`core/app/services/orchestrator.py:153-165`；**待修，排为修复七** |
 
 > **撤销记录（不再占用编号）**：曾列为本表 D5 的一条「`README.md:209` 写"食性表 146 条"」**不成立**——README 全文没有 "146"，`:209` 是「调理资料」那一条，`:342`/`:351` 均写 147；`git log -S"146" -- README.md` 显示该数字在更早的 `dc83af1` 就已改掉。该说法源自一次未核实的转述。
