@@ -352,10 +352,10 @@ text → match_foods(关键词命中，长词优先)
 | 出口 | 渲染什么 | 真源 |
 |---|---|---|
 | 网页「我理解到的」 | `parsed.foods[]` 标签（悬停显示 `verification.detail`）、时段、整餐偏、把握度、待验证计数 | `index.html :: renderParsed` |
-| 网页「给你的建议」 | `recommendations[]`：饮片+克数、冲泡步骤、`cautions`、匹配度 | `index.html :: renderRecs` |
+| 网页「给你的建议」 | `recommendations[]`：饮片+克数、冲泡步骤、`cautions`、自评把握（**仅 `meta.degraded=false` 时显示**） | `index.html :: renderRecs` |
 | 网页「这次推荐的公开依据」 | `basis.references[]`（只含命中本次原料的来源） | `index.html :: renderReferences` |
 | 网页 底部 meta | 耗时 + `degraded` + 体质 + `request_id` + `renderKeySource`（用了谁的 Key） | `index.html :: run` |
-| 终端 | `render_parsed` / `render_recommendations` + 规则命中 + 免责声明 | `chat.py` |
+| 终端 | `render_parsed` / `render_recommendations`（**`degraded` 是必填关键字参数**：降级／离线时不显示自评把握）+ 规则命中 + 免责声明 | `chat.py` |
 | 日志 | `logger.info("analyze 完成 request_id=… degraded=…")`，**不含 Key** | `orchestrator.py` |
 
 ---

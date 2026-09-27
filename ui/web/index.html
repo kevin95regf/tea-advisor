@@ -648,9 +648,14 @@ function renderParsed(p) {
   </div>`;
 }
 
-function renderRecs(recs) {
+// degraded 默认取 true（安全默认：漏传时宁可不显示百分比，也不误显固定值）。
+// 两个调用点都必须显式传：主流程 data.meta.degraded、近 7 天汇总同为离线路径。
+function renderRecs(recs, degraded = true) {
   if (!recs.length) return '';
   const items = recs.map(r => {
+    // 规则兜底／离线（degraded）不显示百分比：那条路径的 score 是固定值，打出来是虚假精度
+    const scoreBadge = degraded
+      ? '' : `<span class="badge">自评把握 ${esc(Math.round((r.score || 0) * 100))}%</span>`;
     const herbs = (r.herbs || []).map(h => `
       <div class="herb">
         <span><b>${esc(h.name)}</b>${h.role ? ` <span class="hint">${esc(h.role)}</span>` : ''}</span>
@@ -660,7 +665,7 @@ function renderRecs(recs) {
     const cautions = (r.cautions || []).length
       ? `<ul class="cautions">${(r.cautions || []).map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : '';
     return `<div class="tea">
-      <h3>${esc(r.title)}<span class="badge">匹配度 ${esc(Math.round((r.score || 0) * 100))}%</span></h3>
+      <h3>${esc(r.title)}${scoreBadge}</h3>
       ${herbs}
       ${r.fit_reason ? `<div class="reason">${esc(r.fit_reason)}</div>` : ''}
       <div class="hint">冲泡：${esc((r.brew && r.brew.vessel) || '')} ｜ 约 ${esc((r.brew && r.brew.water_ml) || 400)} ml ｜ ${esc((r.brew && r.brew.water_temp_c) || 95)}℃ ｜ 焖 ${esc((r.brew && r.brew.steep_min) || 8)} 分钟 ｜ 可续水 ${esc((r.brew && r.brew.refill_times) || 1)} 次</div>
@@ -734,7 +739,7 @@ async function run() {
     let html = '';
     if (data.user_message) html += `<div class="card"><h2>说明</h2><div>${esc(data.user_message)}</div></div>`;
     html += renderParsed(data.parsed);
-    html += renderRecs(data.recommendations || []);
+    html += renderRecs(data.recommendations || [], data.meta.degraded);
     html += renderReferences(data.basis && data.basis.references);
     html += `<div class="card">${renderDisclaimer()}
       <div class="meta">耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s ｜ Agent1 ${esc(data.meta.agent1_ms)}ms ｜ Agent2 ${esc(data.meta.agent2_ms)}ms
@@ -872,7 +877,7 @@ async function analyzeRecentHistory() {
     const data = await res.json();
     if (!res.ok) throw new Error((data.detail && data.detail.message) || JSON.stringify(data.detail || data));
     target.innerHTML = (data.user_message ? `<div class="reason">${esc(data.user_message)}</div>` : '')
-      + renderParsed(data.parsed) + renderRecs(data.recommendations || [])
+      + renderParsed(data.parsed) + renderRecs(data.recommendations || [], data.meta.degraded)
       + renderReferences(data.basis && data.basis.references) + renderDisclaimer();
   } catch (e) {
     target.innerHTML = `<div class="error">汇总失败：${esc(e.message || e)}</div>`;

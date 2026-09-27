@@ -190,7 +190,7 @@ def main() -> int:
                     blend = " + ".join(
                         f"{h.name}{h.amount_g:g}g" for h in rec.herbs
                     )
-                    print(f"    → 《{rec.title}》{blend}（匹配度 {rec.score:.2f}）")
+                    print(f"    → 《{rec.title}》{blend}（自评把握 {rec.score:.2f}）")
                     print(f"       理由：{rec.fit_reason}")
                     for c in rec.cautions:
                         print(f"       注意：{c}")

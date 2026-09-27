@@ -194,13 +194,19 @@ def _render_meal_plan(parsed: ParsedMeal) -> None:
         print(f"  {plan.second_note}")
 
 
-def render_recommendations(recs: list) -> None:
+def render_recommendations(recs: list, *, degraded: bool) -> None:
+    """打印推荐。
+
+    `degraded=True`（规则兜底／离线模式）时**不显示"自评把握"**：那条路径的 `score`
+    是固定值（`matcher` 里的 0.6），打一个百分比出来是虚假精度。
+    """
     print("\n【给你的建议】")
     if not recs:
         print("  （本次没有推荐）")
         return
     for i, rec in enumerate(recs, 1):
-        print(f"\n  {i}. 《{rec.title}》  匹配度 {rec.score:.0%}")
+        score_part = "" if degraded else f"  自评把握 {rec.score:.0%}"
+        print(f"\n  {i}. 《{rec.title}》{score_part}")
         for h in rec.herbs:
             role = f"  {h.role}" if h.role else ""
             print(f"     - {h.name} {h.amount_g:g}g{role}")
@@ -360,7 +366,7 @@ def cmd_offline(
     render_parsed(parsed)
     if msg:
         print(f"\n  {msg}")
-    render_recommendations(recs)
+    render_recommendations(recs, degraded=True)  # 离线路径全程不调模型
     print("\n" + "-" * 62)
     print(_constitution_line(constitution, avoid, note))
     print(f"  ｜ 命中规则：{'、'.join(rule_hits)} ｜ 耗时 {time.perf_counter() - t0:.2f}s")
@@ -426,7 +432,7 @@ def cmd_full(
     if resp.user_message:
         print(f"\n【说明】\n  {resp.user_message}")
     render_parsed(resp.parsed)
-    render_recommendations(resp.recommendations)
+    render_recommendations(resp.recommendations, degraded=resp.meta.degraded)
     render_footer(resp, elapsed)
     return 0
 

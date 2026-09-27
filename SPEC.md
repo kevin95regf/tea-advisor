@@ -215,7 +215,7 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
    ⚠️ **任一步失败即禁用主按钮**并提示"无法读取 /api/meta"（`ui/web/index.html:566-569`）。
 2. **提交** `run()`：先 `saveKey()`；读"离线规则"勾选框；**只在"填了 Key 且非离线"时才带** `Authorization` 头；端点二选一 `/api/analyze-offline` 或 `/api/analyze`；请求体为 `text` + `constitution_override` + `avoid_constitutions`。
 3. **错误处理**：`NO_API_KEY` / `USER_KEY_UNSUPPORTED` / `API_KEY_REJECTED` 归为"凭据问题"→ 自动打开设置弹窗并聚焦 Key 输入框；其余显示错误卡片。
-4. **成功渲染**：`user_message` → "我理解到的"（`parsed.foods` 标签，悬停显示判定过程）→ "给你的建议"（饮片+克数、冲泡步骤、注意事项、匹配度）→ "这次推荐的公开依据"（`basis.references`）→ 免责声明 + `request_id` → 底部 meta（耗时、是否降级、体质、本次用没用 Key）。
+4. **成功渲染**：`user_message` → "我理解到的"（`parsed.foods` 标签，悬停显示判定过程）→ "给你的建议"（饮片+克数、冲泡步骤、注意事项、**自评把握**——只有模型给出的推荐才显示，规则兜底／离线路径不显示）→ "这次推荐的公开依据"（`basis.references`）→ 免责声明 + `request_id` → 底部 meta（耗时、是否降级、体质、本次用没用 Key）。
 5. **副作用**：成功即写入本地饮食记录。
 
 **Key 存储**：勾选"记住 Key"→ `localStorage` 键 `ta_api_key`；默认不勾选 → `sessionStorage` 键 `ta_api_key_session`（只存当前标签页）。主界面只显示"已填写 / 未填写"，**不回显 Key 的任何部分**。
@@ -334,6 +334,13 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 > 不覆盖就会同屏出现两个茶名。提示词已相应改为有条件表述（`core/app/agents/prompts/agent2_system.md`）。
 > 刻意**不**加长度校验：`min_length/max_length` 会让越界变成 schema 错误 ⇒ 经重试后仍失败即
 > **整条降级为规则兜底**，代价不成比例。
+
+> ⚠️ **`Recommendation.score` 是模型自评、纯展示字段**（2026-09-26 定性）：全仓**没有任何逻辑读它**
+> —— 无排序、无过滤、无阈值，也不入浏览器历史与导出；只有两个壳把它渲染成一个百分比。
+> 定位＝模型对这条推荐的**自评把握度**，**不可当质量指标**。规则兜底路径的 `score` 恒为 `0.6`
+> （`core/app/services/matcher.py`），是 demo 骨架期（`38ec34a`）遗留的裸常量、**无任何依据**，
+> 因此**已改为不显示**：两个壳只在 `meta.degraded=false`（即模型给出的推荐）时才渲染这个百分比。
+> **代码不派生 score**（按信号强度映射属可选方案，本次刻意不做）。
 
 ### 4.5 枚举
 
