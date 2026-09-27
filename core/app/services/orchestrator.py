@@ -38,6 +38,7 @@ from app.domain.safety import (
     detect_high_risk,
     herb_evidence,
     ready_constitutions,
+    recommendation_scan_text,
     render_guardrail_entry,
     scan_free_text,
 )
@@ -163,9 +164,10 @@ def _sanitize_recommendations(
                 continue
             rec.herbs = kept
 
-        # 文案层禁用表述检查
-        text_blob = " ".join([rec.title, rec.fit_reason, *rec.cautions])
-        text_result = scan_free_text(text_blob)
+        # 文案层禁用表述检查。扫描面由 safety.recommendation_scan_text 统一决定：
+        # title + fit_reason + cautions + 每味 role + brew 的 vessel/steps。
+        # 曾经这里写死前三项，模型把禁词写进 role 或冲泡步骤就绕过了护栏。
+        text_result = scan_free_text(recommendation_scan_text(rec))
         if not text_result.ok:
             applied.extend(
                 render_guardrail_entry(item) for item in text_result.blocked
@@ -355,6 +357,14 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
             cleaned, constitution, request.exclude_herbs, avoid
         )
         applied.extend(applied2)
+
+    # user_message 不在推荐对象里，单独扫一遍：漏扫它等于把禁用表述直接送达用户。
+    # 命中即换成固定话术（此刻已没有"哪条推荐"可作废，且推荐本身未必有问题）。
+    msg_result = scan_free_text(user_message)
+    if not msg_result.ok:
+        applied.extend(render_guardrail_entry(item) for item in msg_result.blocked)
+        logger.warning("user_message 含禁用表述，已替换为固定话术")
+        user_message = "说明未通过安全检查，已省略。"
 
     total_ms = int((time.perf_counter() - started) * 1000)
     logger.info(

@@ -20,6 +20,7 @@ from app.domain.models import AnalyzeResponse, Meta, ParsedFood, ParsedMeal, Ver
 from app.domain.safety import (
     detect_high_risk,
     ready_constitutions,
+    recommendation_scan_text,
     render_guardrail_entry,
     scan_free_text,
 )
@@ -180,7 +181,8 @@ async def analyze_offline_endpoint(request: OfflineAnalyzeRequest) -> AnalyzeRes
     guardrail: list[str] = []
     kept = []
     for rec in recs:
-        result = scan_free_text(" ".join([rec.title, rec.fit_reason, *rec.cautions]))
+        # 扫描面与 LLM 路径共用 safety.recommendation_scan_text（不再只扫前三个字段）
+        result = scan_free_text(recommendation_scan_text(rec))
         if result.ok:
             kept.append(rec)
         else:
@@ -191,6 +193,13 @@ async def analyze_offline_endpoint(request: OfflineAnalyzeRequest) -> AnalyzeRes
     if guardrail:
         recs = kept
         message = "部分推荐未通过安全检查，已从结果中移除。"
+
+    # user_message 同样要过一遍：数据文件里的文案也从这里出去，不能只守推荐对象
+    msg_result = scan_free_text(message)
+    if not msg_result.ok:
+        guardrail.extend(render_guardrail_entry(item) for item in msg_result.blocked)
+        logger.warning("离线 user_message 含禁用表述，已替换为固定话术")
+        message = "说明未通过安全检查，已省略。"
 
     elapsed = int((time.perf_counter() - started) * 1000)
     return AnalyzeResponse(

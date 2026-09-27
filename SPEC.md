@@ -108,7 +108,7 @@ core/data/          规则库与数据文件（10 个 JSON）
 | `core/app/domain/constitution_resolver.py` | 206 行 | 问卷分数 → 主导体质/兼夹体质的收敛与屏蔽集（失败类型见 §3.3） |
 | `core/app/domain/meal_time.py` | 44 行 | 餐次猜测（两条离线链路共用一份） |
 | `core/data/*.json` | 10 个 JSON | 规则库与数据（结构见 §4.6） |
-| `core/tests/` | 45 个测试文件 | 835 项离线测试（不调模型、不需要 Key）。⚠️ 口径：**45 = `test_*.py` 的个数**；该目录下还有 `conftest.py` 与 `__init__.py`，`*.py` 合计 **47** 个（`docs/maintenance.md` §1.4 按"排除 `__init__.py`"口径记作 46，两者口径不同、都对） |
+| `core/tests/` | 45 个测试文件 | 838 项离线测试（不调模型、不需要 Key）。⚠️ 口径：**45 = `test_*.py` 的个数**；该目录下还有 `conftest.py` 与 `__init__.py`，`*.py` 合计 **47** 个（`docs/maintenance.md` §1.4 按"排除 `__init__.py`"口径记作 46，两者口径不同、都对） |
 | `core/scripts/` | 12 个脚本 | 数据构建/同步/自查脚本 + 冒烟脚本 |
 
 ### 2.3 核心链路：四道闸门 + 一道结构性限制
@@ -423,9 +423,10 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 ### 5.5 禁用表述 ✅
 
 - `FORBIDDEN_PHRASES` 共 **15 个**词：治疗、治愈、根治、药到病除、主治、疗效、疗程、处方、代替吃药、停药、包好、确诊、癌症、肿瘤、药方（`safety.py:29-33`）。
-- 扫描对象：推荐的 `title`、`fit_reason`、`cautions` 拼成的文本（`orchestrator.py:167`；离线路径同样扫，`core/app/api/analyze_offline.py:180-191`）。
-- 判定：命中即 `ok=False`，**整条推荐作废**（`orchestrator.py:168-172`）。
-- 离线路径的处理略不同：命中者从结果中移除，并把 `user_message` 换成"部分推荐未通过安全检查，已从结果中移除。"（`core/app/api/analyze_offline.py:191-193`）。
+- 扫描面由**唯一入口** `safety.recommendation_scan_text()`（`safety.py:205`）决定：`title` + `fit_reason` + `cautions` + **每味饮片的 `role`** + **`brew.vessel`** + **`brew.steps` 每一步**。2026-09-26 前的旧口径只拼前三项 ⇒ 模型把禁词写进 `role` 或冲泡步骤即可绕过护栏（已修）。
+- 判定：命中即 `ok=False`，**整条推荐作废**（LLM 路径 `orchestrator.py:170-176`）。
+- `user_message` **不在推荐对象里**，两条路径各自单独扫一遍、命中即换成固定话术：LLM 路径 `orchestrator.py:361-367`；离线路径 `core/app/api/analyze_offline.py:197-202`。
+- 离线路径对推荐对象的处置略有不同：命中者从结果中移除（不是整条兜底），并把 `user_message` 换成"部分推荐未通过安全检查，已从结果中移除。"（`core/app/api/analyze_offline.py:183-195`）。
 - `/api/chat` 也扫模型输出，不合规则替换为固定文案。
 
 ### 5.6 体质适配 ✅
@@ -699,7 +700,7 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 | **2** | `rule_hits` 一并带出；`degraded=True` | 空推荐在 `:322-323` 转成异常；兜底 `:324-330` |
 | **3** | 兜底后再**过一遍护栏**，两次的 `guardrail_applied` 合并 | `orchestrator.py:348-357` |
 
-> 这三条出口的行为断言由 `core/tests/test_degradation_paths.py` 正面守护：高风险不调模型且无需 Key（`:86-100`）、Agent2 失败降级仍给非空搭配（`:103-122`）、护栏清空后 `degraded_reason="guardrail_removed_all"` 并留痕（`:125-150`）。
+> 这三条出口的行为断言由 `core/tests/test_degradation_paths.py` 正面守护（起始行：高风险不调模型且无需 Key `:90`、Agent2 失败降级仍给非空搭配 `:107`、护栏清空后 `degraded_reason="guardrail_removed_all"` 并留痕 `:129`）。**护栏扫描面**另有三条：禁用表述写进 `role`（`:157`）或 `brew.steps`（`:190`）也要整条作废、离线路径共用同一份扫描面（`:217`）。
 
 ### 7.2 兜底函数内部的空出口（上表 #4–#6，`matcher.fallback_recommend()`）
 
@@ -723,7 +724,7 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 | **8** | `guardrail_applied` 写明命中词 | `core/app/api/analyze_offline.py:149-172`（标注 `:166-167`） |
 | **9** | 用户主动选的正常模式，语义见 §7.6 C | `core/app/api/analyze_offline.py:195-216`（标注 `:212-213`） |
 
-离线路径另有两条**不是降级**的出口：文案安全检查不过 → 移除该条并把 message 换成"部分推荐未通过安全检查，已从结果中移除。"（`:179-190`）；体质未就绪 → **422** `CONSTITUTION_NOT_READY`（`:78-85`）。
+离线路径另有两条**不是降级**的出口：文案安全检查不过 → 移除该条并把 message 换成"部分推荐未通过安全检查，已从结果中移除。"（`:183-195`；扫描面与 LLM 路径同源，`user_message` 另单独扫，`:197-202`）；体质未就绪 → **422** `CONSTITUTION_NOT_READY`（`:79-86`）。
 
 ### 7.4 降级链的尽头：唯一的 500 点
 
@@ -892,8 +893,8 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 
 | 项 | 值 | 来源 |
 |---|---|---|
-| 测试收集数 | **835 项**（45 个测试文件） | 实测：`python -m pytest core/tests --collect-only -q`（2026-09-26 复核；较上次 828 项 **+7**：`test_degradation_paths.py` +3、`test_terminal_shell.py` +4） |
-| 实跑结果（A：临时目录可写） | **833 passed / 2 skipped / 0 failed** | 2026-09-26 复核实测（835 收集 − 2 skip） |
+| 测试收集数 | **838 项**（45 个测试文件） | 实测：`python -m pytest core/tests --collect-only -q`（2026-09-26 复核：护栏扫描面扩展 **+3**，`test_degradation_paths.py` 3 → 6 项） |
+| 实跑结果（A：临时目录可写） | **836 passed / 2 skipped / 0 failed** | 2026-09-26 复核实测（838 收集 − 2 skip） |
 | 实跑结果（B：DSH 沙箱只读临时目录） | 821 passed / 2 skipped / 1 failed / 4 errors（**当时共 828 项**） | 同一套测试、同一份代码，仅环境不同 |
 | B 里那 5 项失败的原因 | **全部是 `PermissionError`**：测试要往 `%TEMP%\dsh-*\pytest-of-*` 写临时目录被拒。涉及 `test_herb_evidence`、`test_catalog_check`、`test_questionnaire_dependency` | 报错原文 `[WinError 5] 拒绝访问` |
 | **结论** | **不是代码缺陷**：两次结果的差异只由运行环境的临时目录写权限决定（B 的失败项在 A 下全绿） | — |
@@ -933,7 +934,7 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 | 体质就绪闸门与两路径一致性 | `tests/test_constitution_readiness.py`、`tests/test_constitution_integration.py` |
 | 数据契约与派生不变式 | `tests/test_data_contracts.py`、`tests/test_herb_evidence.py`、`tests/test_catalog_check.py` |
 | 信号与餐单接线 | `tests/test_meal_signals_wiring.py`、`tests/test_meal_plan_wiring.py`、`tests/test_offline_segmentation.py` |
-| **降级路径三条出口（§7.1）** | `tests/test_degradation_paths.py`（3 项：高风险不调模型且无需 Key / Agent2 失败降级仍给非空搭配 / 护栏清空后 `guardrail_removed_all` 并留痕） |
+| **降级路径三条出口（§7.1）+ 护栏扫描面（§5.5）** | `tests/test_degradation_paths.py`（6 项：高风险不调模型且无需 Key / Agent2 失败降级仍给非空搭配 / 护栏清空后 `guardrail_removed_all` 并留痕 / 禁用表述写进 `role` 整条作废 / 写进 `brew.steps` 整条作废 / 离线路径共用同一份扫描面） |
 | 壳层（网页） | `tests/test_web_shell.py` |
 | 壳层（终端）CLI 行为 | `tests/test_terminal_shell.py`（4 项：`--resolve` 食性 / `--offline` 返回码 1 / `--offline` 出推荐 / 空推荐负控制） |
 | 壳层（终端）结构与行为不变式 | `tests/test_terminal_offline_path.py`（10 项：`_offline_analyze` 的 AST 结构守卫 + 单样食物零漂移 + 温度词归属） |

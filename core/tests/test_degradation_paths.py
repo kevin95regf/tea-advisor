@@ -1,13 +1,17 @@
-"""降级路径的三条契约（`orchestrator.analyze`）。
+"""降级路径与护栏扫描面的契约（`orchestrator.analyze` + 离线路径）。
 
-守的是「失败时**给出有用的东西**而不是崩掉」这条设计底线，三条各自对应一个出口：
+守的是「失败时**给出有用的东西**而不是崩掉」这条设计底线，前三条各自对应一个出口：
  1. 高风险人群：不调模型、不给推荐、引导就医 —— 且**不需要 Key**。
     安全提示不能被配置问题挡住，所以凭据校验刻意排在它之后；
  2. Agent2 抛异常：降级到 `matcher.fallback_recommend`，推荐仍非空；
  3. 护栏把推荐全清掉：再兜底一次，并把 `degraded_reason` 钉成
     `guardrail_removed_all`，而不是静默返回空列表。
 
-三条**全离线**：两个 Agent 全部打桩，不调模型、不需要真实 Key。
+后三条守**扫描面**（2026-09-26 扩展）：禁用表述写进 `role` 或 `brew.steps` 也必须拦住
+—— 旧口径只拼 `title + fit_reason + cautions`，这两个字段能绕过护栏；
+且离线路径与 LLM 路径共用 `safety.recommendation_scan_text` 这**一份**扫描面。
+
+六条**全离线**：两个 Agent 全部打桩，不调模型、不需要真实 Key。
 """
 
 from __future__ import annotations
@@ -148,3 +152,101 @@ def test_guardrail_removes_all_falls_back(
     assert resp.meta.degraded_reason == "guardrail_removed_all"
     # 留痕：被拦下的原因进 basis，前端能看见，不能只是"悄悄没了"
     assert any("禁用表述" in item for item in resp.basis.guardrail_applied)
+
+
+def test_forbidden_phrase_in_herb_role_is_blocked(
+    monkeypatch: pytest.MonkeyPatch, stub_agents: dict[str, int]
+) -> None:
+    """禁用表述写进某味饮片的 `role`，整条推荐作废（扫描面扩展的回归）。
+
+    `role` 是**直接展示给用户**的字段，却不在旧扫描面里（旧口径只拼
+    title + fit_reason + cautions）⇒ 旧实现下这条会一路透出去。
+    用真实禁词「根治」：谁把扫描面改回去，或用例改成恒真写法，它都会红。
+    """
+    def dirty_role_agent2(*args, **kwargs):
+        rec = Recommendation(
+            title="祛湿茶",
+            herbs=[HerbInBlend(name="陈皮", amount_g=5, role="坚持喝两周可根治湿气")],
+            brew=BrewGuide(),
+            fit_reason="测试用",
+            score=0.8,
+        )
+        return [rec], "测试说明", 1
+
+    monkeypatch.setattr(orchestrator, "agent2_recommend", dirty_role_agent2)
+
+    resp = orchestrator.analyze(AnalyzeRequest(text=NORMAL_TEXT), api_key=SENTINEL_KEY)
+
+    assert resp.meta.degraded_reason == "guardrail_removed_all"
+    assert any("禁用表述" in item for item in resp.basis.guardrail_applied)
+    # 整条作废：脏推荐不得出现在返回值里（role 是它的判别特征）
+    assert all(
+        "根治" not in (h.role or "")
+        for rec in resp.recommendations
+        for h in rec.herbs
+    ), "含禁用表述的 role 透出去了"
+
+
+def test_forbidden_phrase_in_brew_steps_is_blocked(
+    monkeypatch: pytest.MonkeyPatch, stub_agents: dict[str, int]
+) -> None:
+    """禁用表述写进冲泡步骤，整条推荐作废（`brew.steps` 同样不在旧扫描面里）。"""
+    def dirty_steps_agent2(*args, **kwargs):
+        rec = Recommendation(
+            title="祛湿茶",
+            herbs=[HerbInBlend(name="陈皮", amount_g=5)],
+            brew=BrewGuide(steps=["煮开后温饮，坚持两周可根治湿气"]),
+            fit_reason="测试用",
+            score=0.8,
+        )
+        return [rec], "测试说明", 1
+
+    monkeypatch.setattr(orchestrator, "agent2_recommend", dirty_steps_agent2)
+
+    resp = orchestrator.analyze(AnalyzeRequest(text=NORMAL_TEXT), api_key=SENTINEL_KEY)
+
+    assert resp.meta.degraded_reason == "guardrail_removed_all"
+    assert any("禁用表述" in item for item in resp.basis.guardrail_applied)
+    assert all(
+        "根治" not in step
+        for rec in resp.recommendations
+        for step in rec.brew.steps
+    ), "含禁用表述的冲泡步骤透出去了"
+
+
+def test_offline_path_shares_the_scan_surface(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """离线路径共用**同一份**扫描面：脏的 `role` 一样被剔掉并留痕。
+
+    与 LLM 路径的唯一差别是处置方式（离线是"移除该条"，LLM 是"整条作废后兜底"），
+    判据必须同源 —— `safety.recommendation_scan_text` 是唯一入口。
+    """
+    pytest.importorskip("fastapi", reason="HTTP 层测试需要 [web] extra")
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+    from app.services import matcher
+
+    def dirty_fallback(parsed, constitution, exclude_herbs=None, *, avoid=()):
+        rec = Recommendation(
+            title="祛湿茶",
+            herbs=[HerbInBlend(name="陈皮", amount_g=5, role="坚持喝可根治湿气")],
+            brew=BrewGuide(),
+            fit_reason="测试用",
+            score=0.6,
+        )
+        return [rec], "离线说明", []
+
+    monkeypatch.setattr(matcher, "fallback_recommend", dirty_fallback)
+
+    resp = TestClient(app).post(
+        "/api/analyze-offline",
+        json={"text": NORMAL_TEXT, "constitution_override": "balanced"},
+    )
+
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["recommendations"] == [], "未通过安全检查的推荐没被移除"
+    assert any("禁用表述" in item for item in body["basis"]["guardrail_applied"])
+    assert "未通过安全检查" in body["user_message"]

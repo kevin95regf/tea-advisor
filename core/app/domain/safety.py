@@ -194,6 +194,38 @@ def scan_free_text(text: str) -> GuardrailResult:
         ],
     )
 
+
+def _field(obj: object, key: str, default: object = None) -> object:
+    """从对象或 dict 里取字段（护栏要能同时吃 pydantic 对象与 dict 两种形状）。"""
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return getattr(obj, key, default)
+
+
+def recommendation_scan_text(rec: object) -> str:
+    """一条推荐里**所有会展示给用户的文本**，拼成一段供 `scan_free_text` 扫描。
+
+    为什么要有这个函数（2026-09-26）：扫描面原先散落在两条路径里、且只拼
+    `title + fit_reason + cautions` —— 模型把禁用表述写进 `role`、`brew.steps`
+    或 `brew.vessel` 就能绕过护栏（这三个字段同样是直接展示给用户的）。
+    这里立**唯一入口**，LLM 路径与离线路径共用；日后新增文案字段只补这一处。
+
+    `rec` 同时吃 pydantic 对象与 dict（与 `_brew_get` 同约定）。每个字段只拼一次。
+    """
+    parts: list[str] = [
+        str(_field(rec, "title", "") or ""),
+        str(_field(rec, "fit_reason", "") or ""),
+    ]
+    parts.extend(str(c) for c in (_field(rec, "cautions", []) or []))
+    for herb in _field(rec, "herbs", []) or []:
+        parts.append(str(_field(herb, "role", "") or ""))
+    brew = _field(rec, "brew", None)
+    if brew is not None:
+        parts.append(str(_field(brew, "vessel", "") or ""))
+        parts.extend(str(step) for step in (_field(brew, "steps", []) or []))
+    return " ".join(part for part in parts if part)
+
+
 def check_blend(
     herbs: list[dict],
     exclude_herbs: list[str] | None = None,
@@ -390,9 +422,7 @@ def blend_needs_cooking(names: list[str]) -> list[str]:
 
 def _brew_get(brew: object, key: str, default: object = None) -> object:
     """从 BrewGuide 或等价 dict 里取值（护栏要能同时吃两种形状）。"""
-    if isinstance(brew, dict):
-        return brew.get(key, default)
-    return getattr(brew, key, default)
+    return _field(brew, key, default)
 
 
 def brew_is_cook_style(brew: object) -> bool:
