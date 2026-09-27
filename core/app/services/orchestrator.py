@@ -341,6 +341,14 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
             parsed, constitution, request.exclude_herbs, avoid=avoid
         )
 
+    # 茶饮名以代码派生的 plan.first.title 为准：提示词已要求「照抄」（`_plan_lines` 的
+    # 「本次优先级」节 + `agent2_system.md` 第 1 条），但**没有任何校验**；而两个壳又会把
+    # `plan.first.title`（「本餐优先」提示）与 `rec.title`（推荐卡片）**并排显示** ⇒
+    # 不覆盖就会同屏出现两个名字。plan.first 为空或方向关闭时不覆盖，交给模型自判。
+    if parsed.plan is not None and parsed.plan.first is not None and parsed.plan.first.open:
+        for rec in recs:
+            rec.title = parsed.plan.first.title
+
     # ---------- 3. 护栏 ----------
     cleaned, applied = _sanitize_recommendations(
         recs, constitution, request.exclude_herbs, avoid

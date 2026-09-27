@@ -108,7 +108,7 @@ core/data/          规则库与数据文件（10 个 JSON）
 | `core/app/domain/constitution_resolver.py` | 206 行 | 问卷分数 → 主导体质/兼夹体质的收敛与屏蔽集（失败类型见 §3.3） |
 | `core/app/domain/meal_time.py` | 44 行 | 餐次猜测（两条离线链路共用一份） |
 | `core/data/*.json` | 10 个 JSON | 规则库与数据（结构见 §4.6） |
-| `core/tests/` | 45 个测试文件 | 838 项离线测试（不调模型、不需要 Key）。⚠️ 口径：**45 = `test_*.py` 的个数**；该目录下还有 `conftest.py` 与 `__init__.py`，`*.py` 合计 **47** 个（`docs/maintenance.md` §1.4 按"排除 `__init__.py`"口径记作 46，两者口径不同、都对） |
+| `core/tests/` | 45 个测试文件 | 839 项离线测试（不调模型、不需要 Key）。⚠️ 口径：**45 = `test_*.py` 的个数**；该目录下还有 `conftest.py` 与 `__init__.py`，`*.py` 合计 **47** 个（`docs/maintenance.md` §1.4 按"排除 `__init__.py`"口径记作 46，两者口径不同、都对） |
 | `core/scripts/` | 12 个脚本 | 数据构建/同步/自查脚本 + 冒烟脚本 |
 
 ### 2.3 核心链路：四道闸门 + 一道结构性限制
@@ -321,10 +321,19 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 
 | 对象 | 定义处 | 字段 |
 |---|---|---|
-| `Recommendation` | `models.py:212` | `title`、`herbs[]`、`brew`、`fit_reason`、`cautions[]`、`score` |
+| `Recommendation` | `models.py:212` | `title`（**LLM 路径下由代码覆盖为 `plan.first.title`**，见下方注）、`herbs[]`、`brew`、`fit_reason`、`cautions[]`、`score` |
 | `HerbInBlend` | `models.py:190` | `name`、`amount_g`(≥0)、`nature`、`flavors[]`、`meridians[]`、`role` |
 | `BrewGuide` | `models.py:201` | `vessel`、`water_ml`(100–2000)、`water_temp_c`(40–100)、`steps[]`、`steep_min`(1–60)、`refill_times`(0–5) |
 | `CatalogHerb` | `models.py:348` | `id`、`name`、`nature`、`flavors[]`、`meridians[]`、`effects[]`、`max_daily_g`、`cautions[]`、`suitable_constitutions[]`、`brewing`、`unsuitable_for[]` |
+
+> ⚠️ **`Recommendation.title` 的来源分两种**（2026-09-26 起）：**方向接管生效时由代码覆盖**为
+> `plan.first.title`（`core/app/services/orchestrator.py` 在 Agent2 返回后、进护栏前赋值；
+> `plan.first` 为空或 `open=false` 时保持模型自创）；**兜底路径**本来就由代码给名
+> （`core/app/services/matcher.py` 用 `_from_stage` 取方向名，或直接取数据文件里的 title）。
+> 理由：两个壳会**并排显示** `plan.first.title`（"本餐优先"提示）与 `rec.title`（推荐卡片），
+> 不覆盖就会同屏出现两个茶名。提示词已相应改为有条件表述（`core/app/agents/prompts/agent2_system.md`）。
+> 刻意**不**加长度校验：`min_length/max_length` 会让越界变成 schema 错误 ⇒ 经重试后仍失败即
+> **整条降级为规则兜底**，代价不成比例。
 
 ### 4.5 枚举
 
@@ -893,8 +902,8 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 
 | 项 | 值 | 来源 |
 |---|---|---|
-| 测试收集数 | **838 项**（45 个测试文件） | 实测：`python -m pytest core/tests --collect-only -q`（2026-09-26 复核：护栏扫描面扩展 **+3**，`test_degradation_paths.py` 3 → 6 项） |
-| 实跑结果（A：临时目录可写） | **836 passed / 2 skipped / 0 failed** | 2026-09-26 复核实测（838 收集 − 2 skip） |
+| 测试收集数 | **839 项**（45 个测试文件） | 实测：`python -m pytest core/tests --collect-only -q`（2026-09-26 复核：护栏扫描面扩展 **+3**、LLM 路径 title 归属 **+1**；`test_degradation_paths.py` 3 → 6 项） |
+| 实跑结果（A：临时目录可写） | **837 passed / 2 skipped / 0 failed** | 2026-09-26 复核实测（839 收集 − 2 skip） |
 | 实跑结果（B：DSH 沙箱只读临时目录） | 821 passed / 2 skipped / 1 failed / 4 errors（**当时共 828 项**） | 同一套测试、同一份代码，仅环境不同 |
 | B 里那 5 项失败的原因 | **全部是 `PermissionError`**：测试要往 `%TEMP%\dsh-*\pytest-of-*` 写临时目录被拒。涉及 `test_herb_evidence`、`test_catalog_check`、`test_questionnaire_dependency` | 报错原文 `[WinError 5] 拒绝访问` |
 | **结论** | **不是代码缺陷**：两次结果的差异只由运行环境的临时目录写权限决定（B 的失败项在 A 下全绿） | — |

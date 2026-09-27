@@ -17,9 +17,18 @@ from pathlib import Path
 import pytest
 
 from app.agents.agent2_recommend import build_user_prompt
+from app.config import get_settings
 from app.domain.diet_signals import build_meal_signals, derive_meal_plan
 from app.domain.enums import Constitution
-from app.domain.models import ParsedFood, ParsedMeal
+from app.domain.models import (
+    AnalyzeRequest,
+    BrewGuide,
+    HerbInBlend,
+    ParsedFood,
+    ParsedMeal,
+    Recommendation,
+)
+from app.services import orchestrator
 from app.services.food_lookup import match_foods, resolve_in_context
 
 # tests/ 的 parents[1] 是 core/，parents[2] 是仓库根（接线路径里带着 core/ 前缀）
@@ -252,3 +261,57 @@ def test_prompt_plan_matches_derived_plan(constitution: Constitution) -> None:
     if parsed.plan is not None and parsed.plan.first is not None:
         section = build_user_prompt(parsed, constitution).split(PLAN_SECTION_HEADING, 1)[1]
         assert [n for n in parsed.plan.first.herbs if n in section] == parsed.plan.first.herbs
+
+
+# ---------------------------------------------------------------
+# 6. LLM 路径的 title 以 plan.first.title 为准（不再由模型自创）
+# ---------------------------------------------------------------
+def test_llm_title_follows_plan_derived_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """方向接管生效时，编排层用 `plan.first.title` 覆盖模型自创的名字。
+
+    两个壳会**并排显示**这两个名字（"本餐优先：<`plan.first.title`>" 与推荐卡片的
+    `rec.title`），而提示词只是"要求"照抄、代码原先不校验 ⇒ 不覆盖就会同屏两个名字。
+    `plan.first` 为空或方向关闭时**不覆盖**（那时本来就该模型自己判断）。
+    """
+    monkeypatch.setattr(get_settings(), "backend", "direct")
+
+    def fake_parse_diet(text, meal_time=None, session_id=None, *, api_key=None):
+        # 复用文件里既有的 `_parsed()`：foods 走真实解析；编排层随后会自己重算
+        # signals / plan —— 本用例要测的正是那之后的一步（title 覆盖）。
+        return _parsed(text), 1, "sid-a1"
+
+    def fake_agent2(
+        parsed,
+        constitution,
+        exclude_herbs=None,
+        session_id=None,
+        *,
+        api_key=None,
+        avoid=(),
+    ):
+        # 前提：这一餐真的触发了方向接管，否则本用例测不到覆盖逻辑
+        assert parsed.plan is not None and parsed.plan.first is not None
+        assert parsed.plan.first.open, "样本失效：方向没开放，覆盖逻辑不会触发"
+        rec = Recommendation(
+            title="自创的祛湿茶",  # 模型没照抄
+            herbs=[HerbInBlend(name="陈皮", amount_g=5)],
+            brew=BrewGuide(),
+            fit_reason="测试用",
+            score=0.8,
+        )
+        return [rec], "测试说明", 1
+
+    monkeypatch.setattr(orchestrator, "parse_diet", fake_parse_diet)
+    monkeypatch.setattr(orchestrator, "agent2_recommend", fake_agent2)
+
+    resp = orchestrator.analyze(
+        AnalyzeRequest(text=DAMP_CASE), api_key="sk-TEST-STUB-NOT-A-REAL-KEY"
+    )
+
+    assert resp.recommendations, "本用例需要一条通过护栏的推荐"
+    plan = resp.parsed.plan
+    assert plan is not None and plan.first is not None
+    assert resp.recommendations[0].title == plan.first.title, "没按 plan.first.title 覆盖"
+    assert "自创" not in resp.recommendations[0].title, "模型自创的名字透出去了"
