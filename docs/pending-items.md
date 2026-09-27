@@ -615,7 +615,7 @@
 | | |
 |---|---|
 | **裁定与落地（2026-09-21）** | 选 **① 下沉共用**：新增 `core/app/domain/meal_time.py`（`guess_meal_time`，逻辑原样搬，不重写），API 离线（`core/app/api/analyze_offline.py`）与终端（`ui/terminal/chat.py`）**两条链路都用它**，终端不再写死 `UNKNOWN`。⚠️ **顺带纠正本条此前的陈述**：「`matcher` 的场景规则按 `meal_time` 命中」**不成立** —— 实测 `_pick_rule` **从不读 `meal_time`**（那正是 **D31** 的根因）。⇒ 本条的危害不是「夜宵规则命不中」，而是**两条链路的 `meal_time` 不一致**这个状态本身，以及将来任何按餐次的判据都会在终端侧失效。<br>**改前／改后探针**（6 条样本，走真实 `chat.py`）：**只有 `meal_time` 一行变化**，识别结果、`hits`、**推荐搭配全部不变** ⇒ 零行为变更。<br>**顺带修的漏词**：关键词表原先只写「夜宵」没写「宵夜」⇒ 实测「宵夜吃了烧烤」漏过关键词、退到当前钟点（凌晨跑判成 breakfast）。两种写法都补上。<br>守卫：`core/tests/test_meal_time_paths.py`（6 项：跨链路一致 + 不恒 `UNKNOWN` + 两种写法都判得出 + 变异检验）。⚠️ 兜底那一段用的是「现在几点」不是「这餐几点吃」⇒ 同一句无时间词的口述在不同时刻跑会得到不同餐次（既有行为，未改；接判据时必须知道）。 |
-| **现状** | ~~`ui/terminal/chat.py` 的 `_offline_analyze` 写死~~（**已修**：两条链路共用 `guess_meal_time`） `meal_time=MealTime.UNKNOWN`；而 API 离线路径 `core/app/api/analyze_offline.py` 用 `_guess_meal_time` 从口述里猜（定义在 `analyze_offline.py:52`）。⇒ **同一句口述在两条链路的 `meal_time` 不同** |
+| **现状** | ~~`ui/terminal/chat.py` 的 `_offline_analyze` 写死~~（**已修**：两条链路共用 `guess_meal_time`） `meal_time=MealTime.UNKNOWN`；而 API 离线路径 `core/app/api/analyze_offline.py` 用 `_guess_meal_time` 从口述里猜（定义在 `analyze_offline.py:51`）。⇒ **同一句口述在两条链路的 `meal_time` 不同** |
 | **为什么值得单列** | `matcher` 的场景规则（含 `RULES.late_night`）按 `meal_time` 命中 ⇒ 终端路径下夜宵场景永远命不中 |
 | **为什么本轮不做** | `_guess_meal_time` 定义在 `core/app/api/` 下，终端要用得复制一份、或**从 api 层反向 import**（`ui/` 层只 import `app.*` 的领域层与服务层）⇒ 属分层设计问题 |
 | **需要什么** | 所有者定：① 把 `_guess_meal_time` 下沉到 `core/app/domain/` 或 `core/app/services/`，两条链路共用；② 终端维持 `UNKNOWN`，并在界面上显式标注「未判定餐次」 |
