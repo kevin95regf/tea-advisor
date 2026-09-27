@@ -108,7 +108,7 @@ core/data/          规则库与数据文件（10 个 JSON）
 | `core/app/domain/constitution_resolver.py` | 206 行 | 问卷分数 → 主导体质/兼夹体质的收敛与屏蔽集（失败类型见 §3.3） |
 | `core/app/domain/meal_time.py` | 44 行 | 餐次猜测（两条离线链路共用一份） |
 | `core/data/*.json` | 10 个 JSON | 规则库与数据（结构见 §4.6） |
-| `core/tests/` | 45 个测试文件 | 840 项离线测试（不调模型、不需要 Key）。⚠️ 口径：**45 = `test_*.py` 的个数**；该目录下还有 `conftest.py` 与 `__init__.py`，`*.py` 合计 **47** 个（`docs/maintenance.md` §1.4 按"排除 `__init__.py`"口径记作 46，两者口径不同、都对） |
+| `core/tests/` | 45 个测试文件 | 841 项离线测试（不调模型、不需要 Key）。⚠️ 口径：**45 = `test_*.py` 的个数**；该目录下还有 `conftest.py` 与 `__init__.py`，`*.py` 合计 **47** 个（`docs/maintenance.md` §1.4 按"排除 `__init__.py`"口径记作 46，两者口径不同、都对） |
 | `core/scripts/` | 12 个脚本 | 数据构建/同步/自查脚本 + 冒烟脚本 |
 
 ### 2.3 核心链路：四道闸门 + 一道结构性限制
@@ -428,13 +428,24 @@ AnalyzeResponse（必带 disclaimer；meta 带 key_source / backend / 耗时 / d
 | 约束 | 阈值 | 处理方式 |
 |---|---|---|
 | 单次搭配味数 | `MAX_HERBS_PER_BLEND = 4`（`safety.py:42`） | **整组拒绝**（避免"君臣佐使"式处方结构） |
-| 单味日用量 | `min(条目 max_daily_g, HARD_DOSE_CEILING_G = 30 g)`（`safety.py:36`、`:248-256`） | **自动裁剪到上限**并记入 `adjusted`、给出 warning（与"不静默改写"原则一致：改写必须留痕） |
-| 单次搭配总量 | `TOTAL_DOSE_CEILING_G = 45 g`（`safety.py:39`、`:280-285`） | **只警告 + 标记 `adjusted`**（不裁剪） |
+| 单味日用量 | `min(条目 max_daily_g, HARD_DOSE_CEILING_G = 30 g)`（`safety.py:36`、`:289`、`:293`） | **自动裁剪到上限**并记入 `adjusted`、给出 warning（与"不静默改写"原则一致：改写必须留痕）；该 warning **同时写进 `Recommendation.cautions`**（两个壳都渲染，见下方注） |
+| 单次搭配总量 | `TOTAL_DOSE_CEILING_G = 45 g`（`safety.py:39`、`:316`、`:319`） | **只警告 + 标记 `adjusted`**（不裁剪；属**结构/审美约束**，不是安全线——人工搭配实测最大仅 18 g，见下方注）；该 warning **同时写进 `Recommendation.cautions`** |
 | 白名单外饮片 | — | 剔除该味并 blocked（`safety.py:230-232`） |
 | 用户手动排除 | `exclude_herbs` | 剔除该味并 blocked（`safety.py:238-240`） |
 | 饮片自身 `cautions` | — | **逐条转成 warning**（`safety.py:271-273`） |
 
 调用方约定（`safety.py:205-207`）：**不要静默丢弃 blocked 内容**——要么剔除对应饮片后重算，要么整条推荐作废并走规则兜底；**绝不能把被拦的内容照原样返回给用户**。
+
+> **剂量类警告的可见性（2026-09-26 修）**：`dose_over_limit`（逐味超限）与 `total_over_limit`（总量偏多）
+> 原先只进 `Basis.guardrail_applied`，而**网页完全不渲染该字段**（`ui/web/index.html` 零引用）、
+> **终端只打印条数**（`ui/terminal/chat.py:237-238`）⇒ 只留痕等于没说。现在编排层按体质契合警告的
+> 同一范式把它们渲染后写进 `Recommendation.cautions`（去重，`orchestrator.py:160-167`），范围由
+> `safety.DOSE_WARNING_CODES`（`safety.py:86`）唯一决定。`herb_caution`（饮片自身禁忌）刻意**不**进来：
+> 它另有出口（兜底路径取每味第 1 条进 `cautions`）。
+> 总量上限之所以"只警告不裁剪"是**有意**的：阈值理由是"超过就显得像方剂"（`safety.py:38-39`），
+> 属结构性约束；实测 16 组人工搭配（9 体质默认 + 4 场景规则 + 1 方向）**合计最大仅 18 g**，
+> 离线/兜底路径到不了 45 g；只有模型违背提示词（提示词本身要求 ≤4 味 × 3–10 g = ≤40 g）时才可能触发。
+> ⇒ 为极少数越界付"整套推荐作废 + 降级"的代价不成比例，故**保持警告**并补可见性。
 
 ### 5.5 禁用表述 ✅
 
@@ -877,6 +888,7 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 | **D3** | `docs/request-flow.md` §5.6：终端离线"**不过闸门④**"（并把该差异记为已知差异） | 该说法对**终端**仍成立；但**API 离线路径已跑禁用表述扫描**（`scan_free_text`），只是**没有**跑完整的 `_sanitize_recommendations`。即：现在有**两条**离线路径，护栏强度各不相同 | `docs/request-flow.md:342-343`；`core/app/api/analyze_offline.py:180-191`；`ui/terminal/chat.py:347-358` |
 | **D5** | `docs/handover.md` §2.5：模型不可用、**没给 Key、JSON 解析失败**、推荐全被拦——"以上任何一种情况都**不能变成 500**" | 其中两项与代码相反：**没给 Key** 会 `raise AnalyzeError("NO_API_KEY")` → 400（`orchestrator.py:267-268`），**Agent1 的 JSON 解析失败**会 `raise AnalyzeError("AGENT1_FAILED")` → 422（`:287-291`）。SPEC §7.5 已按代码写清"刻意不降级的硬失败 5 条" | `docs/handover.md:76`；`orchestrator.py:267-268`、`:287-291`；§7.5 |
 | **D6** | `core/app/agents/prompts/agent1_system.md:30` 要求份量"未提及写「未指明」" | 同文件 `:60` 的示例输出用了 `"amount_desc":"未吃完"`，与字段定义不一致（属提示词内部不一致） | `core/app/agents/prompts/agent1_system.md:30`、`:60` |
+| **D7** | `SPEC.md` §5.1/§5.4 写「超味数**整组拒绝**」，且 `safety.py:72` 的护栏文案写「已按药食同源茶饮简化处理」 | 实测**既不拒绝也不处理**：编排层按 `blocked` 条目的 `target` 剔饮片，而 `too_many_herbs` 的 `target` 是计数串「N味」而非饮片名 ⇒ `kept` 保留全部饮片（没有哪味叫「5味」），推荐**原样返回**；且 `models.Recommendation.herbs` 无数量上限、`filter_by_constitution` 与提示词都只是**建议** ≤4 味。同类风险：任何 `target` 不是饮片名的 blocked 条目都会踩空 | `core/app/domain/safety.py:249-256`、`core/app/services/orchestrator.py:153-165`；**待修，排为修复七** |
 
 > **撤销记录（不再占用编号）**：曾列为本表 D5 的一条「`README.md:209` 写"食性表 146 条"」**不成立**——README 全文没有 "146"，`:209` 是「调理资料」那一条，`:342`/`:351` 均写 147；`git log -S"146" -- README.md` 显示该数字在更早的 `dc83af1` 就已改掉。该说法源自一次未核实的转述。
 >
@@ -909,8 +921,8 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 
 | 项 | 值 | 来源 |
 |---|---|---|
-| 测试收集数 | **840 项**（45 个测试文件） | 实测：`python -m pytest core/tests --collect-only -q`（2026-09-26 复核：护栏扫描面 **+3**、LLM 路径 title 归属 **+1**、逐味 `adjusted` 记原量 **+1**；`test_degradation_paths.py` 3 → 6 项） |
-| 实跑结果（A：临时目录可写） | **838 passed / 2 skipped / 0 failed** | 2026-09-26 复核实测（840 收集 − 2 skip） |
+| 测试收集数 | **841 项**（45 个测试文件） | 实测：`python -m pytest core/tests --collect-only -q`（2026-09-26 复核：护栏扫描面 **+3**、LLM 路径 title 归属 **+1**、逐味 `adjusted` 记原量 **+1**、剂量警告可见性 **+1**；`test_degradation_paths.py` 3 → 7 项） |
+| 实跑结果（A：临时目录可写） | **839 passed / 2 skipped / 0 failed** | 2026-09-26 复核实测（841 收集 − 2 skip） |
 | 实跑结果（B：DSH 沙箱只读临时目录） | 821 passed / 2 skipped / 1 failed / 4 errors（**当时共 828 项**） | 同一套测试、同一份代码，仅环境不同 |
 | B 里那 5 项失败的原因 | **全部是 `PermissionError`**：测试要往 `%TEMP%\dsh-*\pytest-of-*` 写临时目录被拒。涉及 `test_herb_evidence`、`test_catalog_check`、`test_questionnaire_dependency` | 报错原文 `[WinError 5] 拒绝访问` |
 | **结论** | **不是代码缺陷**：两次结果的差异只由运行环境的临时目录写权限决定（B 的失败项在 A 下全绿） | — |

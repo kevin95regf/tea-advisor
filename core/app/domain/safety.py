@@ -79,6 +79,12 @@ _ENTRY_TEMPLATES: dict[str, str] = {
     "brew_needs_cooking": "{target}：须煎煮，{detail}",
 }
 
+# 剂量类警告：**必须让用户看见**。`guardrail_applied` 在网页完全不渲染、终端只打印条数
+# ⇒ 只留痕等于没说；调用方把它们按同一范式写进 `Recommendation.cautions`（两个壳都渲染）。
+# 与 `herb_caution`（饮片自身禁忌）、`constitution_mismatch`（体质契合）刻意分开：
+# 后两者另有出口（兜底路径取每味第 1 条 cautions；体质契合本就走 cautions）。
+DOSE_WARNING_CODES: frozenset[str] = frozenset({"dose_over_limit", "total_over_limit"})
+
 
 def render_guardrail_entry(entry: dict) -> str:
     """把一条护栏结果（`{code, target, ...}`）渲染成给用户看的中文。

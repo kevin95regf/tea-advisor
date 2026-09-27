@@ -32,6 +32,7 @@ from app.domain.models import (
     Recommendation,
 )
 from app.domain.safety import (
+    DOSE_WARNING_CODES,
     check_blend,
     check_brew_adequacy,
     check_constitution_fit,
@@ -155,6 +156,15 @@ def _sanitize_recommendations(
         }
         applied.extend(render_guardrail_entry(item) for item in result.blocked)
         applied.extend(render_guardrail_entry(item) for item in result.warnings)
+
+        # 剂量类警告（逐味超限 / 总量偏多）写进 cautions：`guardrail_applied` 网页不渲染、
+        # 终端只打印条数 ⇒ 只留痕等于没说。与下方体质契合警告同范式（渲染 + 去重）。
+        for warning in result.warnings:
+            if warning.get("code") not in DOSE_WARNING_CODES:
+                continue
+            rendered_dose = render_guardrail_entry(warning)
+            if rendered_dose not in rec.cautions:
+                rec.cautions.append(rendered_dose)
 
         if blocked_names:
             # 剔除被拦的饮片；剔空则整条推荐作废

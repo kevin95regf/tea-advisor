@@ -60,7 +60,7 @@
 | `core/app/services` | 4 | 1,856 | 编排与规则兜底 |
 | `core/app/agents` | 8 | 1,523 | LLM 层（含两个后端）+ 2 个提示词文件 |
 | `core/app/api` | 6 | 700 | HTTP 适配，极薄 |
-| `core/tests` | 46 | 12,240 | **840 项，全离线，约 6 秒** |
+| `core/tests` | 46 | 12,240 | **841 项，全离线，约 6 秒** |
 | `core/scripts` | 12 | 4,792 | 运维/自检脚本 |
 | `ui/terminal` | 1 | 606 | 终端壳 |
 | `ui/web` | 1 | 1,057 | 网页壳 |

@@ -19,6 +19,7 @@ from __future__ import annotations
 import pytest
 
 from app.config import get_settings
+from app.domain.enums import Constitution
 from app.domain.models import (
     AnalyzeRequest,
     BrewGuide,
@@ -250,3 +251,39 @@ def test_offline_path_shares_the_scan_surface(
     assert body["recommendations"] == [], "未通过安全检查的推荐没被移除"
     assert any("禁用表述" in item for item in body["basis"]["guardrail_applied"])
     assert "未通过安全检查" in body["user_message"]
+
+
+def test_dose_warnings_are_visible_in_cautions() -> None:
+    """剂量类护栏警告必须写进 `cautions`（两个壳都渲染它，`guardrail_applied` 不是）。
+
+    背景：`check_blend` 的警告原先只进 `Basis.guardrail_applied`，而**网页完全不渲染
+    这个字段、终端只打印条数** ⇒「单味超限已裁剪」「合计偏多」这类提示等于没说。
+    现在按体质契合警告的同一范式写进 `cautions`（渲染 + 去重）。
+    范围刻意只取剂量类（`DOSE_WARNING_CODES`）：`herb_caution` 不进来 —— 本用例
+    用甘草一并钉住这个边界（它自带 3 条饮片禁忌）。
+    """
+    rec = Recommendation(
+        title="测试饮",
+        herbs=[
+            HerbInBlend(name="甘草", amount_g=100),   # 单味超限 ⇒ 裁到 6g
+            HerbInBlend(name="茯苓", amount_g=15),
+            HerbInBlend(name="薏苡仁", amount_g=20),
+            HerbInBlend(name="陈皮", amount_g=10),    # 6+15+20+10 = 51g ⇒ 总量偏多
+        ],
+        brew=BrewGuide(),
+        fit_reason="测试用",
+        score=0.8,
+    )
+
+    cleaned, applied = orchestrator._sanitize_recommendations(
+        [rec], Constitution.BALANCED, []
+    )
+
+    assert len(cleaned) == 1, "本用例的前提是推荐能通过护栏"
+    cautions = cleaned[0].cautions
+    assert any("甘草" in c and "上限" in c for c in cautions), f"逐味超限没进 cautions：{cautions}"
+    assert any("合计用量" in c for c in cautions), f"总量偏多没进 cautions：{cautions}"
+    # 留痕仍在（两条路径不互斥）
+    assert any("上限" in item for item in applied)
+    # 边界：饮片自身禁忌（herb_caution）不进 cautions —— 它另有出口
+    assert not any("长期大量" in c for c in cautions), f"herb_caution 越界进了 cautions：{cautions}"

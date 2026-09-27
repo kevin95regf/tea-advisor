@@ -181,7 +181,7 @@ request.text
 | `check_constitution_fit` | 饮片 `unsuitable_for` 命中当前体质 | 只给 warning，**追加进 `rec.cautions`**，不作废 | `safety.py :: check_constitution_fit` |
 | `check_brew_adequacy` | 含须煎煮饮片却配了保温杯焖泡 | **自动换成 `matcher.COOK_BREW`**（养生壶/小锅煮 20–30 分钟）并留痕 | `safety.py :: check_brew_adequacy` + `matcher.COOK_BREW` |
 
-- **输出**：`(cleaned: list[Recommendation], applied: list[str])` → `applied` 进 `basis.guardrail_applied`（**用户可见**）
+- **输出**：`(cleaned: list[Recommendation], applied: list[str])` → `applied` 进 `basis.guardrail_applied`（进 API 响应；**界面只显示条数**：终端 `chat.py:237-238` 打印「护栏介入：N 项」，网页不渲染该字段）
 - **全被拦时**：若此前没降级过 → 再用 `fallback_recommend` 兜底一次 + 再过一遍护栏，
   置 `degraded=True` / `degraded_reason="guardrail_removed_all"`
 - **不变量**：被拦的内容**绝不原样返回给用户**
