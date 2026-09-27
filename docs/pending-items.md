@@ -615,7 +615,7 @@
 | | |
 |---|---|
 | **裁定与落地（2026-09-21）** | 选 **① 下沉共用**：新增 `core/app/domain/meal_time.py`（`guess_meal_time`，逻辑原样搬，不重写），API 离线（`core/app/api/analyze_offline.py`）与终端（`ui/terminal/chat.py`）**两条链路都用它**，终端不再写死 `UNKNOWN`。⚠️ **顺带纠正本条此前的陈述**：「`matcher` 的场景规则按 `meal_time` 命中」**不成立** —— 实测 `_pick_rule` **从不读 `meal_time`**（那正是 **D31** 的根因）。⇒ 本条的危害不是「夜宵规则命不中」，而是**两条链路的 `meal_time` 不一致**这个状态本身，以及将来任何按餐次的判据都会在终端侧失效。<br>**改前／改后探针**（6 条样本，走真实 `chat.py`）：**只有 `meal_time` 一行变化**，识别结果、`hits`、**推荐搭配全部不变** ⇒ 零行为变更。<br>**顺带修的漏词**：关键词表原先只写「夜宵」没写「宵夜」⇒ 实测「宵夜吃了烧烤」漏过关键词、退到当前钟点（凌晨跑判成 breakfast）。两种写法都补上。<br>守卫：`core/tests/test_meal_time_paths.py`（6 项：跨链路一致 + 不恒 `UNKNOWN` + 两种写法都判得出 + 变异检验）。⚠️ 兜底那一段用的是「现在几点」不是「这餐几点吃」⇒ 同一句无时间词的口述在不同时刻跑会得到不同餐次（既有行为，未改；接判据时必须知道）。 |
-| **现状** | ~~`ui/terminal/chat.py` 的 `_offline_analyze` 写死~~（**已修**：两条链路共用 `guess_meal_time`） `meal_time=MealTime.UNKNOWN`；而 API 离线路径 `core/app/api/analyze_offline.py` 用 `_guess_meal_time` 从口述里猜（定义在 `analyze_offline.py:51`）。⇒ **同一句口述在两条链路的 `meal_time` 不同** |
+| **现状** | ~~`ui/terminal/chat.py` 的 `_offline_analyze` 写死~~（**已修**：两条链路共用 `guess_meal_time`） `meal_time=MealTime.UNKNOWN`；而 API 离线路径 `core/app/api/analyze_offline.py` 用 `_guess_meal_time` 从口述里猜（定义在 `analyze_offline.py:52`）。⇒ **同一句口述在两条链路的 `meal_time` 不同** |
 | **为什么值得单列** | `matcher` 的场景规则（含 `RULES.late_night`）按 `meal_time` 命中 ⇒ 终端路径下夜宵场景永远命不中 |
 | **为什么本轮不做** | `_guess_meal_time` 定义在 `core/app/api/` 下，终端要用得复制一份、或**从 api 层反向 import**（`ui/` 层只 import `app.*` 的领域层与服务层）⇒ 属分层设计问题 |
 | **需要什么** | 所有者定：① 把 `_guess_meal_time` 下沉到 `core/app/domain/` 或 `core/app/services/`，两条链路共用；② 终端维持 `UNKNOWN`，并在界面上显式标注「未判定餐次」 |
@@ -902,7 +902,7 @@
 | | |
 |---|---|
 | **现状** | ✅ **已实施。** 扫描面原先在两条路径里**各拼一份**、且都只拼三个字段（`orchestrator.py` 的 `text_blob`、`analyze_offline.py` 的内联 `" ".join(...)`）⇒ 补一处漏一处的形状 |
-| **修法** | 立**唯一入口** `safety.recommendation_scan_text()`（`core/app/domain/safety.py:205`）：`title` + `fit_reason` + `cautions` + **每味饮片的 `role`** + **`brew.vessel`** + **`brew.steps` 每一步**，两条路径共用。`user_message` 不在推荐对象里 ⇒ 两条路径各自**单独扫一遍**、命中即换成固定话术（`orchestrator.py:361-367`、`analyze_offline.py:197-202`）；离线路径对推荐对象的处置仍是「移除该条」而非整条兜底 |
+| **修法** | 立**唯一入口** `safety.recommendation_scan_text()`（`core/app/domain/safety.py:211`）：`title` + `fit_reason` + `cautions` + **每味饮片的 `role`** + **`brew.vessel`** + **`brew.steps` 每一步**，两条路径共用。`user_message` 不在推荐对象里 ⇒ 两条路径各自**单独扫一遍**、命中即换成固定话术（`orchestrator.py:379-385`、`analyze_offline.py:197-202`）；离线路径对推荐对象的处置仍是「移除该条」而非整条兜底 |
 | **影响面** | 只加拦截、不改既有判定：不含禁词的输出**逐字不变**；命中者由「透给用户」变为「整条作废（LLM 路径）／移除该条（离线路径）」并把命中词写进 `basis.guardrail_applied`。第三个入口 `/api/chat` 经核实**无同类缺口**：`ChatResponse` 只有 `reply` 一个自由文本字段，已在 `api/chat.py:157` 整体扫描、命中即替换为固定文案 |
 | **验证** | `core/tests/test_degradation_paths.py` 新增 3 项：禁词写进 `role` 整条作废、写进 `brew.steps` 整条作废、离线路径共用同一份扫描面。`pytest -q` 收集数 **835 → 838**（`836 passed / 2 skipped / 0 failed`）；三份文档守卫的计数已同步 |
 | **解决于** | **2026-09-26**（未提交） |
@@ -956,7 +956,7 @@
 | | |
 |---|---|
 | **现状** | ✅ **已修。** 只在**逐味**裁剪分支出现；**总量**分支（`total_over_limit` / `total_adjusted`）本来就读未被改写的 `total`，实测 `55.0 → 45.0` 正确 ⇒ **未动** |
-| **修法** | 裁剪前先存原始克数 `original = amount`（`core/app/domain/safety.py:289`），`adjusted` 的 `from` 改用 `original`，与 `dose_over_limit` 警告（`:291`、`:299`）取同一个源。属**取值缺陷**而非类型问题，故不改 `GuardrailResult` 的结构 |
+| **修法** | 裁剪前先存原始克数 `original = amount`（`core/app/domain/safety.py:295`），`adjusted` 的 `from` 改用 `original`，与 `dose_over_limit` 警告（`:297`、`:305`）取同一个源。属**取值缺陷**而非类型问题，故不改 `GuardrailResult` 的结构 |
 | **影响面** | 只影响 `guardrail_applied` 的文案（`render_guardrail_entry` 渲染该警告时用 `from`/`to`）与事后归因日志；**裁剪行为本身不变**（各味克数照旧被裁到 ceiling）。前端若按 `adjusted` 显示「原量→新量」，现在显示的是真实原量 |
 | **验证** | `core/tests/test_safety.py` 新增 1 项（`:83`）：断言 `adjusted.from == 请求量`、`to < from`、且与警告两处完全一致（严格不等式，不钉快照值）。手动实测 `check_blend([{"name":"甘草","amount_g":100}])` → `adjusted: [{'code': 'dose_adjusted', 'target': '甘草', 'from': 100.0, 'to': 6.0}]`。`pytest -q` 收集数 **839 → 840**；SPEC §9.1 第 7 行**结案移入 §9.3** |
 | **解决于** | **2026-09-26**（未提交） |
