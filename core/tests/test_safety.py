@@ -80,6 +80,24 @@ def test_hard_ceiling_is_respected() -> None:
     assert any(w.get("target") == "茯苓" for w in result.warnings)
 
 
+def test_dose_adjusted_records_original_amount() -> None:
+    """逐味裁剪时 `adjusted` 必须记「原量 → 新量」，而不是裁剪后的值。
+
+    旧实现先把 `amount` 改成 `ceiling`、再由 `adjusted.append` 读它 ⇒ 实测产出
+    `{"from":6.0,"to":6.0}`，「原量 → 新量」这个语义在日志里完全丢失
+    （2026-09-26 修；原为 SPEC §9.1 第 7 行待确认项，已结案移入 §9.3）。断言用严格不等式与
+    两处一致性，不钉快照值 —— 目录限量改了也不会误红。
+    """
+    requested = 100.0
+    result = check_blend([{"name": "甘草", "amount_g": requested}])
+
+    entry = next(a for a in result.adjusted if a.get("code") == "dose_adjusted")
+    warn = next(w for w in result.warnings if w.get("code") == "dose_over_limit")
+    assert entry["from"] == requested, "`from` 不是原始克数"
+    assert entry["to"] < entry["from"], "`from`/`to` 没有形成「原量 → 新量」"
+    assert (entry["from"], entry["to"]) == (warn["from"], warn["to"]), "两处记录必须一致"
+
+
 def test_total_dose_ceiling() -> None:
     """总量上限要在逐味裁剪之后仍然生效。
 

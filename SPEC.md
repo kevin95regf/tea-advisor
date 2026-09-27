@@ -108,7 +108,7 @@ core/data/          规则库与数据文件（10 个 JSON）
 | `core/app/domain/constitution_resolver.py` | 206 行 | 问卷分数 → 主导体质/兼夹体质的收敛与屏蔽集（失败类型见 §3.3） |
 | `core/app/domain/meal_time.py` | 44 行 | 餐次猜测（两条离线链路共用一份） |
 | `core/data/*.json` | 10 个 JSON | 规则库与数据（结构见 §4.6） |
-| `core/tests/` | 45 个测试文件 | 839 项离线测试（不调模型、不需要 Key）。⚠️ 口径：**45 = `test_*.py` 的个数**；该目录下还有 `conftest.py` 与 `__init__.py`，`*.py` 合计 **47** 个（`docs/maintenance.md` §1.4 按"排除 `__init__.py`"口径记作 46，两者口径不同、都对） |
+| `core/tests/` | 45 个测试文件 | 840 项离线测试（不调模型、不需要 Key）。⚠️ 口径：**45 = `test_*.py` 的个数**；该目录下还有 `conftest.py` 与 `__init__.py`，`*.py` 合计 **47** 个（`docs/maintenance.md` §1.4 按"排除 `__init__.py`"口径记作 46，两者口径不同、都对） |
 | `core/scripts/` | 12 个脚本 | 数据构建/同步/自查脚本 + 冒烟脚本 |
 
 ### 2.3 核心链路：四道闸门 + 一道结构性限制
@@ -867,7 +867,6 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 | 4 | `dsh` 后端是否真的无超时强制 | 从 `runtime.py` 看 `timeout_s` 形参未被使用；未实际构造超时场景验证 |
 | 5 | 官方模型列表与 `/api/chat` 的 6 个模型在真实调用中的可用性 | 只确证接口返回 6 个硬编码 key，未实测每个 key 都能通 |
 | 6 | `ErrorBody` / `ProfileResponse` / `ProfileUpdateRequest` **是否有意保留** | 定义在 `core/app/domain/models.py:40-43`、`:317-322`、`:325-328`；全仓检索**只有定义处这一处引用**，没有任何路由或模块使用它们。是预留、还是历史遗留 ⇒ 未确证。**因此本文件不把它们的字段写进 §4 的契约表**——如果它们其实是有意的对外结构，§4 需要补 |
-| 7 | `GuardrailResult.adjusted` 里**逐味**条目的 `from == to` **是否有意** | **只出现在逐味裁剪分支**：`core/app/domain/safety.py:261` 先把 `amount` 改成 `ceiling`，紧接着 `:262-268` 的 `adjusted.append({"from": amount, …})` 读到的已是裁剪后的值 ⇒ 实测 `{"code":"dose_adjusted","target":"甘草","from":6.0,"to":6.0}`；而**同一次**的 `dose_over_limit` 警告（`:254-260`）里 `from/to` 是正确的 `100.0 → 6.0`。⚠️ **总量分支没有这个问题**：`:288-293` 的 `from: total` 与警告（`:282-287`）一致，实测 `55.0 → 45.0` 正确。若前端按 `adjusted` 显示"原量→新量"，逐味那条会显示成 `6→6`。属取值逻辑问题、非类型问题 ⇒ 是否有意未确证（2026-09-26 发现，**未修**） |
 
 ### 9.2 文档滞后清单 📌（**一律以代码为准**）
 
@@ -889,6 +888,7 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 |---|---|
 | `CONF_SHOW_THRESHOLD` 是否被壳层实际使用 | **是，但通过 `/api/meta` 间接使用**（引用点清单见 §6.8） |
 | 白名单规模、就绪体质、食性表规模 | 实测：白名单 **44 味**；`ready_constitutions()` 返回**全部 9 型**；食性表 **147 条**（129 + 18） |
+| `GuardrailResult.adjusted` 逐味条目的 `from == to`（原 §9.1 第 7 行 ❓） | **已修：属取值缺陷，不是有意。** 旧实现先把 `amount` 改成 `ceiling`、再由 `adjusted.append` 读它 ⇒ 实测 `{"code":"dose_adjusted","target":"甘草","from":6.0,"to":6.0}`；现改为**裁剪前先存 `original`**（`core/app/domain/safety.py:289`），`adjusted` 记「原量 → 新量」，实测 `100.0 → 6.0`，与 `dose_over_limit` 警告（`:291`、`:299`）完全一致。总量分支本来就没有这个问题（`:316` 起）。守卫：`core/tests/test_safety.py:83`（断言严格不等式 + 两处一致，不钉快照值） |
 | 问卷子包缺失时的行为 | **确实返回 501**：`core/app/api/questionnaire.py:18-34` 的 `_require_questionnaire()` 捕获 `ModuleNotFoundError`，且**仅当** `exc.name` ∈ {`tcm_constitution`, `tcm_constitution.questions`} 时转 501（其它 ImportError 照抛）；detail 就是那段安装命令，网页壳再把它换成"问卷功能未启用…"的人话提示（`ui/web/index.html:885-901`） |
 | `nature_math.PREFIX_BOUNDARY_CHARS` 的引用关系 | 定义在 `nature_math.py:211`（在 nature_math 内部**无使用**），但**被 `food_lookup.py:26` 导入、在 `food_lookup.py:548` 的 `_claims_prefix()` 里实际使用** ⇒ 它就是温度词"自成边界"三种判据之一（见 §6.2） |
 | 4 条场景规则的完整取值 | 已逐条实测（id / priority / 关键词 / 搭配 / `match_natures`），见 §6.6 的表 |
@@ -909,8 +909,8 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 
 | 项 | 值 | 来源 |
 |---|---|---|
-| 测试收集数 | **839 项**（45 个测试文件） | 实测：`python -m pytest core/tests --collect-only -q`（2026-09-26 复核：护栏扫描面扩展 **+3**、LLM 路径 title 归属 **+1**；`test_degradation_paths.py` 3 → 6 项） |
-| 实跑结果（A：临时目录可写） | **837 passed / 2 skipped / 0 failed** | 2026-09-26 复核实测（839 收集 − 2 skip） |
+| 测试收集数 | **840 项**（45 个测试文件） | 实测：`python -m pytest core/tests --collect-only -q`（2026-09-26 复核：护栏扫描面 **+3**、LLM 路径 title 归属 **+1**、逐味 `adjusted` 记原量 **+1**；`test_degradation_paths.py` 3 → 6 项） |
+| 实跑结果（A：临时目录可写） | **838 passed / 2 skipped / 0 failed** | 2026-09-26 复核实测（840 收集 − 2 skip） |
 | 实跑结果（B：DSH 沙箱只读临时目录） | 821 passed / 2 skipped / 1 failed / 4 errors（**当时共 828 项**） | 同一套测试、同一份代码，仅环境不同 |
 | B 里那 5 项失败的原因 | **全部是 `PermissionError`**：测试要往 `%TEMP%\dsh-*\pytest-of-*` 写临时目录被拒。涉及 `test_herb_evidence`、`test_catalog_check`、`test_questionnaire_dependency` | 报错原文 `[WinError 5] 拒绝访问` |
 | **结论** | **不是代码缺陷**：两次结果的差异只由运行环境的临时目录写权限决定（B 的失败项在 A 下全绿） | — |

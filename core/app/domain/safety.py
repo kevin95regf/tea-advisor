@@ -283,10 +283,14 @@ def check_blend(
             HARD_DOSE_CEILING_G,
         )
         if amount > ceiling:
+            # 裁剪前先留原始克数：`adjusted` 的语义是「原量 → 新量」，旧实现先把
+            # amount 改成 ceiling 再读它，产出的是 {"from":6.0,"to":6.0}
+            # （2026-09-26 修；原为 SPEC §9.1 第 7 行待确认项，已结案移入 §9.3）。
+            original = amount
             warnings.append({
                 "code": "dose_over_limit",
                 "target": name,
-                "from": amount,
+                "from": original,
                 "to": ceiling,
                 "action": "adjusted",
             })
@@ -294,7 +298,7 @@ def check_blend(
             adjusted.append({
                 "code": "dose_adjusted",
                 "target": name,
-                "from": amount,
+                "from": original,
                 "to": ceiling,
             })
 
