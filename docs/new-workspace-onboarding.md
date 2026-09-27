@@ -27,7 +27,7 @@
    ```
    cd core && ./.venv/Scripts/python.exe -m pytest tests -q
    ```
-   期望 **841 passed**。红就是环境问题，先修再说别的。
+   期望 **841 passed**（当前 **45 个测试文件**）。红就是环境问题，先修再说别的。
 2. 读 `docs/pending-items.md` —— 挂起项**唯一真源**，概览表 + 每项详情小节。
 3. 读 `docs/handover.md` —— 全貌（设计原则、目录分层、数据资产、决策表、文档地图）。
 

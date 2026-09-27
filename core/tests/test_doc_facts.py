@@ -126,11 +126,15 @@ def test_declared_test_count_matches_collection(rel, collected_count):
 
 @pytest.mark.parametrize("rel", GUARDED_DOCS)
 def test_declared_test_file_count_matches_directory(rel):
-    """写了「N 个测试文件」的才查；没写的文档不要求它写。"""
+    """每份守卫文档都必须写「N 个测试文件」，且与实际个数一致。
+
+    ⚠️ 2026-09-26 修：原先没写就 `pytest.skip` —— 那是**静默失效**：谁把文档里那句话
+    删掉或改写措辞，守卫就从"检查"退化成"跳过"，报告里只多一个 skip、**不会变红**。
+    现在缺这句话直接**变红**，逼文档补上。
+    """
     text = _text(rel)
     m = re.search(r"(\d+)\s*个测试文件", text)
-    if not m:
-        pytest.skip(f"{rel} 没写测试文件数")
+    assert m, f"{rel} 没写测试文件数 —— 守卫会静默失效，请补一句「N 个测试文件」"
     actual = len(list((CORE_DIR / "tests").glob("test_*.py")))
     assert int(m.group(1)) == actual, f"{rel} 写 {m.group(1)} 个测试文件，实际 {actual}"
 

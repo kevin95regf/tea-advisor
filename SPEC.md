@@ -861,6 +861,7 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 | venv 里的 `.exe` shim 失效 | `pip.exe`/`uvicorn.exe` 会**无声失败**；一律用 `python -m pip` / `python -m uvicorn`（目录曾从 `backend` 改名为 `core`，shim 中的绝对路径失效） |
 | `dsh` 后端的超时未强制 | `runtime.run()` 收 `timeout_s` 形参，但 `dsh` 后端路径**未使用**它（`direct` 后端用 `timeout_s or 120.0`）❓ 见 §9.1 |
 | 200 但非 JSON 的响应 | `direct_api` 的 `resp.json()` 未包 try，会抛出未包装的解析异常（`multi_provider` 已捕获为 `RuntimeError`） |
+| **数据快照型计数是已知维护成本** | 数据守卫里有一批**精确数字**断言（`len(derived) == 53`、`== 49`、`== 4`：`core/tests/test_b4_derivation_notes.py:155/195/222/345`；`len(catalog["items"]) == EXPECTED_TOTAL`：`core/tests/test_catalog_check.py:55`）⇒ **数据每扩充一条就要同步改测试**。这是刻意的（它同时钉住批次规模、防"守卫被治理偷走"），但**是本套件最主要的维护成本来源**，新批次落地时要预留改测试的时间。⚠️ 与之相对，另有 **57 处** `len(...)` **下界**断言（`>=147`/`>=40`/`>=10` 等）是**反"样本被偷"**的守卫（防守卫因样本变空而恒真），不属本项 |
 
 ---
 
@@ -922,7 +923,7 @@ HTTP 分档规则：`{NO_API_KEY, USER_KEY_UNSUPPORTED, API_KEY_REJECTED}` → *
 | 项 | 值 | 来源 |
 |---|---|---|
 | 测试收集数 | **841 项**（45 个测试文件） | 实测：`python -m pytest core/tests --collect-only -q`（2026-09-26 复核：护栏扫描面 **+3**、LLM 路径 title 归属 **+1**、逐味 `adjusted` 记原量 **+1**、剂量警告可见性 **+1**；`test_degradation_paths.py` 3 → 7 项） |
-| 实跑结果（A：临时目录可写） | **839 passed / 2 skipped / 0 failed** | 2026-09-26 复核实测（841 收集 − 2 skip） |
+| 实跑结果（A：临时目录可写） | **841 passed / 0 skipped / 0 failed** | 2026-09-26 复核实测（841 收集；原先那 2 个 skip 是 `test_doc_facts.py` 的条件式跳过，已改为硬失败，见 `docs/pending-items.md` E22） |
 | 实跑结果（B：DSH 沙箱只读临时目录） | 821 passed / 2 skipped / 1 failed / 4 errors（**当时共 828 项**） | 同一套测试、同一份代码，仅环境不同 |
 | B 里那 5 项失败的原因 | **全部是 `PermissionError`**：测试要往 `%TEMP%\dsh-*\pytest-of-*` 写临时目录被拒。涉及 `test_herb_evidence`、`test_catalog_check`、`test_questionnaire_dependency` | 报错原文 `[WinError 5] 拒绝访问` |
 | **结论** | **不是代码缺陷**：两次结果的差异只由运行环境的临时目录写权限决定（B 的失败项在 A 下全绿） | — |
