@@ -109,15 +109,18 @@ FIELD_NON_CONSUMERS = [
 
 # ---- 人作出的处置决定（与 task 1 的 DECISIONS 同构） ----
 DECISION = {
-    "decided_at": "2026-09-17",
-    "decision": "7 处不一致**先保留项目值**，在文档里标注药典值与差异影响；等 nanple 复核数据后再决定是否改。",
-    "status": "待 nanple 复核",
-    "action": (
-        "1) 不修改 herbs.json 任何字段；2) 本文档为每处不一致给出「差异影响」；"
-        "3) 待 nanple 复核后，若要改，用 `--refresh` 重建参考数据并同步更新测试里的"
-        " EXPECTED_INCONSISTENT 清单。"
+    "decided_at": "2026-09-17（桑椹单项 2026-10-13 改定）",
+    "decision": (
+        "原 7 处不一致中**桑椹已于 2026-10-13 按药典改为寒**（见 docs/food-expansion/DECISIONS.md 第6步）；"
+        "其余 **6 处仍先保留项目值**，在文档里标注药典值与差异影响，等 nanple 继续复核。"
     ),
-    "basis": "这些差异均不影响任何确定性判定（见 §3.1 的代码取证），因此不阻塞；而是否改动应听数据审核人的判断。",
+    "status": "部分已裁定（桑椹完成；余 6 处待复核）",
+    "action": (
+        "1) 桑椹已改 herbs.json nature=cold，并 --recompute 参考数据；"
+        "2) 其余不一致仍不改 herbs.json；"
+        "3) 继续复核时若再改，用 `--recompute` 重建并更新 EXPECTED_INCONSISTENT。"
+    ),
+    "basis": "这些差异均不影响任何确定性判定（见 §3.1 的代码取证）；桑椹改寒为所有者按药典拍板。",
 }
 
 

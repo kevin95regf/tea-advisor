@@ -113,17 +113,16 @@ def test_not_in_table_keeps_llm_value_but_marks_unverified() -> None:
     assert food.verification.unverified is True
 
 
-def test_substring_can_pull_unrelated_name_into_table() -> None:
-    """已知局限：名字里含表内关键词就会被匹配。
+def test_compound_dish_not_hijacked_by_ingredient_stem() -> None:
+    """第 3 步：菜名尾巴上的原料词不得抢走整菜。
 
-    例如「某个沙拉卷」含"沙拉"，会被判成表内「沙拉」的属性。
-    这是关键词匹配的固有代价——要避免只能把这类菜品单独收录进表。
-    本测试固化该行为，避免以后误以为是 bug 而改坏匹配逻辑。
+    旧行为：「某个沙拉卷」含「沙拉」会被判成表内沙拉（曾当作已知局限固化）。
+    词界启发式落地后，前缀「沙拉」+ 无法切词的尾巴「卷」应丢弃，走 LLM 推测。
     """
     resolved = resolve_food("某个沙拉卷", "unknown", Nature.WARM.value)
-    assert resolved.verification.source == "rule"
-    assert resolved.entry is not None
-    assert resolved.entry["name"] == "沙拉"
+    assert resolved.verification.source == "llm"
+    assert resolved.entry is None
+    assert resolved.nature == Nature.WARM.value
 
 
 def test_unresolved_when_neither_table_nor_llm() -> None:

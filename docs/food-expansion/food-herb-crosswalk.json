@@ -1,0 +1,239 @@
+{
+  "_meta": {
+    "title": "食物表 ↔ 饮片表交叉对照",
+    "version": "1.0.0",
+    "compiled_at": "2026-10-12",
+    "policy": "E8-β：两表并存、互相标注；推荐候选只来自 herbs.json；食物表条目永不作为推荐候选来源。",
+    "runtime": "本文件仅在 docs/，运行时不读。",
+    "counts": {
+      "pairs": 13,
+      "in_runtime": 12,
+      "hold_back": 1,
+      "nature_mismatch": 0
+    },
+    "scan_method": "food.name∪aliases∪keywords ∩ herb.name∪aliases∪keywords（精确词）"
+  },
+  "entries": [
+    {
+      "food_id": "wumei_cha",
+      "food_name": "乌梅茶",
+      "food_nature": "neutral",
+      "food_nature_zh": "平",
+      "food_in_runtime": true,
+      "herb_id": "wumei",
+      "herb_name": "乌梅",
+      "herb_nature": "neutral",
+      "herb_nature_zh": "平",
+      "shared_terms": [
+        "乌梅"
+      ],
+      "nature_agree": true,
+      "relation": "食物别名/关键词指向饮片正名",
+      "note": null
+    },
+    {
+      "food_id": "juemingzi_cha",
+      "food_name": "决明子茶",
+      "food_nature": "cool",
+      "food_nature_zh": "凉",
+      "food_in_runtime": true,
+      "herb_id": "juemingzi",
+      "herb_name": "决明子",
+      "herb_nature": "cool",
+      "herb_nature_zh": "凉",
+      "shared_terms": [
+        "决明子"
+      ],
+      "nature_agree": true,
+      "relation": "食物别名/关键词指向饮片正名",
+      "note": null
+    },
+    {
+      "food_id": "jiang",
+      "food_name": "姜",
+      "food_nature": "warm",
+      "food_nature_zh": "温",
+      "food_in_runtime": true,
+      "herb_id": "shengjiang",
+      "herb_name": "生姜",
+      "herb_nature": "warm",
+      "herb_nature_zh": "温",
+      "shared_terms": [
+        "生姜"
+      ],
+      "nature_agree": true,
+      "relation": "食物别名/关键词指向饮片正名",
+      "note": null
+    },
+    {
+      "food_id": "shanzha_guo",
+      "food_name": "山楂果",
+      "food_nature": "warm",
+      "food_nature_zh": "温",
+      "food_in_runtime": true,
+      "herb_id": "shanzha",
+      "herb_name": "山楂",
+      "herb_nature": "warm",
+      "herb_nature_zh": "温",
+      "shared_terms": [
+        "山楂"
+      ],
+      "nature_agree": true,
+      "relation": "食物别名/关键词指向饮片正名",
+      "note": null
+    },
+    {
+      "food_id": "shanyao",
+      "food_name": "山药",
+      "food_nature": "neutral",
+      "food_nature_zh": "平",
+      "food_in_runtime": true,
+      "herb_id": "shanyao",
+      "herb_name": "山药",
+      "herb_nature": "neutral",
+      "herb_nature_zh": "平",
+      "shared_terms": [
+        "山药"
+      ],
+      "nature_agree": true,
+      "relation": "同名并存：食物表记「吃了什么」，饮片表记「推荐什么」",
+      "note": null
+    },
+    {
+      "food_id": "meigui_cha",
+      "food_name": "玫瑰花茶",
+      "food_nature": "warm",
+      "food_nature_zh": "温",
+      "food_in_runtime": true,
+      "herb_id": "meiguihua",
+      "herb_name": "玫瑰花",
+      "herb_nature": "warm",
+      "herb_nature_zh": "温",
+      "shared_terms": [
+        "玫瑰花"
+      ],
+      "nature_agree": true,
+      "relation": "食物别名/关键词指向饮片正名",
+      "note": null
+    },
+    {
+      "food_id": "hongdou",
+      "food_name": "红豆",
+      "food_nature": "neutral",
+      "food_nature_zh": "平",
+      "food_in_runtime": true,
+      "herb_id": "chixiaodou",
+      "herb_name": "赤小豆",
+      "herb_nature": "neutral",
+      "herb_nature_zh": "平",
+      "shared_terms": [
+        "赤小豆"
+      ],
+      "nature_agree": true,
+      "relation": "食物别名/关键词指向饮片正名",
+      "note": null
+    },
+    {
+      "food_id": "luohanguo_cha",
+      "food_name": "罗汉果茶",
+      "food_nature": "cool",
+      "food_nature_zh": "凉",
+      "food_in_runtime": true,
+      "herb_id": "luohanguo",
+      "herb_name": "罗汉果",
+      "herb_nature": "cool",
+      "herb_nature_zh": "凉",
+      "shared_terms": [
+        "罗汉果"
+      ],
+      "nature_agree": true,
+      "relation": "食物别名/关键词指向饮片正名",
+      "note": null
+    },
+    {
+      "food_id": "molihua_cha",
+      "food_name": "茉莉花茶",
+      "food_nature": "warm",
+      "food_nature_zh": "温",
+      "food_in_runtime": true,
+      "herb_id": "molihua",
+      "herb_name": "茉莉花",
+      "herb_nature": "warm",
+      "herb_nature_zh": "温",
+      "shared_terms": [
+        "茉莉花"
+      ],
+      "nature_agree": true,
+      "relation": "食物别名/关键词指向饮片正名",
+      "note": null
+    },
+    {
+      "food_id": "heye_cha",
+      "food_name": "荷叶茶",
+      "food_nature": "neutral",
+      "food_nature_zh": "平",
+      "food_in_runtime": true,
+      "herb_id": "heye",
+      "herb_name": "荷叶",
+      "herb_nature": "neutral",
+      "herb_nature_zh": "平",
+      "shared_terms": [
+        "荷叶"
+      ],
+      "nature_agree": true,
+      "relation": "食物别名/关键词指向饮片正名",
+      "note": null
+    },
+    {
+      "food_id": "juhua_cha",
+      "food_name": "菊花茶",
+      "food_nature": "cool",
+      "food_nature_zh": "凉",
+      "food_in_runtime": true,
+      "herb_id": "juhua",
+      "herb_name": "菊花",
+      "herb_nature": "cool",
+      "herb_nature_zh": "凉",
+      "shared_terms": [
+        "菊花"
+      ],
+      "nature_agree": true,
+      "relation": "食物别名/关键词指向饮片正名",
+      "note": null
+    },
+    {
+      "food_id": "yimi",
+      "food_name": "薏米",
+      "food_nature": "cool",
+      "food_nature_zh": "凉",
+      "food_in_runtime": true,
+      "herb_id": "yiyiren",
+      "herb_name": "薏苡仁",
+      "herb_nature": "cool",
+      "herb_nature_zh": "凉",
+      "shared_terms": [
+        "薏苡仁"
+      ],
+      "nature_agree": true,
+      "relation": "食物别名/关键词指向饮片正名",
+      "note": null
+    },
+    {
+      "food_id": "sangshen",
+      "food_name": "桑葚",
+      "food_nature": "cold",
+      "food_nature_zh": "寒",
+      "food_in_runtime": false,
+      "herb_id": "sangshen",
+      "herb_name": "桑椹",
+      "herb_nature": "cold",
+      "herb_nature_zh": "寒",
+      "shared_terms": [
+        "桑椹"
+      ],
+      "nature_agree": true,
+      "relation": "食物别名/关键词指向饮片正名（食物侧尚在第二批 hold-back，未入运行时）",
+      "note": "2026-10-13 所有者批准：herbs.json 桑椹 cool→cold（药典 2020 一部 p.362「甘、酸，寒」）。食物侧仍 hold-back（food_in_runtime=false）。"
+    }
+  ]
+}

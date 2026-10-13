@@ -23,7 +23,7 @@ DOC_PATH = PROJECT_ROOT / "docs" / "herb-nature-crosscheck.md"
 
 # 当前已知的不一致项。这份清单变化时必须显式确认 —— 要么是项目改了数据，
 # 要么是药典检索结果变了，两种都值得看一眼。
-EXPECTED_INCONSISTENT = ["红枣", "荷叶", "桑椹", "百合", "淡竹叶", "白扁豆", "佛手"]
+EXPECTED_INCONSISTENT = ["红枣", "荷叶", "百合", "淡竹叶", "白扁豆", "佛手"]
 EXPECTED_NOT_IN_PHARMACOPOEIA = ["茉莉花"]
 
 
@@ -140,7 +140,9 @@ def test_known_specific_discrepancies(ref):
     """把几个具体差异钉死，防止映射规则被改坏后静默变成「一致」。"""
     by = {r["herb"]: r for r in ref["herbs"]}
     assert by["桑椹"]["pharmacopoeia"]["nature_word"] == "寒"
-    assert by["桑椹"]["project"]["nature"] == "cool"
+    assert by["桑椹"]["project"]["nature"] == "cold"
+    assert by["桑椹"]["nature_match"] is True
+    assert by["桑椹"]["status"] == "一致"
     assert by["百合"]["pharmacopoeia"]["nature_word"] == "寒"
     assert by["淡竹叶"]["pharmacopoeia"]["nature_word"] == "寒"
     assert by["白扁豆"]["pharmacopoeia"]["nature_word"] == "微温"

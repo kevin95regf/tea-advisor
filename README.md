@@ -158,7 +158,7 @@ Copy-Item credentials.env.example credentials.env    # 可选：只有用 dsh �
 * **不配 `credentials.env`** → 完全不影响：它不含 Key，而 `DSH_HOME` 有默认值（`<仓库根>/dsh-home`）。
 
 两个真实配置文件都已被 `.gitignore` 忽略（模板文件会入库）。
-**实测：全新 clone 不配任何配置文件也能跑通 `pytest`（841 项）与 `--resolve` 纯规则链路。**
+**实测：全新 clone 不配任何配置文件也能跑通 `pytest`（886 项）与 `--resolve` 纯规则链路。**
 
 ```powershell
 # 环境与数据自检（秒级，不调模型）
@@ -339,7 +339,7 @@ Agent2 只能从 `herbs.json` 的 44 味里挑，候选集由 `safety.py` 按体
 
 | 文件 | 内容 | 规模 |
 |---|---|---|
-| `core/data/food_properties.json` | 食材 + 茶饮食性表，逐条审核状态 | **147 条**（129 食材 + 18 茶饮） |
+| `core/data/food_properties.json` | 食材 + 茶饮食性表，逐条审核状态 | **212 条**（194 食材 + 18 茶饮） |
 | `core/data/herbs.json` | 药食同源饮片白名单（含剂量上限与禁忌） | **44 味** |
 | `core/data/constitution.json` | 体质速查 | **9 型** |
 
@@ -348,7 +348,7 @@ Agent2 只能从 `herbs.json` 的 44 味里挑，候选集由 `safety.py` 按体
 | 状态 | 效果 |
 |---|---|
 | `approved` | 真·硬规则库，置信度 0.9，界面**不**标注 |
-| `pending` | 置信度 0.9，但界面必须标注「待验证」（**当前 147 条全部是这个**） |
+| `pending` | 置信度 0.9，但界面必须标注「待验证」（**当前 212 条全部是这个**） |
 | `rejected` | 降为组合推理档（0.6），不再作硬规则 |
 
 > 全部为 `pending` 是**刻意**的：界面普遍显示「待验证」标记，
@@ -398,7 +398,7 @@ tea-advisor/
 │  │     └─ orchestrator.py        双 Agent 串行编排 + 降级
 │  ├─ data/                        数据层（上表三个 JSON）
 │  ├─ scripts/                     自检与冒烟脚本
-│  └─ tests/                       841 项离线测试
+│  └─ tests/                       886 项离线测试
 ├─ start-web.cmd                   ★ Windows 双击启动网页版（自动开浏览器）
 ├─ start-terminal.cmd              ★ Windows 双击启动终端版
 └─ docs/three-layer-architecture.md
@@ -413,7 +413,7 @@ tea-advisor/
 
 ```powershell
 cd core
-python -m pytest tests -q    # 841 passed，不调用模型、不需要 API Key
+python -m pytest tests -q    # 886 passed，不调用模型、不需要 API Key
 ```
 
 > ⚠️ 别在 `core/` 下直接跑裸 `pytest -q`：它会把 `core/var/` 下的临时脚本一起收集（其中有 GBK 编码文件，会报 `UnicodeDecodeError`）。带上 `tests` 就不会。
@@ -428,7 +428,7 @@ python -m pytest tests -q    # 841 passed，不调用模型、不需要 API Key
 | `tests/test_json_guard.py` | 围栏剥离、对象提取、schema 校验、失败重试 | 14 |
 | `tests/test_key_handling.py` | Authorization 解析、思考模式映射、**Key 不进日志/响应/异常**、凭据错误码、无 Key 即拒绝 | 50 |
 
-> 本表只列核心 7 个文件；`core/tests/` 现共 **45 个测试文件 / 841 项**，完整清单跑 `pytest --collect-only -q`（在 `core/` 目录下）。
+> 本表只列核心 7 个文件；`core/tests/` 现共 **48 个测试文件 / 886 项**，完整清单跑 `pytest --collect-only -q`（在 `core/` 目录下）。
 
 需要 API Key 的端到端（**不在 pytest 内**，会产生调用费用）：
 
@@ -518,7 +518,7 @@ python core\scripts\smoke_agents.py      # 运行时启动 → 原始往返 → 
 ```powershell
 python core\scripts\check_setup.py   # 环境与数据自检
 python core\scripts\smoke_offline.py # 离线全链路冒烟
-python -m pytest core\tests -q       # 841 项
+python -m pytest core\tests -q       # 886 项
 ```
 
 提交 PR 前请读 **[CONTRIBUTING.md](CONTRIBUTING.md)**，其中写明了：

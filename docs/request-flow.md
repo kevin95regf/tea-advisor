@@ -120,7 +120,7 @@
 request.text
    │
    ├─① render_reference(text) ── match_foods() ──→ 命中的食性表条目 ──→ 注入 user 提示词「参考表」
-   │     真源：services/food_lookup.py；数据 core/data/food_properties.json（147 条）
+   │     真源：services/food_lookup.py；数据 core/data/food_properties.json（212 条）
    │
    ├─② runtime.run(prompt, system_prompt, api_key)
    │     真源：agents/runtime.py → direct_api.py（默认）/ harness（dsh）
@@ -250,7 +250,7 @@ request.text
             ▼
    置信度与「待验证」由 review_status 决定：
      approved → 0.9，unverified=False
-     pending  → 0.9（走了修正层则 0.6），unverified=True  ← 当前 147 条全是这个
+     pending  → 0.9（走了修正层则 0.6），unverified=True  ← 当前 212 条全是这个
      rejected → 0.6，unverified=True
 ```
 

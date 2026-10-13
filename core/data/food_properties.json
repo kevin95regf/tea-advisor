@@ -191,6 +191,17 @@
         "reason": "生食只到 -1（档位不足），现值按「生鱼偏寒」记寒；拍板 D 取甲的代价。",
         "status": "待裁定"
       }
+    },
+    "food_group": {
+      "food_group_code": "WS/T 464-2015《食物成分数据表达规范》类-亚类-小类码（X-n=非标准复合菜肴组）；名称与依据见 food_classification.sidecar.json",
+      "dg2022_layer": "中国居民平衡膳食宝塔（2022）层号：1–5；0=宝塔外；X=复合食物",
+      "runtime_use": "当前运行时代码不读这两个字段（仅供分析与审核）",
+      "batch1_added": {
+        "date": "2026-10-12",
+        "count": 65,
+        "held_back": 14,
+        "note": "第4步安全批次；第二批见 docs/food-expansion/batch2_pending.md"
+      }
     }
   },
   "foods": [
@@ -216,7 +227,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "01-2-2",
+      "dg2022_layer": "1"
     },
     {
       "id": "zhou",
@@ -239,7 +252,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "01-2-2",
+      "dg2022_layer": "1"
     },
     {
       "id": "mantou",
@@ -260,7 +275,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "01-1-3",
+      "dg2022_layer": "1"
     },
     {
       "id": "mianshi",
@@ -285,7 +302,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "01-1-2",
+      "dg2022_layer": "1"
     },
     {
       "id": "miantiao_liang",
@@ -308,7 +327,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-3",
+      "dg2022_layer": "X"
     },
     {
       "id": "jiazi",
@@ -331,7 +352,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-2-3",
+      "dg2022_layer": "X"
     },
     {
       "id": "baozi",
@@ -354,7 +377,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-2-3",
+      "dg2022_layer": "X"
     },
     {
       "id": "xiaolongbao",
@@ -375,7 +400,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-2-3",
+      "dg2022_layer": "X"
     },
     {
       "id": "suantou",
@@ -402,7 +429,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "01-2-3",
+      "dg2022_layer": "1"
     },
     {
       "id": "yumi",
@@ -423,7 +452,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "01-3-1",
+      "dg2022_layer": "1"
     },
     {
       "id": "hongshu",
@@ -450,7 +481,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "02-1-0",
+      "dg2022_layer": "1"
     },
     {
       "id": "tudou",
@@ -473,7 +506,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "02-1-0",
+      "dg2022_layer": "1"
     },
     {
       "id": "youtiao",
@@ -494,7 +529,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-3",
+      "dg2022_layer": "X"
     },
     {
       "id": "hanbao",
@@ -515,7 +552,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-1-0",
+      "dg2022_layer": "X"
     },
     {
       "id": "sanmingzhi",
@@ -534,7 +573,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-1-0",
+      "dg2022_layer": "X"
     },
     {
       "id": "zhurou",
@@ -561,7 +602,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "08-1-1",
+      "dg2022_layer": "3"
     },
     {
       "id": "niurou",
@@ -583,7 +626,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "08-2-1",
+      "dg2022_layer": "3"
     },
     {
       "id": "yangrou",
@@ -604,7 +649,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "08-3-1",
+      "dg2022_layer": "3"
     },
     {
       "id": "jirou",
@@ -630,7 +677,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": "移除「炸鸡」别名与关键词：它属于独立条目 zhaji（热），留着会让炸鸡被判成鸡肉（温）属性",
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "09-1-1",
+      "dg2022_layer": "3"
     },
     {
       "id": "yakuai",
@@ -654,7 +703,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "09-2-1",
+      "dg2022_layer": "3"
     },
     {
       "id": "lourou",
@@ -678,7 +729,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "08-1-3",
+      "dg2022_layer": "3"
     },
     {
       "id": "huotui",
@@ -702,7 +755,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "08-1-3",
+      "dg2022_layer": "3"
     },
     {
       "id": "xiangchang",
@@ -724,7 +779,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "08-1-3",
+      "dg2022_layer": "3"
     },
     {
       "id": "yuxia",
@@ -750,7 +807,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "12-1-0",
+      "dg2022_layer": "3"
     },
     {
       "id": "xia",
@@ -773,7 +832,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "12-2-0",
+      "dg2022_layer": "3"
     },
     {
       "id": "pangxie",
@@ -796,7 +857,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "12-3-0",
+      "dg2022_layer": "3"
     },
     {
       "id": "shengyu",
@@ -820,7 +883,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": "移除与「寿司」重叠的关键词，避免寿司被误配为生鱼片属性",
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "12-1-0",
+      "dg2022_layer": "3"
     },
     {
       "id": "haili",
@@ -842,7 +907,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "05-2-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "zicai",
@@ -864,7 +931,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "05-2-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "baicai",
@@ -888,7 +957,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": "加 note 留痕（口径分歧），nature 未改",
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-5-3",
+      "dg2022_layer": "2"
     },
     {
       "id": "qingcai",
@@ -911,7 +982,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-5-3",
+      "dg2022_layer": "2"
     },
     {
       "id": "bocai",
@@ -929,7 +1002,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-5-3",
+      "dg2022_layer": "2"
     },
     {
       "id": "shengcai",
@@ -951,7 +1026,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-5-3",
+      "dg2022_layer": "2"
     },
     {
       "id": "huanggua",
@@ -974,7 +1051,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": "加 note 留痕（口径分歧），nature 未改",
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-3-5",
+      "dg2022_layer": "2"
     },
     {
       "id": "xihongshi",
@@ -996,7 +1075,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-3-3",
+      "dg2022_layer": "2"
     },
     {
       "id": "luobo",
@@ -1018,7 +1099,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-1-1",
+      "dg2022_layer": "2"
     },
     {
       "id": "huluobo",
@@ -1039,7 +1122,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-1",
+      "dg2022_layer": "2"
     },
     {
       "id": "qincai",
@@ -1061,7 +1146,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-5-2",
+      "dg2022_layer": "2"
     },
     {
       "id": "jiecai",
@@ -1079,7 +1166,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-5",
+      "dg2022_layer": "2"
     },
     {
       "id": "jiucai",
@@ -1097,7 +1186,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-5-3",
+      "dg2022_layer": "2"
     },
     {
       "id": "jiachang",
@@ -1115,7 +1206,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-3-2",
+      "dg2022_layer": "2"
     },
     {
       "id": "donggua",
@@ -1134,7 +1227,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-3-4",
+      "dg2022_layer": "2"
     },
     {
       "id": "nangua",
@@ -1152,7 +1247,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-3-7",
+      "dg2022_layer": "2"
     },
     {
       "id": "sigua",
@@ -1170,7 +1267,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-3-9",
+      "dg2022_layer": "2"
     },
     {
       "id": "kugua",
@@ -1191,7 +1290,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-3-6",
+      "dg2022_layer": "2"
     },
     {
       "id": "lajiao",
@@ -1217,7 +1318,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-3-1",
+      "dg2022_layer": "2"
     },
     {
       "id": "cong",
@@ -1239,7 +1342,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-4-2",
+      "dg2022_layer": "2"
     },
     {
       "id": "suan",
@@ -1261,7 +1366,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-4-1",
+      "dg2022_layer": "2"
     },
     {
       "id": "jiang",
@@ -1284,7 +1391,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-4-9",
+      "dg2022_layer": "2"
     },
     {
       "id": "mogu",
@@ -1307,7 +1416,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": "拆条后收窄为「蘑菰」（寒，纲目 23487）：香菇已移至 xianggu；四气由 neutral 改 cold。**条目代表的物种＝蘑菰；显示名保留「蘑菇」不改名**，以维持 exact_name_hit 直取（改名会让用户说「蘑菇」落到别名匹配，并可能启用烹饪修正层）。金针菇/杏鲍菇/平菇 是另外 3 个物种、50 号文件无条目，已从 aliases + keywords 两处移出（走「表未覆盖」分支，界面标「食性未经验证」）；「口蘑」保留在别名上，但**依据是项目专业判断、非来源行**（见挂起项 A3）。",
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "05-1-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "xianggu",
@@ -1332,7 +1443,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": "由 mogu 拆出（④层矛盾：一个条目代表两个四气不同的物种）",
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "05-1-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "muer",
@@ -1353,7 +1466,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "05-1-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "lianou",
@@ -1375,7 +1490,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": "加 note 留痕（口径分歧，三值并列），nature 未改",
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-6-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "douya",
@@ -1396,7 +1513,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-2-2",
+      "dg2022_layer": "2"
     },
     {
       "id": "doufu",
@@ -1419,7 +1538,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "03-1-2",
+      "dg2022_layer": "4"
     },
     {
       "id": "doujiang",
@@ -1440,7 +1561,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "03-1-3",
+      "dg2022_layer": "4"
     },
     {
       "id": "fuzhu",
@@ -1461,7 +1584,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "03-1-9",
+      "dg2022_layer": "4"
     },
     {
       "id": "maodou",
@@ -1481,7 +1606,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "04-2-1",
+      "dg2022_layer": "2"
     },
     {
       "id": "pingguo",
@@ -1500,7 +1627,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-1-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "xiangjiao",
@@ -1518,7 +1647,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-5-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "juzi",
@@ -1542,7 +1673,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-4-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "xigua",
@@ -1560,7 +1693,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-6-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "putao",
@@ -1582,7 +1717,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-3-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "li",
@@ -1605,7 +1742,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-1-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "caomei",
@@ -1624,7 +1763,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-3-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "mangguo",
@@ -1643,7 +1784,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-5-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "lizhi",
@@ -1662,7 +1805,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-5-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "longyan",
@@ -1683,7 +1828,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-5-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "taozi",
@@ -1705,7 +1852,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-2-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "yingtao",
@@ -1726,7 +1875,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-2-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "shanzha_guo",
@@ -1747,7 +1898,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-1-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "ningmeng",
@@ -1768,7 +1921,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-4-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "niuyouguo",
@@ -1789,7 +1944,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-5-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "huolongguo",
@@ -1807,7 +1964,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-5-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "shizi",
@@ -1826,7 +1985,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-3-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "shanzhu",
@@ -1845,7 +2006,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "06-5-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "niunai",
@@ -1868,7 +2031,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "10-1-0",
+      "dg2022_layer": "4"
     },
     {
       "id": "suannai",
@@ -1887,7 +2052,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "10-3-0",
+      "dg2022_layer": "4"
     },
     {
       "id": "bingqilin",
@@ -1911,7 +2078,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "16-8-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "kele",
@@ -1938,7 +2107,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "16-1-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "naicha",
@@ -1959,7 +2130,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "16-4-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "kafei",
@@ -1986,7 +2159,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": "冰镇变体由 cool 改 neutral：温 + 冰镇 -1 = 平，与其余变体条目同规则",
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "16-6-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "pijiu",
@@ -2006,7 +2181,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "17-1-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "baijiu",
@@ -2026,7 +2203,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "17-2-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "hongjiu",
@@ -2048,7 +2227,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "17-1-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "suanmeitang",
@@ -2068,7 +2249,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "16-9-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "liangcha",
@@ -2093,7 +2276,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "16-9-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "guozhi",
@@ -2118,7 +2303,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "16-2-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "mahuoguo",
@@ -2141,7 +2328,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "X-1",
+      "dg2022_layer": "X"
     },
     {
       "id": "malatang",
@@ -2164,7 +2353,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-3",
+      "dg2022_layer": "X"
     },
     {
       "id": "malahuoguo",
@@ -2187,7 +2378,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "X-2",
+      "dg2022_layer": "X"
     },
     {
       "id": "shaokao",
@@ -2212,7 +2405,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "X-3",
+      "dg2022_layer": "X"
     },
     {
       "id": "hongshao",
@@ -2234,7 +2429,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "X-4",
+      "dg2022_layer": "X"
     },
     {
       "id": "lajiao_chao",
@@ -2258,7 +2455,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "X-2",
+      "dg2022_layer": "X"
     },
     {
       "id": "zhajiang",
@@ -2277,7 +2476,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-1-0",
+      "dg2022_layer": "X"
     },
     {
       "id": "guanzhudong",
@@ -2296,7 +2497,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-3",
+      "dg2022_layer": "X"
     },
     {
       "id": "shala",
@@ -2320,7 +2523,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "X-5",
+      "dg2022_layer": "X"
     },
     {
       "id": "pisa",
@@ -2343,7 +2548,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-1-0",
+      "dg2022_layer": "X"
     },
     {
       "id": "zhaji",
@@ -2368,7 +2575,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-1-0",
+      "dg2022_layer": "X"
     },
     {
       "id": "shujiaotiao",
@@ -2390,7 +2599,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": "关键词归一，避免与「炸鱼薯条」相互抢占匹配",
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-1-0",
+      "dg2022_layer": "X"
     },
     {
       "id": "shuijiao_rou",
@@ -2410,7 +2621,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-3",
+      "dg2022_layer": "X"
     },
     {
       "id": "huntun",
@@ -2434,7 +2647,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-2-3",
+      "dg2022_layer": "X"
     },
     {
       "id": "dangao",
@@ -2455,7 +2670,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "14-2-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "lvdougao",
@@ -2474,7 +2691,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "14-2-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "qiaokeli",
@@ -2493,7 +2712,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "14-4-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "binggan",
@@ -2512,7 +2733,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "14-3-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "tang",
@@ -2536,7 +2759,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "19-8-1",
+      "dg2022_layer": "0"
     },
     {
       "id": "yan",
@@ -2554,7 +2779,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "19-9-0",
+      "dg2022_layer": "5"
     },
     {
       "id": "cu",
@@ -2575,7 +2802,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "19-1-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "jiangyou",
@@ -2599,7 +2828,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": "加 note 留痕（口径分歧）；映射（酱油→酱）已采纳、值不改",
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "19-2-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "yiner",
@@ -2622,7 +2853,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "05-1-0",
+      "dg2022_layer": "2"
     },
     {
       "id": "chadan",
@@ -2643,7 +2876,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "11-1-0",
+      "dg2022_layer": "3"
     },
     {
       "id": "jidan",
@@ -2668,7 +2903,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": "D29：移除裸字「蛋」——它是别的条目词（蛋糕/卤蛋/茶叶蛋）的子串，会让「蛋糕」同时命中鸡蛋。其余单字（鱼/姜/梨/糖/盐）同类问题已登记，由 tests/test_single_char_keywords.py 的白名单守着，新增即变红。",
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "11-1-0",
+      "dg2022_layer": "3"
     },
     {
       "id": "xila_suannai",
@@ -2694,7 +2931,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": "去掉 cold 变体：冷藏为常见食用方式，属性维持凉，不与冰镇饮料同档",
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "10-3-0",
+      "dg2022_layer": "4"
     },
     {
       "id": "hanshi_zhaji",
@@ -2720,7 +2959,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-1-0",
+      "dg2022_layer": "X"
     },
     {
       "id": "yidali_mian",
@@ -2746,7 +2987,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "01-1-2",
+      "dg2022_layer": "1"
     },
     {
       "id": "shousi",
@@ -2773,7 +3016,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": "去掉 raw 变体：生食为常见吃法，属性维持凉，不与生鱼片同档",
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-1-0",
+      "dg2022_layer": "X"
     },
     {
       "id": "niurou_hanbao",
@@ -2798,7 +3043,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-1-0",
+      "dg2022_layer": "X"
     },
     {
       "id": "zhayu_shutiao",
@@ -2821,7 +3068,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-1-0",
+      "dg2022_layer": "X"
     },
     {
       "id": "niuyouguo_shala",
@@ -2844,7 +3093,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "X-5",
+      "dg2022_layer": "X"
     },
     {
       "id": "hanshi_banfan",
@@ -2871,7 +3122,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-1-0",
+      "dg2022_layer": "X"
     },
     {
       "id": "rishi_lamian",
@@ -2896,7 +3149,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-1-0",
+      "dg2022_layer": "X"
     },
     {
       "id": "gali",
@@ -2920,7 +3175,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-1-0",
+      "dg2022_layer": "X"
     },
     {
       "id": "tusi",
@@ -2946,7 +3203,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "14-3-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "sanmingzhi_huotui",
@@ -2968,7 +3227,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "15-1-0",
+      "dg2022_layer": "X"
     },
     {
       "id": "suannai_wan",
@@ -2992,7 +3253,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "10-3-0",
+      "dg2022_layer": "4"
     },
     {
       "id": "bing_naicha",
@@ -3016,7 +3279,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "16-4-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "qubing_naicha",
@@ -3040,7 +3305,9 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "16-4-0",
+      "dg2022_layer": "0"
     },
     {
       "id": "re_naicha",
@@ -3062,7 +3329,1505 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null,
-      "review_status": "pending"
+      "review_status": "pending",
+      "food_group_code": "16-4-0",
+      "dg2022_layer": "0"
+    },
+    {
+      "id": "nuomi",
+      "name": "糯米",
+      "aliases": [
+        "江米"
+      ],
+      "category": "主食",
+      "nature": "warm",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "糯米",
+        "江米"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "01-2-1",
+      "dg2022_layer": "1"
+    },
+    {
+      "id": "zongzi",
+      "name": "粽子",
+      "aliases": [],
+      "category": "主食",
+      "nature": "warm",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "粽子"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "01-2-9",
+      "dg2022_layer": "1"
+    },
+    {
+      "id": "huangmi",
+      "name": "黄米",
+      "aliases": [
+        "黍米"
+      ],
+      "category": "主食",
+      "nature": "warm",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "黄米",
+        "黍米"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "01-5-1",
+      "dg2022_layer": "1"
+    },
+    {
+      "id": "qiaomai",
+      "name": "荞麦",
+      "aliases": [],
+      "category": "主食",
+      "nature": "cold",
+      "flavors": [
+        "sweet",
+        "sour"
+      ],
+      "keywords": [
+        "荞麦"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "01-9-2",
+      "dg2022_layer": "1"
+    },
+    {
+      "id": "yimi",
+      "name": "薏米",
+      "aliases": [
+        "薏苡仁",
+        "薏仁",
+        "苡仁"
+      ],
+      "category": "主食",
+      "nature": "cool",
+      "flavors": [
+        "sweet",
+        "bland"
+      ],
+      "keywords": [
+        "薏米",
+        "薏苡仁",
+        "薏仁",
+        "苡仁"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "01-9-5",
+      "dg2022_layer": "1"
+    },
+    {
+      "id": "gaoliang",
+      "name": "高粱",
+      "aliases": [
+        "高粱米"
+      ],
+      "category": "主食",
+      "nature": "warm",
+      "flavors": [
+        "sweet",
+        "astringent"
+      ],
+      "keywords": [
+        "高粱",
+        "高粱米"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "01-9-1",
+      "dg2022_layer": "1"
+    },
+    {
+      "id": "heidou",
+      "name": "黑豆",
+      "aliases": [
+        "黑大豆"
+      ],
+      "category": "豆制品",
+      "nature": "neutral",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "黑豆",
+        "黑大豆"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "03-1-1",
+      "dg2022_layer": "4"
+    },
+    {
+      "id": "hongdou",
+      "name": "红豆",
+      "aliases": [
+        "赤豆",
+        "赤小豆",
+        "红小豆"
+      ],
+      "category": "豆制品",
+      "nature": "neutral",
+      "flavors": [
+        "sweet",
+        "sour"
+      ],
+      "keywords": [
+        "红豆",
+        "赤豆",
+        "赤小豆",
+        "红小豆"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "03-3-1",
+      "dg2022_layer": "1"
+    },
+    {
+      "id": "yundou",
+      "name": "芸豆",
+      "aliases": [
+        "白芸豆",
+        "花芸豆"
+      ],
+      "category": "豆制品",
+      "nature": "neutral",
+      "flavors": [
+        "sweet",
+        "bland"
+      ],
+      "keywords": [
+        "芸豆",
+        "白芸豆",
+        "花芸豆"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "03-4-1",
+      "dg2022_layer": "1"
+    },
+    {
+      "id": "candou",
+      "name": "蚕豆",
+      "aliases": [],
+      "category": "豆制品",
+      "nature": "neutral",
+      "flavors": [
+        "sweet",
+        "pungent"
+      ],
+      "keywords": [
+        "蚕豆"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "03-5-1",
+      "dg2022_layer": "1"
+    },
+    {
+      "id": "yingzuidou",
+      "name": "鹰嘴豆",
+      "aliases": [],
+      "category": "豆制品",
+      "nature": "neutral",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "鹰嘴豆"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "03-9-1",
+      "dg2022_layer": "1"
+    },
+    {
+      "id": "wandou",
+      "name": "豌豆",
+      "aliases": [
+        "青豆"
+      ],
+      "category": "豆制品",
+      "nature": "neutral",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "豌豆",
+        "青豆"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "03-9-1",
+      "dg2022_layer": "1"
+    },
+    {
+      "id": "wujing",
+      "name": "芜菁",
+      "aliases": [
+        "蔓菁"
+      ],
+      "category": "蔬菜",
+      "nature": "warm",
+      "flavors": [
+        "pungent",
+        "sweet",
+        "bitter"
+      ],
+      "keywords": [
+        "芜菁",
+        "蔓菁"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-1-9",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "niubang",
+      "name": "牛蒡",
+      "aliases": [
+        "牛蒡根"
+      ],
+      "category": "蔬菜",
+      "nature": "cool",
+      "flavors": [
+        "bitter",
+        "sweet"
+      ],
+      "keywords": [
+        "牛蒡",
+        "牛蒡根"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-1-9",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "xiangcai",
+      "name": "香菜",
+      "aliases": [
+        "芫荽",
+        "胡荽"
+      ],
+      "category": "蔬菜",
+      "nature": "warm",
+      "flavors": [
+        "pungent"
+      ],
+      "keywords": [
+        "香菜",
+        "芫荽",
+        "胡荽"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-5-3",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "kongxincai",
+      "name": "空心菜",
+      "aliases": [
+        "蕹菜",
+        "通菜"
+      ],
+      "category": "蔬菜",
+      "nature": "cold",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "空心菜",
+        "蕹菜",
+        "通菜"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-5-3",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "juanxincai",
+      "name": "卷心菜",
+      "aliases": [
+        "包菜",
+        "甘蓝"
+      ],
+      "category": "蔬菜",
+      "nature": "cool",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "卷心菜",
+        "包菜",
+        "甘蓝"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-5-3",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "tonghao",
+      "name": "茼蒿",
+      "aliases": [
+        "蓬蒿"
+      ],
+      "category": "蔬菜",
+      "nature": "cool",
+      "flavors": [
+        "pungent",
+        "sweet"
+      ],
+      "keywords": [
+        "茼蒿",
+        "蓬蒿"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-5-3",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "jiaobai",
+      "name": "茭白",
+      "aliases": [
+        "茭笋"
+      ],
+      "category": "蔬菜",
+      "nature": "cold",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "茭白",
+        "茭笋"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-6-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "cigu",
+      "name": "慈姑",
+      "aliases": [
+        "慈菇"
+      ],
+      "category": "蔬菜",
+      "nature": "cool",
+      "flavors": [
+        "sweet",
+        "bitter",
+        "pungent"
+      ],
+      "keywords": [
+        "慈姑",
+        "慈菇"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-6-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "lingjiao",
+      "name": "菱角",
+      "aliases": [],
+      "category": "蔬菜",
+      "nature": "cool",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "菱角"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-6-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "biqi",
+      "name": "荸荠",
+      "aliases": [
+        "马蹄",
+        "乌芋"
+      ],
+      "category": "蔬菜",
+      "nature": "cold",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "荸荠",
+        "马蹄",
+        "乌芋"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-6-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "shanyao",
+      "name": "山药",
+      "aliases": [
+        "淮山",
+        "怀山药",
+        "薯蓣"
+      ],
+      "category": "蔬菜",
+      "nature": "neutral",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "山药",
+        "淮山",
+        "怀山药",
+        "薯蓣"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-7-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "yutou",
+      "name": "芋头",
+      "aliases": [
+        "芋艿",
+        "毛芋"
+      ],
+      "category": "蔬菜",
+      "nature": "neutral",
+      "flavors": [
+        "sweet",
+        "pungent"
+      ],
+      "keywords": [
+        "芋头",
+        "芋艿",
+        "毛芋"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-7-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "doushu",
+      "name": "豆薯",
+      "aliases": [
+        "凉薯",
+        "沙葛"
+      ],
+      "category": "蔬菜",
+      "nature": "cool",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "豆薯",
+        "凉薯",
+        "沙葛"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-7-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "juecai",
+      "name": "蕨菜",
+      "aliases": [],
+      "category": "蔬菜",
+      "nature": "cold",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "蕨菜"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-8-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "muxu",
+      "name": "苜蓿",
+      "aliases": [
+        "草头"
+      ],
+      "category": "蔬菜",
+      "nature": "neutral",
+      "flavors": [
+        "bitter"
+      ],
+      "keywords": [
+        "苜蓿",
+        "草头"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-8-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "machixian",
+      "name": "马齿苋",
+      "aliases": [],
+      "category": "蔬菜",
+      "nature": "cold",
+      "flavors": [
+        "sour"
+      ],
+      "keywords": [
+        "马齿苋"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-8-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "jicai",
+      "name": "荠菜",
+      "aliases": [],
+      "category": "蔬菜",
+      "nature": "cool",
+      "flavors": [
+        "sweet",
+        "bland"
+      ],
+      "keywords": [
+        "荠菜"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "04-8-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "shihuacai",
+      "name": "石花菜",
+      "aliases": [],
+      "category": "水产",
+      "nature": "cold",
+      "flavors": [
+        "sweet",
+        "salty"
+      ],
+      "keywords": [
+        "石花菜"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "05-2-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "xingzi",
+      "name": "杏子",
+      "aliases": [
+        "鲜杏"
+      ],
+      "category": "水果",
+      "nature": "warm",
+      "flavors": [
+        "sour",
+        "sweet"
+      ],
+      "keywords": [
+        "杏子",
+        "鲜杏"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "06-2-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "lizi",
+      "name": "李子",
+      "aliases": [],
+      "category": "水果",
+      "nature": "warm",
+      "flavors": [
+        "bitter",
+        "sour"
+      ],
+      "keywords": [
+        "李子"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "06-2-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "xianzao",
+      "name": "鲜枣",
+      "aliases": [
+        "冬枣",
+        "青枣"
+      ],
+      "category": "水果",
+      "nature": "hot",
+      "flavors": [
+        "sweet",
+        "pungent"
+      ],
+      "keywords": [
+        "鲜枣",
+        "冬枣",
+        "青枣"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "06-2-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "mihoutao",
+      "name": "猕猴桃",
+      "aliases": [
+        "奇异果"
+      ],
+      "category": "水果",
+      "nature": "cold",
+      "flavors": [
+        "sour",
+        "sweet"
+      ],
+      "keywords": [
+        "猕猴桃",
+        "奇异果"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "06-3-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "shiliu",
+      "name": "石榴",
+      "aliases": [],
+      "category": "水果",
+      "nature": "warm",
+      "flavors": [
+        "sweet",
+        "sour",
+        "astringent"
+      ],
+      "keywords": [
+        "石榴"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "06-3-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "wuhuaguo",
+      "name": "无花果",
+      "aliases": [],
+      "category": "水果",
+      "nature": "cool",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "无花果"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "06-3-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "shaji",
+      "name": "沙棘",
+      "aliases": [],
+      "category": "水果",
+      "nature": "warm",
+      "flavors": [
+        "sour",
+        "astringent"
+      ],
+      "keywords": [
+        "沙棘"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "06-3-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "jinju",
+      "name": "金桔",
+      "aliases": [
+        "金橘"
+      ],
+      "category": "水果",
+      "nature": "warm",
+      "flavors": [
+        "sweet",
+        "sour",
+        "pungent"
+      ],
+      "keywords": [
+        "金桔",
+        "金橘"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "06-4-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "yezi",
+      "name": "椰子",
+      "aliases": [
+        "椰肉"
+      ],
+      "category": "水果",
+      "nature": "neutral",
+      "flavors": [
+        "sweet",
+        "pungent"
+      ],
+      "keywords": [
+        "椰子",
+        "椰肉"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "06-5-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "pipa",
+      "name": "枇杷",
+      "aliases": [],
+      "category": "水果",
+      "nature": "cool",
+      "flavors": [
+        "sweet",
+        "sour"
+      ],
+      "keywords": [
+        "枇杷"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "06-5-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "yangtao",
+      "name": "杨桃",
+      "aliases": [
+        "阳桃",
+        "五敛子"
+      ],
+      "category": "水果",
+      "nature": "cold",
+      "flavors": [
+        "sour",
+        "sweet"
+      ],
+      "keywords": [
+        "杨桃",
+        "阳桃",
+        "五敛子"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "06-5-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "tiangua",
+      "name": "甜瓜",
+      "aliases": [
+        "香瓜"
+      ],
+      "category": "水果",
+      "nature": "cold",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "甜瓜",
+        "香瓜"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "06-6-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "baixiangguo",
+      "name": "百香果",
+      "aliases": [],
+      "category": "水果",
+      "nature": "neutral",
+      "flavors": [
+        "sweet",
+        "sour"
+      ],
+      "keywords": [
+        "百香果"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "06-5-0",
+      "dg2022_layer": "2"
+    },
+    {
+      "id": "hetao",
+      "name": "核桃",
+      "aliases": [
+        "核桃仁",
+        "胡桃"
+      ],
+      "category": "零食",
+      "nature": "warm",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "核桃",
+        "核桃仁",
+        "胡桃"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "07-1-0",
+      "dg2022_layer": "4"
+    },
+    {
+      "id": "banli",
+      "name": "板栗",
+      "aliases": [
+        "栗子"
+      ],
+      "category": "零食",
+      "nature": "neutral",
+      "flavors": [
+        "sweet",
+        "salty"
+      ],
+      "keywords": [
+        "板栗",
+        "栗子"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "07-1-0",
+      "dg2022_layer": "4"
+    },
+    {
+      "id": "xingren",
+      "name": "杏仁",
+      "aliases": [
+        "甜杏仁"
+      ],
+      "category": "零食",
+      "nature": "neutral",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "杏仁",
+        "甜杏仁"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "07-1-0",
+      "dg2022_layer": "4"
+    },
+    {
+      "id": "zhenzi",
+      "name": "榛子",
+      "aliases": [],
+      "category": "零食",
+      "nature": "neutral",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "榛子"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "07-1-0",
+      "dg2022_layer": "4"
+    },
+    {
+      "id": "songzi",
+      "name": "松子",
+      "aliases": [
+        "松仁",
+        "松子仁"
+      ],
+      "category": "零食",
+      "nature": "warm",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "松子",
+        "松仁",
+        "松子仁"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "07-1-0",
+      "dg2022_layer": "4"
+    },
+    {
+      "id": "huasheng",
+      "name": "花生",
+      "aliases": [
+        "花生米",
+        "落花生"
+      ],
+      "category": "零食",
+      "nature": "neutral",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "花生",
+        "花生米",
+        "落花生"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "07-2-0",
+      "dg2022_layer": "4"
+    },
+    {
+      "id": "kuihuazi",
+      "name": "葵花子",
+      "aliases": [
+        "葵花籽"
+      ],
+      "category": "零食",
+      "nature": "neutral",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "葵花子",
+        "葵花籽"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "07-2-0",
+      "dg2022_layer": "4"
+    },
+    {
+      "id": "zhugan",
+      "name": "猪肝",
+      "aliases": [],
+      "category": "肉类",
+      "nature": "warm",
+      "flavors": [
+        "bitter"
+      ],
+      "keywords": [
+        "猪肝"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "08-1-2",
+      "dg2022_layer": "3"
+    },
+    {
+      "id": "niudu",
+      "name": "牛肚",
+      "aliases": [
+        "毛肚",
+        "牛百叶"
+      ],
+      "category": "肉类",
+      "nature": "warm",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "牛肚",
+        "毛肚",
+        "牛百叶"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "08-2-2",
+      "dg2022_layer": "3"
+    },
+    {
+      "id": "lvrou",
+      "name": "驴肉",
+      "aliases": [],
+      "category": "肉类",
+      "nature": "neutral",
+      "flavors": [
+        "sweet",
+        "sour"
+      ],
+      "keywords": [
+        "驴肉"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "08-4-1",
+      "dg2022_layer": "3"
+    },
+    {
+      "id": "turou",
+      "name": "兔肉",
+      "aliases": [],
+      "category": "肉类",
+      "nature": "cold",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "兔肉"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "08-9-1",
+      "dg2022_layer": "3"
+    },
+    {
+      "id": "yaxue",
+      "name": "鸭血",
+      "aliases": [],
+      "category": "肉类",
+      "nature": "cool",
+      "flavors": [
+        "salty"
+      ],
+      "keywords": [
+        "鸭血"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "09-2-2",
+      "dg2022_layer": "3"
+    },
+    {
+      "id": "erou",
+      "name": "鹅肉",
+      "aliases": [],
+      "category": "肉类",
+      "nature": "neutral",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "鹅肉"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "09-3-1",
+      "dg2022_layer": "3"
+    },
+    {
+      "id": "gezirou",
+      "name": "鸽子肉",
+      "aliases": [
+        "乳鸽",
+        "鸽子"
+      ],
+      "category": "肉类",
+      "nature": "neutral",
+      "flavors": [
+        "salty"
+      ],
+      "keywords": [
+        "鸽子肉",
+        "乳鸽",
+        "鸽子"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "09-9-1",
+      "dg2022_layer": "3"
+    },
+    {
+      "id": "anchun",
+      "name": "鹌鹑",
+      "aliases": [],
+      "category": "肉类",
+      "nature": "neutral",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "鹌鹑"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "09-9-1",
+      "dg2022_layer": "3"
+    },
+    {
+      "id": "yangnai",
+      "name": "羊奶",
+      "aliases": [
+        "羊乳"
+      ],
+      "category": "乳饮",
+      "nature": "warm",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "羊奶",
+        "羊乳"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "10-1-0",
+      "dg2022_layer": "4"
+    },
+    {
+      "id": "yadan",
+      "name": "鸭蛋",
+      "aliases": [
+        "鸭卵"
+      ],
+      "category": "蛋类",
+      "nature": "cool",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "鸭蛋",
+        "鸭卵"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "11-2-0",
+      "dg2022_layer": "3"
+    },
+    {
+      "id": "edan",
+      "name": "鹅蛋",
+      "aliases": [],
+      "category": "蛋类",
+      "nature": "warm",
+      "flavors": [
+        "sweet"
+      ],
+      "keywords": [
+        "鹅蛋"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "11-3-0",
+      "dg2022_layer": "3"
+    },
+    {
+      "id": "muli",
+      "name": "牡蛎",
+      "aliases": [
+        "生蚝"
+      ],
+      "category": "水产",
+      "nature": "neutral",
+      "flavors": [
+        "sweet",
+        "salty"
+      ],
+      "keywords": [
+        "牡蛎",
+        "生蚝"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "12-4-0",
+      "dg2022_layer": "3"
+    },
+    {
+      "id": "haishen",
+      "name": "海参",
+      "aliases": [],
+      "category": "水产",
+      "nature": "neutral",
+      "flavors": [
+        "sweet",
+        "salty"
+      ],
+      "keywords": [
+        "海参"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "12-9-0",
+      "dg2022_layer": "3"
+    },
+    {
+      "id": "haizhe",
+      "name": "海蜇",
+      "aliases": [
+        "海蜇头"
+      ],
+      "category": "水产",
+      "nature": "neutral",
+      "flavors": [
+        "salty"
+      ],
+      "keywords": [
+        "海蜇",
+        "海蜇头"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "12-9-0",
+      "dg2022_layer": "3"
+    },
+    {
+      "id": "jiuniang",
+      "name": "酒酿",
+      "aliases": [
+        "醪糟"
+      ],
+      "category": "酒类",
+      "nature": "warm",
+      "flavors": [
+        "sweet",
+        "pungent"
+      ],
+      "keywords": [
+        "酒酿",
+        "醪糟"
+      ],
+      "reviewed": false,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "review_note": null,
+      "review_status": "pending",
+      "food_group_code": "17-1-0",
+      "dg2022_layer": "0"
     }
   ],
   "tea_drinks": {
@@ -3091,7 +4856,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "juhua_cha",
@@ -3116,7 +4883,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "gouqi_cha",
@@ -3137,7 +4906,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "meigui_cha",
@@ -3160,7 +4931,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "puerg",
@@ -3182,7 +4955,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "lvcha",
@@ -3208,7 +4983,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "hongcha",
@@ -3231,7 +5008,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "wulong",
@@ -3255,7 +5034,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "damaicha",
@@ -3276,7 +5057,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "chenpi_cha",
@@ -3298,7 +5081,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "jiangcha",
@@ -3319,7 +5104,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "hongzao_cha",
@@ -3341,7 +5128,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "juemingzi_cha",
@@ -3361,7 +5150,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "heye_cha",
@@ -3381,7 +5172,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "luohanguo_cha",
@@ -3402,7 +5195,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "wumei_cha",
@@ -3425,7 +5220,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "putaoyou_cha",
@@ -3449,7 +5246,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       },
       {
         "id": "naixicha",
@@ -3469,7 +5268,9 @@
         "reviewed_by": null,
         "reviewed_at": null,
         "review_note": null,
-        "review_status": "pending"
+        "review_status": "pending",
+        "food_group_code": "16-6-0",
+        "dg2022_layer": "0"
       }
     ]
   }

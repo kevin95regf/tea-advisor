@@ -1,0 +1,296 @@
+{
+  "_meta": {
+    "title": "家用食疗汤模板（food_therapy）",
+    "version": "0.2.0",
+    "kind_constraint": "food_therapy_only",
+    "notice": "仅收录药食同源范围内的家用组合；不是中药处方，不含君臣佐使与处方剂量。review_status 全部 pending。默认不进入 Agent2 自动推荐；只读查询工具可返回并须带 pending 免责。禁止把模板当方剂加减。",
+    "field_notes": {
+      "kind": "固定 food_therapy；禁止 chm_formula",
+      "components": "每项必须且只能有 herb_id 或 food_id 之一；herb_id∈herbs.json，food_id∈food_properties（foods 或 tea_drinks）；role 仅 ingredient",
+      "kitchen_amount_hint": "家庭厨房约量文案，禁止冒充处方汤药剂量",
+      "sources": "可核验出处 URL 或书名；无据不写",
+      "review_status": "pending 时不得自动塞进 Agent2 recommendations；查询路径可返回并声明待审"
+    }
+  },
+  "templates": [
+    {
+      "id": "sishen_tang",
+      "display_name": "四神汤",
+      "kind": "food_therapy",
+      "components": [
+        {
+          "herb_id": "fuling",
+          "role": "ingredient"
+        },
+        {
+          "herb_id": "yiyiren",
+          "role": "ingredient"
+        },
+        {
+          "herb_id": "qianshi",
+          "role": "ingredient"
+        },
+        {
+          "herb_id": "shanyao",
+          "role": "ingredient"
+        }
+      ],
+      "kitchen_amount_hint": "四味大致等量，家用每味约一小把（约 15–20 g 量级）入锅与排骨/猪骨等同炖；以单味 herbs.max_daily_g 为个人当日饮用封顶参考，勿按门诊汤剂加量。",
+      "cautions": [
+        "健脾祛湿家常汤取向，非处方；孕妇、脾胃虚寒明显或正在服药者先咨询医师",
+        "薏苡仁性偏凉，虚寒便溏者可改炒薏仁或减量",
+        "民间另有「茯苓+淮山+莲子+芡实」版本；本模板按项目已定组成（含薏苡仁）策展"
+      ],
+      "suitable_notes": [
+        "适合想健脾祛湿、饮食偏油腻湿滞时的家常煲汤参考"
+      ],
+      "review_status": "pending",
+      "sources": [
+        {
+          "label": "广东省中医药局《健脾祛湿「四神汤」，这么煲更好喝》",
+          "url": "http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_3284601.html",
+          "note": "官方科普记「四神」为茯苓、淮山、莲子、芡实（或薏仁）；本模板取茯苓+薏苡仁+芡实+山药（项目边界文档已定）"
+        },
+        {
+          "label": "连州市卫生健康局转载《化内湿、健脾胃……四神汤》",
+          "url": "http://www.lianzhou.gov.cn/zjlz/shsh/ylbj/content/post_1856361.html",
+          "note": "列薏仁、莲子、山药、茯苓等量约每味 20 g 家用口径"
+        }
+      ]
+    },
+    {
+      "id": "jiangzao_cha",
+      "display_name": "姜枣茶",
+      "kind": "food_therapy",
+      "components": [
+        {
+          "herb_id": "shengjiang",
+          "role": "ingredient"
+        },
+        {
+          "herb_id": "hongzao",
+          "role": "ingredient"
+        }
+      ],
+      "kitchen_amount_hint": "生姜约 3–5 片，红枣 3–5 颗（建议掰开去核），清水煮或沸水焖后温饮；勿睡前大量。",
+      "cautions": [
+        "温中日常饮，阴虚内热、湿热偏重、易上火者不宜多用",
+        "红枣含糖高，血糖偏高者控制分量"
+      ],
+      "suitable_notes": [
+        "适合畏寒手脚凉、饮食偏生冷后想温中时的家用参考"
+      ],
+      "review_status": "pending",
+      "sources": [
+        {
+          "label": "北京市中医药管理局《谷雨，这杯「暖宝宝」化湿茶请收好~》姜枣温阳化湿茶",
+          "url": "https://zyj.beijing.gov.cn/sy/whkp/202604/t20260420_4596653.html",
+          "note": "基础配方：生姜 3–5 片（约 10 g），红枣 3–5 颗去核"
+        }
+      ]
+    },
+    {
+      "id": "yiner_lianzi_baihe",
+      "display_name": "银耳莲子百合汤取向",
+      "kind": "food_therapy",
+      "components": [
+        {
+          "food_id": "yiner",
+          "role": "ingredient"
+        },
+        {
+          "herb_id": "lianzi",
+          "role": "ingredient"
+        },
+        {
+          "herb_id": "baihe",
+          "role": "ingredient"
+        }
+      ],
+      "kitchen_amount_hint": "银耳一小朵泡发后撕小朵；莲子一小把、百合适量（家用各约一手捏，勿按汤剂加码）；清水小火炖至银耳软糯成羹，可按口味加少许冰糖。单味饮片以 herbs.max_daily_g 为当日封顶参考。",
+      "cautions": [
+        "家常润燥甜汤取向，非润肺处方；风寒咳嗽、脾胃虚寒、便溏者不宜当默认",
+        "痰湿腹胀、甜腻不耐受者少喝或减量",
+        "孕妇、儿童、慢性病或正在服药者先咨询医师"
+      ],
+      "suitable_notes": [
+        "适合口干燥感、想吃清淡甜汤时的饮食参考"
+      ],
+      "review_status": "pending",
+      "sources": [
+        {
+          "label": "广东省中医药局百合科普（提及银耳莲子百合汤类做法）",
+          "url": "http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_3491887.html",
+          "note": "作食疗方向支撑，非处方剂量"
+        },
+        {
+          "label": "国家中医药管理局秋季相关发布会语境（银耳莲子羹类饮食建议）",
+          "url": "http://www.natcm.gov.cn/bangongshi/gongzuodongtai/2025-09-16/36929.html",
+          "note": "饮食建议口径，非方剂"
+        }
+      ]
+    },
+    {
+      "id": "qizao_jitang",
+      "display_name": "芪枣鸡汤取向",
+      "kind": "food_therapy",
+      "components": [
+        {
+          "herb_id": "huangqi",
+          "role": "ingredient"
+        },
+        {
+          "herb_id": "hongzao",
+          "role": "ingredient"
+        },
+        {
+          "food_id": "jirou",
+          "role": "ingredient"
+        }
+      ],
+      "kitchen_amount_hint": "鸡肉或土鸡块适量入锅；黄芪一小段（家用约一指节长量级，勿堆成汤剂）、红枣 3–5 颗去核同炖至熟软；盐油按家常。黄芪/红枣以单味 max_daily_g 为个人当日封顶参考。本模板不强制加党参。",
+      "cautions": [
+        "家常清补鸡汤取向，绝非补中益气汤，禁止在任何文案中挂「补中益气」或经方名",
+        "黄芪属药食目录但 2023-09 对孕妇、哺乳期妇女、婴幼儿等特殊人群不推荐；命中高风险人群不得推荐",
+        "温补同向：实热、外感发热、气滞湿阻、湿热痰湿腹胀期间不宜滥补",
+        "红枣含糖高，血糖偏高者控制分量"
+      ],
+      "suitable_notes": [
+        "适合气虚清补向、畏寒乏力时想喝家常鸡汤的饮食参考（非药品）"
+      ],
+      "review_status": "pending",
+      "sources": [
+        {
+          "label": "四川中医药局科普转载式稿（黄芪炖鸡/参芪类叙述）",
+          "url": "https://sctcm.sc.gov.cn/sctcm/jkys/2024/2/26/d681fa0c10754099b2234215b729f5a9.shtml",
+          "note": "饮食科普口径；不得当作补中益气汤执行"
+        },
+        {
+          "label": "三明市卫健委相关科普页",
+          "url": "http://wjw.sm.gov.cn/jktd/zyys/202403/t20240307_2007308.htm",
+          "note": "参芪大枣/黄芪炖鸡类家用叙述"
+        }
+      ]
+    },
+    {
+      "id": "shenqi_dazao",
+      "display_name": "参芪大枣饮取向",
+      "kind": "food_therapy",
+      "components": [
+        {
+          "herb_id": "huangqi",
+          "role": "ingredient"
+        },
+        {
+          "herb_id": "dangshen",
+          "role": "ingredient"
+        },
+        {
+          "herb_id": "hongzao",
+          "role": "ingredient"
+        }
+      ],
+      "kitchen_amount_hint": "黄芪、党参各一小段（家用轻煎量级，勿抄门诊汤剂克数），红枣 3–5 颗去核，清水煮开后小火再煮十余分钟，温饮。各味以 herbs.max_daily_g 为当日封顶；能少不多。",
+      "cautions": [
+        "食疗轻煎饮取向，非补中益气汤，禁止挂经方名或「益气聪明」类夸张功效词",
+        "黄芪、党参：2023-09 对孕妇、哺乳期妇女、婴幼儿等特殊人群不推荐；高风险人群不得推荐",
+        "外感表实、气滞湿阻、湿热偏重不宜滥补",
+        "红枣含糖高，血糖偏高者控制分量"
+      ],
+      "suitable_notes": [
+        "适合想清补气虚、又不想喝肉汤时的家用轻煎参考；与芪枣鸡汤同属清补气虚模板族"
+      ],
+      "review_status": "pending",
+      "sources": [
+        {
+          "label": "四川中医药局科普转载式稿（参芪大枣汤叙述）",
+          "url": "https://sctcm.sc.gov.cn/sctcm/jkys/2024/2/26/d681fa0c10754099b2234215b729f5a9.shtml",
+          "note": "与芪枣鸡汤同源科普链"
+        },
+        {
+          "label": "三明市卫健委相关科普页",
+          "url": "http://wjw.sm.gov.cn/jktd/zyys/202403/t20240307_2007308.htm",
+          "note": "参芪大枣类家用叙述"
+        }
+      ]
+    },
+    {
+      "id": "qingbuliang_wl",
+      "display_name": "清补凉（本站白名单版）",
+      "kind": "food_therapy",
+      "components": [
+        {
+          "herb_id": "yuzhu",
+          "role": "ingredient"
+        },
+        {
+          "herb_id": "maidong",
+          "role": "ingredient"
+        },
+        {
+          "herb_id": "baihe",
+          "role": "ingredient"
+        },
+        {
+          "herb_id": "lianzi",
+          "role": "ingredient"
+        },
+        {
+          "herb_id": "shanyao",
+          "role": "ingredient"
+        }
+      ],
+      "kitchen_amount_hint": "五味按家常甜汤/广式煲汤习惯各取一小把量级入锅久炖；以各味 herbs.max_daily_g 为个人当日封顶，勿按市售料包或汤剂加量。本站只认上述白名单组成。",
+      "cautions": [
+        "本站白名单固定组成，≠ 市售「清补凉」料包；拒绝解析未知包材或自由加减",
+        "多味凉润叠加：阳虚、脾胃虚寒、痰湿偏重、腹泻期间不宜当默认",
+        "禁止写成益胃汤、沙参麦冬汤、增液汤等经方名",
+        "孕妇、儿童、慢性病或正在服药者先咨询医师"
+      ],
+      "suitable_notes": [
+        "适合燥热口干、想喝养阴生津向家常甜汤时的白名单参考"
+      ],
+      "review_status": "pending",
+      "sources": [
+        {
+          "label": "广东省中医药局《清热生津汤》类科普",
+          "url": "http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_3989272.html",
+          "note": "可见银耳/沙参/玉竹/百合/莲子/山药等写法；本白名单未含未入库沙参，宁可减味"
+        }
+      ]
+    },
+    {
+      "id": "shanzha_maiya",
+      "display_name": "山楂麦芽消食饮",
+      "kind": "food_therapy",
+      "components": [
+        {
+          "herb_id": "shanzha",
+          "role": "ingredient"
+        },
+        {
+          "herb_id": "maiya",
+          "role": "ingredient"
+        }
+      ],
+      "kitchen_amount_hint": "山楂、麦芽各一小把家用量（轻煎或煮饮），勿大剂量久服；各味以 herbs.max_daily_g 为当日封顶。禁止任何「回乳方」用量提示。",
+      "cautions": [
+        "【强制】哺乳期妇女不得常规推荐含麦芽本品；药典回乳炒用大剂量禁止作产品默认",
+        "【强制】孕妇慎用/不宜山楂——孕期不得推荐本模板",
+        "胃酸偏多、溃疡倾向者山楂减量或不用；无食积而脾胃弱者不宜久用麦芽",
+        "家用消食向命名模板，禁止挂保和丸、大山楂丸等成药名当家庭煎服指南"
+      ],
+      "suitable_notes": [
+        "适合油腻肉食或面食停滞之后的消食向家用参考（非成药）"
+      ],
+      "review_status": "pending",
+      "sources": [
+        {
+          "label": "广东省中医药局山楂科普（山楂与麦芽配伍类叙述）",
+          "url": "http://szyyj.gd.gov.cn/zyyfw/ysbj/content/post_4486849.html",
+          "note": "方向支撑；须绑死哺乳/孕期闸门"
+        }
+      ]
+    }
+  ]
+}

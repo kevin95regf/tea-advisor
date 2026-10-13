@@ -83,8 +83,8 @@
       "域 II 条目**不得带 field 键** —— 带了就成了判定登记，会与 herbs.json 的 rulings（软约束豁免登记）语义混用。"
     ],
     "counts": {
-      "property_total": 44,
-      "property_with_source": 43,
+      "property_total": 51,
+      "property_with_source": 50,
       "constitution_total": 24,
       "distinct_herbs": 14
     },
@@ -544,8 +544,8 @@
       "id": "sangshen",
       "name": "桑椹",
       "project": {
-        "nature": "cool",
-        "nature_cn": "凉",
+        "nature": "cold",
+        "nature_cn": "寒",
         "flavors": [
           "sweet",
           "sour"
@@ -571,9 +571,9 @@
           "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=475"
         }
       ],
-      "status": "不一致",
-      "delta": "四气：项目「凉」，药典「寒」（按降档约定应为「寒」）",
-      "open_question": "按 2026-09-17 既有裁定保留项目值、不改 herbs.json，等 nanple 复核（见 core/data/herb_nature_reference.json 的 open_items.discrepancies_keep_project_values）"
+      "status": "一致",
+      "delta": null,
+      "open_question": null
     },
     {
       "id": "baihe",
@@ -1566,6 +1566,234 @@
           "locator": "《中国药典》2020 年版一部 p.105「天冬」",
           "verbatim": "甘、苦，寒。归肺、肾经。",
           "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=78"
+        }
+      ],
+      "status": "一致",
+      "delta": null,
+      "open_question": null
+    },
+    {
+      "id": "huangqi",
+      "name": "黄芪",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "肺",
+          "脾"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "黄芪",
+          "how": "正名（药典收载名）",
+          "locator": "《中国药典》2020 年版一部 p.364「黄芪」",
+          "verbatim": "甘，微温。归肺、脾经。",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=479"
+        }
+      ],
+      "status": "一致",
+      "delta": "四气：降档后一致，但药典原文用的是更细的档「微温」",
+      "open_question": null
+    },
+    {
+      "id": "dangshen",
+      "name": "党参",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "肺"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "党参",
+          "how": "正名（药典收载名）",
+          "locator": "《中国药典》2020 年版一部 p.342「党参」",
+          "verbatim": "甘，平。归脾、肺经。",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=443"
+        }
+      ],
+      "status": "一致",
+      "delta": null,
+      "open_question": null
+    },
+    {
+      "id": "danggui",
+      "name": "当归",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet",
+          "pungent"
+        ],
+        "flavors_cn": [
+          "甘",
+          "辛"
+        ],
+        "meridians": [
+          "肝",
+          "心",
+          "脾"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "当归",
+          "how": "正名（药典收载名）",
+          "locator": "《中国药典》2020 年版一部 p.188「当归」",
+          "verbatim": "甘、辛，温。归肝、心、脾经。",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=204"
+        }
+      ],
+      "status": "一致",
+      "delta": null,
+      "open_question": null
+    },
+    {
+      "id": "sharen",
+      "name": "砂仁",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "肾"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "砂仁",
+          "how": "正名（药典收载名）",
+          "locator": "《中国药典》2020 年版一部 p.313「砂仁」",
+          "verbatim": "辛，温。归脾、胃、肾经。",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=396"
+        }
+      ],
+      "status": "一致",
+      "delta": null,
+      "open_question": null
+    },
+    {
+      "id": "maiya",
+      "name": "麦芽",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "胃"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "麦芽",
+          "how": "正名（药典收载名）",
+          "locator": "《中国药典》2020 年版一部 p.212「麦芽」",
+          "verbatim": "甘，平。归脾、胃经。",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=241"
+        }
+      ],
+      "status": "一致",
+      "delta": null,
+      "open_question": null
+    },
+    {
+      "id": "mugua",
+      "name": "木瓜",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sour"
+        ],
+        "flavors_cn": [
+          "酸"
+        ],
+        "meridians": [
+          "肝",
+          "脾"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "木瓜",
+          "how": "正名（药典收载名）",
+          "locator": "《中国药典》2020 年版一部 p.111「木瓜」",
+          "verbatim": "酸，温。归肝、脾经。",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=87"
+        }
+      ],
+      "status": "一致",
+      "delta": null,
+      "open_question": null
+    },
+    {
+      "id": "pangdahai",
+      "name": "胖大海",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "肺",
+          "大肠"
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "chp2020",
+          "tier": "官方·药典",
+          "matched_name": "胖大海",
+          "how": "正名（药典收载名）",
+          "locator": "《中国药典》2020 年版一部 p.322「胖大海」",
+          "verbatim": "甘，寒。归肺、大肠经。",
+          "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=413"
         }
       ],
       "status": "一致",
