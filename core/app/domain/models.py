@@ -294,6 +294,14 @@ class AnalyzeRequest(BaseModel):
             "默认空 ⇒ 与既有调用方行为完全一致。"
         ),
     )
+    persona_id: str | None = Field(
+        default=None,
+        description=(
+            "可选用户主画像 id（见 personas.json）。缺省兼容旧客户端。"
+            "未知 id 由编排层返回 UNKNOWN_PERSONA；"
+            "safety_gate=high_risk 的画像与关键词闸门同等：不推荐、引导就医。"
+        ),
+    )
 
     @field_validator("text")
     @classmethod

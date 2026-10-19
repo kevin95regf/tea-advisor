@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "title": "44 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）",
+    "title": "51 味饮片性味归经核对参考数据（《中国药典》2020 年版一部）",
     "version": "1.0.0",
     "compiled_at": "2026-09-20",
     "purpose": "把项目 core/data/herbs.json 的性味归经与《中国药典》2020 年版一部逐条对照，标出不一致项，供人工判断以哪个为准。**本文件不修改任何项目数据。**",
@@ -809,8 +809,8 @@
     {
       "herb": "桑椹",
       "project": {
-        "nature": "cool",
-        "nature_cn": "凉",
+        "nature": "cold",
+        "nature_cn": "寒",
         "flavors": [
           "sweet",
           "sour"
@@ -858,20 +858,12 @@
         "entry_id": 475,
         "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=475"
       },
-      "nature_match": false,
+      "nature_match": true,
       "flavors_match": true,
       "meridians_match": true,
-      "differences": [
-        "**四气**：项目「凉」，药典「寒」（按降档约定应为「寒」）"
-      ],
-      "status": "不一致",
-      "impact": [
-        "**四性数值轴**：项目 `cool`(-1) → 药典降档后 `cold`(-2)，相差 **1 档**（编码见 `core/app/domain/nature_math.py`）。注意：这条轴**不作用于饮片**，只作用于食材。",
-        "**对确定性逻辑无影响**：没有任何护栏或规则读饮片四气，所以改与不改都不会改变 `filter_by_constitution`、`check_blend`、`_pick_rule` 的结果。",
-        "**对 Agent2 有软性影响**：候选描述里 桑椹 的四性会从「凉」变成「寒」（更偏寒凉），模型据此做寒热搭配推理时可能略微改变选料倾向。这不是硬约束，无法用测试断言。",
-        "**展示影响**：两个壳目前都不打印饮片四性，所以用户看不到这个差别。",
-        "**结论**：本处差异**不会改变任何确定性判定结果**，因此「先保留项目值」不会引入功能风险；改动与否取决于中药专业判断。"
-      ]
+      "differences": [],
+      "status": "一致",
+      "impact": []
     },
     {
       "herb": "百合",
@@ -2584,14 +2576,397 @@
       "differences": [],
       "status": "一致",
       "impact": []
+    },
+    {
+      "herb": "黄芪",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "肺",
+          "脾"
+        ],
+        "effects": [
+          "补气升阳",
+          "固表",
+          "生津养血"
+        ],
+        "max_daily_g": 20
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "黄芪",
+        "page": 364,
+        "pinyin": "Huɑngqi",
+        "latin": "ASTRAGALI RADIX",
+        "xingwei_verbatim": "甘，微温。归肺、脾经。",
+        "nature_word": "微温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "肺",
+          "脾"
+        ],
+        "effects_verbatim": "补气升阳，固表止汗，利水消肿，生津养血，行滞通痹，托毒排脓，敛疮生肌。用于气虚乏力，食少便溏，中气下陷，久泻脱肛，便血崩漏，表虚自汗，气虚水肿，内热消渴，血虚萎黄，半身不遂，痹痛麻木，痈疽难溃，久溃不敛。",
+        "dosage_verbatim": "9～30g。",
+        "entry_id": 479,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=479"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [
+        "四气：降档后一致，但药典原文用的是更细的档「微温」"
+      ],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "党参",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "肺"
+        ],
+        "effects": [
+          "健脾益肺",
+          "养血生津"
+        ],
+        "max_daily_g": 20
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "党参",
+        "page": 342,
+        "pinyin": "Dɑngshen",
+        "latin": "CODONOPSIS RADIX",
+        "xingwei_verbatim": "甘，平。归脾、肺经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "肺"
+        ],
+        "effects_verbatim": "健脾益肺，养血生津。用于脾肺气虚，食少倦怠，咳嗽虚喘，气血不足，面色萎黄，心悸气短，津伤口渴，内热消渴。",
+        "dosage_verbatim": "9～30g。",
+        "entry_id": 443,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=443"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "当归",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sweet",
+          "pungent"
+        ],
+        "flavors_cn": [
+          "甘",
+          "辛"
+        ],
+        "meridians": [
+          "肝",
+          "心",
+          "脾"
+        ],
+        "effects": [
+          "补血活血",
+          "润肠"
+        ],
+        "max_daily_g": 12
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "当归",
+        "page": 188,
+        "pinyin": "Dɑnggui",
+        "latin": "ANGELICAE SINENSIS RADIX",
+        "xingwei_verbatim": "甘、辛，温。归肝、心、脾经。",
+        "nature_word": "温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "sweet",
+          "pungent"
+        ],
+        "flavors_cn": [
+          "甘",
+          "辛"
+        ],
+        "meridians": [
+          "肝",
+          "心",
+          "脾"
+        ],
+        "effects_verbatim": "补血活血，调经止痛，润肠通便。用于血虚萎黄，眩晕心悸，月经不调，经闭痛经，虚寒腹痛，风湿痹痛，跌扑损伤，痈疽疮疡，肠燥便秘。酒当归活血通经。用于经闭痛经，风湿痹痛，跌扑损伤。",
+        "dosage_verbatim": "6～12g。",
+        "entry_id": 204,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=204"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "砂仁",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "肾"
+        ],
+        "effects": [
+          "化湿开胃",
+          "温脾"
+        ],
+        "max_daily_g": 6
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "砂仁",
+        "page": 313,
+        "pinyin": "Shɑren",
+        "latin": "AMOMI FRUCTUS",
+        "xingwei_verbatim": "辛，温。归脾、胃、肾经。",
+        "nature_word": "温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "pungent"
+        ],
+        "flavors_cn": [
+          "辛"
+        ],
+        "meridians": [
+          "脾",
+          "胃",
+          "肾"
+        ],
+        "effects_verbatim": "化湿开胃，温脾止泻，理气安胎。用于湿浊中阻，脘痞不饥，脾胃虚寒，呕吐泄泻，妊娠恶阻，胎动不安。",
+        "dosage_verbatim": "3～6g，后下。",
+        "entry_id": 396,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=396"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "麦芽",
+      "project": {
+        "nature": "neutral",
+        "nature_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "胃"
+        ],
+        "effects": [
+          "行气消食",
+          "健脾开胃"
+        ],
+        "max_daily_g": 15
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "麦芽",
+        "page": 212,
+        "pinyin": "Mɑiyɑ",
+        "latin": "HORDEI FRUCTUS GERMINATUS",
+        "xingwei_verbatim": "甘，平。归脾、胃经。",
+        "nature_word": "平",
+        "nature_mapped": "neutral",
+        "nature_mapped_cn": "平",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "脾",
+          "胃"
+        ],
+        "effects_verbatim": "行气消食，健脾开胃，回乳消胀。用于食积不消，脘腹胀痛，脾虚食少，乳汁郁积，乳房胀痛，妇女断乳，肝郁胁痛，肝胃气痛。生麦芽健脾和胃，疏肝行气。用于脾虚食少，乳汁郁积。炒麦芽行气消食回乳。用于食积不消，妇女断乳。焦麦芽消食化滞。用于食积不消，脘腹胀痛。",
+        "dosage_verbatim": "10～15g；回乳炒用60g。",
+        "entry_id": 241,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=241"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "木瓜",
+      "project": {
+        "nature": "warm",
+        "nature_cn": "温",
+        "flavors": [
+          "sour"
+        ],
+        "flavors_cn": [
+          "酸"
+        ],
+        "meridians": [
+          "肝",
+          "脾"
+        ],
+        "effects": [
+          "舒筋活络",
+          "和胃化湿"
+        ],
+        "max_daily_g": 9
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "木瓜",
+        "page": 111,
+        "pinyin": "Muguɑ",
+        "latin": "CHAENOMELIS FRUCTUS",
+        "xingwei_verbatim": "酸，温。归肝、脾经。",
+        "nature_word": "温",
+        "nature_mapped": "warm",
+        "nature_mapped_cn": "温",
+        "flavors": [
+          "sour"
+        ],
+        "flavors_cn": [
+          "酸"
+        ],
+        "meridians": [
+          "肝",
+          "脾"
+        ],
+        "effects_verbatim": "舒筋活络，和胃化湿。用于湿痹拘挛，腰膝关节酸重疼痛，暑湿吐泻，转筋挛痛，脚气水肿。",
+        "dosage_verbatim": "6～9g。",
+        "entry_id": 87,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=87"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致",
+      "impact": []
+    },
+    {
+      "herb": "胖大海",
+      "project": {
+        "nature": "cold",
+        "nature_cn": "寒",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "肺",
+          "大肠"
+        ],
+        "effects": [
+          "清热润肺",
+          "利咽开音",
+          "润肠通便"
+        ],
+        "max_daily_g": 9
+      },
+      "bridge_note": null,
+      "pharmacopoeia": {
+        "matched_title": "胖大海",
+        "page": 322,
+        "pinyin": "Pɑngdɑhɑi",
+        "latin": "STERCULIAE LYCHNOPHORAE SEMEN",
+        "xingwei_verbatim": "甘，寒。归肺、大肠经。",
+        "nature_word": "寒",
+        "nature_mapped": "cold",
+        "nature_mapped_cn": "寒",
+        "flavors": [
+          "sweet"
+        ],
+        "flavors_cn": [
+          "甘"
+        ],
+        "meridians": [
+          "肺",
+          "大肠"
+        ],
+        "effects_verbatim": "清热润肺，利咽开音，润肠通便。用于肺热声哑，干咳无痰，咽喉干痛，热结便闭，头痛目赤。",
+        "dosage_verbatim": "2～3枚，沸水泡服或煎服。",
+        "entry_id": 413,
+        "url": "https://ydz.chp.org.cn/#/item?bookId=1&entryId=413"
+      },
+      "nature_match": true,
+      "flavors_match": true,
+      "meridians_match": true,
+      "differences": [],
+      "status": "一致",
+      "impact": []
     }
   ],
   "open_items": [
     {
       "id": "discrepancies_keep_project_values",
-      "title": "7 处不一致：先保留项目值，等 nanple 复核",
-      "status": "待 nanple 复核",
-      "detail": "**2026-09-17 决定：先保留项目值，不修改 herbs.json，等 nanple 复核数据后再决定是否改。** 每处差异的「差异影响」见 docs/herb-nature-crosscheck.md §3.2。**此处更正一处早先的错误说法**：本文件曾写「四气档位差异会影响三层判定里的寒热加减」，这是错的 —— 代码里没有任何护栏或规则读饮片四气（取证见文档 §3.1：safety.py 只读 name/max_daily_g/cautions/unsuitable_for/suitable_constitutions；matcher 的 match_natures 匹配的是整餐四气 parsed.overall_nature；两个壳渲染饮片时只打印 name/amount_g/role）。所以这些差异**不改变任何确定性判定结果**，唯一实质消费者是 Agent2 的候选描述提示词，属软性影响。"
+      "title": "6 处不一致仍保留项目值；桑椹已按药典改为寒（2026-10-13）",
+      "status": "部分已裁定（桑椹完成；余 6 处待复核）",
+      "detail": "**2026-09-17 曾定：先保留项目值。2026-10-13 所有者批准桑椹一项：herbs.json cool→cold（药典 2020 一部 p.362）。** 其余 6 处（百合/淡竹叶凉↔寒、白扁豆平↔微温、佛手缺酸/胃、红枣缺心、荷叶多淡）仍待复核。差异对确定性逻辑无影响；详见 docs/herb-nature-crosscheck.md。"
     },
     {
       "id": "zhonghua_bencao_column_empty",

@@ -1,0 +1,392 @@
+{
+  "_meta": {
+    "title": "用户主画像（样本分布层）",
+    "version": "0.1.0",
+    "notice": "本文件来自用户上传的 3 万行画像样本表的主画像分布，不是医学依据、不是体质辨证标准。constitution_hints / diet_signal_tendencies 均为样本语境下的软对照，一律 review_status=pending，禁止当作药典或文献结论引用。高风险画像只挂安全闸门与就医提醒方向，不得自动茶饮/汤饮推荐。本层是结构化 JSON 查表，不是向量 RAG。",
+    "sample_source": {
+      "description": "用户上传的用户画像样本 CSV（字段 user_id, persona_primary, persona_secondary, brief_note）",
+      "row_count": 30000,
+      "primary_persona_count": 11,
+      "secondary_compatible_note": "secondary_compatible 按样本中该 primary 与 secondary 的共现中文名列出（非权威医学组合）"
+    },
+    "review_status": "unreviewed",
+    "field_notes": {
+      "safety_gate": "none | high_risk；high_risk 时不得进入自动茶饮推荐",
+      "high_risk_keywords": "仅 high_risk 画像填写；须能被 safety.HIGH_RISK_KEYWORDS 或本表关键词子串命中",
+      "constitution_hints": "软倾向，pending；constitution_id 必须 ∈ constitution.json",
+      "diet_signal_tendencies": "signal_id 必须 ∈ diet_signals.json；tendency 仅 elevated|reduced|neutral",
+      "secondary_compatible": "样本副画像共现中文名列表"
+    }
+  },
+  "personas": [
+    {
+      "id": "overnight_student",
+      "display_name": "熬夜大学生",
+      "brief_note": "常熬夜，早餐不准时，夜宵多",
+      "sample_primary_count": 3000,
+      "safety_gate": "none",
+      "high_risk_keywords": [],
+      "constitution_hints": [
+        {
+          "constitution_id": "yin_deficiency",
+          "tendency": "possible",
+          "note": "样本备注含熬夜/夜宵语境；仅作软对照，非辨证结论（pending）"
+        }
+      ],
+      "diet_signal_tendencies": [
+        {
+          "signal_id": "high_sugar",
+          "tendency": "elevated",
+          "note": "夜宵语境下甜食/饮料可能偏多（样本分布推断，pending）"
+        },
+        {
+          "signal_id": "iced",
+          "tendency": "elevated",
+          "note": "夜宵外卖常见冰饮语境（样本分布推断，pending）"
+        },
+        {
+          "signal_id": "fried",
+          "tendency": "elevated",
+          "note": "夜宵油炸/煎炸倾向（样本分布推断，pending）"
+        }
+      ],
+      "secondary_compatible": ["外卖党"],
+      "review_status": "pending",
+      "sources": [
+        {
+          "kind": "distribution_sample",
+          "label": "用户画像样本表 persona_primary=熬夜大学生（n=3000）"
+        }
+      ]
+    },
+    {
+      "id": "alcohol_middle_age",
+      "display_name": "爱喝酒中年人",
+      "brief_note": "晚餐常饮酒，偶有深夜续摊",
+      "sample_primary_count": 3000,
+      "safety_gate": "none",
+      "high_risk_keywords": [],
+      "constitution_hints": [
+        {
+          "constitution_id": "damp_heat",
+          "tendency": "possible",
+          "note": "饮酒语境下湿热倾向为软推断，非诊断（pending）"
+        },
+        {
+          "constitution_id": "qi_stagnation",
+          "tendency": "possible",
+          "note": "社交饮酒/续摊压力语境的软对照（pending）"
+        }
+      ],
+      "diet_signal_tendencies": [
+        {
+          "signal_id": "alcohol",
+          "tendency": "elevated",
+          "note": "brief_note 明确晚餐常饮酒（样本，pending）"
+        }
+      ],
+      "secondary_compatible": ["规律上班族"],
+      "review_status": "pending",
+      "sources": [
+        {
+          "kind": "distribution_sample",
+          "label": "用户画像样本表 persona_primary=爱喝酒中年人（n=3000）"
+        }
+      ]
+    },
+    {
+      "id": "regular_office",
+      "display_name": "规律上班族",
+      "brief_note": "早中晚相对规律，偶有加班餐",
+      "sample_primary_count": 3000,
+      "safety_gate": "none",
+      "high_risk_keywords": [],
+      "constitution_hints": [
+        {
+          "constitution_id": "balanced",
+          "tendency": "possible",
+          "note": "作息相对规律时平和质可能性略高；仍属软推断（pending）"
+        }
+      ],
+      "diet_signal_tendencies": [
+        {
+          "signal_id": "fried",
+          "tendency": "neutral",
+          "note": "偶有加班餐，信号整体偏中性（pending）"
+        },
+        {
+          "signal_id": "greasy",
+          "tendency": "neutral",
+          "note": "无稳定油腻主导描述（pending）"
+        }
+      ],
+      "secondary_compatible": ["外卖党"],
+      "review_status": "pending",
+      "sources": [
+        {
+          "kind": "distribution_sample",
+          "label": "用户画像样本表 persona_primary=规律上班族（n=3000）"
+        }
+      ]
+    },
+    {
+      "id": "takeout_heavy",
+      "display_name": "外卖党",
+      "brief_note": "几乎不做饭，外卖为主",
+      "sample_primary_count": 3000,
+      "safety_gate": "none",
+      "high_risk_keywords": [],
+      "constitution_hints": [
+        {
+          "constitution_id": "phlegm_damp",
+          "tendency": "possible",
+          "note": "外卖油腻甜辣语境下痰湿倾向为软推断（pending）"
+        }
+      ],
+      "diet_signal_tendencies": [
+        {
+          "signal_id": "fried",
+          "tendency": "elevated",
+          "note": "外卖为主常见煎炸（样本分布推断，pending）"
+        },
+        {
+          "signal_id": "greasy",
+          "tendency": "elevated",
+          "note": "外卖油腻倾向（pending）"
+        },
+        {
+          "signal_id": "high_sugar",
+          "tendency": "elevated",
+          "note": "外卖甜饮/甜口搭配常见（pending）"
+        },
+        {
+          "signal_id": "spicy",
+          "tendency": "elevated",
+          "note": "外卖麻辣口味常见（pending）"
+        }
+      ],
+      "secondary_compatible": ["熬夜大学生"],
+      "review_status": "pending",
+      "sources": [
+        {
+          "kind": "distribution_sample",
+          "label": "用户画像样本表 persona_primary=外卖党（n=3000）"
+        }
+      ]
+    },
+    {
+      "id": "fitness",
+      "display_name": "健身人群",
+      "brief_note": "高蛋白少油，训练日加餐",
+      "sample_primary_count": 3000,
+      "safety_gate": "none",
+      "high_risk_keywords": [],
+      "constitution_hints": [
+        {
+          "constitution_id": "balanced",
+          "tendency": "possible",
+          "note": "规律训练+少油描述下的软对照，非体能评估（pending）"
+        }
+      ],
+      "diet_signal_tendencies": [
+        {
+          "signal_id": "greasy",
+          "tendency": "reduced",
+          "note": "brief_note 写少油（样本，pending）"
+        },
+        {
+          "signal_id": "dairy",
+          "tendency": "neutral",
+          "note": "样本未写乳制品或蛋白粉；不推定 elevated（pending）"
+        }
+      ],
+      "secondary_compatible": ["减肥年轻人"],
+      "review_status": "pending",
+      "sources": [
+        {
+          "kind": "distribution_sample",
+          "label": "用户画像样本表 persona_primary=健身人群（n=3000）"
+        }
+      ]
+    },
+    {
+      "id": "vegetarian",
+      "display_name": "素食者",
+      "brief_note": "植物性饮食，忌酒肉",
+      "sample_primary_count": 3000,
+      "safety_gate": "none",
+      "high_risk_keywords": [],
+      "constitution_hints": [],
+      "diet_signal_tendencies": [
+        {
+          "signal_id": "alcohol",
+          "tendency": "reduced",
+          "note": "brief_note 忌酒（样本，pending）"
+        }
+      ],
+      "secondary_compatible": ["减肥年轻人"],
+      "review_status": "pending",
+      "sources": [
+        {
+          "kind": "distribution_sample",
+          "label": "用户画像样本表 persona_primary=素食者（n=3000）"
+        }
+      ]
+    },
+    {
+      "id": "pregnant",
+      "display_name": "孕期女性",
+      "brief_note": "少食多餐，忌酒",
+      "sample_primary_count": 3000,
+      "safety_gate": "high_risk",
+      "high_risk_keywords": ["孕期", "孕妇"],
+      "constitution_hints": [],
+      "diet_signal_tendencies": [
+        {
+          "signal_id": "alcohol",
+          "tendency": "reduced",
+          "note": "brief_note 忌酒；高风险人群不走自动推荐（pending）"
+        }
+      ],
+      "secondary_compatible": ["规律上班族"],
+      "review_status": "pending",
+      "care_direction": "命中本画像或关键词时不给出自动茶饮/汤饮推荐，引导咨询执业医师或妇幼保健机构。",
+      "sources": [
+        {
+          "kind": "distribution_sample",
+          "label": "用户画像样本表 persona_primary=孕期女性（n=3000）"
+        }
+      ]
+    },
+    {
+      "id": "weight_loss_youth",
+      "display_name": "减肥年轻人",
+      "brief_note": "控热量，偶有破戒",
+      "sample_primary_count": 3000,
+      "safety_gate": "none",
+      "high_risk_keywords": [],
+      "constitution_hints": [
+        {
+          "constitution_id": "phlegm_damp",
+          "tendency": "possible",
+          "note": "控热量人群中痰湿相关仅为可能软对照（pending）"
+        }
+      ],
+      "diet_signal_tendencies": [
+        {
+          "signal_id": "high_sugar",
+          "tendency": "elevated",
+          "note": "偶有破戒时甜食可能升高（样本分布推断，pending）"
+        },
+        {
+          "signal_id": "greasy",
+          "tendency": "reduced",
+          "note": "控热量语境下油腻倾向自称降低（pending）"
+        }
+      ],
+      "secondary_compatible": ["健身人群"],
+      "review_status": "pending",
+      "sources": [
+        {
+          "kind": "distribution_sample",
+          "label": "用户画像样本表 persona_primary=减肥年轻人（n=3000）"
+        }
+      ]
+    },
+    {
+      "id": "retired_elder",
+      "display_name": "退休老人",
+      "brief_note": "清淡早睡早起，软食粥类多",
+      "sample_primary_count": 3000,
+      "safety_gate": "none",
+      "high_risk_keywords": [],
+      "constitution_hints": [
+        {
+          "constitution_id": "balanced",
+          "tendency": "possible",
+          "note": "清淡规律作息的软对照（pending）"
+        },
+        {
+          "constitution_id": "qi_deficiency",
+          "tendency": "possible",
+          "note": "年长群体气虚可能升高，仅为人口学软推断（pending）"
+        }
+      ],
+      "diet_signal_tendencies": [
+        {
+          "signal_id": "spicy",
+          "tendency": "reduced",
+          "note": "清淡饮食语境（pending）"
+        },
+        {
+          "signal_id": "alcohol",
+          "tendency": "reduced",
+          "note": "样本未强调饮酒；清淡取向下偏低（pending）"
+        }
+      ],
+      "secondary_compatible": ["慢性病高血压"],
+      "review_status": "pending",
+      "sources": [
+        {
+          "kind": "distribution_sample",
+          "label": "用户画像样本表 persona_primary=退休老人（n=3000）"
+        }
+      ]
+    },
+    {
+      "id": "chronic_diabetes",
+      "display_name": "慢性病糖尿病",
+      "brief_note": "控糖少甜，定时加餐",
+      "sample_primary_count": 1500,
+      "safety_gate": "high_risk",
+      "high_risk_keywords": ["糖尿病"],
+      "constitution_hints": [],
+      "diet_signal_tendencies": [
+        {
+          "signal_id": "high_sugar",
+          "tendency": "elevated",
+          "note": "需严控的信号维度：画像备注控糖少甜；tendency=elevated 表示该信号对决策敏感/须规避，非鼓励摄入（pending）"
+        }
+      ],
+      "secondary_compatible": [],
+      "review_status": "pending",
+      "care_direction": "命中本画像或「糖尿病」关键词时不给出自动茶饮/汤饮推荐，引导咨询内分泌或全科医师，遵医嘱饮食。",
+      "sources": [
+        {
+          "kind": "distribution_sample",
+          "label": "用户画像样本表 persona_primary=慢性病糖尿病（n=1500）"
+        }
+      ]
+    },
+    {
+      "id": "chronic_hypertension",
+      "display_name": "慢性病高血压",
+      "brief_note": "少盐清淡，作息偏早",
+      "sample_primary_count": 1500,
+      "safety_gate": "high_risk",
+      "high_risk_keywords": ["高血压"],
+      "constitution_hints": [],
+      "diet_signal_tendencies": [
+        {
+          "signal_id": "greasy",
+          "tendency": "reduced",
+          "note": "少盐清淡语境；高风险不走自动推荐（pending）"
+        },
+        {
+          "signal_id": "alcohol",
+          "tendency": "reduced",
+          "note": "清淡作息取向下饮酒宜低；非治疗建议（pending）"
+        }
+      ],
+      "secondary_compatible": ["退休老人"],
+      "review_status": "pending",
+      "care_direction": "命中本画像或「高血压」关键词时不给出自动茶饮/汤饮推荐，引导咨询心内科或全科医师。",
+      "sources": [
+        {
+          "kind": "distribution_sample",
+          "label": "用户画像样本表 persona_primary=慢性病高血压（n=1500）"
+        }
+      ]
+    }
+  ]
+}

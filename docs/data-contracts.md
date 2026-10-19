@@ -9,17 +9,17 @@
 
 ## `core/data/food_properties.json`
 
-- `food_properties.json`＝147：`foods` **list(129)**、`tea_drinks` **{_note, items(18)}** ——
+- `food_properties.json`＝212：`foods` **list(194)**、`tea_drinks` **{_note, items(18)}** ——
   **嵌套≠同构**，查重必须先 flatten，否则会漏掉整个茶饮段。
 - ⚠️ **`ENTRY_FIXES` 是强制写入** ⇒ 改食物数据必须同步它（否则下次跑补丁脚本会把手改的内容覆盖回去）。
-- 字段集合＝`FIELD_ORDER`（**15** 个，定义在 `core/scripts/patch_food_table.py`）；`nature` 只 5 值存英文。
+- 字段集合＝`FIELD_ORDER`（**17** 个，定义在 `core/scripts/patch_food_table.py`）；原 15 个业务/审核字段不变，末尾追加 `food_group_code`（WS/T 464-2015）与 `dg2022_layer`（膳食宝塔 2022 层号）；运行时代码当前不读这两字段。`nature` 只 5 值存英文。
 
 ## `core/data/herbs.json`
 
 - 是 **`indent=2` 多行 JSON**，但**数组按宽度折行续写**（如 `"herbs": ["fuling", "chenpi", …`
   续到下一行）⇒ `json.load` → `dumps` 回写会把每个数组元素拆成一行、产生 **~2400 行假 diff**
   ⇒ 只能**文本级精确替换**。精确替换的 old 串必须带**唯一上下文锚定**（同一段 JSON 片段常出现多次）。
-- `_meta.version` 现 **0.8.0**。
+- `_meta.version` 现 **0.9.0**（2026-10-13 Batch H1：P0 七味入库，44→51）。
 - **`brewing` 是每味最后一个业务字段**；E2 之后插入 4 个 review 字段
   （`review_status`／`reviewed_by`／`reviewed_at`／`review_note`，**无 `reviewed` 布尔**）。
   `CatalogHerb(**item)` 会**忽略多余字段**。
@@ -51,6 +51,11 @@
 - ⚠️ **`rulings` 的读者是测试侧**：`core/tests/test_safety.py` 的 `load_rulings()`；
   **production（`core/app`、`ui`）不读它**（这两个键在生产代码里零命中）。
 
+## `docs/food-tcm-evidence.json`（四气/五味核验侧车）
+
+- 按 id 索引的核验结果（原 147 + 待审 79），**不是** `food-properties-sources.json` 那种登记表。
+- ⚠️ **运行时不读**（与其它 `docs/*.json` 相同）；清单见 `docs/food-expansion/tcm_review_checklist.md`。
+
 ## `docs/food-properties-sources.json`（登记表）
 
 - 往 `docs/food-properties-sources.json` 加条目有 7 条「会静默出错」纪律 ⇒ **照既有条目抄格式**
@@ -69,3 +74,20 @@
 - ⚠️ **批脚本会往数据里写文案**：`core/var/stage3_apply.py` 的 `vis_tail`／`open_questions`／`scope`／
   `CATALOG_ANNOUNCEMENT` 会被**逐字写进 `herbs.json`** ⇒ 「文案即数据」，改脚本前先看它会写什么。
 - ⚠️ **口径陈述不写死数字**（如「库内 N 味寒凉一律标阳虚不宜」）—— N 每批都变 ⇒ 必过期。
+
+
+## `core/data/soup_templates.json`（2026-10-13 新增）
+
+- 结构＝`{_meta, templates}`；`kind` **仅** `food_therapy`。
+- 组件 `herb_id` 必须落在 `herbs.json`；`kitchen_amount_hint` 为家庭约量文案，**禁止**冒充处方剂量。
+- 只读加载：`core/app/services/soup_templates.py`；**未**接 Agent2，**未**改 `agent2_system.md`。UI/API 接线另开。
+
+
+## `core/data/personas.json`（2026-10-16 新增）
+
+- 结构＝`{_meta, personas}`；**恰好 11** 条主画像，来自用户上传的 3 万行样本表分布（非医学标准）。
+- `safety_gate`＝`none | high_risk`；`high_risk`（孕期女性 / 慢性病糖尿病 / 慢性病高血压）**不得**进入自动茶饮推荐。
+- `constitution_hints[].constitution_id` ∈ `constitution.json`；`diet_signal_tendencies[].signal_id` ∈ `diet_signals.json`。
+- 对照字段一律 `review_status=pending`，`sources` 仅登记 `distribution_sample`，**禁止**伪造药典/文献 URL。
+- 只读加载：`core/app/services/personas.py`；工具桩：`list_personas` / `get_persona`（`tool_registry_stub`）。
+- **不是**向量 RAG；与饮片/食材/食疗模板同属结构化查表层。

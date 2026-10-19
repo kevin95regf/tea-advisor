@@ -91,39 +91,206 @@ def reload_food_table() -> dict[str, Any]:
     return load_food_table()
 
 
+# ---- 匹配启发式（第 3 步）：词界 + 饮品后缀保护 + 前缀孤儿抑制 ----
+# 背景：新食材入库后，「黑胡椒牛排→胡椒」「柚子茶→柚子」等菜名会被原料词抢走。
+# 策略：
+#   1. 在 CJK 连续段（token）内匹配，而不是整句裸子串；
+#   2. token 以 茶/酒/饮 结尾时，只允许茶饮条目（或全词命中）出线；
+#   3. token 首部的原料专名若后面还跟着无法切词的菜名尾巴，则丢弃该前缀命中；
+#   4. 切词时允许跳过温度前缀（冰/热…），以免「炸鸡冰可乐」丢掉炸鸡；
+#   5. 仍按命中词长度降序；茶饮在同等长度下略优先；
+#   6. 被条目规范名整词跨度严格包含的短命中（如 麻辣烫 里的 辣→辣椒）剔除。
+
+_BEVERAGE_SUFFIXES = ("茶", "酒", "饮")
+# 主食尾巴：专名+饭/粥 应保留专名（糯米饭→糯米），与「菠萝咕咾肉」那种菜名尾巴区分开
+_STAPLE_SUFFIXES = ("饭", "粥", "面", "粉", "汤", "羹", "包", "饼", "糕", "饺", "馄饨")
+_TEMP_SKIP_IN_SEGMENT = tuple(
+    sorted(
+        {
+            "冰镇的", "冰镇", "冰的", "冰", "加冰的", "加冰", "去冰的", "去冰",
+            "冷冻的", "冷冻", "冷藏的", "冷藏", "冻的", "冻",
+            "热腾腾的", "热腾腾", "滚烫的", "滚烫", "烫的", "烫",
+            "加热的", "加热", "温热的", "温热", "热的", "热", "温",
+        },
+        key=len,
+        reverse=True,
+    )
+)
+
+
+def _is_cjk(ch: str) -> bool:
+    o = ord(ch)
+    return (0x4E00 <= o <= 0x9FFF) or (0x3400 <= o <= 0x4DBF)
+
+
+# 句子里的虚词/连词：切开 CJK 长串，避免「今天中午吃了炸鸡和冰可乐」整句变成一个 token
+# 从而把「炸鸡」误判成段中嵌套而丢掉。
+_TOKEN_SOFT_BREAKS = frozenset(
+    "的了吗呢吧啊呀么嘛着过就都也还把被让给从到对和与及或在是有"
+    "吃喝点配加用夹带附跟同"
+    "炒煮蒸炸烤炖焖拌煎焯涮灼焗烩烧卤熏拌"
+    "我你他她它们您谁哪几多少"
+    "个份碗杯瓶盘顿些种餐"
+)
+
+
+def _is_token_char(ch: str) -> bool:
+    return _is_cjk(ch) and ch not in _TOKEN_SOFT_BREAKS
+
+
+def _token_bounds(text: str, pos: int) -> tuple[int, int]:
+    """含 pos 的「食物短语」段 [start, end)：CJK 连续且不含虚词切分。"""
+    n = len(text)
+    start = pos
+    while start > 0 and _is_token_char(text[start - 1]):
+        start -= 1
+    end = pos
+    while end < n and _is_token_char(text[end]):
+        end += 1
+    return start, end
+
+
+def _entry_words(entry: dict) -> list[str]:
+    words: list[str] = []
+    for raw in (
+        [entry.get("name") or ""]
+        + list(entry.get("aliases") or [])
+        + list(entry.get("keywords") or [])
+    ):
+        w = (raw or "").replace(" ", "").strip()
+        if w:
+            words.append(w)
+    return words
+
+
+def _word_index(entries: list[dict]) -> dict[str, list[dict]]:
+    index: dict[str, list[dict]] = {}
+    for entry in entries:
+        for word in _entry_words(entry):
+            index.setdefault(word, []).append(entry)
+    return index
+
+
+def _tea_id_set() -> set[str]:
+    table = load_food_table()
+    return {
+        str(e.get("id") or "")
+        for e in (table.get("tea_drinks") or {}).get("items") or []
+        if e.get("id")
+    }
+
+
+def _can_segment(rest: str, index: dict[str, list[dict]]) -> bool:
+    """rest 能否被词典词（中间可夹温度前缀）完全切分。"""
+    i = 0
+    n = len(rest)
+    while i < n:
+        skipped = False
+        for prefix in _TEMP_SKIP_IN_SEGMENT:
+            if rest.startswith(prefix, i):
+                i += len(prefix)
+                skipped = True
+                break
+        if skipped:
+            continue
+        found = False
+        for length in range(n - i, 0, -1):
+            if rest[i : i + length] in index:
+                i += length
+                found = True
+                break
+        if not found:
+            return False
+    return True
+
+
 def match_foods(text: str, limit: int = 12) -> list[dict]:
     """在用户口述里找出表中有记录的条目。
 
-    匹配策略：关键词命中即算，按关键词长度降序优先（长词更具体，
-    例如「麻辣香锅」应优先于「麻辣」）。
+    匹配策略（第 3 步起）：
+      - 关键词/规范名/别名命中；
+      - 在 CJK token 内做词界约束（饮品后缀保护、前缀孤儿抑制）；
+      - 按命中词长度降序，茶饮同等长度略优先。
     """
     if not text:
         return []
 
-    scored: list[tuple[int, dict]] = []
-    for entry in _entries():
-        keywords = entry.get("keywords") or [entry.get("name", "")]
-        hits = [kw for kw in keywords if kw and kw in text]
-        if not hits:
-            continue
-        # 用最长命中关键词的长度作为排序权重，其次按命中数量
-        weight = max(len(kw) for kw in hits) * 10 + len(hits)
-        scored.append((weight, entry))
+    entries = _entries()
+    index = _word_index(entries)
+    tea_ids = _tea_id_set()
 
-    scored.sort(key=lambda pair: pair[0], reverse=True)
+    raw: list[tuple[int, int, str, dict]] = []
+    for word, ents in index.items():
+        start = 0
+        while True:
+            pos = text.find(word, start)
+            if pos < 0:
+                break
+            for entry in ents:
+                raw.append((pos, pos + len(word), word, entry))
+            start = pos + 1
 
-    # 去重（同一 id 只保留一次）
-    seen: set[str] = set()
-    result: list[dict] = []
-    for _, entry in scored:
-        eid = entry.get("id") or entry.get("name")
-        if eid in seen:
+    kept: list[tuple[int, int, str, dict]] = []
+    for start, end, word, entry in raw:
+        name = (entry.get("name") or "").replace(" ", "").strip()
+        token_start, token_end = _token_bounds(text, start)
+        token = text[token_start:token_end]
+        is_tea = str(entry.get("id") or "") in tea_ids
+
+        # 整词等于 token / 规范名等于 token：始终保留
+        if word == token or name == token:
+            kept.append((start, end, word, entry))
             continue
-        seen.add(eid)
-        result.append(entry)
-        if len(result) >= limit:
-            break
-    return result
+
+        beverage_token = any(
+            token.endswith(suf) and len(token) > len(suf) for suf in _BEVERAGE_SUFFIXES
+        )
+        # 柚子茶→柚子 要拦；黄酒/菊花茶 本身以 酒/茶 结尾则放行
+        word_is_drink = word.endswith(_BEVERAGE_SUFFIXES) or name.endswith(_BEVERAGE_SUFFIXES)
+        if beverage_token and not is_tea and not word_is_drink:
+            if entry.get("category") not in {"酒类", "饮料"}:
+                continue
+        if is_tea:
+            kept.append((start, end, word, entry))
+            continue
+
+        # 中心语在后：token 末尾的命中保留（包子、面）
+        if end == token_end:
+            kept.append((start, end, word, entry))
+            continue
+
+        # token 首部专名：尾巴必须能切词，或为常见主食后缀（糯米饭），否则视为菜名误伤
+        if start == token_start and end < token_end:
+            rest = text[end:token_end]
+            if _can_segment(rest, index) or rest in _STAPLE_SUFFIXES:
+                kept.append((start, end, word, entry))
+            continue
+
+        # 段中非茶饮：左侧也必须能切词（避免「黑胡椒牛排」里嵌着的「胡椒」）
+        if _can_segment(text[token_start:start], index):
+            kept.append((start, end, word, entry))
+
+    # 注意：不去掉「麻辣烫 ⊃ 麻辣→辣椒」这类嵌套命中——
+    # 离线温度归属的负控制依赖 match_foods 仍返回辣椒，从而让「烫」落在其它条目跨度边界上。
+    # 菜名劫持主要靠词界 / 饮品后缀 / 前缀孤儿规则拦住。
+
+    _DISH_CATEGORIES = frozenset({"主食", "菜肴", "甜点", "速食"})
+    best: dict[str, tuple[int, dict]] = {}
+    for start, end, word, entry in kept:
+        eid = str(entry.get("id") or entry.get("name") or "")
+        weight = len(word) * 10
+        if eid in tea_ids or (entry.get("category") in _DISH_CATEGORIES):
+            weight += 15  # 完整菜/茶优先于原料
+        # 中心语在后的命中再加一点（包子 in 马齿苋包子）
+        token_start, token_end = _token_bounds(text, start)
+        if end == token_end and word != text[token_start:token_end]:
+            weight += 5
+        prev = best.get(eid)
+        if prev is None or weight > prev[0]:
+            best[eid] = (weight, entry)
+
+    ranked = sorted(best.values(), key=lambda pair: pair[0], reverse=True)
+    return [entry for _, entry in ranked[:limit]]
 
 
 def names_match(expected: str, actual: str) -> bool:
@@ -265,35 +432,96 @@ def _find_entry(
     if not target:
         return None, None, ""
 
-    name_match: tuple[int, int, dict, str] | None = None   # (gap, 长度, 条目, 命中词)
+    # name_match 键：(不在末尾, gap, -规范名长) —— 中心语在后优先（马齿苋包子→包子）
+    name_match: tuple[int, int, int, dict, str] | None = None
     keyword_match: tuple[int, dict, str] | None = None     # (命中词长度, 条目, 命中词)
+    tea_ids = _tea_id_set()
+    index = _word_index(_entries())
+
+    beverage_target = any(
+        target.endswith(suf) and len(target) > len(suf) for suf in _BEVERAGE_SUFFIXES
+    )
 
     for entry in _entries():
         entry_name = (entry.get("name") or "").replace(" ", "").strip()
         if not entry_name:
             continue
+        is_tea = str(entry.get("id") or "") in tea_ids
 
         # 第 0 级：完全同名
         if entry_name == target:
             return entry, entry_name, "name"
 
-        # 第 1 级：包含关系，按 gap 最小者优先
-        if entry_name in target or target in entry_name:
-            gap = abs(len(entry_name) - len(target))
-            key = (gap, len(entry_name))
-            if name_match is None or key < (name_match[0], name_match[1]):
-                name_match = (gap, len(entry_name), entry, entry_name)
+        # 第 1 级：包含关系
+        # 反向（短 query ⊂ 长规范名）对单字太凶（枣→鲜枣/红枣茶），要求 query 至少 2 字
+        forward = entry_name in target and entry_name != target
+        reverse = len(target) >= 2 and target in entry_name and entry_name != target
+        if forward or reverse:
+            if forward:
+                # 饮品 token：非茶饮的词干命中丢掉（柚子茶→柚子）；
+                # 规范名本身以茶/酒结尾（凉茶）或酒类条目除外。
+                if (
+                    beverage_target
+                    and not is_tea
+                    and not entry_name.endswith(_BEVERAGE_SUFFIXES)
+                    and entry.get("category") not in {"酒类", "饮料"}
+                ):
+                    forward = False
+                else:
+                    pos = target.find(entry_name)
+                    ts, te = _token_bounds(target, pos)
+                    end = pos + len(entry_name)
+                    if end == te:
+                        pass  # 中心语在后
+                    elif pos == ts:
+                        # 前缀孤儿：尾巴不能切词且不是主食后缀 → 丢掉（菠萝咕咾肉→菠萝）
+                        rest = target[end:te]
+                        if not _can_segment(rest, index) and rest not in _STAPLE_SUFFIXES:
+                            forward = False
+                    else:
+                        # 段中嵌套（黑胡椒牛排里的胡椒）：左右都须可切
+                        if not _can_segment(target[ts:pos], index):
+                            forward = False
+                        elif end < te and not _can_segment(target[end:te], index):
+                            forward = False
+            if forward or reverse:
+                gap = abs(len(entry_name) - len(target))
+                at_end = target.endswith(entry_name)
+                key = (0 if at_end else 1, gap, -len(entry_name))
+                if name_match is None or key < (name_match[0], name_match[1], name_match[2]):
+                    name_match = (key[0], key[1], key[2], entry, entry_name)
 
-        # 第 2 级：关键词/别名匹配
+        # 第 2 级：关键词/别名匹配（同样受饮品后缀与词界约束）
         for kw in list(entry.get("keywords") or []) + list(entry.get("aliases") or []):
             k = (kw or "").replace(" ", "").strip()
             if not k or k not in target:
                 continue
+            if k == target or entry_name == target:
+                pass
+            elif (
+                beverage_target
+                and not is_tea
+                and not k.endswith(_BEVERAGE_SUFFIXES)
+                and not entry_name.endswith(_BEVERAGE_SUFFIXES)
+                and entry.get("category") not in {"酒类", "饮料"}
+            ):
+                continue
+            else:
+                pos = target.find(k)
+                # 嵌在更长 CJK token 中部的原料别名（黑胡椒∈黑胡椒牛排）需左侧可切
+                ts, te = _token_bounds(target, pos)
+                if not (pos == ts or pos + len(k) == te or is_tea):
+                    if not _can_segment(target[ts:pos], index):
+                        continue
+                if pos == ts and pos + len(k) < te and not is_tea:
+                    rest = target[pos + len(k) : te]
+                    if not _can_segment(rest, index) and rest not in _STAPLE_SUFFIXES:
+                        continue
             if keyword_match is None or len(k) > keyword_match[0]:
                 keyword_match = (len(k), entry, k)
 
     if name_match is not None:
-        return name_match[2], name_match[3], "name"
+        return name_match[3], name_match[4], "name"
     if keyword_match is not None:
         return keyword_match[1], keyword_match[2], "keyword"
     return None, None, ""

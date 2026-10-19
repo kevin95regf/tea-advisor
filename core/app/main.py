@@ -30,6 +30,7 @@ from app.api import analyze as analyze_api
 from app.api import analyze_offline as analyze_offline_api
 from app.api import chat as chat_api
 from app.api import medication as medication_api
+from app.api import soup_templates as soup_templates_api
 from app.api import questionnaire as questionnaire_api
 from app.config import get_settings
 from app.domain.enums import (
@@ -112,6 +113,7 @@ app.include_router(analyze_offline_api.router, prefix="/api", tags=["analyze"])
 app.include_router(questionnaire_api.router, prefix="/api", tags=["questionnaire"])
 app.include_router(chat_api.router, prefix="/api", tags=["chat"])
 app.include_router(medication_api.router, prefix="/api", tags=["reference"])
+app.include_router(soup_templates_api.router, prefix="/api", tags=["reference"])
 
 
 # ============================================================

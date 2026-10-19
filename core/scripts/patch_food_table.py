@@ -49,6 +49,7 @@ FIELD_ORDER = (
     "id", "name", "aliases", "category", "nature", "flavors", "keywords",
     "variant_nature", "note", "base_form",
     "reviewed", "reviewed_by", "reviewed_at", "review_note", "review_status",
+    "food_group_code", "dg2022_layer",
 )
 
 

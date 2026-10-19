@@ -276,3 +276,28 @@ def test_item3_guard_negative_control() -> None:
     reverted = prompt.replace(target, OLD_ITEM_3)
     assert reverted != prompt, "替换没生效，负控制形同虚设"
     assert _item3_violations(reverted), "改回旧文案后守卫没变红 —— 判据恒真"
+
+
+# ============================================================
+# 食疗模板：不得当自由开方（硬边界 9）
+# ============================================================
+def test_agent2_prompt_soup_template_boundary() -> None:
+    """硬边界须禁止未批方剂名乱出，并约束食疗模板只引用 display_name。"""
+    prompt = load_prompt()
+    assert "食疗汤模板不是自由开方" in prompt
+    assert "soup_templates" in prompt
+    assert "display_name" in prompt
+    assert "kitchen_amount_hint" in prompt
+    assert "pending" in prompt
+    # 仍禁止方剂式开方
+    assert "不开方剂" in prompt
+
+
+
+def test_agent2_prompt_high_risk_persona_boundary() -> None:
+    """硬边界 5：系统已判定高风险画像时不得推荐。"""
+    prompt = load_prompt()
+    assert "高风险画像" in prompt
+    assert "不得据此开茶饮或汤饮" in prompt
+
+

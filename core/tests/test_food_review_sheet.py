@@ -36,9 +36,9 @@ HERBS_PATH = CORE_DIR / "data" / "herbs.json"
 SOURCES_PATH = CORE_DIR.parent / "docs" / "food-properties-sources.json"
 SHEET_PATH = CORE_DIR.parent / "docs" / "food-properties-review-sheet.md"
 
-# 128 foods + 1（香菇 xianggu，由「蘑菇」拆条新增）+ 18 tea_drinks = 147
-EXPECTED_TOTAL = 147
-EXPECTED_FOODS = 129
+# 原 129 foods + 第4步安全批次 65 + 18 tea_drinks = 212（14 条 hold-back 见 batch2_pending）
+EXPECTED_TOTAL = 212
+EXPECTED_FOODS = 194
 EXPECTED_TEA = 18
 
 

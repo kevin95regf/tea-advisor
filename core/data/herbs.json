@@ -1,7 +1,7 @@
 {
   "_meta": {
     "title": "药食同源饮片库（demo 版）",
-    "version": "0.8.0",
+    "version": "0.9.0",
     "review_status": "pending",
     "notice": "本文件仅收录『既是食品又是中药材的物质』方向的高频品种，属性依据中医饮食养生通行表述整理，剂量上限为保守的日常茶饮建议值。上线前必须由具备资质的中医师/中药师复核，并以国家卫健委发布的最新目录为准。",
     "field_notes": {
@@ -542,7 +542,7 @@
     {
       "id": "sangshen",
       "name": "桑椹",
-      "nature": "cool",
+      "nature": "cold",
       "flavors": ["sweet", "sour"],
       "meridians": ["心", "肝", "肾"],
       "effects": ["滋阴补血", "生津润肠"],
@@ -1204,6 +1204,159 @@
       "reviewed_by": null,
       "reviewed_at": null,
       "review_note": null
-    }
+    },
+  {
+    "id": "huangqi",
+    "name": "黄芪",
+    "nature": "warm",
+    "flavors": ["sweet"],
+    "meridians": ["肺", "脾"],
+    "effects": ["补气升阳", "固表", "生津养血"],
+    "max_daily_g": 20,
+    "cautions": ["孕妇、哺乳期妇女及婴幼儿等特殊人群不推荐食用（2023 年第 9 号公告解读）", "表实邪盛、气滞湿阻者不宜滥补"],
+    "suitable_constitutions": [],
+    "unsuitable_for": [],
+    "brewing": {
+      "form": "干黄芪片或段",
+      "note": "质地坚实，需煮 15 分钟以上才易出味，直接冲泡效果差；宜煲汤久煎",
+      "prep": "温水冲洗后煮制或入汤",
+      "requires_cooking": true
+    },
+    "review_status": "pending",
+    "reviewed_by": null,
+    "reviewed_at": null,
+    "review_note": null
+  },
+  {
+    "id": "dangshen",
+    "name": "党参",
+    "nature": "neutral",
+    "flavors": ["sweet"],
+    "meridians": ["脾", "肺"],
+    "effects": ["健脾益肺", "养血生津"],
+    "max_daily_g": 20,
+    "cautions": ["孕妇、哺乳期妇女及婴幼儿等特殊人群不推荐食用（2023 年第 9 号公告解读）", "不宜与藜芦同用（《中国药典》2020 年版一部【注意】，p.342）"],
+    "suitable_constitutions": [],
+    "unsuitable_for": [],
+    "brewing": {
+      "form": "干党参片或段",
+      "note": "质地坚实，需煮 15 分钟以上才易出味，直接冲泡效果差；宜煲汤",
+      "prep": "温水冲洗后煮制或入汤",
+      "requires_cooking": true
+    },
+    "review_status": "pending",
+    "reviewed_by": null,
+    "reviewed_at": null,
+    "review_note": null
+  },
+  {
+    "id": "danggui",
+    "name": "当归",
+    "nature": "warm",
+    "flavors": ["sweet", "pungent"],
+    "meridians": ["肝", "心", "脾"],
+    "effects": ["补血活血", "润肠"],
+    "max_daily_g": 12,
+    "cautions": ["2019 年第 8 号公告限定：仅作为香辛料和调味品使用；本条目仅作家用煲汤向参考，不作茶饮主推", "腹满便溏者不宜", "产品文案避免调经处方口吻；特殊人群请遵医嘱"],
+    "suitable_constitutions": [],
+    "unsuitable_for": [],
+    "brewing": {
+      "form": "干当归片或段",
+      "note": "质地柔润偏油，需煮 10 分钟以上才易出味；宜入汤，不宜当日常泡茶",
+      "prep": "温水略洗后煮制或入汤",
+      "requires_cooking": true
+    },
+    "review_status": "pending",
+    "reviewed_by": null,
+    "reviewed_at": null,
+    "review_note": null
+  },
+  {
+    "id": "sharen",
+    "name": "砂仁",
+    "nature": "warm",
+    "flavors": ["pungent"],
+    "meridians": ["脾", "胃", "肾"],
+    "effects": ["化湿开胃", "温脾"],
+    "max_daily_g": 6,
+    "cautions": ["血燥者慎用，用量宜小", "药典用量为后下；入汤宜近出锅时加入，久煮易散气"],
+    "suitable_constitutions": [],
+    "unsuitable_for": [],
+    "brewing": {
+      "form": "干砂仁果实，用时捣破",
+      "note": "含挥发油，须煎煮但宜后下：汤将成时再下，煮 3–5 分钟即可；久煮香气散失",
+      "prep": "捣破后入汤后下",
+      "requires_cooking": true
+    },
+    "review_status": "pending",
+    "reviewed_by": null,
+    "reviewed_at": null,
+    "review_note": null
+  },
+  {
+    "id": "maiya",
+    "name": "麦芽",
+    "nature": "neutral",
+    "flavors": ["sweet"],
+    "meridians": ["脾", "胃"],
+    "effects": ["行气消食", "健脾开胃"],
+    "max_daily_g": 15,
+    "cautions": ["哺乳期妇女不宜作常规推荐（药典载回乳用法；回乳炒用大剂量禁止作为产品默认用量）", "无食积而脾胃虚弱者不宜久用"],
+    "suitable_constitutions": [],
+    "unsuitable_for": [],
+    "brewing": {
+      "form": "干麦芽（生/炒按需；产品默认不作回乳用）",
+      "note": "质地较坚实，需煮 10 分钟以上才易出味，直接冲泡效果差",
+      "prep": "温水略洗后煮制或轻煎",
+      "requires_cooking": true
+    },
+    "review_status": "pending",
+    "reviewed_by": null,
+    "reviewed_at": null,
+    "review_note": null
+  },
+  {
+    "id": "mugua",
+    "name": "木瓜",
+    "nature": "warm",
+    "flavors": ["sour"],
+    "meridians": ["肝", "脾"],
+    "effects": ["舒筋活络", "和胃化湿"],
+    "max_daily_g": 9,
+    "cautions": ["本条为药典宣木瓜饮片（贴梗海棠果实），非水果番木瓜", "内有郁热、小便短赤者慎用"],
+    "suitable_constitutions": [],
+    "unsuitable_for": [],
+    "brewing": {
+      "form": "干宣木瓜片（贴梗海棠；非番木瓜）",
+      "note": "宣木瓜饮片，非水果番木瓜。质地坚实，需煮 10 分钟以上才易出味",
+      "prep": "温水冲洗后煮制或入排骨汤等",
+      "requires_cooking": true
+    },
+    "review_status": "pending",
+    "reviewed_by": null,
+    "reviewed_at": null,
+    "review_note": null
+  },
+  {
+    "id": "pangdahai",
+    "name": "胖大海",
+    "nature": "cold",
+    "flavors": ["sweet"],
+    "meridians": ["肺", "大肠"],
+    "effects": ["清热润肺", "利咽开音", "润肠通便"],
+    "max_daily_g": 9,
+    "cautions": ["性寒，脾胃虚寒、便溏者不宜多饮", "药典用法为 2–3 枚沸水泡服；勿按克数盲目加量"],
+    "suitable_constitutions": [],
+    "unsuitable_for": ["yang_deficiency"],
+    "brewing": {
+      "form": "干胖大海果实，整枚",
+      "note": "药典：2–3 枚，沸水泡服或煎服；日常代茶以 2–3 枚为上限（本条 max_daily_g=9 为克数封顶，优先按枚计）",
+      "prep": "沸水冲泡至胀开即可饮用"
+    },
+    "review_status": "pending",
+    "reviewed_by": null,
+    "reviewed_at": null,
+    "review_note": null
+  }
   ]
 }
