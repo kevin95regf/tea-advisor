@@ -81,3 +81,13 @@
 - 结构＝`{_meta, templates}`；`kind` **仅** `food_therapy`。
 - 组件 `herb_id` 必须落在 `herbs.json`；`kitchen_amount_hint` 为家庭约量文案，**禁止**冒充处方剂量。
 - 只读加载：`core/app/services/soup_templates.py`；**未**接 Agent2，**未**改 `agent2_system.md`。UI/API 接线另开。
+
+
+## `core/data/personas.json`（2026-10-16 新增）
+
+- 结构＝`{_meta, personas}`；**恰好 11** 条主画像，来自用户上传的 3 万行样本表分布（非医学标准）。
+- `safety_gate`＝`none | high_risk`；`high_risk`（孕期女性 / 慢性病糖尿病 / 慢性病高血压）**不得**进入自动茶饮推荐。
+- `constitution_hints[].constitution_id` ∈ `constitution.json`；`diet_signal_tendencies[].signal_id` ∈ `diet_signals.json`。
+- 对照字段一律 `review_status=pending`，`sources` 仅登记 `distribution_sample`，**禁止**伪造药典/文献 URL。
+- 只读加载：`core/app/services/personas.py`；工具桩：`list_personas` / `get_persona`（`tool_registry_stub`）。
+- **不是**向量 RAG；与饮片/食材/食疗模板同属结构化查表层。

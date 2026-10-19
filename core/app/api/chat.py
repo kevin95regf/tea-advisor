@@ -20,7 +20,7 @@ from app.config import get_settings
 from app.domain.enums import CONSTITUTION_LABELS, Constitution
 from app.domain.models import EvidenceReference
 from app.domain.safety import (
-    detect_high_risk,
+    high_risk_block_reasons,
     filter_by_constitution,
     herb_evidence,
     scan_free_text,
@@ -91,7 +91,7 @@ async def chat_endpoint(
 
     remembered = request.messages[-20:]
     user_text = remembered[-1].content.strip()
-    risks = detect_high_risk(user_text)
+    risks = high_risk_block_reasons(user_text)
     if risks:
         return ChatResponse(
             reply=(

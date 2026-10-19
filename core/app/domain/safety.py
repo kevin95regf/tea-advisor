@@ -19,7 +19,7 @@ from app.config import get_settings
 # ============================================================
 # 高风险人群关键词：命中即不给出具体推荐，改为引导咨询医师
 HIGH_RISK_KEYWORDS: tuple[str, ...] = (
-    "怀孕", "孕妇", "备孕", "哺乳", "喂奶", "经期", "月经",
+    "怀孕", "孕妇", "孕期", "备孕", "哺乳", "喂奶", "经期", "月经",
     "小孩", "孩子", "儿童", "婴儿", "宝宝", "幼儿",
     "化疗", "手术", "糖尿病", "高血压", "心脏病", "肾病", "肝病",
     "吃药", "服药", "中药", "西药", "过敏",
@@ -180,6 +180,78 @@ def reload_herb_evidence_sources() -> dict:
 def detect_high_risk(text: str) -> list[str]:
     """从用户原始文本里识别高风险人群关键词。"""
     return [kw for kw in HIGH_RISK_KEYWORDS if kw in text]
+
+
+def persona_id_is_high_risk(persona_id: str) -> bool:
+    """画像 id 是否为 high_risk 闸门（供 orchestrator 日后调用）。
+
+    委托 ``app.services.personas.persona_is_high_risk``；画像库缺失时返回 False，
+    不阻断主推荐路径。默认推荐通道仍靠 ``detect_high_risk`` 关键词闸门。
+    """
+    if not persona_id:
+        return False
+    try:
+        from app.services.personas import persona_is_high_risk
+
+        return bool(persona_is_high_risk(persona_id))
+    except Exception:
+        return False
+
+
+def text_hits_high_risk_persona(text: str) -> list[str]:
+    """文本是否命中 high_risk 画像（display_name / high_risk_keywords 子串）。
+
+    返回命中的 persona id 列表。与 ``detect_high_risk`` 互补：后者扫全局关键词，
+    本函数扫画像表。库缺失时返回空列表。
+    """
+    if not text:
+        return []
+    try:
+        from app.services.personas import match_persona_keywords, persona_is_high_risk
+
+        return [pid for pid in match_persona_keywords(text) if persona_is_high_risk(pid)]
+    except Exception:
+        return []
+
+
+def high_risk_block_reasons(
+    text: str, *, persona_id: str | None = None
+) -> list[str]:
+    """汇总应走「高风险→不推荐」路径的护栏说明（空列表 = 不拦截）。
+
+    合并三路信号（与 orchestrator / analyze-offline / chat 共用）：
+    1. ``detect_high_risk(text)`` 全局关键词；
+    2. 请求携带的 ``persona_id`` 为 high_risk 闸门；
+    3. ``text_hits_high_risk_persona(text)`` 文本命中高风险画像名/关键词。
+
+    未知 ``persona_id`` **不在此函数处理**——调用方须先校验，避免静默错画像。
+    """
+    reasons: list[str] = []
+    kws = detect_high_risk(text or "")
+    if kws:
+        reasons.append(f"命中高风险关键词：{'、'.join(kws)}")
+
+    pid = (persona_id or "").strip() or None
+    if pid and persona_id_is_high_risk(pid):
+        label = pid
+        try:
+            from app.services.personas import get_persona
+
+            label = str(get_persona(pid).get("display_name") or pid)
+        except Exception:
+            pass
+        reasons.append(f"命中高风险画像：{label}（{pid}）")
+
+    persona_hits = text_hits_high_risk_persona(text or "")
+    # 若已因同一 persona_id 写入过画像行，仍可再记文本命中（便于归因）；
+    # 但过滤掉与 persona_id 完全相同的重复 id 列表噪音。
+    extra = [h for h in persona_hits if h != pid]
+    if extra:
+        reasons.append(f"文本命中高风险画像：{'、'.join(extra)}")
+    elif persona_hits and not pid:
+        reasons.append(f"文本命中高风险画像：{'、'.join(persona_hits)}")
+
+    return reasons
 
 
 def contains_forbidden_phrase(text: str) -> list[str]:

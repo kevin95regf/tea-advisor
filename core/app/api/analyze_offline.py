@@ -18,7 +18,7 @@ from app.domain.enums import CONSTITUTION_LABELS, Constitution, MealTime, Nature
 from app.domain.meal_time import guess_meal_time
 from app.domain.models import AnalyzeResponse, Meta, ParsedFood, ParsedMeal, Verification
 from app.domain.safety import (
-    detect_high_risk,
+    high_risk_block_reasons,
     ready_constitutions,
     recommendation_scan_text,
     render_guardrail_entry,
@@ -38,6 +38,13 @@ class OfflineAnalyzeRequest(BaseModel):
     constitution_override: Constitution | None = None
     avoid_constitutions: list[Constitution] = Field(default_factory=list)
     exclude_herbs: list[str] = Field(default_factory=list)
+    persona_id: str | None = Field(
+        default=None,
+        description=(
+            "可选用户主画像 id（personas.json）。未知 id → 422 UNKNOWN_PERSONA；"
+            "high_risk 画像与关键词闸门同等拦截。"
+        ),
+    )
 
 
 def _match_nature_from_text(text: str) -> Nature:
@@ -77,6 +84,51 @@ async def analyze_offline_endpoint(request: OfflineAnalyzeRequest) -> AnalyzeRes
         or request.constitution
         or Constitution.BALANCED
     )
+
+    persona_id = (request.persona_id or "").strip() or None
+    if persona_id:
+        try:
+            from app.services.personas import PersonaNotFound, get_persona
+
+            get_persona(persona_id)
+        except PersonaNotFound as exc:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "UNKNOWN_PERSONA",
+                    "message": f"未知的画像 id：{persona_id}",
+                },
+            ) from exc
+
+    # 高风险（关键词 / 画像 id / 文本命中画像）须在体质就绪之前：与 orchestrator 同序
+    early_risks = high_risk_block_reasons(text, persona_id=persona_id)
+    if early_risks:
+        elapsed = int((time.perf_counter() - started) * 1000)
+        return AnalyzeResponse(
+            request_id=uuid.uuid4().hex[:16],
+            parsed=ParsedMeal(
+                meal_time=MealTime.UNKNOWN,
+                summary="你提到了需要特别留意的情况",
+            ),
+            recommendations=[],
+            basis=_build_basis(
+                constitution,
+                CONSTITUTION_LABELS[constitution.value],
+                guardrail_applied=early_risks,
+            ),
+            meta=Meta(
+                agent1_ms=elapsed,
+                agent2_ms=0,
+                total_ms=elapsed,
+                model="offline-rules",
+                degraded=True,
+                degraded_reason="高风险拦截",
+                key_source="not_used",
+                backend="offline",
+            ),
+            user_message="当前描述涉及需要谨慎处理的情况，本程序不提供茶饮建议，请先咨询执业医师。",
+        )
+
     if constitution.value not in ready_constitutions():
         raise HTTPException(
             status_code=422,
@@ -146,31 +198,6 @@ async def analyze_offline_endpoint(request: OfflineAnalyzeRequest) -> AnalyzeRes
         constitution.value,
         avoid=[item.value for item in request.avoid_constitutions],
     )
-
-    risks = detect_high_risk(text)
-    if risks:
-        elapsed = int((time.perf_counter() - started) * 1000)
-        return AnalyzeResponse(
-            request_id=uuid.uuid4().hex[:16],
-            parsed=parsed,
-            recommendations=[],
-            basis=_build_basis(
-                constitution,
-                CONSTITUTION_LABELS[constitution.value],
-                guardrail_applied=[f"命中高风险关键词：{'、'.join(risks)}"],
-            ),
-            meta=Meta(
-                agent1_ms=elapsed,
-                agent2_ms=0,
-                total_ms=elapsed,
-                model="offline-rules",
-                degraded=True,
-                degraded_reason="高风险拦截",
-                key_source="not_used",
-                backend="offline",
-            ),
-            user_message="当前描述涉及需要谨慎处理的情况，本程序不提供茶饮建议，请先咨询执业医师。",
-        )
 
     recs, message, rule_hits = matcher.fallback_recommend(
         parsed,

@@ -293,3 +293,11 @@ def test_agent2_prompt_soup_template_boundary() -> None:
     assert "不开方剂" in prompt
 
 
+
+def test_agent2_prompt_high_risk_persona_boundary() -> None:
+    """硬边界 5：系统已判定高风险画像时不得推荐。"""
+    prompt = load_prompt()
+    assert "高风险画像" in prompt
+    assert "不得据此开茶饮或汤饮" in prompt
+
+

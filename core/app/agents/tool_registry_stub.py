@@ -63,6 +63,52 @@ TOOL_SPECS: list[dict[str, Any]] = [
         ),
         "impl": "app.services.soup_templates.get_soup_template",
     },
+    {
+        "name": "list_personas",
+        "description": (
+            "列出用户主画像样本条目（结构化对照层，非向量 RAG）。"
+            "仅当需要对照用户自述画像/人群标签时考虑调用。"
+            "pending / high_risk 条目不得自动写入茶饮 recommendations。"
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "include_pending": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "为 false 时只返回 review_status=approved",
+                }
+            },
+        },
+        "return_type": "list[dict]",
+        "safety": (
+            "只读；high_risk 画像命中时循环外仍须空推荐并引导就医；"
+            "不得把画像当开方或体质确诊依据。"
+        ),
+        "impl": "app.services.personas.list_personas",
+    },
+    {
+        "name": "get_persona",
+        "description": (
+            "按画像 id 取一条详情。白名单外 id 必须失败，不得猜测或编造。"
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "persona_id": {
+                    "type": "string",
+                    "description": "personas.json 中的 id，如 pregnant",
+                }
+            },
+            "required": ["persona_id"],
+        },
+        "return_type": "dict",
+        "safety": (
+            "未知 id → 明确错误；返回含 _query_meta.disclaimer；"
+            "high_risk → 不得自动推荐。"
+        ),
+        "impl": "app.services.personas.get_persona",
+    },
 ]
 
 
@@ -81,4 +127,12 @@ def resolve_tool(name: str) -> Callable[..., Any] | None:
         from app.services.soup_templates import get_soup_template
 
         return get_soup_template
+    if name == "list_personas":
+        from app.services.personas import list_personas
+
+        return list_personas
+    if name == "get_persona":
+        from app.services.personas import get_persona
+
+        return get_persona
     return None

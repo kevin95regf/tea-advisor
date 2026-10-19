@@ -27,7 +27,7 @@
    ╔═══════════════════════════════════════════════════════════════╗
    ║            orchestrator.analyze()  —— 唯一编排入口              ║
    ╠═══════════════════════════════════════════════════════════════╣
-   ║  闸门① 高风险人群   detect_high_risk()  命中 → 直接返回（免费）║
+   ║  闸门① 高风险人群/画像  high_risk_block_reasons()  命中 → 直接返回（免费）║
    ║        ↓ 未命中                                                ║
    ║  闸门② 体质就绪     ready_constitutions()  不就绪 → 422        ║
    ║        ↓ 就绪                                                  ║
@@ -86,17 +86,17 @@
 - **输出**：`request_id = uuid4().hex[:16]`；`key_source = "user" if 有 Key else "not_used"`
 - **真源**：`orchestrator.py :: analyze`
 
-### S3 闸门① —— 高风险人群
+### S3 闸门① —— 高风险人群 / 高风险画像
 
-- **输入**：`request.text` 原文
-- **真源**：`core/app/domain/safety.py :: detect_high_risk`、`HIGH_RISK_KEYWORDS`（25 个：怀孕/哺乳/经期/儿童/化疗/糖尿病/高血压/服药/过敏…）
+- **输入**：`request.text` 原文 + 可选 `request.persona_id`（`personas.json`）
+- **真源**：`safety.py :: high_risk_block_reasons`（内部合并 `detect_high_risk` / `persona_id_is_high_risk` / `text_hits_high_risk_persona`）；未知 `persona_id` → `AnalyzeError("UNKNOWN_PERSONA")` → **422**
 - **命中时输出**（**不调模型、不花钱**）：
   - `parsed` = 只有 `meal_time` + `summary="你提到了需要特别留意的情况"` 的空壳
   - `recommendations = []`
-  - `basis.guardrail_applied = ["命中高风险关键词：…"]`
+  - `basis.guardrail_applied` = 关键词与/或高风险画像说明
   - `meta.degraded=True` / `degraded_reason="high_risk_group"` / `key_source="not_used"`
   - `user_message` = 「…请先咨询执业医师或药师。」
-- **测试**：`tests/test_safety.py`
+- **测试**：`tests/test_safety.py`、`tests/test_persona_mainflow.py`
 
 ### S4 闸门② —— 体质就绪
 

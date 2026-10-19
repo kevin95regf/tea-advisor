@@ -36,8 +36,8 @@ from app.domain.safety import (
     check_blend,
     check_brew_adequacy,
     check_constitution_fit,
-    detect_high_risk,
     herb_evidence,
+    high_risk_block_reasons,
     ready_constitutions,
     recommendation_scan_text,
     render_guardrail_entry,
@@ -127,6 +127,21 @@ def _build_basis(
         guardrail_applied=guardrail_applied or [],
         references=herb_evidence(names, constitution.value) if names else [],
     )
+
+
+def _persona_rule_hits(persona_meta: dict | None) -> list[str]:
+    """低风险画像元数据挂到 basis.rule_hits（不编造功效、不当开方依据）。"""
+    if not persona_meta:
+        return []
+    pid = persona_meta.get("id") or ""
+    name = persona_meta.get("display_name") or pid
+    status = persona_meta.get("review_status") or "pending"
+    return [
+        f"persona:{pid}",
+        f"persona_name:{name}",
+        f"persona_review:{status}",
+        "persona_note:画像仅供对照，不得作为开方或自动改推荐依据",
+    ]
 
 
 def _sanitize_recommendations(
@@ -233,12 +248,37 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
     label = CONSTITUTION_LABELS.get(constitution.value, constitution.value)
     disclaimer = Disclaimer()
 
-    # ---------- 0. 高风险人群（放在凭据校验【之前】）----------
+    # ---------- 0. 画像 id 校验 + 高风险人群（放在凭据校验【之前】）----------
     # 这个分支不调用模型、不花一分钱，所以必须无条件可用：
     # 一个还没填 Key 的用户输入"我怀孕了"，应该看到"请先咨询执业医师"，
     # 而不是"缺少 API Key"。安全提示的优先级高于配置校验。
-    high_risk = detect_high_risk(request.text)
-    if high_risk:
+    #
+    # persona_id：未知 id 明确失败（UNKNOWN_PERSONA），禁止静默当成无画像。
+    # 高风险拦截合并：关键词 / 高风险画像 id / 文本命中高风险画像。
+    persona_id = (request.persona_id or "").strip() or None
+    persona_meta: dict | None = None
+    if persona_id:
+        try:
+            from app.services.personas import PersonaNotFound, get_persona
+
+            persona_meta = get_persona(persona_id)
+        except PersonaNotFound as exc:
+            raise AnalyzeError(
+                "UNKNOWN_PERSONA",
+                f"未知的画像 id：{persona_id}",
+            ) from exc
+        except Exception as exc:
+            # 画像库损坏时不静默错画像；与未知 id 同样拒绝，避免带错闸门继续推荐
+            logger.warning("画像库读取失败 persona_id=%s: %s", persona_id, exc)
+            raise AnalyzeError(
+                "UNKNOWN_PERSONA",
+                f"无法校验画像 id：{persona_id}",
+            ) from exc
+
+    high_risk_reasons = high_risk_block_reasons(
+        request.text, persona_id=persona_id
+    )
+    if high_risk_reasons:
         parsed = ParsedMeal(
             meal_time=request.meal_time or MealTime.UNKNOWN,
             summary="你提到了需要特别留意的情况",
@@ -250,7 +290,7 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
             basis=_build_basis(
                 constitution,
                 label,
-                guardrail_applied=[f"命中高风险关键词：{'、'.join(high_risk)}"],
+                guardrail_applied=high_risk_reasons,
             ),
             disclaimer=disclaimer,
             meta=Meta(
@@ -308,7 +348,11 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
             request_id=request_id,
             parsed=parsed,
             recommendations=[],
-            basis=_build_basis(constitution, label),
+            basis=_build_basis(
+                constitution,
+                label,
+                rule_hits=_persona_rule_hits(persona_meta),
+            ),
             disclaimer=disclaimer,
             meta=Meta(
                 agent1_ms=agent1_ms,
@@ -398,7 +442,7 @@ def analyze(request: AnalyzeRequest, *, api_key: str | None = None) -> AnalyzeRe
             constitution,
             label,
             recs=cleaned,
-            rule_hits=rule_hits,
+            rule_hits=[*_persona_rule_hits(persona_meta), *rule_hits],
             guardrail_applied=applied,
         ),
         disclaimer=disclaimer,
