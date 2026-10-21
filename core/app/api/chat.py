@@ -49,6 +49,19 @@ class ChatRequest(BaseModel):
     persona: str = Field(default="", description="旧客户端兼容字段，不改变系统身份")
 
 
+class PetSignals(BaseModel):
+    """给前端互动小人用的「状态信号」。
+
+    参照桌宠「只碰状态、不碰内容」的原则：这里只放布尔值和**工具名**，
+    绝不放提示词、用户原文、模型回复或命中的风险关键词 —— 小人只需要知道
+    「查没查资料」「是否触发安全提醒」，多给内容只会扩大泄露面。
+    """
+
+    tool_used: bool = False
+    tools: list[str] = Field(default_factory=list)
+    safety_flag: bool = False
+
+
 class ChatResponse(BaseModel):
     reply: str
     model: str
@@ -58,6 +71,12 @@ class ChatResponse(BaseModel):
     persona: str = "tea_assistant"
     references: list[EvidenceReference] = Field(default_factory=list)
     safety_intercepted: bool = False
+    pet_signals: PetSignals = Field(default_factory=PetSignals)
+
+
+# 本接口实际做的知识库查询（按调用顺序）。名字固定写死而不是从函数对象取，
+# 是为了让前端拿到的是稳定的标识，重构函数名时不会悄悄改变小人的行为。
+_KB_LOOKUP_TOOLS = ["filter_by_constitution", "herb_evidence"]
 
 
 def _safe_context(constitution: Constitution) -> tuple[list[str], list[dict]]:
@@ -102,6 +121,8 @@ async def chat_endpoint(
             elapsed_ms=0,
             remembered_messages=len(remembered),
             safety_intercepted=True,
+            # 高风险闸在查库之前就拦下了，所以 tool_used 为假
+            pet_signals=PetSignals(safety_flag=True),
         )
 
     api_key = extract_api_key(authorization)
@@ -177,6 +198,13 @@ async def chat_endpoint(
         remembered_messages=len(remembered),
         references=refs,
         safety_intercepted=intercepted,
+        # 走到这里一定查过饮片库（候选原料 + 公开依据）；
+        # 回复被内容安全检查拦下时同样提示小人进入「安全提醒」
+        pet_signals=PetSignals(
+            tool_used=True,
+            tools=list(_KB_LOOKUP_TOOLS),
+            safety_flag=intercepted,
+        ),
     )
 
 
